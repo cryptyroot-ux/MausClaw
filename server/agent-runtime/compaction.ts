@@ -11,58 +11,30 @@
 // leaks through this module. It works purely on ModelMessage arrays.
 
 import type { AgentCompactionRecord, ModelMessage } from "./contracts.ts";
+import { countTokens } from "../drivers/tokenizer.ts";
 
-// ═════════════════════════════════════════════════════════════════════════════
-// Token counting — model-aware, no external dependency
-// ═════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// Token counting — BPE-aware via gpt-tokenizer, char estimate fallback
+// ══════════════════════════════════════════════════════════════════════════════
 
-/** Conservative chars-per-token ratios per model family. Higher = fewer tokens
- * estimated for the same text (safer for context budget). Unknown models use 4.0. */
-const TOKEN_CHARS_PER_FAMILY: Readonly<Record<string, number>> = {
-  // cl100k_base: GPT-3.5, GPT-4, most OpenAI-compatible
-  "gpt-3.5": 4.0,
-  "gpt-4": 4.0,
-  // o200k_base: GPT-4o series
-  "gpt-4o": 3.6,
-  "4o": 3.6,
-  // o1 / o3 series (o200k_base too)
-  "o1": 3.8,
-  "o3": 3.8,
-  // Claude family (approx)
-  "claude": 3.9,
-  // Gemini family (approx)
-  "gemini": 3.7,
-};
-
-function tokenCharsForModel(modelId?: string): number {
-  if (!modelId) return 4.0;
-  const lower = modelId.toLowerCase();
-  for (const [family, chars] of Object.entries(TOKEN_CHARS_PER_FAMILY)) {
-    if (lower.includes(family)) return chars;
-  }
-  return 4.0;
-}
-
-/** Estimate tokens for a raw string using a model-aware char-per-token ratio. */
+/** Estimate tokens for a raw string using model-aware BPE counting. */
 export function estimateTokensForText(text: string, modelId?: string): number {
-  const charsPerToken = tokenCharsForModel(modelId);
-  return Math.max(1, Math.ceil(text.length / charsPerToken));
+  return countTokens(text, modelId);
 }
 
 /** Estimate tokens for a single model message, including role/tool-call overhead. */
 export function estimateMessageTokens(message: ModelMessage, modelId?: string): number {
-  const charsPerToken = tokenCharsForModel(modelId);
   let total = 4; // per-message role/format overhead
 
   const content = message.content;
   if (content === null || content === undefined) return total;
 
   if (typeof content === "string") {
-    total += Math.max(1, Math.ceil(content.length / charsPerToken));
+    total += countTokens(content, modelId);
   } else {
     for (const part of content) {
       if (part.type === "text") {
-        total += Math.max(1, Math.ceil(part.text.length / charsPerToken));
+        total += countTokens(part.text, modelId);
       } else if (part.type === "image") {
         // Vision: roughly 1 token per 64 bytes of base64-encoded image data.
         total += Math.max(1, Math.ceil(part.data.length / 64));
@@ -71,13 +43,13 @@ export function estimateMessageTokens(message: ModelMessage, modelId?: string): 
   }
 
   if (message.toolCallId) {
-    total += Math.max(1, Math.ceil(message.toolCallId.length / charsPerToken));
+    total += countTokens(message.toolCallId, modelId);
   }
   if (message.toolCalls) {
     for (const call of message.toolCalls) {
       total += 4; // call overhead
-      total += Math.max(1, Math.ceil(call.name.length / charsPerToken));
-      total += Math.max(1, Math.ceil(call.id.length / charsPerToken));
+      total += countTokens(call.name, modelId);
+      total += countTokens(call.id, modelId);
       total += estimateTokensForText(JSON.stringify(call.arguments), modelId);
     }
   }

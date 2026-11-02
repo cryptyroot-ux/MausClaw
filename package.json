@@ -112,6 +112,7 @@
     "clsx": "^2.1.1",
     "codemirror": "6.0.2",
     "croner": "10.0.1",
+    "gpt-tokenizer": "3.4.0",
     "jmespath": "0.16.0",
     "jose": "6.2.10",
     "katex": "^0.16.47",
