@@ -1,19 +1,19 @@
 {
-  "name": "openmausbot",
+  "name": "mausclaw",
   "private": true,
-  "version": "0.1.134",
-  "description": "A local-first chat app for running a team of AI agents.",
+  "version": "0.1.140",
+  "description": "MausClaw: a self-hosted AI agent platform with native engine, multi-agent orchestration, and provider-agnostic model access.",
   "homepage": "https://github.com/milind-soni/OpenMausBot",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cryptyroot-ux/OMB-Claw.git"
+    "url": "https://github.com/cryptyroot-ux/MausClaw.git"
   },
   "author": {
     "name": "Milind Soni",
     "email": "46266943+milind-soni@users.noreply.github.com"
   },
   "license": "Apache-2.0",
-  "desktopName": "com.openmausbot.app.desktop",
+  "desktopName": "com.mausclaw.app.desktop",
   "type": "module",
   "main": "electron/main.mjs",
   "engines": {
