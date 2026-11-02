@@ -255,6 +255,69 @@ selected are the same with the setting on or off. Engines that replay natively
 still named without a target when its preview is arguments that hold none of
 those at the top level. A URL inside a command is left as the command ran.
 
+## MausClaw native engine compaction subsystem
+
+MausClaw's own agent runtime (`server/agent-runtime/`) ships a standalone,
+provider-agnostic context compaction engine that runs entirely on
+`ModelMessage` arrays (no provider wire format leaks through).
+
+### Token counting
+BPE-aware via `server/drivers/tokenizer.ts` (gpt-tokenizer, pure JS):
+- `o200k_base` for gpt-4o / 4.1 / 4.5 / 5 / 6 / oss, o1-o9, chatgpt-4o, codex
+- `cl100k_base` for gpt-4 / 3.5 / text-embedding
+- `chars/3.5` over-count fallback (`estimateTokensByChars`, never below chars/3.5)
+  for unknown models, which never under-counts.
+- LRU cache (`TokenCountCache`) bounded by characters held; lazy encoding loads.
+
+### Multi-tier recovery
+`compactMessages` runs these tiers in order (`compactMessages.ts`):
+1. **none** — already within budget, no change.
+2. **sliding-window** — keep system + last user turn + bridge messages + highest-importance body messages within keepTokens.
+3. **shrink** — truncate long tool outputs (context-aware cut at line/sentence boundary, progressive reduction to 256-char floor), replace image parts with `[image omitted]`.
+4. **escalate** — best-effort result; caller tries fallback model with larger window or fails.
+
+### Request-size recovery planning
+`planRecovery(tokenEst, trigger, maxTokens, options)` returns `action`:
+`none` → `compact` → `shrink` → `escalate` → `fail`. It reads live
+`engineMemory.headroom()` (returns 0.1-1); when headroom < 0.3 it lowers the
+compaction trigger so compaction happens earlier under memory pressure.
+
+### Adaptive window learning
+`server/agent-runtime/context-budget.ts`:
+- `contextWindowFor(modelId)` — known window (128k default for unknown).
+- `compactBudget(window)` — 25% of window clamped to [8k, 32k].
+- `learnContextWindow(modelId, currentWindow, { overflow })` — per-model overflow
+  streak: stable on a single overflow, shrinks ×0.75 (floor 8192) after 2
+  consecutive overflows, streak resets on any non-overflow.
+- `shouldCompact(tokens, window)` — true when tokens strictly exceed `max(50% of window, window - reserve)`, reserve = max(16k, 15%).
+- `threadTokens(texts, modelId)` — counts tokens, not bytes.
+- `compactionTrigger(headroom, window)` — effective trigger adjusted for OOM pressure.
+
+### Importance scoring
+`scoreMessageImportance` produces 0-100 per message:
+- system: 100 (never dropped).
+- recency: 0-40 (index-based).
+- user 15 (+5 if question), assistant 10 (+20 tool-call, +10 decision),
+  tool 5 (+15 error, +10 file-path).
+- content: concise (<500 chars) +5, code +5, cap 100.
+
+### Compaction journal (durable NDJSON)
+`server/drivers/compaction-journal.ts`:
+- `COMPACTIONS_FILE` = `compactions/compactions.jsonl` (append-only, mode 0o600).
+- `appendCompaction` writes one `CompactionEntry` per line.
+- `readCompactions` / `readCompactionsForThread` read & filter (runId/threadId/botId).
+- `foldCompactions` / `foldCompactionsByThread` dedupe by runId / threadId (last wins).
+- `getCompactionStats` — totalSavedTokens, averageQuality (savings/file size ratio), tierDistribution by reason.
+
+### Verification
+```
+pnpm exec vitest run server/agent-runtime/context-budget.unit.test.ts
+pnpm exec vitest run server/agent-runtime/compaction.unit.test.ts
+pnpm exec vitest run server/drivers/tokenizer.unit.test.ts
+pnpm exec vitest run server/drivers/compaction-journal.unit.test.ts
+pnpm exec vitest run server/compaction-enhanced.e2e.test.ts
+```
+
 ## Bounds and limitations
 
 `context` settings in config.json are optional. `autoCompact: false` disables
