@@ -59,3 +59,37 @@ export function foldCompactions(entries: CompactionEntry[]): Map<string, Compact
   }
   return folded;
 }
+
+export function readCompactionsForThread(dataDir: string, threadId: string): CompactionEntry[] {
+  return readCompactions(dataDir, { threadId });
+}
+
+export function foldCompactionsByThread(entries: CompactionEntry[]): Map<string, CompactionEntry> {
+  const folded = new Map<string, CompactionEntry>();
+  for (const entry of entries) {
+    folded.set(entry.threadId, entry);
+  }
+  return folded;
+}
+
+export function getCompactionStats(entries: CompactionEntry[]): {
+  totalSavedTokens: number;
+  averageQuality: number;
+  tierDistribution: Record<string, number>;
+} {
+  let totalSavedTokens = 0;
+  let qualitySum = 0;
+  const tierDistribution: Record<string, number> = {};
+
+  for (const entry of entries) {
+    totalSavedTokens += entry.tokensSaved;
+    qualitySum += entry.tokensBefore > 0 ? entry.tokensSaved / entry.tokensBefore : 0;
+    tierDistribution[entry.reason] = (tierDistribution[entry.reason] ?? 0) + 1;
+  }
+
+  return {
+    totalSavedTokens,
+    averageQuality: entries.length > 0 ? qualitySum / entries.length : 0,
+    tierDistribution,
+  };
+}
