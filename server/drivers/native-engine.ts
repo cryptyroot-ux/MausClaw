@@ -17,6 +17,7 @@ import { createOrchestratorStore } from "../agent-runtime/orchestrator-store.ts"
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createSqliteAgentRunStore } from "../agent-runtime/run-store.ts";
+import { appendCompaction } from "./compaction-journal.ts";
 
 /** Chat-completions drivers share one native engine shape: an OpenAI-compatible adapter over the same catalog the
  * driver shows in Settings, and the OMB-owned run journal. Provider quirks stay in the adapter options, never in the
@@ -34,6 +35,8 @@ export interface NativeChatEngineOptions {
   readonly audioInput?: (modelId: string) => boolean;
   /** Optional pre-built adapter (e.g. Anthropic Messages). When provided, the OpenAI-compatible adapter is not created. */
   readonly modelAdapter?: ModelAdapter;
+  /** Optional directory for the compaction audit journal (NDJSON). When omitted no journal is written. */
+  readonly dataDir?: string;
 }
 
 export async function createNativeChatEngine(options: NativeChatEngineOptions): Promise<AgentEngine> {
@@ -111,9 +114,37 @@ export async function createNativeChatEngine(options: NativeChatEngineOptions): 
     },
   };
 
+  const store = createSqliteAgentRunStore();
+  if (options.dataDir) {
+    const dataDir = options.dataDir;
+    const original = store.recordCompaction;
+    store.recordCompaction = (record) => {
+      original?.(record);
+      try {
+        appendCompaction(dataDir, {
+          id: `${record.runId}-${record.sequence}`,
+          runId: record.runId,
+          threadId: "",
+          botId: undefined,
+          round: record.sequence,
+          reason: record.trigger === "auto" ? "budget" : "overflow",
+          messagesBefore: 0,
+          messagesAfter: 0,
+          tokensBefore: record.tokenEstimate,
+          tokensAfter: 0,
+          tokensSaved: 0,
+          summary: record.summary,
+          timestamp: record.createdAt,
+        });
+      } catch {
+        // Journal append failures must not break compaction recording.
+      }
+    };
+  }
+
   const engine = createAgentEngine({
     adapters: { resolve: (ref: ProviderModelRef) => getAdapterForModel(ref.modelId) },
-    store: createSqliteAgentRunStore(),
+    store,
     cacheEnabled: true,
     plugins: pluginRegistry,
     intelligence: {
