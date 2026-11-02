@@ -1,6 +1,8 @@
 // Fallback chain: try the primary model, then fallbacks in order, up to maxRetries attempts.
 // Additive port of OpenMausBot-Pivot's server/routing/fallback-chain.ts.
 
+import { failoverKind, failoverHold, type FailoverKind } from "../../drivers/failover.ts";
+
 export interface FallbackChainOptions {
   readonly maxRetries?: number;
   readonly threadId?: string;
@@ -12,6 +14,9 @@ export class FallbackChain {
   private readonly options: FallbackChainOptions;
   /** Model that ultimately succeeded on the most recent execute() call. */
   public lastSucceededModel: string | undefined;
+  /** Last classified failover kind and its hold info (observation only; throw/continue behavior unchanged). */
+  public lastFailoverKind: FailoverKind | null = null;
+  public lastFailoverHold: ReturnType<typeof failoverHold> | null = null;
 
   static execute(...args: unknown[]): Promise<unknown> {
     return new FallbackChain().execute(...args);
@@ -32,6 +37,11 @@ export class FallbackChain {
         if (typeof options.executor === "function") this.executor = options.executor;
       }
     }
+  }
+
+  /** Last classified failover kind and hold info from the most recent execute() call; null when no error was classified. */
+  get lastFailover(): { kind: FailoverKind | null; hold: ReturnType<typeof failoverHold> | null } {
+    return { kind: this.lastFailoverKind, hold: this.lastFailoverHold };
   }
 
   async execute(...args: unknown[]): Promise<unknown> {
@@ -114,6 +124,12 @@ export class FallbackChain {
         return result;
       } catch (error) {
         lastError = error;
+        const state = { aborted: false, produced: false, tooLarge: false };
+        const kind = failoverKind(error as Error, state);
+        if (kind) {
+          this.lastFailoverKind = kind;
+          this.lastFailoverHold = failoverHold(kind);
+        }
       }
     }
 
