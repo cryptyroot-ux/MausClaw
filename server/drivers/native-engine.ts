@@ -121,11 +121,15 @@ export async function createNativeChatEngine(options: NativeChatEngineOptions): 
     store.recordCompaction = (record) => {
       original?.(record);
       try {
+        // Resolve thread/bot attribution from the run so journal entries can be filtered and
+        // folded by threadId/botId. tokensAfter/tokensSaved are not captured by the compaction
+        // record (genuinely unknown at journal time) and are reported as 0.
+        const run = store.getRun(record.runId);
         appendCompaction(dataDir, {
           id: `${record.runId}-${record.sequence}`,
           runId: record.runId,
-          threadId: "",
-          botId: undefined,
+          threadId: run?.threadId ?? "",
+          botId: run?.botId ?? undefined,
           round: record.sequence,
           reason: record.trigger === "auto" ? "budget" : "overflow",
           messagesBefore: 0,

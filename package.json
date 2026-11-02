@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.140",
   "description": "MausClaw: a self-hosted AI agent platform with native engine, multi-agent orchestration, and provider-agnostic model access.",
-  "homepage": "https://github.com/milind-soni/OpenMausBot",
+  "homepage": "https://github.com/cryptyroot-ux/MausClaw.git",
   "repository": {
     "type": "git",
     "url": "https://github.com/cryptyroot-ux/MausClaw.git"

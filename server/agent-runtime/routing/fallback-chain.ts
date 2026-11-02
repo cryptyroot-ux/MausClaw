@@ -104,8 +104,40 @@ export class FallbackChain {
     let lastError: unknown;
     this.lastSucceededModel = undefined;
 
+    // Failover cooldown carried over from the previous execute() turn. A model that failed with
+    // a holdable kind stays out of rotation until limitResetsAt passes; an engine-wide (quota)
+    // hold or an auth-required stop halts the chain outright.
+    const priorHold = this.lastFailoverHold;
+    if (
+      priorHold?.limit === "model" &&
+      typeof priorHold.limitResetsAt === "number" &&
+      Date.now() >= priorHold.limitResetsAt
+    ) {
+      // Hold expired: clear so the lastFailover getter stays accurate.
+      this.lastFailoverKind = null;
+      this.lastFailoverHold = null;
+    }
+
     for (let i = 0; i < attempts.length; i++) {
       const model = attempts[i];
+
+      // Enforce the failover cooldown before dispatching to a model.
+      if (priorHold) {
+        if (priorHold.stopReason === "auth_required") {
+          throw new Error("failover: auth required (stop)");
+        }
+        if (priorHold.limit === "engine") {
+          throw new Error("failover: engine-wide hold (quota)");
+        }
+        if (
+          priorHold.limit === "model" &&
+          typeof priorHold.limitResetsAt === "number" &&
+          Date.now() < priorHold.limitResetsAt
+        ) {
+          continue; // model still in cooldown; try the next one
+        }
+      }
+
       try {
         const result = await executor(model, input);
         const failed = !!result && typeof result === "object" && (result as { ok?: unknown }).ok === false;

@@ -1,4 +1,4 @@
-// Compaction journaling for RootClaw Native Engine.
+// Compaction journaling for MausClaw Native Engine.
 // Records every compaction decision (overflow recovery, turn context fold)
 // as NDJSON for audit and replay. Append-only, non-blocking writes.
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
