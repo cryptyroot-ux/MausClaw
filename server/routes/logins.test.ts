@@ -28,10 +28,10 @@ afterEach(async () => {
 });
 
 async function serve() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-login-routes-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-login-routes-"));
   dirs.push(dir);
   const store = new LoginStore({ dataDir: dir });
-  const { sdk } = fakeOnePasswordSdk({ token: TOKEN, vaults: { v1: { title: "Shared with OMB", items: [
+  const { sdk } = fakeOnePasswordSdk({ token: TOKEN, vaults: { v1: { title: "Shared with MausClaw", items: [
     { id: "i1", title: "Example", urls: ["https://vault.example.com"], username: "vault-user", password: VAULT_PASSWORD },
   ] } } });
   const onePassword = new OnePasswordLogins({ token: () => store.onePasswordToken(), grants: () => store.onePasswordGrants(), connect: (token) => sdkOnePasswordClient(sdk, token, "0.0.0") });
@@ -116,7 +116,7 @@ describe("Settings → Logins routes", () => {
     expect((await call("POST", "/api/logins/1password", { token: "eyJhbGciOiJFUzI1NiJ9.fake-connect-token" })).body.error).toBe(LOGIN_ERRORS.notServiceAccount);
     expect(store.onePasswordToken()).toBeNull();
 
-    expect(await call("POST", "/api/logins/1password", { token: TOKEN })).toMatchObject({ status: 200, body: { onePassword: { connected: true, vaults: [{ id: "v1", title: "Shared with OMB", items: 1, bots: "all" }], items: 1 } } });
+    expect(await call("POST", "/api/logins/1password", { token: TOKEN })).toMatchObject({ status: 200, body: { onePassword: { connected: true, vaults: [{ id: "v1", title: "Shared with MausClaw", items: 1, bots: "all" }], items: 1 } } });
     expect(store.onePasswordToken()).toBe(TOKEN);
     const listed = await call("GET", "/api/logins");
     expect(listed.body.logins).toEqual([expect.objectContaining({ site: "example.com", hosts: ["vault.example.com"], username: "vault-user", source: "1password", bots: "all" })]);

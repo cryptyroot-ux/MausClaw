@@ -1,4 +1,4 @@
-// What OMB's MCP plumbing sees of an MCP App. Only the innermost OMB component on a server's path (the gate,
+// What MausClaw's MCP plumbing sees of an MCP App. Only the innermost MausClaw component on a server's path (the gate,
 // the remote proxy or the Chat Completions client) observes it, so a call is reported once. A report never
 // delays or alters what is relayed to the engine. This module runs inside spawned proxies: it imports
 // nothing heavy.
@@ -10,8 +10,8 @@ import { APP_EXTENSION_KEY, APP_MIME } from "../shared/app.ts";
 export const APP_ONLY_REFUSAL = "This tool belongs to an app view.";
 export const APP_REPORT_MAX_BYTES = 900 * 1024;
 export const APP_REPORT_TIMEOUT_MS = 10_000;
-export const GATE_APPS_ENV = "OMB_GATE_APPS";
-export const REMOTE_MCP_APPS_ENV = "OMB_REMOTE_MCP_APPS";
+export const GATE_APPS_ENV = "MAUSCLAW_GATE_APPS";
+export const REMOTE_MCP_APPS_ENV = "MAUSCLAW_REMOTE_MCP_APPS";
 
 export const UI_EXTENSION = { mimeTypes: [APP_MIME] } as const;
 

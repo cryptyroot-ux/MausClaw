@@ -146,7 +146,7 @@ export function apnsPayload(request: PushSendRequest) {
       "thread-id": notification.threadId,
       "interruption-level": NEEDS_YOU.has(notification.kind) ? "time-sensitive" : "active",
     },
-    omb: {
+    mausclaw: {
       v: 1,
       kind: notification.kind,
       botId: notification.botId,

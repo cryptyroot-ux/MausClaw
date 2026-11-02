@@ -29,11 +29,11 @@ if (argv.includes("--version") || argv.includes("-v")) {
 
 if (process.env.FAKE_PI_DUMP) {
   try {
-    // Read OMB_MCP_CONFIG now: the driver deletes the temp file when the turn settles.
+    // Read MAUSCLAW_MCP_CONFIG now: the driver deletes the temp file when the turn settles.
     let mcpConfig: unknown = null;
-    if (process.env.OMB_MCP_CONFIG) {
+    if (process.env.MAUSCLAW_MCP_CONFIG) {
       try {
-        mcpConfig = JSON.parse(readFileSync(process.env.OMB_MCP_CONFIG, "utf8"));
+        mcpConfig = JSON.parse(readFileSync(process.env.MAUSCLAW_MCP_CONFIG, "utf8"));
       } catch {}
     }
     appendFileSync(

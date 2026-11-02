@@ -117,13 +117,13 @@ async function pairingCode(scopes?: string[]): Promise<{ code: string; credentia
 }
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-remote-test-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-remote-test-"));
   const staticDir = join(home, "static");
-  mkdirSync(join(home, ".openmausbot"), { recursive: true });
+  mkdirSync(join(home, ".mausclaw"), { recursive: true });
   mkdirSync(join(staticDir, "assets"), { recursive: true });
   writeFileSync(join(staticDir, "index.html"), "<!doctype html><title>Served UI</title>");
   // Avoid probing whatever agent CLIs the test machine has installed.
-  writeFileSync(join(home, ".openmausbot", "config.json"), JSON.stringify({
+  writeFileSync(join(home, ".mausclaw", "config.json"), JSON.stringify({
     instances: { fixture: { driver: "remote-session-test-shadow" } },
     profile: { name: "Security fixture", email: "private@example.invalid" },
     vps: { sshAlias: "fixture-private-host" },
@@ -136,15 +136,15 @@ beforeAll(async () => {
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       HOME: home,
       USERPROFILE: home,
-      OMB_PORT: String(PORT),
-      OMB_WEBHOOK_PORT: String(WEBHOOK_PORT),
-      OMB_STATIC_DIR: staticDir,
-      OMB_PUBLIC_URL: `${PUBLIC_URL}/`,
-      OMB_APP_VERSION: "9.9.9-test",
-      OMB_ENVIRONMENT_LABEL: "cab mini",
-      OMB_BROWSER_CONNECTION: join(home, "browser-test-connection.json"),
+      MAUSCLAW_PORT: String(PORT),
+      MAUSCLAW_WEBHOOK_PORT: String(WEBHOOK_PORT),
+      MAUSCLAW_STATIC_DIR: staticDir,
+      MAUSCLAW_PUBLIC_URL: `${PUBLIC_URL}/`,
+      MAUSCLAW_APP_VERSION: "9.9.9-test",
+      MAUSCLAW_ENVIRONMENT_LABEL: "cab mini",
+      MAUSCLAW_BROWSER_CONNECTION: join(home, "browser-test-connection.json"),
       // Slow heartbeat: the revocation test must prove the revoke itself ends the stream.
-      OMB_SSE_HEARTBEAT_MS: "4000",
+      MAUSCLAW_SSE_HEARTBEAT_MS: "4000",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -173,12 +173,12 @@ describe("before pairing", () => {
     expect(response.body).toEqual({ error: "invalid request URL" });
     const health = await call("/api/health");
     expect(health.status).toBe(200);
-    expect(health.body).toMatchObject({ app: "openmausbot", pid: child.pid });
+    expect(health.body).toMatchObject({ app: "mausclaw", pid: child.pid });
     expect(child.exitCode).toBeNull();
   });
 
   it("describes itself to anyone, but serves nothing else off-machine", async () => {
-    const descriptor = await call("/.well-known/openmausbot/environment", { headers: remote("10.0.0.1") });
+    const descriptor = await call("/.well-known/mausclaw/environment", { headers: remote("10.0.0.1") });
     expect(descriptor.status).toBe(200);
     expect(descriptor.body.environmentId).toMatch(/^[0-9a-f-]{36}$/);
     expect(descriptor.body.label).toBe("cab mini");
@@ -273,7 +273,7 @@ describe("pairing", () => {
       body: JSON.stringify({ code: opened.code.toLowerCase() }),
     });
     expect(paired.status).toBe(200);
-    expect(paired.body.token).toMatch(/^omb_sess_/);
+    expect(paired.body.token).toMatch(/^mausclaw_sess_/);
     expect(paired.body.session.label).toBe("Safari on Mac");
     expect(paired.body.environment.label).toBe("cab mini");
     const again = await call("/api/auth/pair", { method: "POST", headers: remote("10.0.0.3"), body: JSON.stringify({ code: opened.code }) });
@@ -285,7 +285,7 @@ describe("pairing", () => {
     expect(me.body).toMatchObject({ kind: "session", via: "bearer", label: "Safari on Mac", scopes: ["admin", "client"] });
 
     const ticket = await call("/api/auth/stream-ticket", { method: "POST", headers: bearer });
-    expect(ticket.body.ticket).toMatch(/^omb_tick_/);
+    expect(ticket.body.ticket).toMatch(/^mausclaw_tick_/);
     const stream = await openSse(`${BASE}/api/events?ticket=${ticket.body.ticket}`, { host: REMOTE_HOST });
     try {
       const hello = await stream.until((f) => f.kind === "hello", 5_000);
@@ -317,7 +317,7 @@ describe("pairing", () => {
     expect(res.status).toBe(200);
     expect(res.body.token).toBeUndefined();
     const setCookie = header(res.headers, "set-cookie");
-    expect(setCookie).toMatch(new RegExp(`^omb_session_${PORT}_[a-f0-9]{12}=omb_sess_`));
+    expect(setCookie).toMatch(new RegExp(`^mausclaw_session_${PORT}_[a-f0-9]{12}=mausclaw_sess_`));
     expect(setCookie).toContain("HttpOnly");
     expect(setCookie).toContain("SameSite=Lax");
     expect(setCookie).toContain("Secure");
@@ -329,7 +329,7 @@ describe("pairing", () => {
     expect(refreshed.split(";")[0]).toBe(cookie);
     expect(refreshed).toMatch(/Max-Age=\d+/);
     expect(refreshed).toContain("HttpOnly");
-    const stranger = await call("/api/bots", { headers: remote("10.0.0.4", { cookie: `${cookie.split("=")[0]}=omb_sess_nope`, origin: `http://${REMOTE_HOST}` }) });
+    const stranger = await call("/api/bots", { headers: remote("10.0.0.4", { cookie: `${cookie.split("=")[0]}=mausclaw_sess_nope`, origin: `http://${REMOTE_HOST}` }) });
     expect(stranger.status).toBe(401);
     expect(header(stranger.headers, "set-cookie")).toBe("");
     const noOrigin = await call("/api/auth/session", { headers: remote("10.0.0.4", { cookie }) });
@@ -345,7 +345,7 @@ describe("pairing", () => {
 
   it("pairs a native companion app on its own route, with the body shape it sends", async () => {
     const opened = await pairingCode(["client"]);
-    expect(opened.credential).toMatch(/^omb_pair_[A-Za-z0-9_-]{43}$/);
+    expect(opened.credential).toMatch(/^mausclaw_pair_[A-Za-z0-9_-]{43}$/);
 
     const paired = await call("/api/pair", {
       method: "POST",
@@ -355,7 +355,7 @@ describe("pairing", () => {
     expect(paired.status).toBe(200);
     // Exactly the fields android/core's PairResponseSerializer requires.
     expect(typeof paired.body.token).toBe("string");
-    expect(paired.body.token.startsWith("omb_sess_")).toBe(true);
+    expect(paired.body.token.startsWith("mausclaw_sess_")).toBe(true);
     expect(paired.body.serverName).toBe(opened.serverName);
     expect(paired.body.device.name).toBe("Pixel 9");
     expect(typeof paired.body.device.id).toBe("string");
@@ -386,7 +386,7 @@ describe("pairing", () => {
     expect(opened.inviteUrl).not.toBeNull();
     const invite = new URL(opened.inviteUrl!);
     // Android's PairingInvite.parse accepts only this exact scheme and host (android/core Connection.kt).
-    expect(invite.protocol).toBe("openmausbot:");
+    expect(invite.protocol).toBe("mausclaw:");
     expect(invite.host).toBe("pair");
     expect(invite.searchParams.get("address")).toBe(PUBLIC_URL);
     expect(invite.searchParams.get("token")).toBe(opened.credential);

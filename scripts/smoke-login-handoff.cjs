@@ -15,7 +15,7 @@ const { once } = require("node:events");
 const { setTimeout: delay } = require("node:timers/promises");
 
 const root = resolve(__dirname, "..");
-const home = mkdtempSync(join(tmpdir(), "omb-login-handoff-smoke-"));
+const home = mkdtempSync(join(tmpdir(), "mausclaw-login-handoff-smoke-"));
 app.setPath("userData", join(home, "electron"));
 const owner = randomBytes(32).toString("base64url");
 const password = `fake-handoff-${randomBytes(6).toString("hex")}`;
@@ -47,18 +47,18 @@ app.whenReady().then(async () => {
     claude: { driver: "claudeAgent", config: { cli: join(root, "server/testing/fake-claude-cli.ts") } },
   } }));
   harness = utilityProcess.fork(join(root, "dist-server/index.js"), [], { cwd: root, stdio: "pipe", env: {
-    HOME: home, USERPROFILE: home, OMB_DATA_DIR: home, PATH: "", OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(await freePort()),
-    OMB_DESKTOP_PARENT: "1", ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
+    HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: home, PATH: "", MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(await freePort()),
+    MAUSCLAW_DESKTOP_PARENT: "1", ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
   } });
   harness.stdout.on("data", (chunk) => { logs += chunk; });
   harness.stderr.on("data", (chunk) => { logs += chunk; });
   const api = async (path, method = "GET", body) => {
     const response = await fetch(`http://127.0.0.1:${port}${path}`, { method, signal: AbortSignal.timeout(5000),
-      headers: { "x-openmausbot-desktop-owner": owner, "content-type": "application/json" }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+      headers: { "x-mausclaw-desktop-owner": owner, "content-type": "application/json" }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     return { status: response.status, body: await response.json() };
   };
   await until(() => fetch(`http://127.0.0.1:${port}/api/health`).then((response) => response.ok).catch(() => false));
-  harness.postMessage({ type: "openmausbot:desktop-mutation-token", token: owner });
+  harness.postMessage({ type: "mausclaw:desktop-mutation-token", token: owner });
   await until(() => api("/api/logins").then((answer) => answer.status === 200).catch(() => false));
   const saved = await api("/api/logins", "POST", { site: "https://accounts.example.test/login", username: "alice", password, totp: "JBSWY3DPEHPK3PXP" });
   assert.equal(saved.status, 201);
@@ -80,7 +80,7 @@ app.whenReady().then(async () => {
   console.error(error);
   process.exitCode = 1;
 }).finally(async () => {
-  const evidence = join(tmpdir(), `omb-login-handoff-${Date.now()}.log`);
+  const evidence = join(tmpdir(), `mausclaw-login-handoff-${Date.now()}.log`);
   writeFileSync(evidence, logs.replaceAll(owner, "[redacted]").replaceAll(password, "[redacted]"));
   console.log(`Fixture log: ${evidence}`);
   if (harness?.pid) {

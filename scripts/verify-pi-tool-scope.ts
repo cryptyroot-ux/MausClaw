@@ -8,10 +8,10 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 const cli = resolve(process.argv[2] ?? "node_modules/.bin/pi");
-const home = mkdtempSync(join(tmpdir(), "omb-pi-selection-"));
+const home = mkdtempSync(join(tmpdir(), "mausclaw-pi-selection-"));
 process.env.HOME = home;
 process.env.USERPROFILE = home;
-process.env.OMB_DATA_DIR = join(home, "data");
+process.env.MAUSCLAW_DATA_DIR = join(home, "data");
 const { PiDriver } = await import("../server/drivers/pi.ts");
 const { ensureDirs } = await import("../server/config.ts");
 if (process.argv[3]) {

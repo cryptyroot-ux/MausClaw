@@ -1,9 +1,9 @@
-// Loaded with --import in isolated fixtures when OMB_TEST_APPROVAL_CLOCK=1: while <data dir>/expire-approvals
+// Loaded with --import in isolated fixtures when MAUSCLAW_TEST_APPROVAL_CLOCK=1: while <data dir>/expire-approvals
 // exists, every pending ask hits the broker's fifteen-minute deadline. No authorization or dispatch decision changes.
 import { registerHooks } from 'node:module';
 import { join } from 'node:path';
-const dataDir = process.env.OMB_DATA_DIR;
-if (!dataDir || dataDir !== process.env.HOME || process.env.OMB_TEST_APPROVAL_CLOCK !== '1') {
+const dataDir = process.env.MAUSCLAW_DATA_DIR;
+if (!dataDir || dataDir !== process.env.HOME || process.env.MAUSCLAW_TEST_APPROVAL_CLOCK !== '1') {
   throw new Error('The approval clock requires an explicitly isolated fixture');
 }
 const marker = join(dataDir, 'expire-approvals');

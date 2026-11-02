@@ -19,13 +19,13 @@ const RELAY_PATH = "/relay/api/cloud/services/decider";
 const ROOM_INSTRUCTIONS = "Which bot in this room should answer `new_message`? Choose __everyone__ only when the message needs several members to answer.";
 const ROOM_STATE_KEYS = ["room", "humans_in_room", "bots_in_room", "recent_messages", "new_message"];
 const KEY_CHECK = {
-  state: { purpose: "OpenMausBot is checking that a decision-model key works." },
+  state: { purpose: "MausClaw is checking that a decision-model key works." },
   questions: { answer: { type: "noul", instructions: "Is this a connection check?" } },
 };
 const EXTRACT_KEY_CHECK = {
   seam: "keyCheck",
   fields: { ok: { type: "boolean", description: "Is this a connection check?" } },
-  input: { text: "OpenMausBot is checking that an extraction-model key works." },
+  input: { text: "MausClaw is checking that an extraction-model key works." },
 };
 
 /** The relay's own check of an extraction body: the key check is the only extraction this test makes. */
@@ -43,7 +43,7 @@ function relayTakes(raw: string, body: any): boolean {
   return ids.length === 1 && question?.type === "choice" && question.instructions === ROOM_INSTRUCTIONS &&
     Boolean(state) && typeof state === "object" && Object.keys(state).every((key) => ROOM_STATE_KEYS.includes(key));
 }
-const INCLUDED = `omb_decide_${randomBytes(32).toString("base64url")}`;
+const INCLUDED = `mausclaw_decide_${randomBytes(32).toString("base64url")}`;
 const OWN = "tsk_own_person_key_5e1c";
 let stub: Server;
 let relayUrl = "";
@@ -99,8 +99,8 @@ beforeAll(async () => {
   const stubBase = `http://127.0.0.1:${(stub.address() as AddressInfo).port}`;
   relayUrl = `${stubBase}${RELAY_PATH}`;
 
-  home = mkdtempSync(join(tmpdir(), "omb-decider-included-"));
-  data = join(home, ".openmausbot");
+  home = mkdtempSync(join(tmpdir(), "mausclaw-decider-included-"));
+  data = join(home, ".mausclaw");
   mkdirSync(data, { recursive: true });
   engineDump = join(home, "engine-dump.json");
   writeFileSync(join(data, "config.json"), JSON.stringify({
@@ -121,9 +121,9 @@ beforeAll(async () => {
       PATH: process.env.PATH,
       ...(process.env.PATHEXT ? { PATHEXT: process.env.PATHEXT } : {}),
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-      HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_CLOUD_DECIDER_URL: relayUrl,
-      OMB_CLOUD_DECIDER_TOKEN: INCLUDED,
+      HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+      MAUSCLAW_CLOUD_DECIDER_URL: relayUrl,
+      MAUSCLAW_CLOUD_DECIDER_TOKEN: INCLUDED,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -186,7 +186,7 @@ describe("Cloud Pro's included decision model", { timeout: 90_000 }, () => {
     expect((await api("PATCH", `/api/groups/${room.id}/setup`, { action: "complete", cwd: null, bulletin: "", defaultResponder: { kind: "auto" } })).status).toBe(200);
   });
 
-  it("asks the relay who answers, at exactly <OMB_CLOUD_DECIDER_URL>/v1/systemone with the included token", async () => {
+  it("asks the relay who answers, at exactly <MAUSCLAW_CLOUD_DECIDER_URL>/v1/systemone with the included token", async () => {
     pick = bots.Theo!.id;
     const reply = await round(room.id, "The signup button overlaps the footer on Safari.");
     expect(reply.from!.name).toBe("Theo");
@@ -250,7 +250,7 @@ describe("Cloud Pro's included decision model", { timeout: 90_000 }, () => {
     expect(log).not.toContain(INCLUDED);
     expect(existsSync(engineDump)).toBe(true);
     const engine = JSON.parse(readFileSync(engineDump, "utf8")).env;
-    expect(engine).not.toHaveProperty("OMB_CLOUD_DECIDER_TOKEN");
+    expect(engine).not.toHaveProperty("MAUSCLAW_CLOUD_DECIDER_TOKEN");
     expect(JSON.stringify(engine)).not.toContain(INCLUDED);
     // A tool started with a copy of the server's own environment, as it is:
     // the token is gone from it, not merely filtered on the way out.
@@ -264,10 +264,10 @@ console.log("dump-env 1.0.0");
     const probe = await api("POST", "/api/cli-test", { cli });
     expect(probe.body, probe.text).toMatchObject({ ok: true, version: "dump-env 1.0.0" });
     const raw = JSON.parse(readFileSync(dump, "utf8"));
-    // Proves the dump is the server's environment, not an empty one; every OMB_CLOUD_* value is stripped from a probed CLI.
+    // Proves the dump is the server's environment, not an empty one; every MAUSCLAW_CLOUD_* value is stripped from a probed CLI.
     expect(raw.HOME).toBe(home);
-    expect(raw).not.toHaveProperty("OMB_CLOUD_DECIDER_URL");
-    expect(raw).not.toHaveProperty("OMB_CLOUD_DECIDER_TOKEN");
+    expect(raw).not.toHaveProperty("MAUSCLAW_CLOUD_DECIDER_URL");
+    expect(raw).not.toHaveProperty("MAUSCLAW_CLOUD_DECIDER_TOKEN");
     expect(JSON.stringify(raw)).not.toContain(INCLUDED);
   });
 });

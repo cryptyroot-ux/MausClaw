@@ -1,13 +1,13 @@
 # Claude coordination and turn-scoped tools
 
-“OpenMausBot: the turn ended” is an approval-broker denial, not evidence of
+“MausClaw: the turn ended” is an approval-broker denial, not evidence of
 an internet outage. Browser capabilities also expire when their owning turn
 ends; “unauthorized” after that boundary must not be repaired by giving a
 worker permanent browser credentials.
 
 The Claude driver keeps native background tasks disabled. Native subagents
 can still work within the active turn; asynchronous work across bots is a
-`coordinate_bots` assignment on OpenMausBot's job runtime
+`coordinate_bots` assignment on MausClaw's job runtime
 (docs/runtime-contract.md), which owns each recipient's turn, approvals,
 and the report that resumes the requester. Long-running native Bash commands can no longer
 auto-background past the owning turn. This does not change approval modes or
@@ -111,7 +111,7 @@ pnpm exec vitest run server/delta-context.e2e.test.ts -t "resets Claude's native
 
 The second command launches a disposable server and fake CLI through the
 shared verification launcher. It creates a conversation, edits the last user
-message with `control-omb edit`, and checks the native launch, reset log,
+message with `control-mausclaw edit`, and checks the native launch, reset log,
 active-branch replay and subsequent resume. Abandoned request/reply markers
 must not reach the replacement prompt. It does not exercise a live Claude
 account or claim automatic context compaction is implemented.

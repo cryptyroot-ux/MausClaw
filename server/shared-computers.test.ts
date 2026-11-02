@@ -31,7 +31,7 @@ describe("shared computer authority and lifecycle", () => {
     broker.close();
   });
   it("chromeLender names the newest computer that lends Chrome, and whether it is online", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-chrome-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-chrome-"));
     let live = true;
     const broker = new SharedComputers(() => live, new LentComputers(join(dir, "lent.json")));
     const a = { ...registration(), name: "A", platform: "darwin" as const, chrome: true };
@@ -211,7 +211,7 @@ describe("a dropped channel recovers by itself", () => {
     broker.complete(computer.id, alice.session, secret, job!.id, "back");
     await expect(waiting).resolves.toBe("back");
     await vi.advanceTimersByTimeAsync(45_000);
-    const offline = expect(broker.request({ computer_id: computer.id, action: "computer_tools" }, alice.person, () => true)).rejects.toThrow(/^Desktop is lent but has been offline for 1 min: OpenMausBot on it is closed/);
+    const offline = expect(broker.request({ computer_id: computer.id, action: "computer_tools" }, alice.person, () => true)).rejects.toThrow(/^Desktop is lent but has been offline for 1 min: MausClaw on it is closed/);
     await vi.advanceTimersByTimeAsync(15_000);
     await offline;
     broker.close();
@@ -325,9 +325,9 @@ describe("server-side scope check (audit M1)", () => {
     expect(sharedComputerScopeRefusal({ ...lent, terminal: true }, { action: "run_command" })).toBeNull();
   });
   it("says where the person lends apps and screen, in the refusal and in the list a bot reads", () => {
-    const steps = "give the person [Use my Mac](openmausbot://use-my-computer) to press in OpenMausBot on that Mac: it asks them once and turns on its apps and screen.";
+    const steps = "give the person [Use my Mac](mausclaw://use-my-computer) to press in MausClaw on that Mac: it asks them once and turns on its apps and screen.";
     expect(sharedComputerScopeRefusal({ ...lent, platform: "darwin" }, { action: "computer_call" })).toBe(`Apps and screen are not lent to this server. To lend them, ${steps}`);
-    expect(sharedComputerScopeRefusal({ ...lent, platform: "win32" }, { action: "computer_call" })).toContain("[Use my PC](openmausbot://use-my-computer)");
+    expect(sharedComputerScopeRefusal({ ...lent, platform: "win32" }, { action: "computer_call" })).toContain("[Use my PC](mausclaw://use-my-computer)");
     expect(sharedComputerScopeRefusal(lent, { action: "computer_call" })).not.toMatch(/Settings/u);
     const broker = new SharedComputers(() => true);
     const mac = { ...registration(), platform: "darwin" as const };

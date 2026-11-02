@@ -47,7 +47,7 @@ export function createHighLevelHost(deps: HighLevelHostDeps): HighLevelHost {
       const token = mint();
       return {
         command: process.execPath, args: [SPAWNED_PROXIES.harnessMcp, HIGHLEVEL_MCP_SERVER],
-        env: { ...AGENTS_NODE_FLAG, [harnessMcpTokenEnv("highlevel")]: token, OMB_HARNESS_URL: harnessUrl },
+        env: { ...AGENTS_NODE_FLAG, [harnessMcpTokenEnv("highlevel")]: token, MAUSCLAW_HARNESS_URL: harnessUrl },
       };
     },
     prompt: (bot) => highlevelSystemPrompt(bot),

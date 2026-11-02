@@ -1,16 +1,16 @@
-// Real model acceptance through the full, isolated OpenMausBot server.
+// Real model acceptance through the full, isolated MausClaw server.
 // The prompts contain goals only, never tool names or execution advice.
 import { copyFileSync, mkdirSync, writeFileSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi } from "./testing/preview-fixture.ts";
 
-const cli = process.env.OMB_VERIFY_CODEX_CLI;
-const auth = process.env.OMB_VERIFY_CODEX_AUTH;
-const binaryPath = process.env.OMB_VERIFY_BROWSER_BINARY;
-const executablePath = process.env.OMB_VERIFY_BROWSER_CHROME;
-const output = process.env.OMB_VERIFY_OUTPUT;
-const models = (process.env.OMB_VERIFY_MODELS ?? "gpt-5.6-luna").split(",").map(model => model.trim()).filter(Boolean);
+const cli = process.env.MAUSCLAW_VERIFY_CODEX_CLI;
+const auth = process.env.MAUSCLAW_VERIFY_CODEX_AUTH;
+const binaryPath = process.env.MAUSCLAW_VERIFY_BROWSER_BINARY;
+const executablePath = process.env.MAUSCLAW_VERIFY_BROWSER_CHROME;
+const output = process.env.MAUSCLAW_VERIFY_OUTPUT;
+const models = (process.env.MAUSCLAW_VERIFY_MODELS ?? "gpt-5.6-luna").split(",").map(model => model.trim()).filter(Boolean);
 if (!models.length) throw new Error("Choose at least one acceptance model.");
 if (!cli || !auth || !binaryPath || !executablePath || !output) throw new Error("Set explicit CLI, sign-in, browser binaries and output directory. Uses real model quota.");
 mkdirSync(output, { recursive: true });
@@ -75,16 +75,16 @@ try {
     await api("PATCH", `/api/bots/${bot.id}`, { computer: "browser", browser: true });
     const prompts = [
       "Open Google Calendar in your own browser.",
-      "Open the GitHub page for milind-soni/OpenMausBot in your browser and tell me how the project is described there.",
+      "Open the GitHub page for milind-soni/MausClaw in your browser and tell me how the project is described there.",
     ];
     for (const [index, prompt] of prompts.entries()) {
       const entry: any = { model, botId: bot.id, prompt };
       report.cases.push(entry); save();
       console.log(JSON.stringify({ model, prompt }));
-      entry.sent = await runControlOmb(["send", "--bot", bot.id, "--text", prompt, "--url", fixture.info.url]);
+      entry.sent = await runControlMausclaw(["send", "--bot", bot.id, "--text", prompt, "--url", fixture.info.url]);
       const deadline = Date.now() + 300_000;
       do {
-        entry.wait = await runControlOmb(["wait", "--bot", bot.id, "--timeout", "30", "--url", fixture.info.url]);
+        entry.wait = await runControlMausclaw(["wait", "--bot", bot.id, "--timeout", "30", "--url", fixture.info.url]);
         save();
         if (entry.wait?.status === "needs-user") {
           const threadId = entry.wait.taskId;
@@ -103,12 +103,12 @@ try {
         }
         if (["settled", "failed", "needs-user", "stalled"].includes(entry.wait?.status)) break;
       } while (Date.now() < deadline);
-      entry.messages = await runControlOmb(["messages", "--bot", bot.id, "--limit", "15", "--url", fixture.info.url]);
+      entry.messages = await runControlMausclaw(["messages", "--bot", bot.id, "--limit", "15", "--url", fixture.info.url]);
       entry.browser = await observe(bot.id, `${model}-${index}`);
       const tabs = entry.browser.observations.filter((item: any) => item.kind === "tabs").at(-1)?.tabs ?? [];
       entry.verified = entry.wait?.status === "settled" && tabs.some((tab: any) => tab.active && (index === 0
         ? /^https:\/\/(?:calendar\.google\.com\/|accounts\.google\.com\/.*calendar\.google\.com|workspace\.google\.com\/(?:intl\/[a-z-]+\/)?products\/calendar\/)/.test(tab.url)
-        : tab.url === "https://github.com/milind-soni/OpenMausBot"));
+        : tab.url === "https://github.com/milind-soni/MausClaw"));
       save();
       console.log(JSON.stringify({ model, index, status: entry.wait?.status, browser: entry.browser }));
       if (entry.wait?.status !== "settled") break;

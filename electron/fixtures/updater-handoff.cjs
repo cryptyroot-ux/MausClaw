@@ -18,7 +18,7 @@ async function main() {
   const { packageInstallCommand } = await import("../package-install-command.mjs");
   const handOff = handOffDownloadedPackage("deb");
 
-  const workspace = mkdtempSync(join(tmpdir(), "omb-handoff-fixture-"));
+  const workspace = mkdtempSync(join(tmpdir(), "mausclaw-handoff-fixture-"));
   const realPath = process.env.PATH;
   try {
     // On disk, since the hand-off refuses a path that is gone.
@@ -44,7 +44,7 @@ async function main() {
     if (result.terminalOpened === true) say("hand-off-reported-the-terminal");
     if (result.command === expected) say("hand-off-returned-the-command");
 
-    const empty = mkdtempSync(join(tmpdir(), "omb-handoff-empty-"));
+    const empty = mkdtempSync(join(tmpdir(), "mausclaw-handoff-empty-"));
     clipboard.writeText("something else entirely");
     process.env.PATH = empty;
     const withoutTerminal = await handOff([staged]);

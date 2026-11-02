@@ -40,7 +40,7 @@ const MAIN = readFileSync(join(REPO_ROOT, "electron", "main.mjs"), "utf8").repla
 const SPLASH_ICON = join(REPO_ROOT, "electron", "resources", "app-icon.png");
 export const ACCOUNT_ID = "acct-fixture";
 /** The renderer's own routes to its server; the same keys as vite.config.ts, so none of its own targets is kept. */
-const PROXIED = ["/api", "/.well-known/openmausbot/environment"];
+const PROXIED = ["/api", "/.well-known/mausclaw/environment"];
 
 type Cdp = Awaited<ReturnType<typeof connectCdp>>;
 type Handler = (params: any, sessionId?: string) => void;
@@ -180,7 +180,7 @@ function readBody(req: IncomingMessage): Promise<string> {
 function preloadStandIn(ipcBase: string, localOrigin: string): string {
   return `(() => {
   if (!/^https?:/.test(location.protocol)) return;
-  try { localStorage.setItem("omb-analytics-opt-out", "1"); localStorage.setItem("omb-email-gate", "skipped"); localStorage.setItem("omb-advanced-mode", "0");
+  try { localStorage.setItem("mausclaw-analytics-opt-out", "1"); localStorage.setItem("mausclaw-email-gate", "skipped"); localStorage.setItem("mausclaw-advanced-mode", "0");
     for (const notice of ${JSON.stringify(NOTICES)}) localStorage.setItem(notice, "1"); } catch {}
   const listeners = new Map();
   window.__ogbEmit = (channel, ...args) => { for (const listener of [...(listeners.get(channel) ?? [])]) listener({}, ...args); };
@@ -204,7 +204,7 @@ function preloadStandIn(ipcBase: string, localOrigin: string): string {
     removeListener: (channel, listener) => { listeners.get(channel)?.delete(listener); },
   };
   const electron = { contextBridge: { exposeInMainWorld: (key, value) => { window[key] = value; } }, ipcRenderer, webUtils: { getPathForFile: () => "" } };
-  const process = { platform: "darwin", argv: ["--omb-local-origin=${localOrigin}", "--omb-company-desktop=1"] };
+  const process = { platform: "darwin", argv: ["--mausclaw-local-origin=${localOrigin}", "--mausclaw-company-desktop=1"] };
   (function (require, process) {
 ${PRELOAD}
   })(() => electron, process);
@@ -344,7 +344,7 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
       }
       next();
     });
-  }, Object.fromEntries(PROXIED.map((path) => [path, { target: fx.desktopBase, ws: true, headers: { "x-openmausbot-desktop-owner": fx.ownerCapability } }])));
+  }, Object.fromEntries(PROXIED.map((path) => [path, { target: fx.desktopBase, ws: true, headers: { "x-mausclaw-desktop-owner": fx.ownerCapability } }])));
   cleanup.push(() => localEdge.close());
 
   // Main's ipcMain, reached by the preload's ipcRenderer.
@@ -362,8 +362,8 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
       const listed = req.method === "POST" && req.headers.authorization === "Bearer omc_fixture" && account.state.status === "connected" && (account.state.teams ?? []).some((team: any) => team.id === id) && !admin.removed.has(id);
       if (!listed) return reply(404, { error: "not_found" });
       admin.teamPairings.push(id);
-      const grant = await fx.grant("OpenMausBot app (Team Cloud)");
-      return reply(200, { cloudContractVersion: 1, origin: teamOrigin, code: grant.code, pairingUrl: `${teamOrigin}/pair#code=${grant.code}`, expiresAt: grant.expiresAt, credential: "omb_pair_fixture" });
+      const grant = await fx.grant("MausClaw app (Team Cloud)");
+      return reply(200, { cloudContractVersion: 1, origin: teamOrigin, code: grant.code, pairingUrl: `${teamOrigin}/pair#code=${grant.code}`, expiresAt: grant.expiresAt, credential: "mausclaw_pair_fixture" });
     }
     if (!sync && !asked) { res.writeHead(200, { "content-type": "text/html" }); res.end("<!doctype html><title>Another server</title><p>Another server</p>"); return; }
     const { args = [] } = JSON.parse((await readBody(req)) || "{}") as { args?: unknown[] };
@@ -398,7 +398,7 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
   };
 
   // Chrome, its two tabs' worth of windows.
-  const profile = mkdtempSync(join(tmpdir(), "omb-one-workspace-chrome-"));
+  const profile = mkdtempSync(join(tmpdir(), "mausclaw-one-workspace-chrome-"));
   cleanup.push(() => rmSync(profile, { recursive: true, force: true }));
   const browser: ChildProcess = spawn(chrome, ["--headless=new", "--no-sandbox", "--no-first-run", "--no-default-browser-check", "--disable-background-networking",
     "--password-store=basic", "--use-mock-keychain", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "about:blank"], {
@@ -448,7 +448,7 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
   });
   const pairHome = async () => {
     if (account.state.status !== "connected" || network.down) throw new Error("My Cloud is not ready to connect yet.");
-    const grant = await fx.grant("OpenMausBot app (Cloud)");
+    const grant = await fx.grant("MausClaw app (Cloud)");
     return { ...grant, origin: cloudOrigin };
   };
   /** The real client's `pairTeam` shape against the fake Admin's route: the Admin's answer, read as the app reads it. */
@@ -498,7 +498,7 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
   };
   const home = createHomeWindow({
     journal: () => (moves.moved ? { v: 1, phase: "done", cloud: { origin: cloudOrigin, account: ACCOUNT_ID, machine: cloudOrigin }, doneAt: Date.now() } : null),
-    frozen: async () => (moves.moved ? (await fetch(`${fx.desktopBase}/api/move/freeze`, { headers: { "x-openmausbot-desktop-owner": fx.ownerCapability } })).json() : { frozen: false }),
+    frozen: async () => (moves.moved ? (await fetch(`${fx.desktopBase}/api/move/freeze`, { headers: { "x-mausclaw-desktop-owner": fx.ownerCapability } })).json() : { frozen: false }),
     // The window's Electron session: its own resolver and host cache, for My Cloud's name.
     hosts: () => ({
       clearHostResolverCache: async () => { hostCache.cleared++; },
@@ -567,7 +567,7 @@ export async function launchHomeWorld(fx: CloudSendFixture, { chrome, ports, ver
 }
 
 export function shotsDir(fallback: string): string {
-  const dir = process.env.OMB_ONE_WORKSPACE_SHOTS ?? join(fallback, "shots");
+  const dir = process.env.MAUSCLAW_ONE_WORKSPACE_SHOTS ?? join(fallback, "shots");
   mkdirSync(dir, { recursive: true });
   return dir;
 }

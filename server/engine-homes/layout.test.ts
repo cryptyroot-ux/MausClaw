@@ -7,7 +7,7 @@ import { audienceBrowserSuffix } from "../browser/audience.ts";
 import { audienceHome, audienceHomeKey, audienceHomes, homedSpawn } from "./layout.ts";
 
 const linux = describe.skipIf(process.platform === "win32");
-const serverHome = "/data", dataDir = "/data/.openmausbot";
+const serverHome = "/data", dataDir = "/data/.mausclaw";
 const bob = audienceHome(dataDir, "member:p_bob"), owner = audienceHome(dataDir, "member:p_olive");
 
 linux("an audience's engine home", () => {
@@ -15,7 +15,7 @@ linux("an audience's engine home", () => {
     expect(audienceHomeKey("team")).toBe("team");
     expect(audienceHomeKey("member:p_bob")).toBe(audienceBrowserSuffix("member:p_bob").slice(2));
     expect(audienceHomeKey("room:r1")).toMatch(/^room-[0-9a-f]{16}$/);
-    expect(audienceHome(dataDir, "team")).toBe("/data/.openmausbot/engine-homes/team");
+    expect(audienceHome(dataDir, "team")).toBe("/data/.mausclaw/engine-homes/team");
     expect(new Set([bob, owner, audienceHome(dataDir, "room:r1"), audienceHome(dataDir, "team")]).size).toBe(4);
     expect(bob.startsWith(`${owner}/`) || owner.startsWith(`${bob}/`)).toBe(false);
   });
@@ -39,8 +39,8 @@ linux("an audience's engine home", () => {
     const homed = homedSpawn({ HOME: serverHome, CLAUDE_CONFIG_DIR: "/data/.claude-work", CODEX_HOME: plan, XDG_CACHE_HOME: "/var/cache/x", GROK_HOME: "relative/grok" },
       { dataDir, serverHome, home: bob });
     expect(homed.env.CLAUDE_CONFIG_DIR).toBe(`${bob}/.claude-work`);
-    expect(homed.env.CODEX_HOME).toMatch(new RegExp(`^${bob}/\\.omb-folders/CODEX_HOME-[0-9a-f]{12}$`));
-    expect(homed.env.XDG_CACHE_HOME).toMatch(new RegExp(`^${bob}/\\.omb-folders/XDG_CACHE_HOME-[0-9a-f]{12}$`));
+    expect(homed.env.CODEX_HOME).toMatch(new RegExp(`^${bob}/\\.mausclaw-folders/CODEX_HOME-[0-9a-f]{12}$`));
+    expect(homed.env.XDG_CACHE_HOME).toMatch(new RegExp(`^${bob}/\\.mausclaw-folders/XDG_CACHE_HOME-[0-9a-f]{12}$`));
     expect(homed.env.GROK_HOME).toBe("relative/grok");
     expect(homed.folders).toEqual(expect.arrayContaining([`${bob}/.claude-work`, homed.env.CODEX_HOME, homed.env.XDG_CACHE_HOME]));
     expect(homed.shared).toContainEqual({ source: "/data/.claude-work/.credentials.json", target: `${bob}/.claude-work/.credentials.json` });
@@ -60,7 +60,7 @@ linux("an audience's engine home", () => {
 });
 
 describe("the audience homes made so far", () => {
-  const root = mkdtempSync(join(tmpdir(), "omb-engine-homes-"));
+  const root = mkdtempSync(join(tmpdir(), "mausclaw-engine-homes-"));
   afterAll(() => rmSync(root, { recursive: true, force: true }));
   it("are the team's, the group chats' and the people's, never the held folder or anything else there", () => {
     for (const name of ["team", `member-${"a".repeat(16)}`, `room-${"b".repeat(16)}`, ".held", ".migrated-x", "member-xyz"]) mkdirSync(join(root, "engine-homes", name), { recursive: true });

@@ -9,11 +9,11 @@
 // MCP servers) and then holds the turn open, so the turn's capability is
 // still good while this test starts the dumped agents server itself and
 // talks to it the way the engine would. Nothing here touches a person's
-// OpenMausBot: the server, its data and its home are the fixture's.
+// MausClaw: the server, its data and its home are the fixture's.
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireMessage } from "../shared/wire.ts";
 import { createToolBridge, type BridgeTool } from "./drivers/agents-bridge.ts";
 import { gateServer } from "./mcp-gate-config.ts";
@@ -21,7 +21,7 @@ import { AGENTS_TOOL_BRIDGE_PROMPT } from "./system-prompt.ts";
 import { turnEvidence } from "./turn-outcome.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
-import { childEnv } from "./testing/omb-env.ts";
+import { childEnv } from "./testing/mausclaw-env.ts";
 
 type McpServer = { command: string; args: string[]; env: Record<string, string> };
 type Launched = { pid: number; systemPrompt: string; mcpConfig: { mcpServers: Record<string, McpServer> } };
@@ -46,7 +46,7 @@ async function withFixture(run: (helpers: {
         const response = await fetch(`${fixture.info.url}${path}`, { method, headers: { "content-type": "application/json" }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
         return { status: response.status, body: await response.json() };
       },
-      control: (args) => runControlOmb([...args, "--url", fixture.info.url]),
+      control: (args) => runControlMausclaw([...args, "--url", fixture.info.url]),
       launched: async () => {
         await expect.poll(() => existsSync(fixture.fixtureDumpPath), { timeout: 30_000 }).toBe(true);
         const value = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")) as Launched;
@@ -112,7 +112,7 @@ it("keeps a turn on the whole catalog until the switch is on, then mounts the br
     await control(["send", "--bot", bot.id, "--text", "Stay active."]);
     const before = await launched();
     const unbridged = before.mcpConfig.mcpServers.agents!;
-    expect(unbridged.env.OMB_AGENTS_TOOL_BRIDGE).toBe("0");
+    expect(unbridged.env.MAUSCLAW_AGENTS_TOOL_BRIDGE).toBe("0");
     expect(before.systemPrompt).not.toContain("find_tool");
     let whole: BridgeTool[] = [];
     await withServer(unbridged, async (ask) => {
@@ -132,14 +132,14 @@ it("keeps a turn on the whole catalog until the switch is on, then mounts the br
     const after = await launched();
     expect(after.pid).not.toBe(before.pid);
     const bridged = after.mcpConfig.mcpServers.agents!;
-    expect(bridged.env.OMB_AGENTS_TOOL_BRIDGE).toBe("1");
+    expect(bridged.env.MAUSCLAW_AGENTS_TOOL_BRIDGE).toBe("1");
     expect(after.systemPrompt).toContain(AGENTS_TOOL_BRIDGE_PROMPT);
     // the rest of the prompt still names its tools as it did; the one rule covers them
     for (const prompt of [before.systemPrompt, after.systemPrompt]) expect(prompt).toContain("set it up with create_trigger in this turn");
     // said once
     expect(after.systemPrompt.split(AGENTS_TOOL_BRIDGE_PROMPT)).toHaveLength(2);
     // a fixture bot is not a Chief of Staff, so create_bot is not one of its tools
-    expect(bridged.env.OMB_CHIEF_OF_STAFF).toBe("0");
+    expect(bridged.env.MAUSCLAW_CHIEF_OF_STAFF).toBe("0");
 
     // While that turn is open its capability is good: the proxy the engine
     // was handed answers through the fixture's own harness.
@@ -203,7 +203,7 @@ it("keeps a turn on the whole catalog until the switch is on, then mounts the br
     const { channel } = await control(["new-channel", "--name", "Bridge room", "--members", bot.id]);
     await control(["send-channel", "--channel", channel.id, "--text", "Stay active in this room."]);
     const room = await launched();
-    expect(room.mcpConfig.mcpServers.agents!.env.OMB_AGENTS_TOOL_BRIDGE).toBe("1");
+    expect(room.mcpConfig.mcpServers.agents!.env.MAUSCLAW_AGENTS_TOOL_BRIDGE).toBe("1");
     expect(room.systemPrompt).toContain(AGENTS_TOOL_BRIDGE_PROMPT);
     await control(["interrupt", "--channel", channel.id]);
     await control(["wait", "--channel", channel.id, "--timeout", "30"]);
@@ -224,8 +224,8 @@ it("leaves every gate and limit where it was: a tool selection, a Chief-only too
     const gatedTurn = await launched();
     // With a selection the engine is handed the gate, which starts the proxy.
     const gate = gatedTurn.mcpConfig.mcpServers.agents!;
-    expect(JSON.parse(gate.env.OMB_GATE_TOOL_SCOPE!)).toEqual(toolScope);
-    expect((JSON.parse(gate.env.OMB_GATE_UPSTREAM!) as McpServer).env.OMB_AGENTS_TOOL_BRIDGE).toBe("0");
+    expect(JSON.parse(gate.env.MAUSCLAW_GATE_TOOL_SCOPE!)).toEqual(toolScope);
+    expect((JSON.parse(gate.env.MAUSCLAW_GATE_UPSTREAM!) as McpServer).env.MAUSCLAW_AGENTS_TOOL_BRIDGE).toBe("0");
     expect(gatedTurn.systemPrompt).not.toContain("find_tool");
     await withServer(gate, async (ask) => {
       const list = await ask("tools/list");
@@ -244,13 +244,13 @@ it("leaves every gate and limit where it was: a tool selection, a Chief-only too
     await control(["send", "--bot", bot.id, "--text", "Stay active."]);
     const turn = await launched();
     const bridged = turn.mcpConfig.mcpServers.agents!;
-    expect(bridged.env.OMB_AGENTS_TOOL_BRIDGE).toBe("1");
-    expect(bridged.env.OMB_BOT_ID).toBe(bot.id);
+    expect(bridged.env.MAUSCLAW_AGENTS_TOOL_BRIDGE).toBe("1");
+    expect(bridged.env.MAUSCLAW_BOT_ID).toBe(bot.id);
 
     // The harness refuses a Chief-only tool to this bot whatever its proxy
     // lists. Started as if it were a Chief's, the proxy lets the call
     // through, and the harness's own refusal comes back the same both ways.
-    await withServer({ ...bridged, env: { ...bridged.env, OMB_CHIEF_OF_STAFF: "1" } }, async (ask) => {
+    await withServer({ ...bridged, env: { ...bridged.env, MAUSCLAW_CHIEF_OF_STAFF: "1" } }, async (ask) => {
       const scout = { name: "Scout", role: "Ops", instructions: "Work." };
       const direct = await call(ask, "create_bot", scout);
       const throughBridge = await use(ask, "create_bot", scout);

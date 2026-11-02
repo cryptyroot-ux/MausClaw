@@ -19,7 +19,7 @@ export const DEVS_TOOL_DEFINITIONS = [
   {
     name: "report_bug",
     description:
-      "Send the person's bug report to the MausBot team (OpenMausBot's developers) with the app's diagnostics. Only for a message that tags @devs, once. No passwords, keys, tokens or file contents.",
+      "Send the person's bug report to the MausBot team (MausClaw's developers) with the app's diagnostics. Only for a message that tags @devs, once. No passwords, keys, tokens or file contents.",
     inputSchema: {
       type: "object",
       additionalProperties: false,

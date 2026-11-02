@@ -2,7 +2,7 @@
 
 ## Sub-features
 
-- Confirm the endpoint identifies itself as OpenMausBot.
+- Confirm the endpoint identifies itself as MausClaw.
 - List configured provider instances without exposing executable paths.
 - Distinguish available and unavailable engines.
 - Add named Claude accounts and select them independently for bots.
@@ -14,11 +14,11 @@ Open a bot's model picker or Settings → Engines.
 ## Driving it
 
 ```sh
-pnpm control:omb doctor --url http://127.0.0.1:PORT
-pnpm control:omb models --url http://127.0.0.1:PORT
+pnpm control:mausclaw doctor --url http://127.0.0.1:PORT
+pnpm control:mausclaw models --url http://127.0.0.1:PORT
 ```
 
-`doctor.ok` is true only when the endpoint is OpenMausBot and at least one
+`doctor.ok` is true only when the endpoint is MausClaw and at least one
 engine is available. The isolated fixture should expose `claude`.
 
 ## Named Claude accounts
@@ -82,7 +82,7 @@ with `muse login`. It spends that account's Muse usage, so it runs only when
 asked:
 
 ```sh
-OMB_LIVE_MUSE=1 pnpm exec vitest run server/drivers/muse-code.live.test.ts
+MAUSCLAW_LIVE_MUSE=1 pnpm exec vitest run server/drivers/muse-code.live.test.ts
 ```
 
 It lists the account's models (Muse Wonder 1.0), answers on Muse Wonder, runs

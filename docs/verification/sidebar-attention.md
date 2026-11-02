@@ -37,7 +37,7 @@ measures it with `getBoundingClientRect`:
    left edge matches the button's left edge and its top sits 4px (`mt-1`)
    below the button's bottom, with the full 288px (`w-72`) width on screen.
 
-PNG evidence for all three densities lands in `.omb-scratch/verify-evidence/sidebar-attention`.
+PNG evidence for all three densities lands in `.mausclaw-scratch/verify-evidence/sidebar-attention`.
 Pass `--capture-only` alongside the flag to write those PNGs without
 asserting, which is how a before/after composite is captured on a pre-fix
 tree. The leg also runs in the runner's `--ui` group with the approval ui

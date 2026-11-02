@@ -5,7 +5,7 @@ import { createOneHome, QUIET_MS } from "./one-home.mjs";
 import { parseCloudSummary } from "./cloud-home.mjs";
 import { installationOf, oneHomeCloud } from "./one-home-main.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 const AIR = installationOf("8f0c6a51-2b7e-4c1d-9a3f-5e6d7c8b9a01"), IMAC = installationOf("1d2e3f4a-5b6c-4d7e-8f9a-0b1c2d3e4f50");
 

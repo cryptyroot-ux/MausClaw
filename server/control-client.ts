@@ -26,7 +26,7 @@ export const CONTROL_BUSY =
   "Another thread is using this computer. This call was not performed. This turn gets the computer as soon as it is free: " +
   `to keep waiting, take a screenshot (each computer call waits up to ${WAIT_WORDS}) instead of ending your turn.`;
 export const CONTROL_UNCONFIRMED =
-  "OpenMausBot could not confirm that this computer is free, so this call was NOT performed and nothing happened on the screen. " +
+  "MausClaw could not confirm that this computer is free, so this call was NOT performed and nothing happened on the screen. " +
   "Retry in a few seconds.";
 
 export interface ControlState {
@@ -57,8 +57,8 @@ export function createControlClient(options?: {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }): ControlClient {
-  const url = options?.url ?? process.env.OMB_CONTROL_URL ?? "";
-  const token = options?.token ?? process.env.OMB_CONTROL_TOKEN ?? "";
+  const url = options?.url ?? process.env.MAUSCLAW_CONTROL_URL ?? "";
+  const token = options?.token ?? process.env.MAUSCLAW_CONTROL_TOKEN ?? "";
   const cacheMs = options?.cacheMs ?? 750;
   const timeoutMs = options?.timeoutMs ?? READ_TIMEOUT_MS;
   const fetchImpl = options?.fetchImpl ?? fetch;

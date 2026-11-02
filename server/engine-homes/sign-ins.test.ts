@@ -16,7 +16,7 @@ const write = (path: string, text: string, ageMs = 60_000) => {
 const files = () => ({ bob: { source: team, target: bob }, owner: { source: team, target: owner } });
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "omb-sign-ins-"));
+  root = mkdtempSync(join(tmpdir(), "mausclaw-sign-ins-"));
   team = join(root, "server", ".claude", ".credentials.json");
   bob = join(root, "bob", ".claude", ".credentials.json");
   owner = join(root, "owner", ".claude", ".credentials.json");

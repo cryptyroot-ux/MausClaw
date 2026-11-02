@@ -8,8 +8,8 @@
 # them. See .oss-scanner/threat_model.md for what to look at and how to run it.
 #
 # Try it like the scanner does:
-#   docker build -f .oss-scanner/Dockerfile -t omb-scan .
-#   docker run --rm --network none omb-scan pnpm exec vitest run server/request-auth.test.ts
+#   docker build -f .oss-scanner/Dockerfile -t mausclaw-scan .
+#   docker run --rm --network none mausclaw-scan pnpm exec vitest run server/request-auth.test.ts
 
 # Same Node line as the root Dockerfile and CI (package.json engines: node >=24).
 FROM node:24-bookworm-slim

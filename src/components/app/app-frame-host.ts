@@ -115,7 +115,7 @@ export interface AppFrameHost {
   destroy(): void;
 }
 
-const PARKED_ID = "omb-app-frames-leaving";
+const PARKED_ID = "mausclaw-app-frames-leaving";
 
 function parkingPlace(doc: Document): HTMLElement {
   const existing = doc.getElementById(PARKED_ID);

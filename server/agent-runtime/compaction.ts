@@ -1,4 +1,4 @@
-// Context compaction & request-size recovery for the OMB-native agent engine.
+// Context compaction & request-size recovery for the MausClaw-native agent engine.
 //
 // This module replaces the rough JSON.length/4 token estimate and pure-recency
 // message selection with model-aware token counting, importance-based message

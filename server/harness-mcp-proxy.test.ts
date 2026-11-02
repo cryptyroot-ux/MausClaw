@@ -51,7 +51,7 @@ describe("harness MCP capability proxy", () => {
   it("sends HighLevel calls to their own harness route with the CRM instructions", async () => {
     status = 200;
     payload = { result: { tools: [{ name: "HIGHLEVEL_GET_CONTACT" }], instructions: "crm" } };
-    await expect(harnessMcpRequest(frame("initialize"), connection("highlevel"))).resolves.toMatchObject({ result: { serverInfo: { name: "openmausbot-highlevel" }, instructions: expect.stringContaining("never send SMS") } });
+    await expect(harnessMcpRequest(frame("initialize"), connection("highlevel"))).resolves.toMatchObject({ result: { serverInfo: { name: "mausclaw-highlevel" }, instructions: expect.stringContaining("never send SMS") } });
     await expect(harnessMcpRequest(frame("tools/list"), connection("highlevel"))).resolves.toEqual({ jsonrpc: "2.0", id: 1, result: { tools: [{ name: "HIGHLEVEL_GET_CONTACT" }], instructions: "crm" } });
     expect(requests.at(-1)).toEqual({ path: "/api/internal/highlevel/mcp", auth: "Bearer scoped-capability", body: { method: "tools/list", params: {} } });
     status = 401;
@@ -77,7 +77,7 @@ describe("harness MCP capability proxy", () => {
   it("sends the cloud computer's calls to its own harness route", async () => {
     status = 200;
     payload = { result: { tools: [{ name: "screenshot" }] } };
-    await expect(harnessMcpRequest(frame("initialize"), connection("computer"))).resolves.toMatchObject({ result: { serverInfo: { name: "openmausbot-computer" } } });
+    await expect(harnessMcpRequest(frame("initialize"), connection("computer"))).resolves.toMatchObject({ result: { serverInfo: { name: "mausclaw-computer" } } });
     await expect(harnessMcpRequest(frame("tools/list"), connection("computer"))).resolves.toEqual({ jsonrpc: "2.0", id: 1, result: { tools: [{ name: "screenshot" }] } });
     expect(requests.at(-1)).toEqual({ path: "/api/internal/computer/mcp", auth: "Bearer scoped-capability", body: { method: "tools/list", params: {} } });
     status = 401;
@@ -93,7 +93,7 @@ describe("harness MCP capability proxy", () => {
     status = 200;
     payload = { result: { tools: [{ name: "data_sql" }], instructions: "DuckDB" } };
     const initialized = await harnessMcpRequest(frame("initialize"), connection("data")) as { result: { serverInfo: { name: string }; instructions?: string } };
-    expect(initialized.result.serverInfo.name).toBe("openmausbot-data");
+    expect(initialized.result.serverInfo.name).toBe("mausclaw-data");
     expect(initialized.result.instructions).toContain("GROUP BY ALL");
     expect(((await harnessMcpRequest(frame("initialize"), connection("browser"))) as { result: Record<string, unknown> }).result.instructions).toBeUndefined();
     await expect(harnessMcpRequest(frame("tools/list"), connection("data"))).resolves.toEqual({ jsonrpc: "2.0", id: 1, result: { tools: [{ name: "data_sql" }], instructions: "DuckDB" } });
@@ -117,16 +117,16 @@ describe("harness MCP capability proxy", () => {
     const gone = await listening();
     await new Promise<void>((resolve) => gone.peer.close(() => resolve()));
     expect(textOf(await harnessMcpRequest(click, { url: gone.url, token: "t", kind: "browser" })))
-      .toMatch(/^OpenMausBot is restarting, so this browser call did not reach it and did not run\. Wait a few seconds/);
+      .toMatch(/^MausClaw is restarting, so this browser call did not reach it and did not run\. Wait a few seconds/);
     const resetting = await listening((req) => req.socket.destroy());
     try {
       expect(textOf(await harnessMcpRequest(click, { url: resetting.url, token: "t", kind: "computer" })))
-        .toMatch(/^OpenMausBot restarted while this cloud computer call was running, so it may or may not have taken effect\./);
+        .toMatch(/^MausClaw restarted while this cloud computer call was running, so it may or may not have taken effect\./);
     } finally { await new Promise<void>((resolve) => resetting.peer.close(() => resolve())); }
     vi.stubGlobal("fetch", vi.fn(async () => { throw new DOMException("The operation was aborted due to timeout", "TimeoutError"); }));
     try {
       const late = textOf(await harnessMcpRequest(click, connection()));
-      expect(late).toMatch(new RegExp(`^OpenMausBot did not answer this browser call within ${HARNESS_PROXY_TIMEOUT_MS / 1_000} seconds\\. It may still be running`));
+      expect(late).toMatch(new RegExp(`^MausClaw did not answer this browser call within ${HARNESS_PROXY_TIMEOUT_MS / 1_000} seconds\\. It may still be running`));
       expect(late).not.toMatch(/restart/i);
     } finally { vi.unstubAllGlobals(); }
   });
@@ -166,7 +166,7 @@ describe("harness MCP capability proxy", () => {
     payload = { result: { tools: [{ name: "agent_browser_snapshot" }] } };
     const child: ChildProcessWithoutNullStreams = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./harness-mcp-proxy.ts", import.meta.url)), "computer"], {
       // Codex hands every server the same environment: each reads only its own family's token.
-      env: { OMB_HARNESS_URL: url, OMB_MCP_TOKEN_COMPUTER: "entrypoint-capability", OMB_MCP_TOKEN_DATA: "data-capability" }, stdio: ["pipe", "pipe", "pipe"],
+      env: { MAUSCLAW_HARNESS_URL: url, MAUSCLAW_MCP_TOKEN_COMPUTER: "entrypoint-capability", MAUSCLAW_MCP_TOKEN_DATA: "data-capability" }, stdio: ["pipe", "pipe", "pipe"],
     });
     let output = "";
     const result = new Promise<unknown>((resolve, reject) => {
@@ -189,7 +189,7 @@ describe("harness MCP capability proxy", () => {
 
   it("refuses to start without a known tool family", async () => {
     const child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./harness-mcp-proxy.ts", import.meta.url)), "shell"], {
-      env: { OMB_HARNESS_URL: url, OMB_MCP_TOKEN_BROWSER: "entrypoint-capability" }, stdio: ["pipe", "pipe", "pipe"],
+      env: { MAUSCLAW_HARNESS_URL: url, MAUSCLAW_MCP_TOKEN_BROWSER: "entrypoint-capability" }, stdio: ["pipe", "pipe", "pipe"],
     });
     const code = await new Promise<number | null>((resolve) => child.once("close", resolve));
     expect(code).toBe(2);

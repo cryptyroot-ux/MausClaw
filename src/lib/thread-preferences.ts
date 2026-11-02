@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 import { useAdvancedMode } from "./interface-mode";
 
-export const SHOW_THREADS_KEY = "omb-show-threads";
+export const SHOW_THREADS_KEY = "mausclaw-show-threads";
 
 let sessionChoice: boolean | undefined;
 const listeners = new Set<() => void>();

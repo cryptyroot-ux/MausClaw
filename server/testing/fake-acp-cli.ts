@@ -202,12 +202,12 @@ const dumpEnv = Object.fromEntries(
     "XAI_API_KEY",
     "GROK_AGENT",
     "BOX_TOKEN",
-    "OMB_TTS_KEY",
-    "OMB_FISH_AUDIO_API_KEY",
-    "OMB_CLOUD_READY_TOKEN",
-    "OMB_CLOUD_BOOTSTRAP",
-    "OMB_LICENSE_KEY",
-    "OMB_INSTALLATION_CREDENTIAL",
+    "MAUSCLAW_TTS_KEY",
+    "MAUSCLAW_FISH_AUDIO_API_KEY",
+    "MAUSCLAW_CLOUD_READY_TOKEN",
+    "MAUSCLAW_CLOUD_BOOTSTRAP",
+    "MAUSCLAW_LICENSE_KEY",
+    "MAUSCLAW_INSTALLATION_CREDENTIAL",
     "FACTORY_API_KEY",
     "UNSLOTH_STUDIO_AUTH_TOKEN",
     "CURSOR_API_KEY",
@@ -231,7 +231,7 @@ const dumpEnv = Object.fromEntries(
     "OPENCODE_DISABLE_PROJECT_CONFIG",
     "GEMINI_API_KEY",
     "MISTRAL_API_KEY",
-    "OMB_ANTHROPIC_API_KEY",
+    "MAUSCLAW_ANTHROPIC_API_KEY",
     "COPILOT_ALLOW_ALL",
     "COPILOT_GITHUB_TOKEN",
     "GH_TOKEN",
@@ -995,7 +995,7 @@ function handle(msg: any) {
       }
       const promptText = String(msg.params?.prompt?.[0]?.text ?? "");
       // A hand-off result wake is synthesized: the mode's usual flow would loop on an unprompted turn.
-      const runtimeReport = /\[OpenMausBot report from @[^\]\n]*: ([a-z_]+)/.exec(promptText);
+      const runtimeReport = /\[MausClaw report from @[^\]\n]*: ([a-z_]+)/.exec(promptText);
       const wokeFromDelegation = promptText.includes("[A delegated task just completed]")
         || promptText.includes("[A delegated task failed]")
         || runtimeReport !== null;

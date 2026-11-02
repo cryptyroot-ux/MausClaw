@@ -444,7 +444,7 @@ export function createBrief(deps: BriefDeps) {
     const given = { mail: new Set(items?.mail.map((email) => email.id) ?? []), prep: new Set(items?.prep.map((one) => one.key) ?? []) };
     const result = items ? parseWatchResult(reply, given) : null;
     if (!items || !result) {
-      deps.failRun(run.id, items ? "The watch's answer could not be read, so nothing was posted. Its emails and meetings wait for the next check." : "OpenMausBot restarted before this run's answer was read; its emails and meetings wait for the next check.");
+      deps.failRun(run.id, items ? "The watch's answer could not be read, so nothing was posted. Its emails and meetings wait for the next check." : "MausClaw restarted before this run's answer was read; its emails and meetings wait for the next check.");
       return;
     }
     const at = now();

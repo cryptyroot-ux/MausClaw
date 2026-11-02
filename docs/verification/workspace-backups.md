@@ -3,7 +3,7 @@
 ## User path
 
 Settings → Backups → **Export full backup** → password and confirmation →
-encrypted `.ombbackup` download. Import uses a native file input, password,
+encrypted `.mausclawbackup` download. Import uses a native file input, password,
 validated preview and an explicit **REPLACE** confirmation. It is replacement,
 not an additive team import. Click **Restart and restore** on the local desktop
 to quit and reopen it; closing only its window does not restart the server.
@@ -56,7 +56,7 @@ pnpm exec vitest run server/workspace-backup.test.ts \
   server/workspace-backup-http.test.ts \
   server/workspace-backup-maintenance.test.ts \
   server/webhook-ingress.test.ts server/request-auth.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/workspace-backup-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/workspace-backup-ui.e2e.test.ts
 ```
 
 The archive tests cover authenticated encryption, damaged/wrong-password files,

@@ -15,7 +15,7 @@ describe.skipIf(!canBuildMachO)("writeThinMachO", () => {
   const file = (name) => path.join(directory, name);
 
   beforeAll(() => {
-    directory = fs.mkdtempSync(path.join(os.tmpdir(), "omb-mac-thin-"));
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-mac-thin-"));
     fs.writeFileSync(file("main.c"), "int main(void) { return 0; }\n");
     for (const arch of ["arm64", "x86_64"]) execFileSync("cc", ["-arch", arch, "-o", file(arch), file("main.c")]);
     execFileSync("/usr/bin/lipo", ["-create", file("arm64"), file("x86_64"), "-output", file("fat")]);

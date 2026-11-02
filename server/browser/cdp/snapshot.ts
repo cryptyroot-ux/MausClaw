@@ -169,7 +169,7 @@ async function readStyles(frames: FrameTree, items: Item[]): Promise<void> {
   await Promise.all([...byFrame].map(async ([frameId, list]) => {
     try {
       await frames.inWorld(frameId, async (session, contextId) => {
-        const group = `omb-snapshot-${frameId}`;
+        const group = `mausclaw-snapshot-${frameId}`;
         try {
           const resolved = await Promise.all(list.map((item) =>
             session.send<{ object: { objectId?: string } }>("DOM.resolveNode", { backendNodeId: item.backendNodeId, executionContextId: contextId, objectGroup: group })

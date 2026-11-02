@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-process.env.OMB_DATA_DIR = mkdtempSync(join(tmpdir(), "omb-skill-share-manifest-"));
+process.env.MAUSCLAW_DATA_DIR = mkdtempSync(join(tmpdir(), "mausclaw-skill-share-manifest-"));
 
 vi.mock("./skills.ts", async (original) => ({
   ...await original<typeof import("./skills.ts")>(),
@@ -19,7 +19,7 @@ const SKILL = "---\nname: rough-cut\ndescription: Cuts a rough edit.\n---\n\n# r
 
 describe("sharing when the private manifest changed meanwhile", () => {
   it("completes the share and assigns the team", () => {
-    const root = mkdtempSync(join(tmpdir(), "omb-skill-share-manifest-lib-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-skill-share-manifest-lib-"));
     const author = { id: "author-m", name: "Cutter", section: "Editing", assignedSkills: [] as string[] };
     const mate = { id: "mate-m", name: "Colorist", section: "Editing", assignedSkills: [] as string[] };
     const bots = [author, mate];

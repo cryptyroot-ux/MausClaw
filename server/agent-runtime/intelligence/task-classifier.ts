@@ -1,6 +1,6 @@
 // Task classifier: heuristically scores an incoming brief as coding/research/analysis/writing/debugging/general.
-// Additive port of OpenMausBot-Pivot's server/intelligence/task-classifier.ts.
-// OMB-Claw already has a separate task-classifier.ts (complexity levels); this is additive and lives under intelligence/.
+// Additive port of MausClaw-Pivot's server/intelligence/task-classifier.ts.
+// MausClaw already has a separate task-classifier.ts (complexity levels); this is additive and lives under intelligence/.
 
 export type TaskType =
   | "coding"

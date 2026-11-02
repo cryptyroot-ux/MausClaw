@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 const BOAT_TOKEN = "box_verification_fixture";
 const JPEG = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD8qqKKKAP/2Q==", "base64");
@@ -86,7 +86,7 @@ it("keeps the bot's own engine on the cloud computer, and a failed place never b
   const address = upstream.address();
   if (!address || typeof address === "string") throw new Error("fixture failed to bind");
   const origin = `http://127.0.0.1:${address.port}`;
-  const gate = join(await import("node:os").then(os => os.tmpdir()), `omb-hosted-desktop-gate-${process.pid}-${Date.now()}`);
+  const gate = join(await import("node:os").then(os => os.tmpdir()), `mausclaw-hosted-desktop-gate-${process.pid}-${Date.now()}`);
   // Each turn uses the cloud computer as a real model would: its first computer call creates or wakes the Boat.
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate, FAKE_CLAUDE_USES_CLOUD_COMPUTER: "1" },
     undefined, undefined, undefined, undefined, undefined, [], origin).catch(async error => {
@@ -101,7 +101,7 @@ it("keeps the bot's own engine on the cloud computer, and a failed place never b
     expect(result.status, `${method} ${path}: ${JSON.stringify(result.body)}`).toBeLessThan(400);
     return result.body;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const lastRows = async (thread: string) => (await apiOk("GET", `/api/threads/${thread}/messages?limit=30`)).messages
     .filter((message: any) => message.kind !== "digest")
     .map((message: any) => message.kind === "activity" ? String(message.tool?.name) : `${message.role}:${message.kind}`);
@@ -131,14 +131,14 @@ it("keeps the bot's own engine on the cloud computer, and a failed place never b
     expect(sent.systemPrompt).toContain("You control the assigned cloud computer");
     const computer = sent.mcpConfig.mcpServers.computer;
     expect(computer.args).toEqual([expect.stringMatching(/harness-mcp-proxy\.(?:ts|js)$/), "computer"]);
-    expect(computer.env.OMB_MCP_TOKEN_COMPUTER).toEqual(expect.any(String));
-    expect(computer.env.OMB_HARNESS_URL).toBe(fixture.info.url);
+    expect(computer.env.MAUSCLAW_MCP_TOKEN_COMPUTER).toEqual(expect.any(String));
+    expect(computer.env.MAUSCLAW_HARNESS_URL).toBe(fixture.info.url);
     expect(JSON.stringify(sent)).not.toContain(BOAT_TOKEN);
-    expect(Object.keys(sent.env).filter(key => /BOAT|BOX_TOKEN|OMB_CLOUD/.test(key))).toEqual([]);
+    expect(Object.keys(sent.env).filter(key => /BOAT|BOX_TOKEN|MAUSCLAW_CLOUD/.test(key))).toEqual([]);
     expect(sent.argv[sent.argv.indexOf("--allowedTools") + 1].split(",")).toContain("mcp__computer");
     const client = mcpClient(computer);
     try {
-      expect((await client.request("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "fixture", version: "1" } })).result.serverInfo.name).toBe("openmausbot-computer");
+      expect((await client.request("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "fixture", version: "1" } })).result.serverInfo.name).toBe("mausclaw-computer");
       expect((await client.request("tools/list")).result.tools).toHaveLength(10);
       const shot = await client.request("tools/call", { name: "screenshot", arguments: {} });
       expect(shot.result.content[0]).toMatchObject({ type: "image", mimeType: "image/jpeg" });

@@ -1,7 +1,7 @@
 // Voice-latency measurement harness. Drives the real app — renderer store
 // speak path, the Speaker, the server TTS route and the provider call —
 // against the committed corpus fixture, through the same disposable
-// verification fixture `control-omb ui` uses. The record protocol is the
+// verification fixture `control-mausclaw ui` uses. The record protocol is the
 // deterministic stub: no live engine call, no engine key. See
 // fixtures/voice-latency/README.md for the protocol.
 import { execFileSync } from "node:child_process";
@@ -10,8 +10,8 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { cpus, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { runControlOmb, launchVerificationServer, type VerificationServer } from "../control-omb.ts";
-import { agentBrowser, ensureUiBrowser, sessionEnv } from "./control-omb-ui.ts";
+import { runControlMausclaw, launchVerificationServer, type VerificationServer } from "../control-mausclaw.ts";
+import { agentBrowser, ensureUiBrowser, sessionEnv } from "./control-mausclaw-ui.ts";
 import { mountPreview, type MountedPreview } from "./preview-fixture.ts";
 import { CADENCE, corpusFixtureId, readLfText, SYNTHESIS } from "./voice-latency-corpus.ts";
 import { launchVoiceLatencyStub, STUB_KEY, STUB_MODEL, STUB_VOICE } from "./voice-latency-stub.ts";
@@ -151,16 +151,16 @@ async function main(): Promise<void> {
 
   // Marker routing, not ordered slots: the driver replays a user message over
   // several CLI launches, and slot order would misalign replies across them.
-  const WARMUP_MARKER = "omb voice probe warmup";
-  const markerPath = join(mkdtempSync(join(tmpdir(), "omb-voice-latency-")), "marker-replies.json");
+  const WARMUP_MARKER = "mausclaw voice probe warmup";
+  const markerPath = join(mkdtempSync(join(tmpdir(), "mausclaw-voice-latency-")), "marker-replies.json");
   const markerReplies: Record<string, string> = { [WARMUP_MARKER]: WARMUP_REPLY };
-  for (const reply of selected) markerReplies[`omb voice probe ${reply.id}`] = reply.text;
+  for (const reply of selected) markerReplies[`mausclaw voice probe ${reply.id}`] = reply.text;
   writeFileSync(markerPath, JSON.stringify(markerReplies));
   const fakeEnv: NodeJS.ProcessEnv = {
     FAKE_CLAUDE_MARKER_REPLIES: markerPath,
     FAKE_CLAUDE_TOOL_CALLS: "[]",
     FAKE_CLAUDE_STREAM_CADENCE: `${CADENCE.chunkChars}:${CADENCE.intervalMs}`,
-    OMB_ELEVENLABS_API: stub.url,
+    MAUSCLAW_ELEVENLABS_API: stub.url,
   };
 
   let fixture: VerificationServer | undefined;
@@ -177,7 +177,7 @@ async function main(): Promise<void> {
     const serverEnv: NodeJS.ProcessEnv = { ...process.env, ...fakeEnv };
     // Keyless record run: an exported live key would otherwise ride the
     // parent env into measurement, even though nothing reads it here.
-    delete serverEnv.OMB_TTS_KEY;
+    delete serverEnv.MAUSCLAW_TTS_KEY;
     fixture = await launchVerificationServer(serverEnv, stop.signal, undefined,
       { binaryPath: binary, executablePath: chrome ?? "" });
 
@@ -193,7 +193,7 @@ async function main(): Promise<void> {
     };
 
     await api("PATCH", "/api/config", { tts: { provider: "elevenlabs", key: STUB_KEY, model: STUB_MODEL, voice: STUB_VOICE } });
-    const created = await runControlOmb(["new-bot", "--name", "VoiceProbe", "--url", fixture.info.url]) as { bot: { id: string } };
+    const created = await runControlMausclaw(["new-bot", "--name", "VoiceProbe", "--url", fixture.info.url]) as { bot: { id: string } };
     const botId = created.bot.id;
     await api("PATCH", `/api/bots/${botId}`, { speakReplies: true, voice: STUB_VOICE });
     console.error(`tts provider=elevenlabs(stub) model=${STUB_MODEL} voice=${STUB_VOICE} synthesis=modeled rtf=${SYNTHESIS.rtf} audioMsPerChar=${SYNTHESIS.audioMsPerChar}`);
@@ -204,7 +204,7 @@ async function main(): Promise<void> {
       title: "Isolated OpenMaus Chat",
       logLevel: "warn",
     });
-    const session = { home: fixture.info.dataDir, session: `omb-voice-${new URL(fixture.info.url).port}`, chrome };
+    const session = { home: fixture.info.dataDir, session: `mausclaw-voice-${new URL(fixture.info.url).port}`, chrome };
     browserEnv = sessionEnv(session, process.env);
     // Headless Chrome otherwise refuses media playback without a user gesture.
     browserEnv.AGENT_BROWSER_ARGS = [browserEnv.AGENT_BROWSER_ARGS ?? "", "--autoplay-policy=no-user-gesture-required"].filter(Boolean).join("\n");
@@ -266,7 +266,7 @@ async function main(): Promise<void> {
           console.error(`${scope} timeout: samples=${samples.length} fresh=${fresh.length} quiet=${quiet} own=${own.length} expected=${expectedChars}c href=${JSON.stringify(href)}`);
           try {
             const tail = readFileSync(fixture!.info.logPath, "utf8").split("\n").filter((line) =>
-              line.includes("[omb-turn]") || line.includes("[omb-error]") || line.includes("tts")).slice(-10);
+              line.includes("[mausclaw-turn]") || line.includes("[mausclaw-error]") || line.includes("tts")).slice(-10);
             for (const line of tail) console.error(`  srv ${line.slice(0, 240)}`);
           } catch {}
           return null;
@@ -315,7 +315,7 @@ async function main(): Promise<void> {
       const expected = manifest.replies.find((row) => row.id === reply.id)?.blocks;
       if (!expected) throw new Error(`manifest has no block count for ${reply.id}`);
       const timeout = 45_000 + expected * 8_000;
-      const frames = await driveTurn(`reply ${reply.id}`, `omb voice probe ${reply.id}`, reply.text.length, timeout);
+      const frames = await driveTurn(`reply ${reply.id}`, `mausclaw voice probe ${reply.id}`, reply.text.length, timeout);
       // The turn's other frames carry chunk-sized prefixes or trailing
       // auxiliary messages; the corpus reply is identified by its length.
       const audioFrame = frames?.filter((frame) => frame.textChars === reply.text.length)
@@ -351,7 +351,7 @@ async function main(): Promise<void> {
       label,
       corpusFixtureId: corpusSha,
       baseCommit: BASE_COMMIT,
-      measuredBuildCommit: process.env.OMB_MEASURED_COMMIT ?? "(unset: worktree HEAD)",
+      measuredBuildCommit: process.env.MAUSCLAW_MEASURED_COMMIT ?? "(unset: worktree HEAD)",
       date: new Date().toISOString(),
       machine: { platform: process.platform, arch: process.arch, cpuModel: cpus()[0]?.model ?? null },
       configSummary: { provider: "elevenlabs (record stub)", model: STUB_MODEL, voice: STUB_VOICE },

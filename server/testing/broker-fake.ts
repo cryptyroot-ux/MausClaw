@@ -1,5 +1,5 @@
 // The connected-apps service (cloudflare/composio-broker) with its own fake D1 and fake Composio, served over loopback
-// HTTP so a real OpenMausBot server can register with it, create triggers and long-poll events. Nothing leaves the
+// HTTP so a real MausClaw server can register with it, create triggers and long-poll events. Nothing leaves the
 // machine: Composio calls from the Worker are answered by the broker's test harness.
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -134,7 +134,7 @@ export async function startBrokerFake(): Promise<BrokerFake> {
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   let accounts = 0;
-  const userFor = (installationId: string) => `omb_${installationId.replaceAll("-", "")}`;
+  const userFor = (installationId: string) => `mausclaw_${installationId.replaceAll("-", "")}`;
   return {
     url,
     harness,

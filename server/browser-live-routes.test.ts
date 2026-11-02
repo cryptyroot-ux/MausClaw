@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../scripts/control-mausclaw.ts";
 
 let fixture: VerificationServer;
 let botId: string;
@@ -19,9 +19,9 @@ async function call(method: string, path: string, body?: unknown, headers: Recor
 
 beforeAll(async () => {
   fixture = await launchVerificationServer();
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
-  expect((await runControlOmb(["doctor"], { env }) as any).ok).toBe(true);
-  const created = await runControlOmb(["new-bot", "--name", "Browser profile fixture"], { env }) as any;
+  const env = { MAUSCLAW_URL: fixture.info.url };
+  expect((await runControlMausclaw(["doctor"], { env }) as any).ok).toBe(true);
+  const created = await runControlMausclaw(["new-bot", "--name", "Browser profile fixture"], { env }) as any;
   botId = created.bot.id;
 
   const clientPairing = await call("POST", "/api/auth/pairing", { scopes: ["client"] });

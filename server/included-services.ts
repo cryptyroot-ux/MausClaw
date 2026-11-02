@@ -1,9 +1,9 @@
 // One relay URL + token pair per included service:
-//   OMB_CLOUD_BOAT_URL    + OMB_CLOUD_BOAT_TOKEN     the Boat relay, ending in /api/box/v1
-//   OMB_CLOUD_VOICE_URL   + OMB_CLOUD_VOICE_TOKEN    the ElevenLabs relay, ending in /v1
-//   OMB_CLOUD_DECIDER_URL + OMB_CLOUD_DECIDER_TOKEN  the Jev relay, a Jev base URL
-//   OMB_CLOUD_AI_URL      + OMB_CLOUD_AI_TOKEN       the trial's Claude credit, an OpenAI-compatible base URL
-//   OMB_CLOUD_X_URL       + OMB_CLOUD_X_TOKEN        the X research relay (a desktop gets its own over the parent port)
+//   MAUSCLAW_CLOUD_BOAT_URL    + MAUSCLAW_CLOUD_BOAT_TOKEN     the Boat relay, ending in /api/box/v1
+//   MAUSCLAW_CLOUD_VOICE_URL   + MAUSCLAW_CLOUD_VOICE_TOKEN    the ElevenLabs relay, ending in /v1
+//   MAUSCLAW_CLOUD_DECIDER_URL + MAUSCLAW_CLOUD_DECIDER_TOKEN  the Jev relay, a Jev base URL
+//   MAUSCLAW_CLOUD_AI_URL      + MAUSCLAW_CLOUD_AI_TOKEN       the trial's Claude credit, an OpenAI-compatible base URL
+//   MAUSCLAW_CLOUD_X_URL       + MAUSCLAW_CLOUD_X_TOKEN        the X research relay (a desktop gets its own over the parent port)
 // The person's own key always wins and is resolved per request; an included token goes only to its relay and is never
 // written to config.json or reported to a client.
 import { JEV_DEFAULT_BASE_URL } from "./decider/jev.ts";
@@ -11,7 +11,7 @@ import { JEV_DEFAULT_BASE_URL } from "./decider/jev.ts";
 export const BOAT_API_DEFAULT = "https://boat.dev/api/v1";
 export const ELEVENLABS_API_DEFAULT = "https://api.elevenlabs.io/v1";
 /** Must also be on WORKSPACE_CREDENTIAL_ENV. */
-export const INCLUDED_TOKEN_ENV = ["OMB_CLOUD_BOAT_TOKEN", "OMB_CLOUD_VOICE_TOKEN", "OMB_CLOUD_DECIDER_TOKEN", "OMB_CLOUD_AI_TOKEN", "OMB_CLOUD_X_TOKEN"] as const;
+export const INCLUDED_TOKEN_ENV = ["MAUSCLAW_CLOUD_BOAT_TOKEN", "MAUSCLAW_CLOUD_VOICE_TOKEN", "MAUSCLAW_CLOUD_DECIDER_TOKEN", "MAUSCLAW_CLOUD_AI_TOKEN", "MAUSCLAW_CLOUD_X_TOKEN"] as const;
 
 export interface ServiceCredential {
   token: string;
@@ -35,17 +35,17 @@ function includedService(url: string | undefined, token: string | undefined): Se
 }
 
 const includedFrom = (env: NodeJS.ProcessEnv): Included => ({
-  boat: includedService(env.OMB_CLOUD_BOAT_URL, env.OMB_CLOUD_BOAT_TOKEN),
-  voice: includedService(env.OMB_CLOUD_VOICE_URL, env.OMB_CLOUD_VOICE_TOKEN),
-  decider: includedService(env.OMB_CLOUD_DECIDER_URL, env.OMB_CLOUD_DECIDER_TOKEN),
-  ai: trialCreditService(env.OMB_CLOUD_AI_URL, env.OMB_CLOUD_AI_TOKEN),
-  x: includedService(env.OMB_CLOUD_X_URL, env.OMB_CLOUD_X_TOKEN),
+  boat: includedService(env.MAUSCLAW_CLOUD_BOAT_URL, env.MAUSCLAW_CLOUD_BOAT_TOKEN),
+  voice: includedService(env.MAUSCLAW_CLOUD_VOICE_URL, env.MAUSCLAW_CLOUD_VOICE_TOKEN),
+  decider: includedService(env.MAUSCLAW_CLOUD_DECIDER_URL, env.MAUSCLAW_CLOUD_DECIDER_TOKEN),
+  ai: trialCreditService(env.MAUSCLAW_CLOUD_AI_URL, env.MAUSCLAW_CLOUD_AI_TOKEN),
+  x: includedService(env.MAUSCLAW_CLOUD_X_URL, env.MAUSCLAW_CLOUD_X_TOKEN),
 });
 
 /** The token is a key the chat engine sends here, so the address must be HTTPS (loopback for tests) and the token the Admin's shape. */
 function trialCreditService(url: string | undefined, token: string | undefined): ServiceCredential | null {
   const credential = includedService(url, token);
-  if (!credential || !/^omb_ai_[A-Za-z0-9_-]{43}$/.test(credential.token)) return null;
+  if (!credential || !/^mausclaw_ai_[A-Za-z0-9_-]{43}$/.test(credential.token)) return null;
   try {
     const parsed = new URL(credential.api);
     const loopback = parsed.protocol === "http:" && ["127.0.0.1", "[::1]"].includes(parsed.hostname);
@@ -72,9 +72,9 @@ function resolve(own: string | undefined, providerApi: string, included: Service
   return included;
 }
 
-export const boatProviderApi = (env: NodeJS.ProcessEnv = process.env): string => env.OMB_BOAT_API || BOAT_API_DEFAULT;
+export const boatProviderApi = (env: NodeJS.ProcessEnv = process.env): string => env.MAUSCLAW_BOAT_API || BOAT_API_DEFAULT;
 export const elevenLabsProviderApi = (env: NodeJS.ProcessEnv = process.env): string =>
-  env.OMB_ELEVENLABS_API || ELEVENLABS_API_DEFAULT;
+  env.MAUSCLAW_ELEVENLABS_API || ELEVENLABS_API_DEFAULT;
 
 export function boatCredential(own: string | undefined, env: NodeJS.ProcessEnv = process.env): ServiceCredential | null {
   return resolve(own, boatProviderApi(env), (held ?? includedFrom(env)).boat);
@@ -106,11 +106,11 @@ let desktopXRefused = false;
 
 const LOOPBACK = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
-/** `{ type: "openmausbot:included-x", access: { url, token } | null }` from
+/** `{ type: "mausclaw:included-x", access: { url, token } | null }` from
  * the desktop's main process. True when it was one (then applied), false for
  * any other message; a malformed one throws and changes nothing. */
 export function applyIncludedXMessage(message: unknown): boolean {
-  if (!message || typeof message !== "object" || (message as { type?: unknown }).type !== "openmausbot:included-x") return false;
+  if (!message || typeof message !== "object" || (message as { type?: unknown }).type !== "mausclaw:included-x") return false;
   const access = (message as { access?: unknown }).access;
   if (access === null) {
     desktopX = null;
@@ -148,7 +148,7 @@ export function xCredential(env: NodeJS.ProcessEnv = process.env): ServiceCreden
 export const TREG_API_DEFAULT = "https://treg.to";
 /** Security: the person's treg key goes only to treg (https), or to a loopback stand-in in development and tests. */
 export function tregProviderApi(env: NodeJS.ProcessEnv = process.env): string {
-  const configured = env.OMB_TREG_URL?.trim().replace(/\/+$/, "");
+  const configured = env.MAUSCLAW_TREG_URL?.trim().replace(/\/+$/, "");
   if (!configured) return TREG_API_DEFAULT;
   try {
     const parsed = new URL(configured);

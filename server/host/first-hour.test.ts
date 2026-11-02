@@ -18,7 +18,7 @@ afterEach(() => {
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function setup(options: { start?: string; connected?: { gmail?: boolean; googlecalendar?: boolean } } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-first-hour-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-first-hour-"));
   dirs.push(dir);
   let now = Date.parse(options.start ?? "2026-10-27T15:00:00Z");
   const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }));

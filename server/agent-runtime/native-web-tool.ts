@@ -61,7 +61,7 @@ export async function runWebTool(_ctx: WebToolContext, args: Record<string, unkn
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return { ok: false, content: "", error: "only http/https allowed" };
     if (await isPrivateUrl(url)) return { ok: false, content: "", error: "private or local addresses are not allowed" };
     try {
-      const res = await fetch(url, { headers: { "user-agent": "OMB-Native/1.0" }, signal: AbortSignal.timeout(30_000), redirect: "manual" });
+      const res = await fetch(url, { headers: { "user-agent": "MausClaw-Native/1.0" }, signal: AbortSignal.timeout(30_000), redirect: "manual" });
       if (res.status >= 300 && res.status < 400) {
         const loc = res.headers.get("location");
         if (loc) {
@@ -82,7 +82,7 @@ export async function runWebTool(_ctx: WebToolContext, args: Record<string, unkn
     if (!query) return { ok: false, content: "", error: "query is required" };
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
     try {
-      const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (OMB-Native)" }, signal: AbortSignal.timeout(30_000) });
+      const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (MausClaw-Native)" }, signal: AbortSignal.timeout(30_000) });
       if (!res.ok) return { ok: false, content: "", error: `HTTP ${res.status}` };
       const html = await res.text();
       // Parse result links + snippets

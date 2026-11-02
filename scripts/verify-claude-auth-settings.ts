@@ -1,4 +1,4 @@
-// Real Claude CLI through the OMB driver, synthetic account and loopback API.
+// Real Claude CLI through the MausClaw driver, synthetic account and loopback API.
 import assert from "node:assert/strict";
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -8,14 +8,14 @@ import { join, resolve } from "node:path";
 const cli = resolve(process.argv[2] ?? "");
 const apiKey = process.argv.includes("--api-key");
 assert.ok(process.argv[2], "Pass the absolute Claude CLI path");
-const home = mkdtempSync(join(tmpdir(), "omb-claude-auth-fixture-"));
+const home = mkdtempSync(join(tmpdir(), "mausclaw-claude-auth-fixture-"));
 const account = join(home, ".claude");
 const workspace = join(home, "workspace");
 mkdirSync(account);
 mkdirSync(workspace);
 process.env = {
   HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: join(home, ".config"),
-  PATH: process.env.PATH, OMB_DATA_DIR: join(home, "omb"),
+  PATH: process.env.PATH, MAUSCLAW_DATA_DIR: join(home, "mausclaw"),
   CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
   DISABLE_TELEMETRY: "1", DISABLE_ERROR_REPORTING: "1",
   ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),

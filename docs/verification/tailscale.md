@@ -1,7 +1,7 @@
 # Tailscale standalone CLI discovery
 
 The macOS app executable chooses GUI or CLI mode from its environment.
-Finder-launched OMB processes must set `TAILSCALE_BE_CLI=1`, including when
+Finder-launched MausClaw processes must set `TAILSCALE_BE_CLI=1`, including when
 using the self-hosted server's `tailscale serve` support. No installed wrapper,
 interactive shell, or change to the user's environment is required.
 

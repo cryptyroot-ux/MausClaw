@@ -65,7 +65,7 @@ function connectedAppsClause(apps: SetupConnectedApps): string {
         : ` Connected apps are switched off for you, ${NO_APP} ask the user to turn on Connected apps in your settings under Access, then tell you to go on; you can start the connection after that.`;
     case "not-configured":
       if (apps.host === "cloud") return ` Connected apps come with their MausBot Cloud plan but are not answering right now, ${NO_APP} say so in one sentence and suggest trying again in a few minutes.`;
-      if (apps.host === "desktop") return ` Connected apps are not answering right now, ${NO_APP} say so in one sentence: restarting OpenMausBot usually brings them back, or they can add their own ${KEY_PLACE}.`;
+      if (apps.host === "desktop") return ` Connected apps are not answering right now, ${NO_APP} say so in one sentence: restarting MausClaw usually brings them back, or they can add their own ${KEY_PLACE}.`;
       return ` Connected apps are not set up here, ${NO_APP} say so in one sentence: they are set up by adding a ${KEY_PLACE}.`;
     case "unsupported":
       return ` Your current model cannot use connected apps, ${NO_APP} say so in one sentence.`;

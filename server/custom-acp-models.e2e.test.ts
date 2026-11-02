@@ -3,7 +3,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 type Selection = { instanceId: string; model: string; variant?: string };
@@ -32,7 +32,7 @@ it("discovers custom ACP models and preserves independent bot and thread choices
     return result;
   };
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", url]) as any;
+    const result = await runControlMausclaw([...args, "--url", url]) as any;
     evidence.push({ command: args, result });
     return result;
   };

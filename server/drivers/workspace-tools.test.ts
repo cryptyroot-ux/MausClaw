@@ -100,7 +100,7 @@ describe("search tools", () => {
   });
   for (const rg of [true, false]) {
     it(`greps with ${rg ? "ripgrep" : "the JS fallback"}`, async () => {
-      if (!rg) process.env.OMB_NO_RG = "1";
+      if (!rg) process.env.MAUSCLAW_NO_RG = "1";
       try {
         const { ok, text } = await run("grep", { pattern: "NEEDLE", glob: "*.ts" });
         expect(ok).toBe(true);
@@ -111,7 +111,7 @@ describe("search tools", () => {
           expect(text).not.toContain("c.md");
         }
         expect((await run("grep", { pattern: "needle", ignore_case: true, path: "src/deep" })).text).toContain("b.ts:1:");
-      } finally { delete process.env.OMB_NO_RG; }
+      } finally { delete process.env.MAUSCLAW_NO_RG; }
     });
   }
   it("globs and lists", async () => {

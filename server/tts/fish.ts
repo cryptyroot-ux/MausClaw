@@ -1,7 +1,7 @@
 // The API key stays on the harness: the renderer gets only voice metadata and audio bytes.
 import type { FishTtsModel } from "../config.ts";
 
-const API = (process.env.OMB_FISH_AUDIO_API || "https://api.fish.audio").replace(/\/+$/, "");
+const API = (process.env.MAUSCLAW_FISH_AUDIO_API || "https://api.fish.audio").replace(/\/+$/, "");
 export const DEFAULT_FISH_MODEL: FishTtsModel = "s2.1-pro";
 const MAX_ERROR_LENGTH = 240;
 const PAGE_SIZE = 100;

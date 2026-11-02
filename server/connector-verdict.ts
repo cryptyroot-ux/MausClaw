@@ -132,13 +132,13 @@ export function connectorRefusalText(denials: ConnectorDenial[]): string {
   return [
     named + " " + (one ? "is" : "are") + " not granted to this bot.",
     "This call was not performed.",
-    "Ask the person to grant " + (one ? "it" : "these tools") + " in OpenMausBot if they want " + (one ? "it" : "them") + " run.",
+    "Ask the person to grant " + (one ? "it" : "these tools") + " in MausClaw if they want " + (one ? "it" : "them") + " run.",
   ].join(" ");
 }
 
 export function connectorUnrecognizedText(invoked: string, reason: string): string {
   return [
-    "A " + invoked + " call arrived in a shape OpenMausBot could not read (" + reason + "), so it was not performed.",
+    "A " + invoked + " call arrived in a shape MausClaw could not read (" + reason + "), so it was not performed.",
     invoked === COMPOSIO_MULTI_EXECUTE_TOOL
       ? "Send it again with the tools to execute as tools: [{ tool_slug, arguments }]."
       : "Send a well-formed call that names the tools to execute.",
@@ -149,6 +149,6 @@ export function connectorUnrecognizedText(invoked: string, reason: string): stri
 export function connectorScopeRefusalText(call: ConnectorCall, reason: "app" | "write", bot: string, app: string, tool: string): string {
   if (call.kind === "unrecognized") return connectorUnrecognizedText(call.invoked, call.reason);
   return reason === "app"
-    ? `OpenMausBot did not run this: ${bot} has not been given access to ${app}. Ask the user to allow it under the bot's Access settings, and do not retry.`
-    : `OpenMausBot did not run this: ${app} is read-only for ${bot}, and ${tool} would write to it. Ask the user before trying again.`;
+    ? `MausClaw did not run this: ${bot} has not been given access to ${app}. Ask the user to allow it under the bot's Access settings, and do not retry.`
+    : `MausClaw did not run this: ${app} is read-only for ${bot}, and ${tool} would write to it. Ask the user before trying again.`;
 }

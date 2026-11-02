@@ -7,7 +7,7 @@ import { createHeldKeys } from "./cloud-held-keys.ts";
 import { TRIAL_KEY_HELD } from "./trial-credit.ts";
 
 const dirs: string[] = [];
-const dataDir = () => { const dir = mkdtempSync(join(tmpdir(), "omb-held-keys-")); dirs.push(dir); return dir; };
+const dataDir = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-held-keys-")); dirs.push(dir); return dir; };
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 describe("a trial's moved AI keys", () => {

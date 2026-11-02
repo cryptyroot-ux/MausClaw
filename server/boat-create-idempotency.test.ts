@@ -22,7 +22,7 @@ function journalWorker(dataDir: string, source: string) {
     "--eval",
     source,
   ], {
-    env: { ...process.env, OMB_DATA_DIR: dataDir },
+    env: { ...process.env, MAUSCLAW_DATA_DIR: dataDir },
     stdio: ["pipe", "pipe", "pipe"],
   });
   let stderr = "";
@@ -132,7 +132,7 @@ describe("Boat create idempotency", () => {
     });
     await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));
     const port = (api.address() as AddressInfo).port;
-    vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${port}/api/v1`);
+    vi.stubEnv("MAUSCLAW_BOAT_API", `http://127.0.0.1:${port}/api/v1`);
   });
 
   beforeEach(() => {
@@ -159,7 +159,7 @@ describe("Boat create idempotency", () => {
     scenario = "lost-response";
     vi.resetModules();
     const { provisionBoat } = await import("./boat.ts");
-    // Keys this OpenMausBot holds stay here; the Boat gets none of them.
+    // Keys this MausClaw holds stay here; the Boat gets none of them.
     const held = { OPENAI_API_KEY: process.env.OPENAI_API_KEY, CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN };
     process.env.OPENAI_API_KEY = "sk-openai-held-here";
     process.env.CLAUDE_CODE_OAUTH_TOKEN = "claude-oauth-held-here";
@@ -342,7 +342,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("serializes two processes that primed independent journal caches", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-processes-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-processes-"));
     const requestBody = JSON.stringify({ ttlSeconds: 7_200, noEnv: true });
     const source = `
       const journal = await import(${JSON.stringify(JOURNAL_MODULE_URL)});
@@ -393,7 +393,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("safely retires a complete lock left by an exited process", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-stale-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-stale-"));
     const exited = spawn(process.execPath, ["--eval", ""], { stdio: "ignore" });
     const exitedPid = exited.pid;
     expect(exitedPid).toBeTypeOf("number");
@@ -425,7 +425,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("recovers when an elected stale-lock reaper also exited", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-dead-reaper-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-dead-reaper-"));
     const exitedOwner = spawn(process.execPath, ["--eval", ""], { stdio: "ignore" });
     const exitedOwnerPid = exitedOwner.pid;
     expect(exitedOwnerPid).toBeTypeOf("number");
@@ -467,7 +467,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("bounds retries when a lock disappears between EEXIST and owner read", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-vanishing-lock-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-vanishing-lock-"));
     const lockPath = join(dataDir, "box-create-requests.lock");
     const source = `
       import fs from "node:fs";
@@ -513,7 +513,7 @@ describe("Boat create idempotency", () => {
         elapsed?: number;
       };
       await expectCleanWorkerExit(worker, "vanishing-lock worker");
-      expect(result.error).toMatch(/locked by another OpenMausBot process/i);
+      expect(result.error).toMatch(/locked by another MausClaw process/i);
       expect(result.elapsed).toBeGreaterThanOrEqual(1_500);
       expect(result.elapsed).toBeLessThan(5_000);
     } finally {
@@ -523,7 +523,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("bounds retries when every successfully reaped lock is replaced", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-replaced-lock-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-replaced-lock-"));
     const exited = spawn(process.execPath, ["--eval", ""], { stdio: "ignore" });
     const exitedPid = exited.pid;
     expect(exitedPid).toBeTypeOf("number");
@@ -576,7 +576,7 @@ describe("Boat create idempotency", () => {
         elapsed?: number;
       };
       await expectCleanWorkerExit(worker, "replaced-lock worker");
-      expect(result.error).toMatch(/locked by another OpenMausBot process/i);
+      expect(result.error).toMatch(/locked by another MausClaw process/i);
       expect(result.elapsed).toBeGreaterThanOrEqual(1_500);
       expect(result.elapsed).toBeLessThan(5_000);
     } finally {
@@ -586,7 +586,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("never bypasses a live elected reaper when contenders race", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-live-reaper-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-live-reaper-"));
     const exitedOwner = spawn(process.execPath, ["--eval", ""], { stdio: "ignore" });
     const exitedOwnerPid = exitedOwner.pid;
     expect(exitedOwnerPid).toBeTypeOf("number");
@@ -633,8 +633,8 @@ describe("Boat create idempotency", () => {
         expectCleanWorkerExit(second, "second live-reaper contender"),
       ]);
 
-      expect(firstResult.error).toMatch(/locked by another OpenMausBot process/i);
-      expect(secondResult.error).toMatch(/locked by another OpenMausBot process/i);
+      expect(firstResult.error).toMatch(/locked by another MausClaw process/i);
+      expect(secondResult.error).toMatch(/locked by another MausClaw process/i);
       expect(readFileSync(lockPath, "utf8")).toBe(lockContents);
       expect(readFileSync(`${lockPath}.reap-${lockToken}`, "utf8")).toBe(reaperContents);
       expect(() => readFileSync(join(dataDir, "box-create-requests.json"), "utf8")).toThrow();
@@ -646,7 +646,7 @@ describe("Boat create idempotency", () => {
   });
 
   it("fails closed instead of replacing an ownerless or corrupt lock", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-box-journal-corrupt-lock-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-box-journal-corrupt-lock-"));
     writeFileSync(join(dataDir, "box-create-requests.lock"), "not-json\n");
     const source = `
       const journal = await import(${JSON.stringify(JOURNAL_MODULE_URL)});

@@ -181,7 +181,7 @@ export interface AcpSupport {
   clientFileSystem?: boolean;
   /** Sent as `clientCapabilities._meta` on initialize, where agents read vendor capabilities. */
   clientCapabilitiesMeta?: Record<string, unknown>;
-  /** The agent reaches MCP servers by URL: OpenMausBot's own servers are this server's endpoints, no process each. */
+  /** The agent reaches MCP servers by URL: MausClaw's own servers are this server's endpoints, no process each. */
   ownMcpOverHttp?: boolean;
   /** How many tools the agent lists of its own beside the MCP servers', counted against a provider's tool limit. */
   engineTools?: number;
@@ -303,7 +303,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
   const SOURCE = support.nativeSource;
   const decodeConfig = decodeAcpConfig(support.defaultCli);
   const DENY_TIMEOUT_NOTE =
-    "OpenMausBot: nobody answered this permission request in time. Skip this action and finish what you can without it.";
+    "MausClaw: nobody answered this permission request in time. Skip this action and finish what you can without it.";
   const QUESTION_NO_MATCH_NOTE =
     "That answer isn't one of the choices this AI can take, so the question was closed and the turn stopped. Ask again and pick one of the options.";
 
@@ -457,7 +457,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
             for (const link of host.links) closeSession(link.threadId, "recycle");
           }
           host.recycle = null;
-        }, envOr("OMB_ACP_SHARED_RECYCLE_MS", 60_000));
+        }, envOr("MAUSCLAW_ACP_SHARED_RECYCLE_MS", 60_000));
         host.recycle.unref?.();
       };
       const armIdle = (threadId: string) => {
@@ -1237,7 +1237,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
                   "initialize",
                   {
                     protocolVersion: 1,
-                    clientInfo: { name: "openmausbot", version: "0.0.0" },
+                    clientInfo: { name: "mausclaw", version: "0.0.0" },
                     clientCapabilities: {
                       fs: {
                         readTextFile: support.clientFileSystem === true,
@@ -1627,7 +1627,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
             if (err) {
               const failure = err as NodeJS.ErrnoException & { killed?: boolean };
               const reason = failure.code === "ENOENT"
-                ? `\`${config.cli}\` isn't installed, or isn't on this app's PATH. Install it for the user running OpenMausBot or use Set CLI, then check again.`
+                ? `\`${config.cli}\` isn't installed, or isn't on this app's PATH. Install it for the user running MausClaw or use Set CLI, then check again.`
                 : failure.code === "EACCES" || failure.code === "EPERM"
                   ? `\`${config.cli}\` isn't executable. Check its file permissions, then check again.`
                   : failure.killed && failure.code == null
@@ -1654,7 +1654,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
         if (support.requireAuthenticationBeforeSpawn && !(await support.isAuthenticated(env, turnConfig, instanceId))) {
           throw new Error(support.loginNote);
         }
-        const cwd = mkdtempSync(join(await support.oneShotFolder?.() ?? tmpdir(), "omb-acp-memory-"));
+        const cwd = mkdtempSync(join(await support.oneShotFolder?.() ?? tmpdir(), "mausclaw-acp-memory-"));
         try {
           const turn = { threadId: `memory-text-${newId()}`, text: prompt, approvalMode: "ask", cwd } as SendTurnInput;
           support.applyTurnEnv?.(env, { fullAuto: false, cwd, threadId: turn.threadId, mcpServers: [] });

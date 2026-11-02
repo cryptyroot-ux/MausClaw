@@ -4,8 +4,8 @@
 export const CITATION_MAX_QUOTE_LENGTH = 12_000;
 export const CITATION_MAX_COMMENT_LENGTH = 4_000;
 const CITATION_CONTEXT_LENGTH = 64;
-const CITATION_MARKER = "<!--omb-citation-v1:";
-const CITATION_MARKER_RE = /<!--omb-citation-v1:([A-Za-z0-9_-]{1,100000})-->/g;
+const CITATION_MARKER = "<!--mausclaw-citation-v1:";
+const CITATION_MARKER_RE = /<!--mausclaw-citation-v1:([A-Za-z0-9_-]{1,100000})-->/g;
 
 export type CitationSource = {
   ownerType: "bot" | "group";

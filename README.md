@@ -2,7 +2,7 @@
 
 **MausClaw is a standalone agent platform: the MausClaw engine runs the turn, model providers are replaceable adapters, and one capability runtime governs tools, MCP, skills, browser, and computer use.**
 
-> MausClaw is a private development fork built on the open-source OpenMausBot codebase (Apache-2.0). Unlike the upstream app, MausClaw does not require Claude Code, Codex, OpenCode, Hermes, Pi, or Antigravity to run a bot. External CLI/ACP engines are not registered or launched here. Model access is through API providers.
+> MausClaw is a private development fork built on the open-source MausClaw codebase (Apache-2.0). Unlike the upstream app, MausClaw does not require Claude Code, Codex, OpenCode, Hermes, Pi, or Antigravity to run a bot. External CLI/ACP engines are not registered or launched here. Model access is through API providers.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ pnpm build
 Run the server or desktop shell:
 
 ```sh
-pnpm omb
+pnpm mausclaw
 # or
 pnpm dev:desktop
 ```
@@ -81,21 +81,21 @@ The full repository suite is broader than the native slice; use the commands abo
 ## Documentation
 
 - [Native runtime research and plan index](docs/superpowers/README.md)
-- [Platform independence audit and migration phases](docs/superpowers/specs/2026-10-27-omb-platform-independence-audit.md)
+- [Platform independence audit and migration phases](docs/superpowers/specs/2026-10-27-mausclaw-platform-independence-audit.md)
 - [External engine research](docs/superpowers/specs/2026-10-27-native-engine-external-research.md)
-- [CLI-free acceptance contract](docs/superpowers/specs/2026-10-26-omb-cli-free-acceptance-contract.md)
-- [Native agent platform design](docs/superpowers/specs/2026-10-26-omb-native-agent-platform-design.md)
+- [CLI-free acceptance contract](docs/superpowers/specs/2026-10-26-mausclaw-cli-free-acceptance-contract.md)
+- [Native agent platform design](docs/superpowers/specs/2026-10-26-mausclaw-native-agent-platform-design.md)
 
 ## Status and limits
 
 MausClaw is under active development. The engine boundary and native tool path are implemented; provider protocol coverage, background compaction, evaluation against external benchmarks, subagents, plan artifacts, and broader capability unification remain in progress. See the roadmap and audit documents rather than treating this README as a claim of benchmark superiority.
 
-## Relationship to OpenMausBot
+## Relationship to MausClaw
 
-MausClaw is derived from [OpenMausBot](https://github.com/milind-soni/OpenMausBot), which remains the upstream project for the chat app, desktop shells, and provider integrations used here. MausClaw is not maintained by or affiliated with the upstream maintainer.
+MausClaw is derived from [MausClaw](https://github.com/milind-soni/MausClaw), which remains the upstream project for the chat app, desktop shells, and provider integrations used here. MausClaw is not maintained by or affiliated with the upstream maintainer.
 
 The upstream Apache-2.0 license and notices remain in effect. Enterprise source in `enterprise/` keeps its own upstream license.
 
 ## License
 
-[Apache License 2.0](LICENSE) © 2026 Milind Soni and OpenMausBot contributors; MausClaw modifications © 2026 their respective authors. See [LICENSING.md](LICENSING.md) and [enterprise/LICENSE](enterprise/LICENSE) for details.
+[Apache License 2.0](LICENSE) © 2026 Milind Soni and MausClaw contributors; MausClaw modifications © 2026 their respective authors. See [LICENSING.md](LICENSING.md) and [enterprise/LICENSE](enterprise/LICENSE) for details.

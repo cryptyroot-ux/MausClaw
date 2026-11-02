@@ -28,7 +28,7 @@ import { hostTimeout } from "./testing/host-timeout.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0123456789ab.fly.dev";
+const HOST = "mausclaw-t-0123456789ab.fly.dev";
 const edge = { host: HOST, "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https", origin: `https://${HOST}` };
 const SOMEONE_ELSE = "Someone else wrote in this conversation, so it can't use your Chrome. Start a new conversation to use it.";
 const PROFILE = "mine";
@@ -58,11 +58,11 @@ async function api(cloud: Cloud, method: string, path: string, body?: unknown) {
 }
 
 async function adminPairing(cloud: Cloud): Promise<string> {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const response = await fetch(`${cloud.base}/api/cloud/pairing`, { method: "POST", signal: AbortSignal.timeout(20_000), headers: {
     ...edge, "content-type": "application/json",
-    "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce, "x-omb-cloud-signature": `v1=${cloudPairingSignature(cloud.secret, timestamp, nonce, body)}`,
+    "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce, "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(cloud.secret, timestamp, nonce, body)}`,
   }, body });
   const granted = await response.json() as { code: string };
   const paired = await api(cloud, "POST", "/api/auth/pair", { code: granted.code });
@@ -72,7 +72,7 @@ async function adminPairing(cloud: Cloud): Promise<string> {
 
 /** A personal Cloud home whose browser engine is `agentBrowser`, off the internet: its own fetches go nowhere. */
 async function bootCloud(home: string, agentBrowser: string, env: Record<string, string> = {}): Promise<Cloud> {
-  const dataDir = join(home, ".openmausbot");
+  const dataDir = join(home, ".mausclaw");
   mkdirSync(dataDir, { recursive: true });
   mkdirSync(join(home, "turns"), { recursive: true });
   const cli = join(home, "fixture-claude.mjs");
@@ -94,9 +94,9 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
   const child = spawn(process.execPath, ["--import", offlinePrelude, join(SERVER_DIR, "index.ts")], {
     cwd: join(SERVER_DIR, ".."),
     env: {
-      PATH: process.env.PATH, HOME: home, USERPROFILE: home, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`, OMB_AGENT_BROWSER_PATH: agentBrowser, ...env,
+      PATH: process.env.PATH, HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+      MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`, MAUSCLAW_AGENT_BROWSER_PATH: agentBrowser, ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -200,7 +200,7 @@ async function browserOf(cloud: Cloud, start: () => Promise<void>, botId: string
       let servers: Record<string, McpServer> | undefined;
       try { servers = JSON.parse(text).mcpConfig?.mcpServers; } catch { continue; }
       const env = servers?.agents?.env;
-      if (servers?.browser && env?.OMB_BOT_ID === botId && (!threadId || env.OMB_THREAD_ID === threadId)) { browser = servers.browser; return true; }
+      if (servers?.browser && env?.MAUSCLAW_BOT_ID === botId && (!threadId || env.MAUSCLAW_THREAD_ID === threadId)) { browser = servers.browser; return true; }
     }
     return false;
   }, "the turn's browser tools");
@@ -278,7 +278,7 @@ describe.skipIf(process.platform === "win32")("My Chrome on My Cloud, with stand
   const doorUrl = () => engineEvents().find((entry) => entry.event === "mcp")?.cdp ?? "";
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-my-chrome-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-my-chrome-"));
     // Chrome 155 answers 404 to a browser path that is not its own.
     const seen: Array<{ url?: string; host?: string; origin?: string }> = [];
     const live = new Set<WebSocket>();
@@ -304,7 +304,7 @@ describe.skipIf(process.platform === "win32")("My Chrome on My Cloud, with stand
     const chromeDir = join(home, "person-chrome");
     mkdirSync(chromeDir, { recursive: true });
     writeFileSync(join(chromeDir, "DevToolsActivePort"), `${(server.address() as { port: number }).port}\n/devtools/browser/REAL-ID\n`);
-    // agent-browser as the server finds it (OMB_AGENT_BROWSER_PATH), speaking MCP on stdin and CDP to AGENT_BROWSER_CDP.
+    // agent-browser as the server finds it (MAUSCLAW_AGENT_BROWSER_PATH), speaking MCP on stdin and CDP to AGENT_BROWSER_CDP.
     engineLog = join(home, "agent-browser.log");
     const engine = join(home, "agent-browser");
     writeFileSync(engine, `#!${process.execPath}
@@ -472,12 +472,12 @@ lines.on("close", () => process.exit(0));
 });
 
 // The real thing, only when asked for, since it starts a real Chrome and agent-browser: agent-browser from
-// OMB_TEST_AGENT_BROWSER, and Chrome from OMB_TEST_CHROME, CHROME_BIN or where it installs.
-const askedFor = process.env.OMB_TEST_AGENT_BROWSER;
+// MAUSCLAW_TEST_AGENT_BROWSER, and Chrome from MAUSCLAW_TEST_CHROME, CHROME_BIN or where it installs.
+const askedFor = process.env.MAUSCLAW_TEST_AGENT_BROWSER;
 const realAgentBrowser = askedFor && existsSync(askedFor) ? askedFor : null;
 const realChrome = findChrome();
 const full = process.platform !== "win32" && realAgentBrowser !== null && realChrome !== null;
-if (!full) console.log("skipping My Chrome through the real agent-browser and Chrome: set OMB_TEST_AGENT_BROWSER and OMB_TEST_CHROME to run it");
+if (!full) console.log("skipping My Chrome through the real agent-browser and Chrome: set MAUSCLAW_TEST_AGENT_BROWSER and MAUSCLAW_TEST_CHROME to run it");
 
 describe.skipIf(!full)("My Chrome on My Cloud, with the real agent-browser and a real Chrome", () => {
   let cloud: Cloud | undefined;
@@ -496,11 +496,11 @@ describe.skipIf(!full)("My Chrome on My Cloud, with the real agent-browser and a
     .filter((target) => target.type === "page").map((target) => target.url);
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-my-chrome-real-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-my-chrome-real-"));
     // agent-browser's sockets live here: macOS limits a socket path to 104 bytes.
-    runtime = mkdtempSync("/tmp/omb-ab-");
+    runtime = mkdtempSync("/tmp/mausclaw-ab-");
     // With remote debugging on, Chrome writes DevToolsActivePort into its own data folder.
-    profile = mkdtempSync(join(tmpdir(), "omb-person-chrome-"));
+    profile = mkdtempSync(join(tmpdir(), "mausclaw-person-chrome-"));
     chrome = spawn(realChrome!, [
       "--headless=new", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check",
       "--disable-background-networking", "--disable-component-update", "--disable-sync", ...credentialStoreFlags(),

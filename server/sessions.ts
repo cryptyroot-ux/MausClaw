@@ -18,10 +18,10 @@ export function daysMs(value: string | undefined, fallbackDays: number): number 
   const ok = Number.isInteger(days) && days >= 1 && days <= 3650;
   return (ok ? days : fallbackDays) * 24 * 60 * 60_000;
 }
-/** OMB_SESSION_TTL_DAYS (default 30): a session used with half its term or less left renews for the full term. */
-export const SESSION_TTL_MS = daysMs(process.env.OMB_SESSION_TTL_DAYS, 30);
-/** OMB_SESSION_MAX_DAYS (default 180): renewal never passes this, so a stolen cookie has a bounded life. */
-export const SESSION_MAX_AGE_MS = daysMs(process.env.OMB_SESSION_MAX_DAYS, 180);
+/** MAUSCLAW_SESSION_TTL_DAYS (default 30): a session used with half its term or less left renews for the full term. */
+export const SESSION_TTL_MS = daysMs(process.env.MAUSCLAW_SESSION_TTL_DAYS, 30);
+/** MAUSCLAW_SESSION_MAX_DAYS (default 180): renewal never passes this, so a stolen cookie has a bounded life. */
+export const SESSION_MAX_AGE_MS = daysMs(process.env.MAUSCLAW_SESSION_MAX_DAYS, 180);
 export const SESSION_RENEW_WHEN_LEFT_MS = SESSION_TTL_MS / 2;
 
 export function cookieMaxAgeSeconds(session: { expiresAt: number }, now = Date.now()): number {
@@ -135,7 +135,7 @@ export function generatePairingCode(): string {
 }
 
 /** A credential is matched byte for byte; only a typed code is normalized. */
-export const PAIRING_CREDENTIAL_PREFIX = "omb_pair_";
+export const PAIRING_CREDENTIAL_PREFIX = "mausclaw_pair_";
 
 /** 9 + 43 characters: the Android companion checks that length exactly. */
 export function generatePairingCredential(): string {
@@ -399,7 +399,7 @@ export class SessionRegistry {
     const [pairing] = this.pairings.splice(index, 1);
     this.failures.delete(input.source);
     if (this.personal(pairing.scopes)) return { ok: false, status: 403, error: this.adminOnly! };
-    const token = `omb_sess_${randomBytes(32).toString("base64url")}`;
+    const token = `mausclaw_sess_${randomBytes(32).toString("base64url")}`;
     const checkedAt = pairing.memberCheckedAt ?? now;
     const record: SessionRecord = {
       id: randomUUID(),
@@ -442,7 +442,7 @@ export class SessionRegistry {
   issueMoveIn(input: { label: string; email: string; teamRole: TeamRole; bot: string }): { token: string; session: PublicSession } {
     this.prune();
     const now = this.now();
-    const token = `omb_sess_${randomBytes(32).toString("base64url")}`;
+    const token = `mausclaw_sess_${randomBytes(32).toString("base64url")}`;
     const record: SessionRecord = {
       id: randomUUID(), tokenHash: sha256(token), label: (deviceLabel(input.label) || "Moving a bot in").slice(0, 80), scopes: ["admin", "client"],
       createdAt: now, lastSeenAt: now, expiresAt: teamSessionExpiresAt(now, now + SESSION_TTL_MS),
@@ -475,7 +475,7 @@ export class SessionRegistry {
     this.refusePersonal(input.scopes);
     this.prune();
     const now = this.now();
-    const token = `omb_sess_${randomBytes(32).toString("base64url")}`;
+    const token = `mausclaw_sess_${randomBytes(32).toString("base64url")}`;
     const record: SessionRecord = {
       id: randomUUID(),
       tokenHash: sha256(token),
@@ -612,7 +612,7 @@ export class SessionRegistry {
     this.prune();
     const mine = [...this.tickets].filter(([, t]) => t.sessionId === sessionId).sort((a, b) => a[1].expiresAt - b[1].expiresAt);
     for (const [hash] of mine.slice(0, Math.max(0, mine.length - (MAX_STREAM_TICKETS_PER_SESSION - 1)))) this.tickets.delete(hash);
-    const ticket = `omb_tick_${randomBytes(24).toString("base64url")}`;
+    const ticket = `mausclaw_tick_${randomBytes(24).toString("base64url")}`;
     const expiresAt = this.now() + STREAM_TICKET_TTL_MS;
     this.tickets.set(sha256(ticket), { sessionId, expiresAt });
     return { ticket, expiresAt };

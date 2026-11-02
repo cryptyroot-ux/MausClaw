@@ -23,7 +23,7 @@ it("one policy counts for every launcher: again only on 75, not while stopping, 
   expect(policy.again(RESTART_EXIT_CODE)).toBe(false);
 });
 
-const options = { command: "serve", port: 8799, dataDir: "/tmp/omb", tailscale: false, tunnel: false, client: false, pair: true, json: false } as CliOptions;
+const options = { command: "serve", port: 8799, dataDir: "/tmp/mausclaw", tailscale: false, tunnel: false, client: false, pair: true, json: false } as CliOptions;
 
 it("`serve` starts the server again in the same process on 75, without a second pairing code or browser tab", async () => {
   const codes = [RESTART_EXIT_CODE, RESTART_EXIT_CODE, 0];
@@ -34,7 +34,7 @@ it("`serve` starts the server again in the same process on 75, without a second 
   } finally { log.mockRestore(); }
   expect(runs).toHaveLength(3);
   expect(runs[0]).toBe(options);
-  for (const rerun of runs.slice(1)) expect(rerun).toMatchObject({ pair: false, open: false, port: 8799, dataDir: "/tmp/omb" });
+  for (const rerun of runs.slice(1)) expect(rerun).toMatchObject({ pair: false, open: false, port: 8799, dataDir: "/tmp/mausclaw" });
 });
 
 it("`serve` stops after five restarts in a row, and passes any other exit straight through", async () => {

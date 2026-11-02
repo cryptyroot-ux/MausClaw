@@ -49,7 +49,7 @@ beforeEach(() => setLocale("en"));
 
 const PRELOAD = readFileSync(join(process.cwd(), "electron", "preload.cjs"), "utf8").replace(/\r\n/g, "\n");
 type Ogb = NonNullable<Window["ogb"]>;
-const MY_CLOUD = "https://omb-u-1.fly.dev";
+const MY_CLOUD = "https://mausclaw-u-1.fly.dev";
 const port = (number: number) => `http://127.0.0.1:${number}`;
 type Desktop = (origin: string) => Ogb;
 // One desktop: main's real record, and the real preload for a page of its window: this computer's, on whichever port
@@ -66,7 +66,7 @@ function oneDesktop(): Desktop {
   return origin => {
     let ogb: Ogb | undefined;
     vm.runInNewContext(PRELOAD, {
-      process: { platform: "darwin", argv: [`--omb-local-origin=${origin === MY_CLOUD ? port(8799) : origin}`, "--omb-company-desktop=1"] },
+      process: { platform: "darwin", argv: [`--mausclaw-local-origin=${origin === MY_CLOUD ? port(8799) : origin}`, "--mausclaw-company-desktop=1"] },
       location: { origin }, navigator: {}, TextEncoder,
       require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name: string, value: Ogb) => { ogb = value; } },
         ipcRenderer: { on() {}, removeListener() {}, send() {},
@@ -272,7 +272,7 @@ describe("the popup as a dialog", () => {
 
 describe("who clicked, through the app's analytics", () => {
   async function fresh(enabled: boolean) {
-    const stored = new Map<string, string>(enabled ? [] : [["omb-analytics-opt-out", "1"]]);
+    const stored = new Map<string, string>(enabled ? [] : [["mausclaw-analytics-opt-out", "1"]]);
     vi.stubGlobal("localStorage", { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => void stored.set(key, value) });
     vi.resetModules();
     vi.doMock("posthog-js", () => ph.module());
@@ -321,7 +321,7 @@ describe("who clicked, through the app's analytics", () => {
 
   it("an opt-out kept in one port's storage before the desktop kept it moves there the first time that page runs", async () => {
     const desktop = oneDesktop();
-    await pageOn(desktop, port(8799), new Map([["omb-analytics-opt-out", "1"]]));
+    await pageOn(desktop, port(8799), new Map([["mausclaw-analytics-opt-out", "1"]]));
     expect(ph.loads).toBe(0);
     const second = await pageOn(desktop, port(18799), new Map());
     expect(second.analytics.analyticsEnabled()).toBe(false);
@@ -331,9 +331,9 @@ describe("who clicked, through the app's analytics", () => {
 
   it("the desktop's latest choice wins over an older one left in a port's storage", async () => {
     const desktop = oneDesktop();
-    const first = await pageOn(desktop, port(8799), new Map([["omb-analytics-opt-out", "1"]]));
+    const first = await pageOn(desktop, port(8799), new Map([["mausclaw-analytics-opt-out", "1"]]));
     first.analytics.setAnalyticsEnabled(true);
-    const second = await pageOn(desktop, port(28799), new Map([["omb-analytics-opt-out", "1"]]));
+    const second = await pageOn(desktop, port(28799), new Map([["mausclaw-analytics-opt-out", "1"]]));
     expect(second.analytics.analyticsEnabled()).toBe(true);
     second.report("manage", person, "local");
     expect(sent()).toEqual([identify, ["capture", "cloud_pro_popup", { action: "manage", plan: "none", signed_in: true, page: "local" }]]);
@@ -366,7 +366,7 @@ describe("who clicked, through the app's analytics", () => {
     expect(ph.loads).toBe(0); expect(ph.calls).toEqual([]);
     expect(window.ogb?.desktopAnalytics?.set, "only This computer's page sets it").toBeUndefined();
     await pageOn(desktop, port(18799), new Map()).then(page => page.analytics.setAnalyticsEnabled(true));
-    for (const [stored, enabled] of [[new Map(), true], [new Map([["omb-analytics-opt-out", "1"]]), false]] as const) {
+    for (const [stored, enabled] of [[new Map(), true], [new Map([["mausclaw-analytics-opt-out", "1"]]), false]] as const) {
       const again = await pageOn(desktop, MY_CLOUD, stored);
       expect(again.analytics.analyticsEnabled(), "turned back on in the desktop app, My Cloud's page follows its own switch").toBe(enabled);
     }

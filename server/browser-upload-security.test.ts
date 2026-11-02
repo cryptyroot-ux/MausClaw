@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 it.each(["darwin", "linux"])("stages a regular file with valid %s open flags", async (platform) => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-flags-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-flags-")));
   dirs.push(base);
   const source = join(base, "report.txt");
   fs.writeFileSync(source, "report");
@@ -65,7 +65,7 @@ it.each(["darwin", "linux"])("stages a regular file with valid %s open flags", a
 });
 
 it.each([false, true])("stages workspace files on Windows from the checked path (everyFile: %s)", async (everyFile) => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-windows-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-windows-")));
   dirs.push(base);
   const source = join(base, "report.txt"), folder = join(base, "uploads");
   fs.writeFileSync(source, "report");
@@ -82,7 +82,7 @@ it.each([false, true])("stages workspace files on Windows from the checked path 
 });
 
 it.skipIf(process.platform === "win32")("pins both sources before a directory is swapped while the first file copies", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-race-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-race-")));
   dirs.push(base);
   const workspace = join(base, "workspace"), sub = join(workspace, "sub"), outside = join(base, "outside");
   fs.mkdirSync(sub, { recursive: true });
@@ -102,7 +102,7 @@ it.skipIf(process.platform === "win32")("pins both sources before a directory is
 });
 
 it.skipIf(process.platform === "win32")("removes every directory from a batch when its second file fails", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-cleanup-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-cleanup-")));
   dirs.push(base);
   const first = join(base, "first.txt"), second = join(base, "second.txt"), folder = join(base, "uploads");
   fs.writeFileSync(first, "first");
@@ -118,7 +118,7 @@ it.skipIf(process.platform === "win32")("removes every directory from a batch wh
 });
 
 it.skipIf(process.platform === "win32")("rejects an oversized sparse file before reading it", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-size-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-size-")));
   dirs.push(base);
   const source = join(base, "large.bin");
   fs.writeFileSync(source, "");
@@ -130,7 +130,7 @@ it.skipIf(process.platform === "win32")("rejects an oversized sparse file before
 });
 
 it.skipIf(process.platform === "win32")("rejects a batch over 100 MiB before reading any file", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-batch-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-batch-")));
   dirs.push(base);
   const files = Array.from({ length: 5 }, (_, i) => {
     const file = join(base, `${i}.bin`);
@@ -145,7 +145,7 @@ it.skipIf(process.platform === "win32")("rejects a batch over 100 MiB before rea
 });
 
 it.skipIf(process.platform === "win32")("lets the event loop run while an accepted upload copies", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-async-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-async-")));
   dirs.push(base);
   const source = join(base, "large.bin");
   fs.writeFileSync(source, Buffer.alloc(2 * 1024 * 1024, 0x61));
@@ -157,7 +157,7 @@ it.skipIf(process.platform === "win32")("lets the event loop run while an accept
 });
 
 it.skipIf(process.platform === "win32")("rejects a directory symlink inserted after the allowlist check before staging", async () => {
-  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "omb-upload-parent-")));
+  const base = fs.realpathSync(fs.mkdtempSync(join(tmpdir(), "mausclaw-upload-parent-")));
   dirs.push(base);
   const workspace = join(base, "workspace"), sub = join(workspace, "sub"), outside = join(base, "outside");
   fs.mkdirSync(sub, { recursive: true });

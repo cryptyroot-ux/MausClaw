@@ -19,17 +19,17 @@ review** and the **Data** tab if needed. The printed `ui` path also works with
 the shared [chat UI controls](chat-ui.md):
 
 ```sh
-H=/tmp/openmausbot-verify-data-XXXXXX/ui.json
-pnpm control:omb ui snapshot --ui "$H" --interactive
-pnpm control:omb ui click --ui "$H" --name History
-pnpm control:omb ui snapshot --ui "$H" --interactive
+H=/tmp/mausclaw-verify-data-XXXXXX/ui.json
+pnpm control:mausclaw ui snapshot --ui "$H" --interactive
+pnpm control:mausclaw ui click --ui "$H" --name History
+pnpm control:mausclaw ui snapshot --ui "$H" --interactive
 # Use the snapshot's menuitemradio reference for "Revenue by region":
-pnpm control:omb ui click --ui "$H" --ref @eN
-pnpm control:omb ui click --ui "$H" --name Table
-pnpm control:omb ui click --ui "$H" --name Chart
-pnpm control:omb ui click --ui "$H" --name "Enter fullscreen"
-pnpm control:omb ui screenshot --ui "$H" --out .omb-scratch/data-fullscreen.png
-pnpm control:omb ui click --ui "$H" --name "Exit fullscreen"
+pnpm control:mausclaw ui click --ui "$H" --ref @eN
+pnpm control:mausclaw ui click --ui "$H" --name Table
+pnpm control:mausclaw ui click --ui "$H" --name Chart
+pnpm control:mausclaw ui click --ui "$H" --name "Enter fullscreen"
+pnpm control:mausclaw ui screenshot --ui "$H" --out .mausclaw-scratch/data-fullscreen.png
+pnpm control:mausclaw ui click --ui "$H" --name "Exit fullscreen"
 ```
 
 Expected: one active result fills the viewer without a title/header above it.
@@ -59,7 +59,7 @@ pnpm exec vitest run server/data/data.e2e.test.ts scripts/testing/verification-d
 ```
 
 The asserted browser run uses the same pinned agent-browser and Chrome as
-`control-omb ui`; on the first run it may install them into the checkout's
+`control-mausclaw ui`; on the first run it may install them into the checkout's
 ignored verification-tools directory. It checks a bounded table DOM before and
 after scrolling to row 100,000, one mounted result despite 20 history entries,
 history selection and unclipped menu bounds, Chart/Table switching, always-visible

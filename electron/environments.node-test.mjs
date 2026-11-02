@@ -24,7 +24,7 @@ test("a pairing link keeps its code in the hash; a code anywhere else is refused
 });
 
 test("self-hosted pairing supports custom HTTPS and Cloudflare names without Tailscale", () => {
-  for (const origin of ["https://bots.example.com", "https://example.trycloudflare.com", "https://c-example.openmausbot.com"]) {
+  for (const origin of ["https://bots.example.com", "https://example.trycloudflare.com", "https://c-example.mausclaw.com"]) {
     const link = `${origin}/pair#code=ABCD-EFGH-JKLM`;
     assert.deepEqual(env.parsePairingLink(link), {
       origin, code: "ABCD-EFGH-JKLM", url: link,
@@ -142,12 +142,12 @@ test("native workspace choices use saved IDs and connect opens settings without 
 });
 
 test("Add a Cloud… sits just under the saved servers only where main offers it, and My Cloud's line can say Always on", () => {
-  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://omb-u-1.fly.dev" }, { id: "office", name: "Office", origin: "https://office.example" }], activeId: "local" };
+  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://mausclaw-u-1.fly.dev" }, { id: "office", name: "Office", origin: "https://office.example" }], activeId: "local" };
   const calls = [];
   const base = { onSwitch: (id) => calls.push(["switch", id]), onConnect: () => calls.push(["settings"]), onForget: () => {} };
   const plain = env.workspaceMenuTemplate(state, base);
   assert.equal(plain.some(item => item.id === "workspace-add-cloud"), false);
-  assert.deepEqual(plain.filter(item => item.sublabel).map(item => item.sublabel), ["omb-u-1.fly.dev", "office.example"]);
+  assert.deepEqual(plain.filter(item => item.sublabel).map(item => item.sublabel), ["mausclaw-u-1.fly.dev", "office.example"]);
   const items = env.workspaceMenuTemplate(state, { ...base, onAddCloud: () => calls.push(["add-cloud"]), sublabels: { cloud: "Free trial until 15 Oct" } });
   assert.deepEqual(items.map(item => item.id ?? item.type), ["workspace-local", "workspace-cloud", "workspace-office", "workspace-add-cloud", "separator", "workspace-connect"]);
   const add = items.find(item => item.id === "workspace-add-cloud");
@@ -159,7 +159,7 @@ test("Add a Cloud… sits just under the saved servers only where main offers it
 });
 
 test("with My Cloud, the switcher says first which side has which bots, and under My Cloud what is not on it yet, with Send", async () => {
-  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://omb-u-1.fly.dev" }], activeId: "cloud" };
+  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://mausclaw-u-1.fly.dev" }], activeId: "cloud" };
   const clicked = [];
   const send = { waiting: { bots: 2, total: 2 }, onSend: () => clicked.push("send"), onOpen: () => clicked.push("open") };
   const options = await env.placesMenuOptions({ cloud: state.environments[0], home: true, platform: "win32", send,
@@ -214,9 +214,9 @@ test("the places line names this computer's bots briefly, says nothing when its 
 
 test("native window identity distinguishes hosted HTML, companion data, and the local workspace", () => {
   const state = { environments: [{ id: "old", name: "Old team", origin: "https://old.example" }], activeId: "old" };
-  assert.equal(env.workspaceWindowTitle(state), "OpenMausBot — Hosted: Old team (old.example)");
-  assert.equal(env.workspaceWindowTitle(state, { serverName: "Office", endpoint: "https://c-office.openmausbot.com" }), "OpenMausBot — Connected to: Office (c-office.openmausbot.com)");
-  assert.equal(env.workspaceWindowTitle(env.withActive(state, "local")), "OpenMausBot");
+  assert.equal(env.workspaceWindowTitle(state), "MausClaw — Hosted: Old team (old.example)");
+  assert.equal(env.workspaceWindowTitle(state, { serverName: "Office", endpoint: "https://c-office.mausclaw.com" }), "MausClaw — Connected to: Office (c-office.mausclaw.com)");
+  assert.equal(env.workspaceWindowTitle(env.withActive(state, "local")), "MausClaw");
 });
 
 test("a version 1 file parses as all-remote with kind stamped and activeId preserved, and serializes back as version 2", () => {
@@ -238,17 +238,17 @@ test("version 2 keeps locals with an absolute dataDir and drops relative, dir-le
   const parsed = env.parseEnvironments(JSON.stringify({
     version: 2,
     environments: [
-      { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.openmausbot-aprs" },
+      { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.mausclaw-aprs" },
       { id: "l2", kind: "local", name: "relative", dataDir: "bots/relative" },
       { id: "l3", kind: "local", name: "no dir at all" },
       { id: "r1", kind: "remote", name: "Office", origin: "https://box.example" },
-      { id: "l4", kind: "local", name: "same dir again", dataDir: "/Users/me/.openmausbot-aprs" },
+      { id: "l4", kind: "local", name: "same dir again", dataDir: "/Users/me/.mausclaw-aprs" },
     ],
     activeId: "l1",
   }));
   assert.deepEqual(parsed, {
     environments: [
-      { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.openmausbot-aprs" },
+      { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.mausclaw-aprs" },
       { id: "r1", kind: "remote", name: "Office", origin: "https://box.example" },
     ],
     activeId: "l1",
@@ -258,57 +258,57 @@ test("version 2 keeps locals with an absolute dataDir and drops relative, dir-le
 });
 
 test("withLocalEnvironment registers absolute, non-default, non-nested directories only", () => {
-  const DEFAULT = "/Users/me/.openmausbot";
-  const added = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "APRS Chat", dataDir: "/Users/me/.openmausbot-aprs" }, () => "id1", DEFAULT);
+  const DEFAULT = "/Users/me/.mausclaw";
+  const added = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "APRS Chat", dataDir: "/Users/me/.mausclaw-aprs" }, () => "id1", DEFAULT);
   assert.equal(added.ok, true);
-  assert.deepEqual(added.state.environments, [{ id: "id1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.openmausbot-aprs" }]);
+  assert.deepEqual(added.state.environments, [{ id: "id1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.mausclaw-aprs" }]);
   assert.equal(added.state.activeId, "local");
   const error = (name, dataDir) => env.withLocalEnvironment(added.state, { name, dataDir }, () => "unused", DEFAULT).error;
   assert.equal(error("APRS", "bots/relative"), "path");
-  assert.equal(error("   ", "/Users/me/.openmausbot-x"), "name");
-  assert.equal(error("x".repeat(61), "/Users/me/.openmausbot-x"), "name");
+  assert.equal(error("   ", "/Users/me/.mausclaw-x"), "name");
+  assert.equal(error("x".repeat(61), "/Users/me/.mausclaw-x"), "name");
   assert.equal(error("Same as default", DEFAULT), "nested");
   assert.equal(error("Inside default", `${DEFAULT}/nested`), "nested");
-  assert.equal(error("Same as entry", "/Users/me/.openmausbot-aprs"), "duplicate");
-  assert.equal(error("Same entry with a slash", "/Users/me/.openmausbot-aprs/"), "duplicate");
-  assert.equal(error("Inside the entry", "/Users/me/.openmausbot-aprs/sub"), "nested");
-  assert.equal(error("Almost a sibling", "/Users/me/.openmausbot-aprsx"), undefined);
+  assert.equal(error("Same as entry", "/Users/me/.mausclaw-aprs"), "duplicate");
+  assert.equal(error("Same entry with a slash", "/Users/me/.mausclaw-aprs/"), "duplicate");
+  assert.equal(error("Inside the entry", "/Users/me/.mausclaw-aprs/sub"), "nested");
+  assert.equal(error("Almost a sibling", "/Users/me/.mausclaw-aprsx"), undefined);
 });
 
 test("activeLocalDataDir reports only an active local environment's directory", () => {
-  const DEFAULT = "/Users/me/.openmausbot";
+  const DEFAULT = "/Users/me/.mausclaw";
   const state = {
     environments: [
-      { id: "l1", kind: "local", name: "APRS", dataDir: "/Users/me/.openmausbot-aprs" },
+      { id: "l1", kind: "local", name: "APRS", dataDir: "/Users/me/.mausclaw-aprs" },
       { id: "r1", kind: "remote", name: "Office", origin: "https://box.example" },
     ],
     activeId: "l1",
   };
-  assert.equal(env.activeLocalDataDir(state, DEFAULT), "/Users/me/.openmausbot-aprs");
+  assert.equal(env.activeLocalDataDir(state, DEFAULT), "/Users/me/.mausclaw-aprs");
   assert.equal(env.activeLocalDataDir({ ...state, activeId: "local" }, DEFAULT), null);
   assert.equal(env.activeLocalDataDir({ ...state, activeId: "r1" }, DEFAULT), null);
 });
 
 test("startupEnvironmentDir boots on the active local dir and falls back to the default", () => {
-  const DEFAULT = "/Users/me/.openmausbot";
+  const DEFAULT = "/Users/me/.mausclaw";
   const state = {
     environments: [
-      { id: "l1", kind: "local", name: "APRS", dataDir: "/Users/me/.openmausbot-aprs" },
+      { id: "l1", kind: "local", name: "APRS", dataDir: "/Users/me/.mausclaw-aprs" },
       { id: "r1", kind: "remote", name: "Office", origin: "https://box.example" },
     ],
     activeId: "l1",
   };
-  assert.equal(env.startupEnvironmentDir(state, DEFAULT), "/Users/me/.openmausbot-aprs");
+  assert.equal(env.startupEnvironmentDir(state, DEFAULT), "/Users/me/.mausclaw-aprs");
   assert.equal(env.startupEnvironmentDir({ ...state, activeId: "r1" }, DEFAULT), DEFAULT);
   assert.equal(env.startupEnvironmentDir({ environments: [], activeId: "local" }, DEFAULT), DEFAULT);
 });
 
 test("bootEnvironmentDir refuses to boot onto a missing named env dir — the default dir instead, flagged", () => {
-  const DEFAULT = "/Users/me/.openmausbot";
-  const gone = { environments: [{ id: "l1", kind: "local", name: "APRS", dataDir: "/Volumes/gone/.openmausbot-aprs", missing: true }], activeId: "l1" };
-  assert.deepEqual(env.bootEnvironmentDir(gone, DEFAULT), { dataDir: DEFAULT, fellBack: true, missingDir: "/Volumes/gone/.openmausbot-aprs" });
+  const DEFAULT = "/Users/me/.mausclaw";
+  const gone = { environments: [{ id: "l1", kind: "local", name: "APRS", dataDir: "/Volumes/gone/.mausclaw-aprs", missing: true }], activeId: "l1" };
+  assert.deepEqual(env.bootEnvironmentDir(gone, DEFAULT), { dataDir: DEFAULT, fellBack: true, missingDir: "/Volumes/gone/.mausclaw-aprs" });
   const present = { environments: [{ ...gone.environments[0], missing: false }], activeId: "l1" };
-  assert.deepEqual(env.bootEnvironmentDir(present, DEFAULT), { dataDir: "/Volumes/gone/.openmausbot-aprs", fellBack: false, missingDir: null });
+  assert.deepEqual(env.bootEnvironmentDir(present, DEFAULT), { dataDir: "/Volumes/gone/.mausclaw-aprs", fellBack: false, missingDir: null });
   assert.deepEqual(env.bootEnvironmentDir({ environments: [], activeId: "local" }, DEFAULT), { dataDir: DEFAULT, fellBack: false, missingDir: null });
   const remote = { environments: [{ id: "r1", kind: "remote", name: "Office", origin: "https://box.example", missing: false }], activeId: "r1" };
   assert.deepEqual(env.bootEnvironmentDir(remote, DEFAULT), { dataDir: DEFAULT, fellBack: false, missingDir: null });
@@ -320,16 +320,16 @@ test("data dirs are absolute in POSIX, drive-letter and UNC shape; relative and 
     environments: [{ id: "l1", kind: "local", name: "n", dataDir }],
     activeId: "local",
   })).environments.length;
-  for (const good of ["/Users/me/.openmausbot-aprs", "C:\\Users\\me\\.openmausbot-aprs", "D:/envs/aprs", "\\\\nas\\share\\.openmausbot-x"]) {
+  for (const good of ["/Users/me/.mausclaw-aprs", "C:\\Users\\me\\.mausclaw-aprs", "D:/envs/aprs", "\\\\nas\\share\\.mausclaw-x"]) {
     assert.equal(kept(good), 1, good);
   }
-  for (const bad of ["bots/relative", "C:bots", "~/.openmausbot-x", "\\single\\backslash", "./x", ""]) {
+  for (const bad of ["bots/relative", "C:bots", "~/.mausclaw-x", "\\single\\backslash", "./x", ""]) {
     assert.equal(kept(bad), 0, bad);
   }
 });
 
 test("withLocalEnvironment rejects a candidate that contains a registered local dir, accepts siblings", () => {
-  const DEFAULT = "/Users/me/.openmausbot";
+  const DEFAULT = "/Users/me/.mausclaw";
   const added = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "APRS", dataDir: "/Users/me/bots/aprs" }, () => "id1", DEFAULT);
   assert.equal(added.ok, true);
   const error = (dataDir) => env.withLocalEnvironment(added.state, { name: "x", dataDir }, () => "unused", DEFAULT).error;
@@ -343,11 +343,11 @@ test("withLocalEnvironment rejects a candidate that contains a registered local 
 });
 
 test("a named local environment is this computer with its path, and gets its own menu row", () => {
-  const localEntry = { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.openmausbot-aprs" };
+  const localEntry = { id: "l1", kind: "local", name: "APRS Chat", dataDir: "/Users/me/.mausclaw-aprs" };
   const state = { environments: [localEntry, { id: "r1", kind: "remote", name: "Office", origin: "https://box.example" }], activeId: "l1" };
-  assert.deepEqual(env.workspaceSummary(state), { local: true, name: "APRS Chat", localPath: "/Users/me/.openmausbot-aprs", missing: false });
+  assert.deepEqual(env.workspaceSummary(state), { local: true, name: "APRS Chat", localPath: "/Users/me/.mausclaw-aprs", missing: false });
   assert.deepEqual(env.workspaceSummary({ ...state, environments: [{ ...localEntry, missing: true }, ...state.environments.slice(1)] }),
-    { local: true, name: "APRS Chat", localPath: "/Users/me/.openmausbot-aprs", missing: true });
+    { local: true, name: "APRS Chat", localPath: "/Users/me/.mausclaw-aprs", missing: true });
   assert.deepEqual(env.workspaceSummary({ ...state, activeId: "local" }), { local: true, name: "This computer" });
   assert.deepEqual(env.workspaceSummary({ ...state, activeId: "r1" }), { local: false, name: "Office", origin: "https://box.example" });
   const calls = [];
@@ -364,37 +364,37 @@ test("a named local environment is this computer with its path, and gets its own
 
 
 test("withLocalEnvironment compares Windows-shaped paths by separators and case", () => {
-  const winDefault = "C:\\Users\\me\\.openmausbot";
+  const winDefault = "C:\\Users\\me\\.mausclaw";
   const state = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "Site", dataDir: "C:\\Bots\\Site" }, () => "site", winDefault);
   assert.equal(state.ok, true);
   const again = (name, dataDir) => env.withLocalEnvironment(state.state, { name, dataDir }, () => "x", winDefault).error;
   assert.equal(again("Copy", "c:/bots/site/"), "duplicate");
   assert.equal(again("Child", "C:\\Bots\\Site\\sub"), "nested");
   assert.equal(again("Child2", "C:/BOTS/SITE/sub"), "nested");
-  assert.equal(again("Inside default", "c:\\users\\me\\.openmausbot\\envs\\x"), "nested");
-  const unc = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "Share", dataDir: "\\\\NAS\\omb" }, () => "share", "\\\\nas\\other");
+  assert.equal(again("Inside default", "c:\\users\\me\\.mausclaw\\envs\\x"), "nested");
+  const unc = env.withLocalEnvironment({ environments: [], activeId: "local" }, { name: "Share", dataDir: "\\\\NAS\\mausclaw" }, () => "share", "\\\\nas\\other");
   assert.equal(unc.ok, true);
-  assert.equal(env.withLocalEnvironment(unc.state, { name: "Under", dataDir: "\\\\NAS\\omb\\deep" }, () => "x", "\\\\NAS\\elsewhere").error, "nested");
+  assert.equal(env.withLocalEnvironment(unc.state, { name: "Under", dataDir: "\\\\NAS\\mausclaw\\deep" }, () => "x", "\\\\NAS\\elsewhere").error, "nested");
 });
 
 test("parseEnvironments dedups local dirs on the same normalized key", () => {
   const parse = (entries) => env.parseEnvironments(JSON.stringify({ version: 2, environments: entries, activeId: "local" })).environments;
   assert.deepEqual(parse([
-    { id: "l1", kind: "local", name: "A", dataDir: "/Users/me/.openmausbot-aprs" },
-    { id: "l2", kind: "local", name: "B", dataDir: "/Users/me/.openmausbot-aprs/" },
+    { id: "l1", kind: "local", name: "A", dataDir: "/Users/me/.mausclaw-aprs" },
+    { id: "l2", kind: "local", name: "B", dataDir: "/Users/me/.mausclaw-aprs/" },
   ]).map((entry) => entry.id), ["l1"]);
   assert.deepEqual(parse([
     { id: "l1", kind: "local", name: "A", dataDir: "C:\\Bots\\Site" },
     { id: "l2", kind: "local", name: "B", dataDir: "c:/bots/site" },
   ]).map((entry) => entry.id), ["l1"]);
   assert.equal(parse([
-    { id: "l1", kind: "local", name: "A", dataDir: "/Users/me/.openmausbot-a" },
-    { id: "l2", kind: "local", name: "B", dataDir: "/Users/me/.openmausbot-b" },
+    { id: "l1", kind: "local", name: "A", dataDir: "/Users/me/.mausclaw-a" },
+    { id: "l2", kind: "local", name: "B", dataDir: "/Users/me/.mausclaw-b" },
   ]).length, 2);
 });
 
 test("once My Cloud is home the switcher lists whole places only: My Cloud first, then each saved server, never this computer", () => {
-  const home = "https://omb-t-1.fly.dev";
+  const home = "https://mausclaw-t-1.fly.dev";
   const state = { environments: [{ id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }, { id: "c", kind: "remote", name: "My Cloud", origin: home },
     { id: "l", kind: "local", name: "Lab", dataDir: "/lab" }], activeId: "c" };
   const switched = [], forgot = [];
@@ -408,27 +408,27 @@ test("once My Cloud is home the switcher lists whole places only: My Cloud first
   assert.deepEqual(forgot, ["o"]);
   assert.equal(env.otherPlaces(state, home), 1);
   assert.equal(env.otherPlaces({ ...state, environments: state.environments.filter((entry) => entry.id !== "o") }, home), 0, "My Cloud alone: no switcher");
-  assert.equal(env.workspaceWindowTitle(state, null, home), "OpenMausBot — My Cloud", "with another place besides, the window names the one it shows");
-  assert.equal(env.workspaceWindowTitle({ ...state, environments: state.environments.filter((entry) => entry.id !== "o") }, null, home), "OpenMausBot", "the window onto home alone is simply the app");
-  assert.equal(env.workspaceWindowTitle({ ...state, activeId: "o" }, null, home), "OpenMausBot — Hosted: Office (office.example.test)");
+  assert.equal(env.workspaceWindowTitle(state, null, home), "MausClaw — My Cloud", "with another place besides, the window names the one it shows");
+  assert.equal(env.workspaceWindowTitle({ ...state, environments: state.environments.filter((entry) => entry.id !== "o") }, null, home), "MausClaw", "the window onto home alone is simply the app");
+  assert.equal(env.workspaceWindowTitle({ ...state, activeId: "o" }, null, home), "MausClaw — Hosted: Office (office.example.test)");
 });
 
-const TEAM = "https://omb-u-acme.fly.dev";
+const TEAM = "https://mausclaw-u-acme.fly.dev";
 const acme = (extra = {}) => ({ id: "team-acme", name: "Acme", role: "admin", machine: { status: "ready", origin: TEAM }, ...extra });
 
 test("the switcher lists My Cloud first, then each team from the session with this person's role, then saved servers; a team has no Forget", () => {
-  const home = "https://omb-t-1.fly.dev";
+  const home = "https://mausclaw-t-1.fly.dev";
   const state = { environments: [{ id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }, { id: "t", kind: "remote", name: "Acme", origin: TEAM, team: { id: "team-acme", role: "owner" } },
     { id: "c", kind: "remote", name: "My Cloud", origin: home, home: true }], activeId: "t" };
   const items = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, homeOrigin: home });
-  assert.deepEqual(items.map((item) => [item.label, item.sublabel, item.checked]), [["My Cloud", "omb-t-1.fly.dev", false], ["Acme", "Super admin", true], ["Office", "office.example.test", false]]);
+  assert.deepEqual(items.map((item) => [item.label, item.sublabel, item.checked]), [["My Cloud", "mausclaw-t-1.fly.dev", false], ["Acme", "Super admin", true], ["Office", "office.example.test", false]]);
   assert.deepEqual(env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, homeOrigin: home, foldSublabels: true }).map((item) => item.label), ["My Cloud", "Acme · Super admin", "Office"]);
   for (const [role, label] of [["owner", "Super admin"], ["admin", "Admin"], ["member", "User"], ["other", "User"]]) assert.equal(env.teamRoleLabel(role), label, role);
-  assert.equal(env.workspaceWindowTitle(state, null, home), "OpenMausBot — Acme");
+  assert.equal(env.workspaceWindowTitle(state, null, home), "MausClaw — Acme");
   assert.deepEqual(env.workspaceSummary(state), { local: false, name: "Acme", origin: TEAM, role: "Super admin" });
   // Before the move (or a Team Owner, whose home is this computer): This computer, then each team with its role (no Forget), then servers as saved.
   const before = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {} });
-  assert.deepEqual(before.filter((item) => item.type === "radio").map((item) => [item.label, item.sublabel]), [["This computer", undefined], ["Acme", "Super admin"], ["Office", "office.example.test"], ["My Cloud", "omb-t-1.fly.dev"]]);
+  assert.deepEqual(before.filter((item) => item.type === "radio").map((item) => [item.label, item.sublabel]), [["This computer", undefined], ["Acme", "Super admin"], ["Office", "office.example.test"], ["My Cloud", "mausclaw-t-1.fly.dev"]]);
   assert.equal(before.some((item) => item.id === "workspace-forget"), false, "a team is the Admin's to remove");
   assert.equal(env.otherPlaces(state, home), 2);
   const serialized = env.parseEnvironments(env.serializeEnvironments(state));
@@ -438,7 +438,7 @@ test("the switcher lists My Cloud first, then each team from the session with th
 });
 
 test("the session's teams become saved places, named and roled as the Admin says; one it no longer lists is gone, with its name, and the window falls back to My Cloud", () => {
-  const home = "https://omb-t-1.fly.dev";
+  const home = "https://mausclaw-t-1.fly.dev";
   let ids = 0;
   const makeId = () => `id-${++ids}`;
   const base = { environments: [{ id: "c", kind: "remote", name: "My Cloud", origin: home, home: true }, { id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }], activeId: "c" };

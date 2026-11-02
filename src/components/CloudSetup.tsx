@@ -25,7 +25,7 @@ const WELCOME_HINT: Partial<Record<CloudSetupStep, LocaleKey>> = {
   move: "cloudWelcome.compact.bring", engine: "cloudSetup.engine.hint", files: "cloudWelcome.compact.files",
 };
 
-const COLLAPSED_KEY = "omb.cloudSetup.collapsed";
+const COLLAPSED_KEY = "mausclaw.cloudSetup.collapsed";
 function storedCollapsed(): boolean {
   try { return globalThis.localStorage?.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
 }

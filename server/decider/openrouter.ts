@@ -125,7 +125,7 @@ async function decide(request: BackendRequest): Promise<BackendResult> {
         authorization: `Bearer ${request.key}`,
         "content-type": "application/json",
         accept: "application/json",
-        "x-openrouter-title": "OpenMausBot",
+        "x-openrouter-title": "MausClaw",
       },
       body: JSON.stringify(decisions
         ? openrouterDecisionsBody(request.state, request.questions, asked)

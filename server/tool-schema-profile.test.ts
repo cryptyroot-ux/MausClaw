@@ -163,7 +163,7 @@ describe("which turns carry a schema profile", () => {
   });
 });
 
-describe("OpenMausBot's own tools", () => {
+describe("MausClaw's own tools", () => {
   const catalogs: Array<[string, ReadonlyArray<{ name: string; inputSchema: unknown }>]> = [
     ["agents (full)", fullAgents.tools], ["agents (bridged)", bridgedAgents.tools], ["browser", BROWSER_TOOLS],
     ["data", DATA_TOOLS], ["highlevel", HIGHLEVEL_TOOLS], ["cloud computer", CLOUD_COMPUTER_TOOLS],

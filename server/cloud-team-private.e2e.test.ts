@@ -1,5 +1,5 @@
 // A member's private chat with a team bot is theirs alone, the Owner and every Admin included (docs/team-cloud.md "The
-// audience rule"). A real Team Cloud (OMB_CLOUD_ROLE=team) with the Owner, an Admin and Bob, a member, paired with the
+// audience rule"). A real Team Cloud (MAUSCLAW_CLOUD_ROLE=team) with the Owner, an Admin and Bob, a member, paired with the
 // Admin's signed claims: Bob's chat, its words, its files and its live frames never reach the Owner or the Admin through
 // any route, the event stream, search, a bot's tools or another bot; they cannot write in it; Bob uses it as before; and
 // when Bob leaves the team it is deleted, never handed over. The engine is the synthetic Claude CLI.
@@ -31,7 +31,7 @@ const scriptToolCalls = (calls: unknown[] | null) => {
   const file = join(team.home, "tool-calls.json");
   if (calls) writeFileSync(file, JSON.stringify(calls)); else rmSync(file, { force: true });
 };
-const dataDir = (...rest: string[]) => join(team.home, ".openmausbot", ...rest);
+const dataDir = (...rest: string[]) => join(team.home, ".mausclaw", ...rest);
 const messages = (token: string, threadId: string) => team.as(token, "GET", `/api/threads/${threadId}/messages?limit=200`);
 const idle = async (token: string) => ((await team.as(token, "GET", "/api/bots")).body.bots as Array<{ activity?: string; busy?: boolean }>)
   .every((entry) => entry.activity !== "working" && !entry.busy);

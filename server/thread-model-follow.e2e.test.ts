@@ -3,7 +3,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 const SPARE = "spare";
@@ -34,7 +34,7 @@ async function withEngines(check: (fixture: Fixture) => Promise<void>) {
     expect(response.ok, `${method} ${path}: ${JSON.stringify(result)}`).toBe(true);
     return result;
   };
-  const control = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const control = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const restart = async (engines: Engines) => {
     await waitForExit(server ?? fixture.child, { signal: "SIGTERM" });
     const configPath = join(dataDir, "config.json");

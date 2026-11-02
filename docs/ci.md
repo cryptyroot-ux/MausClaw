@@ -92,9 +92,9 @@ Windows run eight shards each, macOS four (the full lane only);
 `scripts/ci-scope.mjs` builds the matrix.
 
 **Which files run where.** Linux runs every file. Most e2e files drive
-OMB's own logic through a real server and fake engines, which is the same on
+MausClaw's own logic through a real server and fake engines, which is the same on
 every OS, and they were 70% of a Windows shard's time, so only Linux runs
-them: the Windows and macOS shards set `OMB_VITEST_E2E=host`, and
+them: the Windows and macOS shards set `MAUSCLAW_VITEST_E2E=host`, and
 `vite.config.ts` then leaves out every e2e file not listed in
 `scripts/testing/host-e2e.ts`. The list keeps an e2e file on every host when
 it has a test that never runs on Linux (Auto on the person's own desktop, the
@@ -123,12 +123,12 @@ three platforms) when shards drift apart:
 node scripts/testing/update-shard-weights.mjs --run <run id> --run <run id> --run <run id>
 ```
 
-To run one CI shard locally, use the same OS, `--shard` and `OMB_VITEST_E2E`:
-`OMB_VITEST_E2E=host pnpm exec vitest run --shard=3/8` is Windows shard 3 on a
+To run one CI shard locally, use the same OS, `--shard` and `MAUSCLAW_VITEST_E2E`:
+`MAUSCLAW_VITEST_E2E=host pnpm exec vitest run --shard=3/8` is Windows shard 3 on a
 Windows machine.
 The locale and docs tests are the same command with their files first:
 `pnpm exec vitest run src/ scripts/generate-locale.test.mjs --shard=1/2` is
-locale tests 1/2 (those jobs set `OMB_VITEST_SUBSET`, so the sequencer does not
+locale tests 1/2 (those jobs set `MAUSCLAW_VITEST_SUBSET`, so the sequencer does not
 warn that most weighted files are missing).
 
 Deleting or renaming a test file in the weights fails
@@ -152,7 +152,7 @@ half hours. Now:
 
 ## Browser driver (S4)
 
-`browser driver S4 (<os>)` runs the omb-cdp conformance suites
+`browser driver S4 (<os>)` runs the mausclaw-cdp conformance suites
 (`server/browser/cdp/s4-*.e2e.test.ts`) against real Chrome: snapshots across
 out-of-process frames and closed shadow roots, every action, dialogs,
 downloads, popups and tabs, both evaluation worlds, waiting, the calibrated
@@ -183,13 +183,13 @@ options and a code, and no passkey registered) and
 answered by an upload, a dropdown list drawn by the viewer, a download served
 to it, the page's cursor and copied text).
 
-- The job uses the runner's installed Google Chrome (`OMB_CDP_E2E=1`) on the
+- The job uses the runner's installed Google Chrome (`MAUSCLAW_CDP_E2E=1`) on the
   same platforms as the vitest shards: Linux and Windows on PRs, all three in
   the full lane. Pushes to main and merge groups leave it out. Linux runs
   under Xvfb so the headed-identity case has a display.
 - On Linux it then builds the server image's `runtime` stage and runs the
   suites inside it as a non-root user against the image's Chrome for
-  Testing, with `OMB_BROWSER_SANDBOX=0` because the image has no setuid
+  Testing, with `MAUSCLAW_BROWSER_SANDBOX=0` because the image has no setuid
   sandbox helper yet.
 - It is advisory, outside the `CI` gate, until it has run green for a while.
 - The latency targets hold wherever Chrome itself can meet them. The suite
@@ -203,11 +203,11 @@ to it, the page's cursor and copied text).
   release, and the GoogleUpdater it starts swaps the new version into the app
   about a minute and a half after Chrome first runs, in the middle of the
   suites.
-- Locally: `OMB_CDP_CHROME=<chrome executable> pnpm exec vitest run
+- Locally: `MAUSCLAW_CDP_CHROME=<chrome executable> pnpm exec vitest run
   server/browser/cdp/s4- server/browser/checklist.e2e server/browser/passkey-wall.e2e
   server/browser/viewers/viewers.e2e server/browser/viewers/stream-v2.e2e` (or
-  `OMB_CDP_E2E=1` for the installed Google Chrome). Without either the suites
-  skip. `OMB_CDP_TEST_TMP` moves the throwaway profiles.
+  `MAUSCLAW_CDP_E2E=1` for the installed Google Chrome). Without either the suites
+  skip. `MAUSCLAW_CDP_TEST_TMP` moves the throwaway profiles.
 - `pnpm bench:browser-stream` measures the panel's stream on the installed
   Google Chrome with this computer's display: frame and page sizes, input to
   photon, frame rate, bytes and CPU. It is not part of CI.
@@ -301,7 +301,7 @@ per merge group, the main lane, and the same `CI` check name.
 
 GitHub offers the queue only to repositories an organization owns ("Pull
 request merge queues are available in any public repository owned by an
-organization", GitHub's docs, October 2026). `milind-soni/OpenMausBot` is
+organization", GitHub's docs, October 2026). `milind-soni/MausClaw` is
 owned by a user account, so the rule below appears only after the repository
 moves to an organization (such as `SupaMaus`). The move changes the URL the
 desktop updater reads (see Updater migration invariant in `releasing.md`), so
@@ -333,7 +333,7 @@ default branch):
 The same rule through the API, keeping the ruleset's existing check:
 
 ```sh
-gh api -X PUT repos/<org>/OpenMausBot/rulesets/<main-ci-gate id> --input - <<'JSON'
+gh api -X PUT repos/<org>/MausClaw/rulesets/<main-ci-gate id> --input - <<'JSON'
 {"rules": [
   {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "CI", "integration_id": 15368}],
     "strict_required_status_checks_policy": false, "do_not_enforce_on_create": false}},

@@ -5,7 +5,7 @@ import { readSessionState } from "./session";
 
 const answer = (body: unknown) => (async () => new Response(JSON.stringify(body), { status: 200 })) as unknown as typeof fetch;
 
-describe("where a device may write on an OMB Cloud home", () => {
+describe("where a device may write on an MausClaw Cloud home", () => {
   it("a guest writes only in the conversations it opened; the owner's devices and every other server anywhere", async () => {
     const guest = await readSessionState(answer({ kind: "session", id: "s1", label: "Guest phone", scopes: ["client"], expiresAt: 1, cloudHome: true, cloudGuest: true, openedThreads: ["t-mine", 7] }));
     expect(guest).toMatchObject({ kind: "session", cloudGuest: true, openedThreads: ["t-mine"] });

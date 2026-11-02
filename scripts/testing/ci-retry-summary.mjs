@@ -1,6 +1,6 @@
 // Puts the known-flaky tests that needed a retry in this job's summary
 // ($GITHUB_STEP_SUMMARY) with a warning annotation each, from the lines in
-// OMB_VITEST_RETRY_LOG; no log means no retries.
+// MAUSCLAW_VITEST_RETRY_LOG; no log means no retries.
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,7 +39,7 @@ export function retrySummary(logText, list) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const log = process.env.OMB_VITEST_RETRY_LOG;
+  const log = process.env.MAUSCLAW_VITEST_RETRY_LOG;
   const text = log && existsSync(log) ? readFileSync(log, "utf8") : "";
   const { markdown, annotations } = retrySummary(text, loadRetryList());
   for (const line of annotations) console.log(line);

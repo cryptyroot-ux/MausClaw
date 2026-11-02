@@ -23,7 +23,7 @@ const identity = (major: string, brand = "Google Chrome"): ChromeIdentity => ({
 
 /** A Mac whose LaunchServices knows a Google Chrome in a temporary folder, or none. */
 function mac(options: { chrome?: boolean; env?: NodeJS.ProcessEnv } = {}) {
-  const root = mkdtempSync(join(tmpdir(), "omb-launcher-"));
+  const root = mkdtempSync(join(tmpdir(), "mausclaw-launcher-"));
   folders.push(root);
   const app = join(root, "Google Chrome.app");
   const chrome = posix.join(app, "Contents/MacOS/Google Chrome");
@@ -35,7 +35,7 @@ function mac(options: { chrome?: boolean; env?: NodeJS.ProcessEnv } = {}) {
   const dataDir = join(root, "data");
   const env = { HOME: root, ...options.env };
   // Only this folder exists for the launcher: the machine running the test may have a Google Chrome of its own.
-  const inside = (path: string) => path.startsWith(root) || path.startsWith(options.env?.OMB_CHROME_PATH ?? "\0");
+  const inside = (path: string) => path.startsWith(root) || path.startsWith(options.env?.MAUSCLAW_CHROME_PATH ?? "\0");
   const real = chromeHost({ dataDir, env, platform: "darwin", arch: "arm64" });
   const host = { ...real, exists: (path: string) => inside(path) && existsSync(path), list: (folder: string) => inside(folder) ? real.list(folder) : [], appForBundleId: () => options.chrome === false ? null : app };
   return { root, app, chrome, dataDir, env, host };
@@ -133,10 +133,10 @@ describe("the Chrome launcher", () => {
   });
 
   it("keeps the engine's own browser, and says why, when Chrome cannot be prepared at all", async () => {
-    const named = mkdtempSync(join(tmpdir(), "omb-named-"));
+    const named = mkdtempSync(join(tmpdir(), "mausclaw-named-"));
     folders.push(named);
     writeFileSync(join(named, "chrome"), "#!/bin/sh\n", { mode: 0o755 });
-    const chrome = launcher(mac({ env: { OMB_CHROME_PATH: join(named, "chrome") } }), {
+    const chrome = launcher(mac({ env: { MAUSCLAW_CHROME_PATH: join(named, "chrome") } }), {
       calibrate: async () => { throw new Error("the browser's user agent is not Chrome's"); },
     });
     const spec = headless(chrome.path);
@@ -191,7 +191,7 @@ describe("the Chrome launcher", () => {
   });
 
   it.skipIf(process.platform === "win32")("counts a launcher check that only ran out of time as running, and still refuses one that fails", async () => {
-    const root = mkdtempSync(join(tmpdir(), "omb-launcher-check-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-launcher-check-"));
     folders.push(root);
     const slow = join(root, "slow.sh"), failing = join(root, "failing.sh");
     // A Cloud machine just after a restart: the launcher starts but answers late.
@@ -203,15 +203,15 @@ describe("the Chrome launcher", () => {
     await expect(runsLauncher(slow, process.env, 5_000)).rejects.toThrow(/the browser launcher does not run here/);
   });
 
-  it("changes nothing on OMB_BROWSER_LEGACY_SHELL=1", async () => {
-    const machine = mac({ env: { OMB_BROWSER_LEGACY_SHELL: "1", OMB_RESOURCES_PATH: "/Applications/OpenMausBot.app/Contents/Resources" } });
+  it("changes nothing on MAUSCLAW_BROWSER_LEGACY_SHELL=1", async () => {
+    const machine = mac({ env: { MAUSCLAW_BROWSER_LEGACY_SHELL: "1", MAUSCLAW_RESOURCES_PATH: "/Applications/MausClaw.app/Contents/Resources" } });
     const calibrate = vi.fn();
     const chrome = launcher(machine, { calibrate });
     expect(chrome.env()).toEqual({});
     await chrome.ready(headless("/bundle/chrome-headless-shell"));
     await chrome.prepare();
     expect(calibrate).not.toHaveBeenCalled();
-    expect(chrome.describe()).toBe("the bundled Chromium headless shell (OMB_BROWSER_LEGACY_SHELL=1)");
+    expect(chrome.describe()).toBe("the bundled Chromium headless shell (MAUSCLAW_BROWSER_LEGACY_SHELL=1)");
     expect(readdirSync(machine.root)).not.toContain("data");
   });
 

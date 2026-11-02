@@ -2,11 +2,11 @@
 
 Date: 2026-10-28
 Status: research + implementation
-Scope: built-in git operations for OMB native engine.
+Scope: built-in git operations for MausClaw native engine.
 
 ## 1. Why native git (not just bash)
 
-OMB has a bash tool now, so git works via `git status`. But a dedicated git tool provides:
+MausClaw has a bash tool now, so git works via `git status`. But a dedicated git tool provides:
 - Structured output (parsed status, diff, log) for the model.
 - Grant-governed operations (read vs write classification).
 - Approval gating (commit/push require approval; status/diff auto-allowed).

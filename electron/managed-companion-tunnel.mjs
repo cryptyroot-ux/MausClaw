@@ -111,7 +111,7 @@ export function resolveCloudflaredBinary({
   const bundled = path.join(String(resourcesPath ?? ""), "cloudflared", executable);
   if (isPackaged) return exists(bundled) ? bundled : null;
 
-  const override = environment.OMB_CLOUDFLARED_PATH?.trim();
+  const override = environment.MAUSCLAW_CLOUDFLARED_PATH?.trim();
   if (override) return path.isAbsolute(override) && exists(override) ? override : null;
 
   const staged = path.join(
@@ -277,7 +277,7 @@ async function verifyHostedEndpoint(
   const text = await response.text();
   if (Buffer.byteLength(text) > 4096) return false;
   try {
-    return JSON.parse(text)?.app === "openmausbot";
+    return JSON.parse(text)?.app === "mausclaw";
   } catch {
     return false;
   }

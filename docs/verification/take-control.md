@@ -40,9 +40,9 @@ raised in place once, and a cap someone chose stays.
 ## By hand, against a real Local VM
 
 Use Docker on macOS or Linux and a server from source in a temporary home:
-`HOME` and `OMB_DATA_DIR` in a new temporary folder, the fake engine in its
-`config.json` with `localVm: { mode: "per-bot" }`, `OMB_STATIC_DIR` set to a
-`pnpm exec vite build` output and `OMB_DEV_TRUST_LOCAL_BROWSER=1`. Give a bot
+`HOME` and `MAUSCLAW_DATA_DIR` in a new temporary folder, the fake engine in its
+`config.json` with `localVm: { mode: "per-bot" }`, `MAUSCLAW_STATIC_DIR` set to a
+`pnpm exec vite build` output and `MAUSCLAW_DEV_TRUST_LOCAL_BROWSER=1`. Give a bot
 the Local VM, create its VM from the panel and send it a message so it works.
 
 1. Press **Take control**. Within a fraction of a second the panel's picture

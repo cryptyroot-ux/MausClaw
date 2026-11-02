@@ -31,20 +31,20 @@ describe("custom MCP registry", () => {
   });
 
   it("refuses harness-owned environment names in stored and renderer entries", () => {
-    for (const key of ["OMB_HARNESS_URL", "OGB_BOX_TOKEN"]) {
+    for (const key of ["MAUSCLAW_HARNESS_URL", "OGB_BOX_TOKEN"]) {
       expect(parseStoredMcpServer("notes", { command: "notes-mcp", env: { [key]: "bad" } })).toEqual({
         ok: false,
-        error: `Environment variable “${key}” is reserved by OpenMausBot.`,
+        error: `Environment variable “${key}” is reserved by MausClaw.`,
       });
       expect(parseMcpServerMutation("notes", { command: "notes-mcp", env: { [key]: "bad" } })).toEqual({
         ok: false,
-        error: `Environment variable “${key}” is reserved by OpenMausBot.`,
+        error: `Environment variable “${key}” is reserved by MausClaw.`,
       });
     }
   });
 
   it("lets a custom server run an Electron binary as node, and nothing else", () => {
-    const refused = "Environment variable “ELECTRON_RUN_AS_NODE” is reserved by OpenMausBot; a custom server may set it to “1” only.";
+    const refused = "Environment variable “ELECTRON_RUN_AS_NODE” is reserved by MausClaw; a custom server may set it to “1” only.";
     expect(parseStoredMcpServer("notes", { command: "notes-mcp", env: { ELECTRON_RUN_AS_NODE: "0" } })).toEqual({ ok: false, error: refused });
     expect(parseMcpServerMutation("notes", { command: "notes-mcp", env: { ELECTRON_RUN_AS_NODE: "true" } })).toEqual({ ok: false, error: refused });
     const stored = parseStoredMcpServer("bundled", {
@@ -212,7 +212,7 @@ describe("parseMcpServersImport", () => {
     });
     expect(parseMcpServersImport('{"mcpServers": {"web": {"url": "x.example/mcp"}}}')).toMatchObject({ ok: false, error: expect.stringMatching(/full address/) });
     expect(parseMcpServersImport('{"mcpServers": {"computer": {"command": "x"}}}')).toMatchObject({ ok: false, error: expect.stringMatching(/reserved/i) });
-    expect(parseMcpServersImport('{"mcpServers": {"ok": {"command": "x", "env": {"OMB_TOKEN": "1"}}}}')).toMatchObject({ ok: false });
+    expect(parseMcpServersImport('{"mcpServers": {"ok": {"command": "x", "env": {"MAUSCLAW_TOKEN": "1"}}}}')).toMatchObject({ ok: false });
     expect(parseMcpServersImport("not json")).toMatchObject({ ok: false, error: expect.stringMatching(/JSON/i) });
     expect(parseMcpServersImport("[]")).toMatchObject({ ok: false });
   });

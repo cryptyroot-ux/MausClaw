@@ -38,7 +38,7 @@ No personal provider account, real credentials, or user workspace is used.
 
 ```sh
 pnpm exec vitest run src/components/AttachmentGallery.test.ts src/components/AttachmentPreview.test.ts src/components/ToolActivity.test.ts src/components/SettingsPrimitives.test.ts src/components/ShortcutHint.test.ts server/message-file.test.ts scripts/testing/verification-docs.test.ts
-pnpm exec vitest run server/tool-summary.test.ts server/control-omb.test.ts server/drivers/claude.test.ts server/drivers/codex.test.ts server/drivers/pi.test.ts server/drivers/acp/acp.test.ts
+pnpm exec vitest run server/tool-summary.test.ts server/control-mausclaw.test.ts server/drivers/claude.test.ts server/drivers/codex.test.ts server/drivers/pi.test.ts server/drivers/acp/acp.test.ts
 pnpm typecheck
 pnpm lint
 pnpm check:contrast
@@ -64,7 +64,7 @@ advanced without a media error. Both gallery expansion directions, the image
 dialog, settings search/Escape, and the New Bot shortcut hint were exercised.
 At 390 px, document scroll width remained 390 px. No browser console errors were
 reported in this run. The retained fixture log was
-`server-1789307799660-26000.log` in the temporary `openmausbot-verification-evidence`
+`server-1789307799660-26000.log` in the temporary `mausclaw-verification-evidence`
 directory printed by the launcher.
 
 These are offline provider fixtures and browser renderer checks, not live-model

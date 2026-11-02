@@ -5,15 +5,15 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
 import { request } from "../mcp-server.ts";
 import { mountPreview, type MountedPreview } from "./preview-fixture.ts";
-import { OPEN_SIDEBAR_TOOLS, UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { OPEN_SIDEBAR_TOOLS, UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
-const enabled = process.env.OMB_UI_E2E === "1" || Boolean(binary);
-if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to install the pinned browser");
+const enabled = process.env.MAUSCLAW_UI_E2E === "1" || Boolean(binary);
+if (!enabled) console.log("skipping team lifecycle UI e2e: set MAUSCLAW_UI_E2E=1 to install the pinned browser");
 
 (enabled ? it : it.skip)("creates an empty team, moves bots, and manages shared instructions in the renderer", async () => {
   let child: ChildProcess | undefined;
@@ -24,7 +24,7 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
   try {
     let stdout = "", stderr = "";
     let info: { ui: string; url: string; botId: string; logPath: string };
-    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-omb.ts"), "ui", "launch"], {
+    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-mausclaw.ts"), "ui", "launch"], {
       cwd: ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"],
     });
     child.stdout!.on("data", (chunk: Buffer) => { stdout += String(chunk); });
@@ -36,7 +36,7 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
     }, { timeout: binary ? 180_000 : 600_000, interval: 250 }).toBe(true);
     fixtureHandle = info!.ui;
     fixtureLog = info!.logPath;
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
     const target = async (name: string, roles: string[]) => {
       let matches: Array<[string, { name: string; role: string }]> = [];
       await expect.poll(async () => {
@@ -71,7 +71,7 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
     };
     const api = (path: string, method = "GET", body?: unknown) => request(path, { method,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, info.url);
-    const control = (...args: string[]) => runControlOmb([...args, "--url", info.url]);
+    const control = (...args: string[]) => runControlMausclaw([...args, "--url", info.url]);
     const a = (await control("new-bot", "--name", "Researcher", "--section", "Research") as any).bot;
     const b = (await control("new-bot", "--name", "Engineer", "--section", "Engineering") as any).bot;
 
@@ -86,7 +86,7 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
       if (!header) throw new Error('Missing team header');
       header.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 120, clientY: 250 })); return true;
     })()`);
-    await ui("eval", "--js", `localStorage.setItem('openmausbot.sidebarCollapsedSections.v1', JSON.stringify(['section:Delivery'])); localStorage.setItem('openmausbot.sidebarSectionOrder.v1', JSON.stringify(['section:Research','section:Delivery','section:Engineering'])); location.reload(); true`);
+    await ui("eval", "--js", `localStorage.setItem('mausclaw.sidebarCollapsedSections.v1', JSON.stringify(['section:Delivery'])); localStorage.setItem('mausclaw.sidebarSectionOrder.v1', JSON.stringify(['section:Research','section:Delivery','section:Engineering'])); location.reload(); true`);
     await expect.poll(snapshot, { timeout: 15_000 }).toContain('button "Delivery"');
     await teamMenu("Delivery");
     await ui("press", "--keys", "Escape");
@@ -101,8 +101,8 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
     await click("Save name");
     await expect.poll(snapshot).toContain('button "Dispatch"');
     expect((await ui("eval", "--js", "document.querySelector('[data-section=Dispatch] button')?.getAttribute('aria-expanded')")).result).toBe("false");
-    expect((await ui("eval", "--js", "JSON.parse(localStorage.getItem('openmausbot.sidebarCollapsedSections.v1'))")).result).toContain("section:Dispatch");
-    expect((await ui("eval", "--js", "JSON.parse(localStorage.getItem('openmausbot.sidebarSectionOrder.v1'))")).result).toEqual(["section:Research", "section:Dispatch", "section:Engineering"]);
+    expect((await ui("eval", "--js", "JSON.parse(localStorage.getItem('mausclaw.sidebarCollapsedSections.v1'))")).result).toContain("section:Dispatch");
+    expect((await ui("eval", "--js", "JSON.parse(localStorage.getItem('mausclaw.sidebarSectionOrder.v1'))")).result).toEqual(["section:Research", "section:Dispatch", "section:Engineering"]);
     await ui("eval", "--js", "location.reload(); true");
     await expect.poll(snapshot, { timeout: 15_000 }).toContain('button "Dispatch"');
     await teamMenu("Dispatch");
@@ -171,7 +171,7 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
     await manage("Launch");
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Edit Launch shared instructions");
     expect((await api("/api/section-context?section=Launch")).text).toBe("Research first, then build and review.");
-    const screenshot = join(ROOT, ".omb-scratch", "verify-evidence", "team-lifecycle.png");
+    const screenshot = join(ROOT, ".mausclaw-scratch", "verify-evidence", "team-lifecycle.png");
     await ui("screenshot", "--out", screenshot);
     await teamMenu("Launch");
     await click("Delete department");
@@ -346,9 +346,9 @@ if (!enabled) console.log("skipping team lifecycle UI e2e: set OMB_UI_E2E=1 to i
   } finally {
     if (!succeeded && fixtureHandle && fixtureLog) {
       try {
-        const result = await runControlOmb(["ui", "snapshot", "--ui", fixtureHandle]);
+        const result = await runControlMausclaw(["ui", "snapshot", "--ui", fixtureHandle]);
         writeFileSync(`${fixtureLog}.team-lifecycle-failure.json`, JSON.stringify(result, null, 2));
-        await runControlOmb(["ui", "screenshot", "--ui", fixtureHandle, "--out", `${fixtureLog}.team-lifecycle-failure.png`]);
+        await runControlMausclaw(["ui", "screenshot", "--ui", fixtureHandle, "--out", `${fixtureLog}.team-lifecycle-failure.png`]);
         console.info(JSON.stringify({ failureEvidence: `${fixtureLog}.team-lifecycle-failure.json` }));
       } catch { /* The original failure remains authoritative if the browser stopped. */ }
     }

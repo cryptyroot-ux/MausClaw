@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = fileURLToPath(new URL("..", import.meta.url)), flag = "--omb-cloud-account-fixture";
+const root = fileURLToPath(new URL("..", import.meta.url)), flag = "--mausclaw-cloud-account-fixture";
 if (process.versions.electron && process.argv.includes(flag)) {
   const { app, BrowserWindow, ipcMain, session } = await import("electron");
   const { createServer } = await import("node:http");
@@ -51,18 +51,18 @@ if (process.versions.electron && process.argv.includes(flag)) {
   try {
     await client.start(); assert.equal(begins, 0); assert.deepEqual(browsers, []);
     win = new BrowserWindow({ width: 740, height: 780, show: false, webPreferences: { preload: join(root, "electron/preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true,
-      additionalArguments: [`--omb-local-origin=${previewOrigin}`, "--omb-company-desktop=1"] } });
+      additionalArguments: [`--mausclaw-local-origin=${previewOrigin}`, "--mausclaw-company-desktop=1"] } });
     const evaluate = source => win.webContents.executeJavaScript(source, true);
     const wait = async text => { for (let count = 0; count < 240; count++) { if (await evaluate(`document.body.innerText.includes(${JSON.stringify(text)})`)) return; await new Promise(resolve => setTimeout(resolve, 50)); } throw new Error(`Missing fixture UI: ${text}`); };
     const click = async text => { for (let count = 0; count < 80; count++) {
       if (await evaluate(`(() => { const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)}); if(!b || b.disabled)return false; b.click(); return true; })()`)) return;
       await new Promise(resolve => setTimeout(resolve, 25));
     } throw new Error(`Button unavailable: ${text}`); };
-    await win.loadURL(preview); await wait("Sign in to OMB Cloud"); assert.equal(begins, 0);
+    await win.loadURL(preview); await wait("Sign in to MausClaw Cloud"); assert.equal(begins, 0);
     assert.equal(await evaluate("typeof window.ogb.cloudAccount.connection"), "undefined");
-    await click("Sign in to OMB Cloud"); await wait("Security details"); assert.equal(browsers[0], `${origin}/cloud/desktop?code=ABCDE-FGHJK`);
-    await click("Cancel sign-in"); await wait("Sign in to OMB Cloud"); assert.equal(saved, null);
-    await click("Sign in to OMB Cloud"); await wait("Security details"); approved = true;
+    await click("Sign in to MausClaw Cloud"); await wait("Security details"); assert.equal(browsers[0], `${origin}/cloud/desktop?code=ABCDE-FGHJK`);
+    await click("Cancel sign-in"); await wait("Sign in to MausClaw Cloud"); assert.equal(saved, null);
+    await click("Sign in to MausClaw Cloud"); await wait("Security details"); approved = true;
     await wait("Free account"); assert.equal(saved.token, token);
     assert.ok(!(await evaluate("(async () => JSON.stringify(await window.ogb.cloudAccount.state()))()")).includes(token));
     await click("Choose a Cloud plan in your browser"); await new Promise(resolve => setTimeout(resolve, 50)); assert.equal(browsers.at(-1), `${origin}/cloud`);
@@ -73,14 +73,14 @@ if (process.versions.electron && process.argv.includes(flag)) {
     offline = true; await click("Refresh"); await wait("Cloud status cannot currently be verified");
     assert.equal(await evaluate("document.body.innerText.includes('Pro active')"), false);
     offline = false; await click("Refresh"); await wait("Pro active");
-    win.setSize(390, 760); await click("Sign out of OMB Cloud"); await wait("does not cancel your subscription");
+    win.setSize(390, 760); await click("Sign out of MausClaw Cloud"); await wait("does not cancel your subscription");
     assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
     writeFileSync(join(output, "cloud-signout-narrow.png"), (await win.webContents.capturePage()).toPNG());
     await click("Keep signed in"); assert.equal(revokes, 0);
     revoked = true; await click("Refresh"); await wait("Cloud access expired or was revoked");
     assert.equal(await evaluate("document.body.innerText.includes('Pro active')"), false);
-    await click("Sign out of OMB Cloud"); await wait("does not cancel your subscription"); await click("Sign out of OMB Cloud");
-    await wait("Sign in to OMB Cloud");
+    await click("Sign out of MausClaw Cloud"); await wait("does not cancel your subscription"); await click("Sign out of MausClaw Cloud");
+    await wait("Sign in to MausClaw Cloud");
     for (let count = 0; count < 80 && revokes !== 1; count++) await new Promise(resolve => setTimeout(resolve, 25));
     assert.equal(saved, null); assert.equal(revokes, 1);
     await win.loadURL(`${origin}/`); assert.equal(await evaluate("typeof window.ogb?.cloudAccount"), "undefined"); assert.equal(await evaluate("typeof require"), "undefined");
@@ -92,7 +92,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
   });
 } else {
   const { createServer } = await import("vite"), { default: react } = await import("@vitejs/plugin-react"), { default: tailwindcss } = await import("@tailwindcss/vite");
-  const output = mkdtempSync(join(tmpdir(), "omb-cloud-account-ui-"));
+  const output = mkdtempSync(join(tmpdir(), "mausclaw-cloud-account-ui-"));
   for (const name of ["home", "user-data"]) mkdirSync(join(output, name));
   const ui = await createServer({ configFile: false, root, resolve: { alias: { "@": join(root, "src") } }, define: { __APP_VERSION__: JSON.stringify("fixture") },
     server: { host: "127.0.0.1", port: 0 }, plugins: [react(), tailwindcss(), {
@@ -100,7 +100,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
       load(id) { if (id === "\0virtual:cloud-account-fixture") return `import React from 'react'; import { createRoot } from 'react-dom/client'; import { CloudAccountSettings } from '/src/components/CloudAccountSettings.tsx'; import { setLocale } from '/src/lib/i18n.ts'; import '/src/styles.css'; setLocale('en'); createRoot(document.getElementById('root')).render(React.createElement('main',{className:'mx-auto flex max-w-xl flex-col gap-4'},React.createElement(CloudAccountSettings)));`; },
       configureServer(server) { server.middlewares.use((req, res, next) => {
         if (req.url !== "/__cloud.html") return next();
-        void server.transformIndexHtml(req.url, '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Isolated OMB Cloud</title></head><body class="bg-app p-4"><div id="root"></div><script type="module" src="/@id/virtual:cloud-account-fixture"></script></body></html>')
+        void server.transformIndexHtml(req.url, '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Isolated MausClaw Cloud</title></head><body class="bg-app p-4"><div id="root"></div><script type="module" src="/@id/virtual:cloud-account-fixture"></script></body></html>')
           .then(html => { res.setHeader("content-type", "text/html"); res.end(html); }).catch(next);
       }); },
     }] });

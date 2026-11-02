@@ -8,7 +8,7 @@ pnpm exec vitest run server/tool-results.test.ts server/drivers/agents-result.te
 
 The end-to-end test launches the shared `launchVerificationServer` fixture with
 its fake engine, temporary home and explicit loopback URL. It uses
-`control-omb doctor`, `new-bot`, thread-pinned `send`, `messages`, and
+`control-mausclaw doctor`, `new-bot`, thread-pinned `send`, `messages`, and
 `interrupt`. Profile/task setup uses that same isolated server's HTTP API.
 It creates 70 idle profiles to produce a genuinely large roster, then calls
 the real provider-mounted agents MCP process. No live models, computers,

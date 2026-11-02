@@ -31,7 +31,7 @@ export function createHomeAgain({ exportGrant, open, local, tempRoot }) {
   async function take(grant) {
     const session = await open(grant);
     const password = randomBytes(24).toString("base64url");
-    const file = join(tempRoot, `${randomBytes(8).toString("hex")}.ombbackup`);
+    const file = join(tempRoot, `${randomBytes(8).toString("hex")}.mausclawbackup`);
     try {
       const manifest = await session.call("GET", "/api/cloud-send/manifest");
       const switches = Object.fromEntries((Array.isArray(manifest.body?.automations) ? manifest.body.automations : [])

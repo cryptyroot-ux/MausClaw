@@ -4,7 +4,7 @@ The safety floor is a short never-list of shell commands the server will not
 approve by itself: a recursive delete of the filesystem root, the home
 directory or a top-level system directory; formatting or overwriting a disk;
 a fork bomb. It is off by default (`safetyFloor.enabled` in `config.json`, or
-`OMB_SAFETY_FLOOR=1`). No check here runs any of those commands: the
+`MAUSCLAW_SAFETY_FLOOR=1`). No check here runs any of those commands: the
 classifier only reads text, and every permission request is a fake one.
 
 It is not applied on a Windows server yet. There the setting is accepted and
@@ -76,7 +76,7 @@ pnpm exec vitest run server/auto-approve.test.ts server/command-allowlist.e2e.te
   floor is off; after `PUT /api/config` switches it on, the same request is
   denied, the transcript carries the notice and `/api/decisions` the row; an
   unsaved never-list command still reaches a card and the person's Allow
-  stands. It then restarts that fixture with only `OMB_SAFETY_FLOOR=1`, gives
+  stands. It then restarts that fixture with only `MAUSCLAW_SAFETY_FLOOR=1`, gives
   the bot Full access, and checks that Full is denied the never-list command
   and still answers an ordinary one. `/api/config` reports the switch at each
   step. The first request is also read off the `/api/events` stream, where it

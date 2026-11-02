@@ -16,7 +16,7 @@ export interface WorkspaceToolsConfig {
   readRoots?: readonly string[];
   /** Extra folders the bot may also write. */
   writeRoots?: readonly string[];
-  /** Lift path confinement entirely (bot config or OMB_WORKSPACE_UNRESTRICTED=1). */
+  /** Lift path confinement entirely (bot config or MAUSCLAW_WORKSPACE_UNRESTRICTED=1). */
   unrestricted?: boolean;
   /** Mount web_fetch/web_search (default true). */
   web?: boolean;
@@ -59,7 +59,7 @@ export const WORKSPACE_TOOL_DEFINITIONS: readonly ChatToolDefinition[] = [
     command: str("The command line, e.g. \"npm test -- --run src/a.test.ts\"."),
     cwd: str("Folder to run in, relative to the workspace (default: the workspace root)."),
     timeout_ms: int("Kill the command after this many milliseconds (default 120000, max 1800000).", { minimum: 1000, maximum: MAX_SHELL_MS }),
-    background: { type: "boolean", description: "Start without waiting; output goes to a log file in .rootclaw/bg/." },
+    background: { type: "boolean", description: "Start without waiting; output goes to a log file in .mausclaw/bg/." },
   }, ["command"]),
   fn("read_file", "Read a text file from the workspace with line numbers (\"  12\\tcontent\"). Reads up to 2000 lines from offset; " +
     "page through big files with offset/limit. Line numbers are for reference only, never part of the file.", {
@@ -200,7 +200,7 @@ export function shellEnvironment(root: string, source: NodeJS.ProcessEnv = proce
   const env: NodeJS.ProcessEnv = {};
   for (const key of SHELL_ENV_KEYS) if (source[key] !== undefined) env[key] = source[key];
   env.TERM ??= "dumb";
-  env.OMB_WORKSPACE = root;
+  env.MAUSCLAW_WORKSPACE = root;
   env.PAGER = "cat";
   env.GIT_PAGER = "cat";
   env.CI ??= "1";
@@ -219,7 +219,7 @@ async function runShell(args: Record<string, unknown>, paths: Paths, signal: Abo
   if (!existsSync(cwd) || !statSync(cwd).isDirectory()) return fail(`cwd ${paths.display(cwd)} is not a folder.`);
   const env = shellEnvironment(paths.root);
   if (args.background === true) {
-    const dir = join(paths.root, ".rootclaw", "bg");
+    const dir = join(paths.root, ".mausclaw", "bg");
     mkdirSync(dir, { recursive: true });
     const log = join(dir, `${Date.now()}-${randomBytes(3).toString("hex")}.log`);
     const out = openSync(log, "a");
@@ -314,7 +314,7 @@ function writeAtomic(path: string, content: string) {
     if (stat.isSymbolicLink()) { writeFileSync(path, content); return; }
     mode = stat.mode & 0o777;
   } catch {}
-  const temp = `${path}.rootclaw-${randomBytes(4).toString("hex")}.tmp`;
+  const temp = `${path}.mausclaw-${randomBytes(4).toString("hex")}.tmp`;
   writeFileSync(temp, content, mode !== undefined ? { mode } : undefined);
   renameSync(temp, path);
 }
@@ -481,7 +481,7 @@ function* walk(dir: string, signal?: AbortSignal): Generator<string> {
 
 let rgPath: string | null | undefined;
 function ripgrep(): string | null {
-  if (process.env.OMB_NO_RG === "1") return null;
+  if (process.env.MAUSCLAW_NO_RG === "1") return null;
   if (rgPath !== undefined) return rgPath;
   const probe = spawnSync("rg", ["--version"], { encoding: "utf8" });
   return (rgPath = probe.status === 0 ? "rg" : null);

@@ -4,17 +4,17 @@ import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { mountPreview } from "./testing/preview-fixture.ts";
-import { agentBrowser, ensureUiBrowser, sessionEnv } from "./testing/control-omb-ui.ts";
+import { agentBrowser, ensureUiBrowser, sessionEnv } from "./testing/control-mausclaw-ui.ts";
 
 const fixture = await launchVerificationServer();
-const home = mkdtempSync(join(tmpdir(), "omb-vmr-")); // Keep macOS browser sockets below their path limit.
+const home = mkdtempSync(join(tmpdir(), "mausclaw-vmr-")); // Keep macOS browser sockets below their path limit.
 let preview: Awaited<ReturnType<typeof mountPreview>> | undefined;
 let browser: { binary: string; env: NodeJS.ProcessEnv } | undefined;
 try {
   console.log(JSON.stringify(fixture.info));
-  await runControlOmb(["new-bot", "--name", "Resume test", "--url", fixture.info.url]);
+  await runControlMausclaw(["new-bot", "--name", "Resume test", "--url", fixture.info.url]);
   preview = await mountPreview(fixture, {
     entry: "/scripts/testing/cloud-preview.tsx", route: "/__vm-resume.html", title: "Local VM resume verification", logLevel: "silent",
   });
@@ -24,10 +24,10 @@ try {
   const command = (...args: string[]) => agentBrowser(binary, env, args);
   const evaluate = async <T = unknown>(js: string) => (await command("eval", js)).result as T;
   const wait = (condition: string) => { console.log("Waiting:", condition); return command("wait", "--fn", condition); };
-  const evidenceDir = process.env.OMB_UI_EVIDENCE_DIR
-    ? resolve(process.env.OMB_UI_EVIDENCE_DIR) : dirname(fixture.info.logPath);
+  const evidenceDir = process.env.MAUSCLAW_UI_EVIDENCE_DIR
+    ? resolve(process.env.MAUSCLAW_UI_EVIDENCE_DIR) : dirname(fixture.info.logPath);
   mkdirSync(evidenceDir, { recursive: true });
-  const record = process.env.OMB_UI_RECORD === "1";
+  const record = process.env.MAUSCLAW_UI_RECORD === "1";
   await command("set", "viewport", "900", "720");
   await command("open", preview.previewUrl);
   await wait(`document.querySelector('select[aria-label="Conversation surface"]') !== null`);

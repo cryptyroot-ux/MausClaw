@@ -14,7 +14,7 @@ test("Intel, AMD and other drivers use the GPU", () => {
   assert.equal(linuxDisablesGpu({ env: {}, exists: only() }), false);
 });
 
-test("OMB_LINUX_GPU overrides detection either way", () => {
-  assert.equal(linuxDisablesGpu({ env: { OMB_LINUX_GPU: "off" }, exists: only() }), true);
-  assert.equal(linuxDisablesGpu({ env: { OMB_LINUX_GPU: "on" }, exists: only("/sys/module/nvidia") }), false);
+test("MAUSCLAW_LINUX_GPU overrides detection either way", () => {
+  assert.equal(linuxDisablesGpu({ env: { MAUSCLAW_LINUX_GPU: "off" }, exists: only() }), true);
+  assert.equal(linuxDisablesGpu({ env: { MAUSCLAW_LINUX_GPU: "on" }, exists: only("/sys/module/nvidia") }), false);
 });

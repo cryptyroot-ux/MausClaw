@@ -386,7 +386,7 @@ function emitKotlin(): string {
       `        ),`,
     ].join("\n")
   })
-  return `package com.openmausbot.companion.ui
+  return `package com.mausclaw.companion.ui
 
 /**
  * The Halloween bodies a bot can wear — the Android half of \`shared/halloween-bodies.ts\`.

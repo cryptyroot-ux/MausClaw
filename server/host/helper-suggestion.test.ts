@@ -16,7 +16,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function setup(options: { cloud?: boolean } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-helper-suggestion-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-helper-suggestion-"));
   dirs.push(dir);
   const store = new Store(() => ({ instanceId: "codex", model: "gpt-5.5" }));
   const chief = store.createBot({ name: "Chief" });

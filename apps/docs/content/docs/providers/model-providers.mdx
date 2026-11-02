@@ -18,7 +18,7 @@ differences with OpenCode 2.x.
 | Your own OpenAI-compatible address | Yes, in OpenCode's config file | Yes | No | Not yet |
 | Your own Anthropic-compatible address | Not tested | No | Only through Claude Code's own settings | No |
 
-"Chat engine" is OpenMausBot's built-in engine for OpenAI-compatible services.
+"Chat engine" is MausClaw's built-in engine for OpenAI-compatible services.
 In a bot's model picker it is called **OpenAI-compatible (OpenRouter / Groq)**
 and, for now, sits in the Local group.
 
@@ -40,14 +40,14 @@ just needs your key.
 1. In a terminal, run `opencode auth login`.
 2. Pick **OpenRouter**, **Fireworks AI**, **DeepSeek** or **ClinePass** and
    paste your key.
-3. In OpenMausBot, open a bot's model picker, choose OpenCode and press the
+3. In MausClaw, open a bot's model picker, choose OpenCode and press the
    refresh button (**Refresh models**). The provider's models appear in the
-   list. OpenMausBot reads the model list from an ACP session on both
+   list. MausClaw reads the model list from an ACP session on both
    OpenCode 1.x and 2.x, and each model's effort levels the same way: a model
    that has them, such as GitHub Copilot's GPT and Claude models, shows them
    under **Reasoning** in the picker.
 
-OpenMausBot uses your normal OpenCode sign-ins and settings, so there is
+MausClaw uses your normal OpenCode sign-ins and settings, so there is
 nothing to set up inside the app. Sign in with the same OpenCode version that
 your bots use (see [OpenCode 2.x](#opencode-2x)).
 
@@ -74,14 +74,14 @@ your bots use (see [OpenCode 2.x](#opencode-2x)).
    ```
 
    Keep this file plain JSON, with no comments or trailing commas.
-   OpenMausBot edits it when an OpenCode bot uses a model running on this
+   MausClaw edits it when an OpenCode bot uses a model running on this
    computer.
 
-3. Refresh OpenCode's models in OpenMausBot.
+3. Refresh OpenCode's models in MausClaw.
 
 [OpenCode's provider guide](https://opencode.ai/docs/providers/) has more
 examples. OpenCode can also use Anthropic-compatible addresses, but we haven't
-tested that with OpenMausBot.
+tested that with MausClaw.
 
 On a self-hosted server that you start from a terminal, OpenCode also reads
 provider keys exported in that terminal, such as `OPENROUTER_API_KEY`,
@@ -115,7 +115,7 @@ On a server you can set `OPENAI_COMPAT_API_KEY` and `OPENAI_COMPAT_URL`
 instead.
 
 To use more than one provider at once, add extra `openai-compat` engines to
-`config.json` (see [Bring your own engine](https://github.com/milind-soni/OpenMausBot/blob/main/docs/custom-engines.md#any-openai-compatible-endpoint-no-process-at-all)).
+`config.json` (see [Bring your own engine](https://github.com/milind-soni/MausClaw/blob/main/docs/custom-engines.md#any-openai-compatible-endpoint-no-process-at-all)).
 Give each one its own key. An engine without a key uses the key from
 Connections and sends it to that engine's address.
 
@@ -142,15 +142,15 @@ stop with "This model needs OpenRouter credit".
 
 1. Install the standalone CLI with `npm install -g cline`.
 2. Run `cline auth` in a terminal to choose its provider, model and account.
-3. In OpenMausBot's bot model picker, select **Cline** and
+3. In MausClaw's bot model picker, select **Cline** and
    **Cline default (configured)**.
 
-OpenMausBot uses Cline's selected provider and saved credentials. Change the
+MausClaw uses Cline's selected provider and saved credentials. Change the
 provider or model through `cline auth`; the configured model is pinned before
 each prompt. An unconfigured account remains unavailable. **Set CLI** can
 select a wrapper with `--config` or `--data-dir` for a separate Cline home.
 
-Cline receives the bot's scoped MCP tools and uses OpenMausBot's approval
+Cline receives the bot's scoped MCP tools and uses MausClaw's approval
 broker, including Full Access. Native Cline tool selection is not supported.
 
 ### Claude Code
@@ -170,13 +170,13 @@ and your Claude bots follow it:
   `ANTHROPIC_CUSTOM_MODEL_OPTION` and each `ANTHROPIC_DEFAULT_*_MODEL` that
   isn't a Claude model. Otherwise bots ask for Claude models, which
   OpenRouter bills as Claude and DeepSeek replaces with its own model.
-  FireConnect's model list doesn't show up in OpenMausBot, so add
+  FireConnect's model list doesn't show up in MausClaw, so add
   `ANTHROPIC_MODEL` yourself. A bot runs only the model you pick:
   `ANTHROPIC_DEFAULT_*_MODEL` and `CLAUDE_CODE_SUBAGENT_MODEL` aren't carried
   over.
 - It applies only while no Anthropic API key is saved in Connections.
 - It changes Claude Code everywhere on this computer, not just in
-  OpenMausBot.
+  MausClaw.
 - On a server, use the `env` block too, not exports in the terminal that
   starts the server. Otherwise an Anthropic key saved in Connections can be
   sent to that provider.
@@ -193,11 +193,11 @@ another engine's sign-in or model list.
 
 ## OpenCode 2.x
 
-OpenMausBot installs and tests OpenCode 1.x (the `opencode-ai` npm package).
+MausClaw installs and tests OpenCode 1.x (the `opencode-ai` npm package).
 OpenCode 2.x is a separate package, `@opencode/cli`, and it also installs a
 command called `opencode`.
 
-- If you installed OpenCode from OpenMausBot's Settings, bots use that copy.
+- If you installed OpenCode from MausClaw's Settings, bots use that copy.
   Otherwise they use the first `opencode` on your PATH, which is 2.x if you
   installed `@opencode/cli`. **Settings → Engines** shows the version in use.
 - 2.x works on a best-effort basis. Version-specific differences:

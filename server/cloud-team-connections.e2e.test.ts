@@ -1,4 +1,4 @@
-// A real Team Cloud (OMB_CLOUD_ROLE=team) with the fake connected-apps service and fake MCP servers: connections the team
+// A real Team Cloud (MAUSCLAW_CLOUD_ROLE=team) with the fake connected-apps service and fake MCP servers: connections the team
 // makes once, and connections each person makes for themselves. Ada's own Gmail and mail key reach only her private chat,
 // only for her own requests: never a group chat, the bot's main chat, Cleo's chat or an admin writing in hers; and no admin
 // read ever holds them. The engine is the synthetic Claude CLI, calling the connected-apps bridges it was launched with.
@@ -36,7 +36,7 @@ beforeAll(async () => {
   mail = await startFakeHttpMcp({ tools: [{ name: "read_inbox" }] });
   oauth = await startFakeOAuth();
   notes = await startFakeHttpMcp({ tools: [{ name: "read_notes" }], acceptBearer: oauth.isValid, wwwAuthenticate: oauth.challenge });
-  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, broker, team: { id: "team-acme-1", name: "Acme", engine: ENGINE, env: { OMB_BOT_BOX: "0" } } });
+  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, broker, team: { id: "team-acme-1", name: "Acme", engine: ENGINE, env: { MAUSCLAW_BOT_BOX: "0" } } });
   team = fx.team!;
   owner = (await team.pair(OWNER)).token!;
   admin = (await team.pair(ADMIN)).token!;
@@ -151,7 +151,7 @@ it("lets Ada connect her own Gmail and mail key, and nobody reads them back", as
   const read = await team.signed("GET", "/api/cloud/team/admin");
   expect(read.body.scopes).toEqual({ apps: ["gmail"], mcp: ["mail"] });
   expect(read.body.people).toEqual({ apps: { gmail: [ADA.email] }, mcp: { mail: [ADA.email] } });
-  const held = JSON.parse(readFileSync(join(team.home, ".openmausbot", "people-connections", "apps.json"), "utf8")).people[personKey({ id: "", email: ADA.email })].token as string;
+  const held = JSON.parse(readFileSync(join(team.home, ".mausclaw", "people-connections", "apps.json"), "utf8")).people[personKey({ id: "", email: ADA.email })].token as string;
   for (const answer of [read.body, (await team.as(owner, "GET", "/api/mcp/servers")).body, (await team.as(admin, "GET", "/api/config")).body,
     (await team.as(owner, "GET", "/api/connectors/connected")).body, (await team.as(admin, "GET", "/api/team/my-connections")).body]) {
     expect(JSON.stringify(answer)).not.toContain(ADA_KEY);
@@ -159,7 +159,7 @@ it("lets Ada connect her own Gmail and mail key, and nobody reads them back", as
     expect(JSON.stringify(answer)).not.toContain("ada.private@gmail.example");
   }
   // On the volume: a folder of its own, 0700, that no backup carries.
-  if (process.platform !== "win32") expect(statSync(join(team.home, ".openmausbot", "people-connections")).mode & 0o777).toBe(0o700);
+  if (process.platform !== "win32") expect(statSync(join(team.home, ".mausclaw", "people-connections")).mode & 0o777).toBe(0o700);
 }, hostTimeout(60_000));
 
 it("gives Ada's own Gmail and mail to her private chat, for her own request, and runs as her", async () => {
@@ -176,7 +176,7 @@ it("gives Ada's own Gmail and mail to her private chat, for her own request, and
   expect(team_.thread).toContain("Gmail here is this person's own: use it through the own_apps tools");
   expect(gmailCallsBy(teamUser)).toBe(teamBefore);
   // Each bridge keeps its own bearer from turn to turn, so her conversation's engine stays warm.
-  const bearer = (dumped: Dump, server: string) => (dumped.mcpConfig.mcpServers[server] as { env: Record<string, string> }).env.OMB_CONNECTOR_TOKEN;
+  const bearer = (dumped: Dump, server: string) => (dumped.mcpConfig.mcpServers[server] as { env: Record<string, string> }).env.MAUSCLAW_CONNECTOR_TOKEN;
   expect(bearer(team_, "own_apps")).toBe(bearer(seen, "own_apps"));
   expect(bearer(team_, "composio")).toBe(bearer(seen, "composio"));
   expect(bearer(seen, "own_apps")).not.toBe(bearer(seen, "composio"));
@@ -232,7 +232,7 @@ it("signs Cleo in to a notes server of her own, and only her chat gets her token
       res.setEncoding("utf8").on("data", (chunk: string) => { text += chunk; }).on("end", () => resolve(`${res.statusCode} ${text}`));
     }).on("error", reject);
   });
-  expect(page).toBe("200 Signed in. You can close this tab and return to OpenMausBot.");
+  expect(page).toBe("200 Signed in. You can close this tab and return to MausClaw.");
   expect((await team.as(cleo, "GET", "/api/team/my-connections")).body.mcp).toEqual(expect.arrayContaining([expect.objectContaining({ name: "notes", connected: true, how: "sign-in" })]));
   const cleos = await turn(cleo, cleoThread, "Read my notes.");
   const token = /Bearer ([\w.-]+)/.exec(JSON.stringify((cleos.mcpConfig.mcpServers as Record<string, unknown>).notes))?.[1];
@@ -320,7 +320,7 @@ it("skips automatic personal MCP probes after setup and restart while still prob
     expect.soft(personal.seenHeaders.filter((headers) => headers.authorization !== ownAuthorization), "after personal setup").toEqual([]);
 
     personal.seenHeaders.length = 0;
-    rmSync(join(team.home, ".openmausbot", "mcp-app-catalog.json"));
+    rmSync(join(team.home, ".mausclaw", "mcp-app-catalog.json"));
     await team.relaunch();
     await expect.poll(teamHasApps, { timeout: 40_000 }).toBe(true);
     expect(shared.toolsLists).toBe(2);

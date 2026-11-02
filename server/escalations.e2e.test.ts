@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { openSse } from "./testing/sse.ts";
 
 async function launch() {
@@ -19,7 +19,7 @@ async function launch() {
     expect(response.status, `${method} ${path}: ${JSON.stringify(value)}`).toBe(expectedStatus);
     return value;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const file = (threadId: string, extension: string) => join(dataDir, `${threadId}.${extension}`);
   const dump = async (threadId: string) => {
     await expect.poll(() => existsSync(file(threadId, "json")), { timeout: 20_000 }).toBe(true);
@@ -40,7 +40,7 @@ async function launch() {
       'import { existsSync, readFileSync } from "node:fs";',
       'import { join } from "node:path";',
       'const at = process.argv.indexOf("--mcp-config");',
-      'const thread = at < 0 ? "probe" : JSON.parse(readFileSync(process.argv[at + 1], "utf8")).mcpServers?.agents?.env?.OMB_THREAD_ID ?? "probe";',
+      'const thread = at < 0 ? "probe" : JSON.parse(readFileSync(process.argv[at + 1], "utf8")).mcpServers?.agents?.env?.MAUSCLAW_THREAD_ID ?? "probe";',
       `const own = existsSync(${JSON.stringify(planFile)}) ? JSON.parse(readFileSync(${JSON.stringify(planFile)}, "utf8"))[thread] : undefined;`,
       "if (own?.replies) process.env.FAKE_CLAUDE_REPLIES = JSON.stringify(own.replies);",
       "if (own?.tools) process.env.FAKE_CLAUDE_TOOL_CALLS = JSON.stringify(own.tools);",
@@ -84,7 +84,7 @@ it("delivers a pending peer-comm approval card to the Chief's escalations thread
     ), { timeout: 10_000 }).toBe(true);
     const run = await dump(escalations.threadId);
     const prompt = JSON.stringify(run.prompt);
-    expect(prompt).toContain("[Escalation notice from OpenMausBot — not from the person.");
+    expect(prompt).toContain("[Escalation notice from MausClaw — not from the person.");
     expect(prompt).toContain("approval card to contact @Hedge is waiting on the person");
     expect(prompt).toContain("Hedge, a quick one before I file the memo.");
     expect(prompt).toContain(`bot_id \\"${ada.id}\\"`);
@@ -122,7 +122,7 @@ it("delivers a teammate turn that ends needing input to the Chief's escalations 
     ), { timeout: 10_000 }).toBe(true);
     const run = await dump(escalations.threadId);
     const prompt = JSON.stringify(run.prompt);
-    expect(prompt).toContain("[Escalation notice from OpenMausBot — not from the person.");
+    expect(prompt).toContain("[Escalation notice from MausClaw — not from the person.");
     expect(prompt).toContain("which repository should I tag?");
     expect(prompt).toContain(`thread_id \\"${mira.activeTaskId}\\"`);
     const noticeLine = (await messages(escalations.threadId)).find((m) => m.role === "user" && /Escalation notice/.test(m.text ?? ""));
@@ -152,12 +152,12 @@ it("carries the provenance fence header on a bot-raised escalation", async () =>
     const escalations = await escalationsThread(chief.id);
     const run = await dump(escalations.threadId);
     const prompt = JSON.stringify(run.prompt);
-    expect(prompt).toContain("[Escalation notice from OpenMausBot — not from the person.");
+    expect(prompt).toContain("[Escalation notice from MausClaw — not from the person.");
     expect(prompt).toContain("The deploy needs the production key only the person can unlock.");
     expect(prompt).toContain("it raised this flag itself");
     expect(prompt).toContain(`thread_id \\"${mira.activeTaskId}\\"`);
     const noticeLine = (await messages(escalations.threadId)).find((m) => m.role === "user" && /Escalation notice/.test(m.text ?? ""));
-    expect(noticeLine?.text?.split("\n")[0]).toMatch(/^\[.+ from OpenMausBot — not from the person\. .+\]$/);
+    expect(noticeLine?.text?.split("\n")[0]).toMatch(/^\[.+ from MausClaw — not from the person\. .+\]$/);
     expect(noticeLine?.peerAsk).toEqual({ botId: mira.id, name: "Mira", unattended: true, incident: { threadId: mira.activeTaskId } });
     await turnEnded(chief.id, escalations.threadId);
   } finally {

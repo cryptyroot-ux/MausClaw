@@ -1,7 +1,7 @@
 # Provider images, authentication and thread approvals
 
 Every command below uses a disposable home. No real account, API key,
-provider charge, deployment, or running OpenMausBot workspace is involved.
+provider charge, deployment, or running MausClaw workspace is involved.
 
 ## Real CLI transport checks
 
@@ -16,15 +16,15 @@ node --experimental-strip-types scripts/verify-opencode-permissions.ts /absolute
 
 - Grok must deliver the **exact** synthetic PNG bytes to a loopback model.
   Grok 1.0.25 advertises `image:false` despite accepting native ACP image
-  blocks. OMB enables that verified compatibility path only for official
+  blocks. MausClaw enables that verified compatibility path only for official
   1.0.x runtimes from 1.0.25 onward; other runtimes must negotiate image
   input normally. The fixture uses a valid 32×32 PNG because Grok rejects
   images below 8 pixels per axis or 512 total pixels.
 - Claude must complete **two** turns using the selected account's personal
   `apiKeyHelper`, and again with `settings.json`'s API key. All authenticated
   model requests go to the fake local Anthropic endpoint. An unrelated
-  personal SessionStart hook must not run. OMB retains project settings but
-  projects only account authentication from personal settings. Explicit OMB
+  personal SessionStart hook must not run. MausClaw retains project settings but
+  projects only account authentication from personal settings. Explicit MausClaw
   credentials/endpoints take precedence as a pair.
 - OpenCode must actually read a synthetic file **outside** its workspace in
   Full mode without a permission request. The same native session resumes in
@@ -41,7 +41,7 @@ node --experimental-strip-types scripts/verify-opencode-permissions.ts /absolute
 These prove transport/auth integration, not hosted image interpretation,
 subscription entitlement, Console-profile availability, or production API
 uptime. If Claude still reports signed out, compare its `/status` Profile
-and the account selected in OMB; never request the user's keys or tokens.
+and the account selected in MausClaw; never request the user's keys or tokens.
 
 ## ACP internal-error recovery
 
@@ -52,7 +52,7 @@ pnpm exec vitest run server/drivers/acp/acp.test.ts server/acp-recovery.e2e.test
 The ACP transport fixture injects an internal RPC error, including one after
 partial output. The failed turn completes once without automatically resending
 it. The failed process is retired; a subsequent explicit turn resumes the durable
-session on a fresh process and can complete in the same OMB thread. Where a
+session on a fresh process and can complete in the same MausClaw thread. Where a
 native session can no longer be loaded, the replacement receives the canonical
 conversation history rather than only the latest message.
 
@@ -99,7 +99,7 @@ fake Claude, Codex, Grok and Antigravity providers. Assertions cover:
   safety error explains the restriction and does not offer Retry.
 
 For a UI-only rerun use `--ui-only` instead of `--ui`. Screenshots are written
-to `.omb-scratch/verify-evidence/provider-fixes/`. The fixture exits and removes
+to `.mausclaw-scratch/verify-evidence/provider-fixes/`. The fixture exits and removes
 its own disposable server/browser data; the screenshots remain.
 
 ## Regression checks

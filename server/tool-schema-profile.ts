@@ -22,7 +22,7 @@ const PROFILES: Record<ToolSchemaProfileId, ToolSchemaProfile> = {
   moonshot: { id: "moonshot", provider: "Kimi", maxSchemaBytes: 12_000, maxDepth: 30, measureInlined: true },
 };
 
-export const TOOL_SCHEMA_PROFILE_ENV = "OMB_TOOL_SCHEMA_PROFILE";
+export const TOOL_SCHEMA_PROFILE_ENV = "MAUSCLAW_TOOL_SCHEMA_PROFILE";
 
 export function toolSchemaProfile(id: unknown): ToolSchemaProfile | undefined {
   return typeof id === "string" && Object.hasOwn(PROFILES, id) ? PROFILES[id as ToolSchemaProfileId] : undefined;

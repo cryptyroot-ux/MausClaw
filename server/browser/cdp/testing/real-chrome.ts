@@ -1,5 +1,5 @@
-// The driver's real-Chrome suites run when OMB_CDP_CHROME names a Chrome, or
-// when OMB_CDP_E2E=1 asks for the one installed in the usual place (GitHub's
+// The driver's real-Chrome suites run when MAUSCLAW_CDP_CHROME names a Chrome, or
+// when MAUSCLAW_CDP_E2E=1 asks for the one installed in the usual place (GitHub's
 // runners have Google Chrome). Otherwise they are skipped.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync } from "node:fs";
@@ -29,29 +29,29 @@ const INSTALLED: Partial<Record<NodeJS.Platform, string[]>> = {
 };
 
 export function chromeForTests(): string | null {
-  const named = process.env.OMB_CDP_CHROME;
+  const named = process.env.MAUSCLAW_CDP_CHROME;
   if (named) {
-    if (!existsSync(named)) throw new Error(`OMB_CDP_CHROME names no file: ${named}`);
+    if (!existsSync(named)) throw new Error(`MAUSCLAW_CDP_CHROME names no file: ${named}`);
     return named;
   }
-  if (process.env.OMB_CDP_E2E !== "1") return null;
+  if (process.env.MAUSCLAW_CDP_E2E !== "1") return null;
   const found = (INSTALLED[process.platform] ?? []).find((path) => existsSync(path));
-  if (!found) throw new Error("OMB_CDP_E2E=1 but no installed Google Chrome was found; set OMB_CDP_CHROME.");
+  if (!found) throw new Error("MAUSCLAW_CDP_E2E=1 but no installed Google Chrome was found; set MAUSCLAW_CDP_CHROME.");
   return found;
 }
 
 export const CHROME = chromeForTests();
-if (!CHROME) console.log("skipping omb-cdp real-Chrome suites: set OMB_CDP_CHROME to a Chrome executable, or OMB_CDP_E2E=1 to use the installed Google Chrome");
+if (!CHROME) console.log("skipping mausclaw-cdp real-Chrome suites: set MAUSCLAW_CDP_CHROME to a Chrome executable, or MAUSCLAW_CDP_E2E=1 to use the installed Google Chrome");
 
 export const FIRST_LAUNCH_MS = FIRST_START_MS;
 
 /** Linux CI on containers and some runners needs the operator opt-out; never set by the driver itself. */
 const sandbox = !sandboxDisabled(process.env);
 
-export const HOST = process.env.OMB_CDP_HOST === "container" ? "container" : process.env.OMB_CDP_HOST === "server" ? "server" : "desktop";
+export const HOST = process.env.MAUSCLAW_CDP_HOST === "container" ? "container" : process.env.MAUSCLAW_CDP_HOST === "server" ? "server" : "desktop";
 
 export function testRoot(): string {
-  const root = process.env.OMB_CDP_TEST_TMP ?? tmpdir();
+  const root = process.env.MAUSCLAW_CDP_TEST_TMP ?? tmpdir();
   mkdirSync(root, { recursive: true });
   return root;
 }
@@ -108,7 +108,7 @@ export interface StartOptions {
 
 export async function startChrome(label: string, { launch = {}, browser: browserOptions = {}, takeFirstNavigation = process.platform === "win32" }: StartOptions = {}): Promise<RunningChrome> {
   if (!CHROME) throw new Error("No Chrome to test with.");
-  const dir = mkdtempSync(join(testRoot(), "omb-cdp-"));
+  const dir = mkdtempSync(join(testRoot(), "mausclaw-cdp-"));
   const chrome = await launchChrome({
     executablePath: CHROME,
     userDataDir: join(dir, "profile"),
@@ -156,7 +156,7 @@ async function firstNavigation(browser: CdpBrowser): Promise<void> {
  */
 export async function bareChromeStart(url: string): Promise<number> {
   if (!CHROME) throw new Error("No Chrome to test with.");
-  const dir = mkdtempSync(join(testRoot(), "omb-cdp-bare-"));
+  const dir = mkdtempSync(join(testRoot(), "mausclaw-cdp-bare-"));
   const args = ["--remote-debugging-pipe", `--user-data-dir=${join(dir, "profile")}`, "--headless=new", "--no-first-run", "--no-default-browser-check", ...credentialStoreFlags(), ...(sandbox ? [] : ["--no-sandbox"]), "about:blank"];
   const started = performance.now();
   const child = spawn(CHROME, args, { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"], env: chromeEnv(process.env, { host: HOST }), windowsHide: true });

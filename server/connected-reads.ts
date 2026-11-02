@@ -69,7 +69,7 @@ const MESSAGE_WORD = /\b(?:message|email|thread)\b/i;
 const MISSING_WORD = /\b(?:not found|deleted|no longer exists)\b/i;
 const OTHER_SUBJECT = /\b(?:account|connect|o?auth|token|permission|scope|credential|tool|integration)/i;
 const MULTI_EXECUTE = "COMPOSIO_MULTI_EXECUTE_TOOL";
-const CALL_ID = "omb-check-call";
+const CALL_ID = "mausclaw-check-call";
 const PREVIEW_MAX = 300;
 const ADDRESS = /^[\w.+][\w.+-]*@[\w-]+(?:\.[\w-]+)+$/;
 const PRIMARY_CALENDAR = { id: "primary", name: "primary", primary: true, owned: true, read: true } as const;
@@ -347,8 +347,8 @@ export function createConnectedReads(deps: ConnectedReadDeps): ConnectedReads {
 
     async function open(signal: AbortSignal): Promise<string | undefined> {
       const init = await deps.relay({
-        jsonrpc: "2.0", id: "omb-check-init", method: "initialize",
-        params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "openmausbot-checks", version: "1" } },
+        jsonrpc: "2.0", id: "mausclaw-check-init", method: "initialize",
+        params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "mausclaw-checks", version: "1" } },
       }, undefined, signal);
       if (init.status !== 200) throw new Error(`connected apps answered HTTP ${init.status}`);
       // Streamable-HTTP MCP servers expect the initialized notification before the first request.

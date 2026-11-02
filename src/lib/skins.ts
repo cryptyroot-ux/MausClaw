@@ -42,7 +42,7 @@ export const THEME_SKINS = { light: "daylight", dark: "midnight" } as const sati
 export const DEFAULT_SKIN_CHOICE: SkinChoice = "system";
 export const PRIOR_INSTALL_SKIN: SkinId = "midnight";
 
-const KEY = "omb-skin";
+const KEY = "mausclaw-skin";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function isSkinId(value: unknown): value is SkinId {

@@ -299,7 +299,7 @@ export function createChatAppsMcp(deps: ChatAppsMcpDeps): ChatAppsMcp {
     try { problems = validate && !validate(callArgs) ? schemaProblems(validate.errors) : undefined; } catch { problems = undefined; }
     if (problems?.length) return rpcError(400, -32602, `Invalid arguments: ${problems.join("; ")}`);
     // A change follows the bot's approval level: it runs at Full access, and at any other level, where the bot
-    // itself would ask first, it is declined. OpenMausBot draws no Allow card of its own.
+    // itself would ask first, it is declined. MausClaw draws no Allow card of its own.
     const annotations = isRecord(tool.annotations) ? tool.annotations : {};
     const runs = annotations.readOnlyHint === true
       || (!visibility.includes("model") && annotations.destructiveHint !== true)

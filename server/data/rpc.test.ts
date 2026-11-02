@@ -15,7 +15,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function harness(signal = new AbortController().signal) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-data-rpc-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-data-rpc-"));
   dirs.push(dir);
   const database = new FakeDataDatabase();
   let checks = 0;
@@ -49,7 +49,7 @@ describe("dataRpc", () => {
     const { deps, database, checks } = harness();
     const result = await dataRpc({ method: "tools/call", params: { name: "data_sql", arguments: { sql: "SELECT 1 AS one", limit: 1 } } }, deps) as { isError?: boolean; structuredContent: Record<string, unknown> };
     expect(result.isError).toBeUndefined();
-    expect(result.structuredContent).toMatchObject({ table: "omb_results.q_1", rowCount: 3, truncated: true });
+    expect(result.structuredContent).toMatchObject({ table: "mausclaw_results.q_1", rowCount: 3, truncated: true });
     expect(checks()).toBe(2);
     expect(database.calls.every((call) => call.method === "listTables" || call.connection === "bot")).toBe(true);
   });

@@ -22,7 +22,7 @@
   "configSummary": {
     "provider": "elevenlabs (record stub)",
     "model": "eleven_flash_v2_5",
-    "voice": "omb-stub-voice"
+    "voice": "mausclaw-stub-voice"
   },
   "synthesis": {
     "protocol": "elevenlabs-wire stub on loopback; no live engine call, no engine key",

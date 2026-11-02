@@ -126,7 +126,7 @@ export function welcomeOnScreen(): boolean {
   return welcomeShown > 0;
 }
 
-const WELCOME_FINISHED_KEY = "omb.onboarding.welcomeFinished";
+const WELCOME_FINISHED_KEY = "mausclaw.onboarding.welcomeFinished";
 /** The first-run welcome ended in this app session (never a replay): the full-screen Cloud Pro popup waits for a later
  * launch rather than following it. Kept for the window's session, so a reload counts as the same launch. */
 // Where browser storage is blocked, this page's memory stands in for it.
@@ -146,7 +146,7 @@ export function welcomeFinishedThisLaunch(): boolean {
   }
 }
 
-export const DEFAULT_ADMIN_ORIGIN = "https://admin.openmausbot.com";
+export const DEFAULT_ADMIN_ORIGIN = "https://admin.mausclaw.com";
 
 export function organisationSignIn<Bridge>(
   ogb: { organization?: Bridge; remoteClient?: { active?: boolean } } | undefined,

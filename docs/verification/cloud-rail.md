@@ -90,7 +90,7 @@ own wiring of the choice.
 ## Rendered workflow
 
 ```sh
-node --experimental-strip-types scripts/verify-cloud-rail.ts --shots .omb-scratch/verify-evidence/cloud-rail
+node --experimental-strip-types scripts/verify-cloud-rail.ts --shots .mausclaw-scratch/verify-evidence/cloud-rail
 ```
 
 It starts a disposable fake-engine server with three bots and the real app in

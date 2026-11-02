@@ -8,11 +8,11 @@ import { installCloudFiles } from "./cloud-sync-main.mjs";
 test("Files keeps its settings in the folder main names (the staging Admin's own), else cloud-sync", async (t) => {
   const { existsSync } = await import("node:fs");
   for (const [stateDir, folder] of [[undefined, "cloud-sync"], ["cloud-sync-staging", "cloud-sync-staging"]]) {
-    const dir = realpathSync(mkdtempSync(join(tmpdir(), "omb-files-dir-")));
+    const dir = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-files-dir-")));
     const installed = installCloudFiles({
       app: { getPath: (name) => join(dir, name) }, ipcMain: { handle: () => {} }, dialog: {}, shell: { trashItem: async () => {} }, powerMonitor: { on: () => {} },
       fetch: async () => { throw new Error("offline"); }, localWorkspaceOnly: (_channel, handler) => handler, send: () => {}, cloudOrigin: () => null,
-      cloudAccount: () => ({ openDashboard: async () => {} }), localDataDir: join(dir, "home", ".openmausbot"), ...(stateDir ? { stateDir } : {}),
+      cloudAccount: () => ({ openDashboard: async () => {} }), localDataDir: join(dir, "home", ".mausclaw"), ...(stateDir ? { stateDir } : {}),
     });
     // Close before removing: Windows will not delete a folder whose Files database is still open.
     t.after(() => { installed.close(); rmSync(dir, { recursive: true, force: true }); });
@@ -22,7 +22,7 @@ test("Files keeps its settings in the folder main names (the staging Admin's own
 });
 
 test("Files channels answer this computer's own window only, and share only a folder the person picked here", async (t) => {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "omb-files-main-")));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-files-main-")));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const picked = join(dir, "home", "Clients");
   mkdirSync(picked, { recursive: true });
@@ -37,7 +37,7 @@ test("Files channels answer this computer's own window only, and share only a fo
     fetch: async () => { throw new Error("offline"); },
     localWorkspaceOnly: (channel, handler) => { guards.push(channel); return handler; },
     send: () => {}, cloudOrigin: () => null, cloudAccount: () => ({ openDashboard: async () => {} }),
-    localDataDir: join(dir, "home", ".openmausbot"),
+    localDataDir: join(dir, "home", ".mausclaw"),
   });
   t.after(() => installed.close());
   assert.deepEqual(guards, ["files:state", "files:pick", "files:check", "files:share", "files:stop", "files:deletes", "files:locate", "files:outputs", "files:open", "files:more-space"]);
@@ -65,11 +65,11 @@ test("Files channels answer this computer's own window only, and share only a fo
 });
 
 test("a folder added on the Files page is lent, read only, and Stop sharing takes it back from lending", async (t) => {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "omb-files-lend-")));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-files-lend-")));
   const picked = join(dir, "home", "Clients");
   mkdirSync(picked, { recursive: true });
   const handlers = new Map();
-  const env = { id: "my-cloud", origin: "https://omb-u-aaaaaaaaaaaa.fly.dev" };
+  const env = { id: "my-cloud", origin: "https://mausclaw-u-aaaaaaaaaaaa.fly.dev" };
   let state = { enabled: false, folders: [], screen: false, internet: false, chrome: false, terminal: false };
   const saves = [];
   const sharing = {
@@ -80,7 +80,7 @@ test("a folder added on the Files page is lent, read only, and Stop sharing take
     app: { getPath: (name) => join(dir, name) }, ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
     dialog: { showOpenDialog: async () => ({ canceled: false, filePaths: [picked] }) }, shell: { trashItem: async () => {} }, powerMonitor: { on: () => {} },
     fetch: async () => { throw new Error("offline"); }, localWorkspaceOnly: (_channel, handler) => handler, send: () => {}, cloudOrigin: () => null,
-    cloudAccount: () => ({ openDashboard: async () => {}, state: () => ({}) }), localDataDir: join(dir, "home", ".openmausbot"),
+    cloudAccount: () => ({ openDashboard: async () => {}, state: () => ({}) }), localDataDir: join(dir, "home", ".mausclaw"),
     lending: { environment: () => env, sharing: () => sharing, validate: async ([folder]) => [{ ...folder, name: "Clients" }] },
   });
   // Close before removing: Windows will not delete a folder whose Files database is still open.

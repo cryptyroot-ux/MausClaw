@@ -14,7 +14,7 @@ gateway, a Slack bot, an OpenClaw session) holding a standing agents
 capability from `external-runtimes.json` for one pinned thread
 (docs/self-hosting.md, "A bot that also runs outside the server"). It drives
 the bundled MCP stdio bridge, `server/drivers/agents-proxy.ts`, with
-`OMB_EXTERNAL_RUNTIME=1`. The bridge offers the one tool surface every turn
+`MAUSCLAW_EXTERNAL_RUNTIME=1`. The bridge offers the one tool surface every turn
 gets (docs/runtime-contract.md §9): `coordinate_bots` (work, or a question
 with `consult: true`, or a one-way notice with `reply: "none"`) and the
 read-only `assignment_status`. The server accepts only `GET /api/internal/agents`,

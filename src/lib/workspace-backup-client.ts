@@ -1,6 +1,6 @@
 import { WORKSPACE_BACKUP_CLIENT_KEYS, type WorkspaceBackupClientState } from "../../shared/workspace-backup-client";
 
-export const WORKSPACE_RESTORE_MARKER = "omb-pending-workspace-restore";
+export const WORKSPACE_RESTORE_MARKER = "mausclaw-pending-workspace-restore";
 
 export function collectWorkspaceClientState(storage: Pick<Storage, "getItem"> = localStorage): WorkspaceBackupClientState {
   const result: WorkspaceBackupClientState = {};

@@ -1,6 +1,6 @@
 // What of this server a box may reach: only the harness routes under /api/internal/, which every engine helper (the
 // agents, browser, computer, connectors and hook proxies) calls with a per-turn capability bearer. A loopback port inside
-// the box, at the server's own port number, is bridged to this unix socket, so OMB_HARNESS_URL needs no change; every
+// the box, at the server's own port number, is bridged to this unix socket, so MAUSCLAW_HARNESS_URL needs no change; every
 // other route of the server answers 403 here before it is ever asked.
 import { createServer, request as httpRequest, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { Socket } from "node:net";

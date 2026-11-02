@@ -7,7 +7,7 @@ import { caseInsensitive, scanPc, sha256File, watchFolder } from "./cloud-sync-s
 
 const LATER = () => Date.now() + 60_000;
 function folder(t) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-sync-scan-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-sync-scan-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
@@ -17,7 +17,7 @@ test("lists files as wire paths with hashes, keeping links and hard links as pre
   mkdirSync(join(dir, "sub"));
   writeFileSync(join(dir, "sub", "a.txt"), "one");
   writeFileSync(join(dir, "Thumbs.db"), "x");
-  writeFileSync(join(dir, ".a.txt.omb-sync-1a2b3c4d"), "half");
+  writeFileSync(join(dir, ".a.txt.mausclaw-sync-1a2b3c4d"), "half");
   symlinkSync(join(dir, "sub", "a.txt"), join(dir, "link.txt"));
   writeFileSync(join(dir, "hard.txt"), "two");
   linkSync(join(dir, "hard.txt"), join(dir, "sub", "hard-too.txt"));
@@ -28,7 +28,7 @@ test("lists files as wire paths with hashes, keeping links and hard links as pre
   assert.deepEqual(keptDirs, ["linked-dir"]);
   assert.deepEqual([...entries].filter(([, entry]) => !entry.kept).map(([path]) => path), ["sub/a.txt"]);
   assert.equal(entries.get("sub/a.txt").sha256, await sha256File(join(dir, "sub", "a.txt")));
-  assert.deepEqual(temps.map((temp) => temp.file), [join(dir, ".a.txt.omb-sync-1a2b3c4d")]);
+  assert.deepEqual(temps.map((temp) => temp.file), [join(dir, ".a.txt.mausclaw-sync-1a2b3c4d")]);
 });
 
 test("reuses the base's hash when size and modified time match, and hashes again when they do not", async (t) => {

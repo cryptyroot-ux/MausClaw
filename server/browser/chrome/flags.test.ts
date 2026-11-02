@@ -41,7 +41,7 @@ describe("Chrome's command line", () => {
     expect(server).not.toContain("--use-mock-keychain");
   });
 
-  it("goes only through OMB's own local gate, with the gate's own flags and WebRTC kept on it", () => {
+  it("goes only through MausClaw's own local gate, with the gate's own flags and WebRTC kept on it", () => {
     const gated = chromeArgs({ userDataDir: "/p", mode: "headless", host: "desktop", platform: "darwin", egressPort: 41234 });
     expect(gated).toEqual(expect.arrayContaining(gateChromeFlags(41234, "darwin")));
     expect(gated).toEqual(expect.arrayContaining(["--proxy-server=socks5://127.0.0.1:41234", "--proxy-bypass-list=<-loopback>", "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"]));
@@ -73,7 +73,7 @@ describe("Chrome's command line", () => {
   });
 
   it("sets the time zone on servers only, and marks the process for the sweep", () => {
-    expect(chromeEnv({ PATH: "/bin" }, { host: "server", timezone: "Asia/Kolkata", profileMarker: "abc" })).toMatchObject({ PATH: "/bin", TZ: "Asia/Kolkata", OMB_BROWSER_PROFILE: "abc" });
+    expect(chromeEnv({ PATH: "/bin" }, { host: "server", timezone: "Asia/Kolkata", profileMarker: "abc" })).toMatchObject({ PATH: "/bin", TZ: "Asia/Kolkata", MAUSCLAW_BROWSER_PROFILE: "abc" });
     expect(chromeEnv({}, { host: "desktop", timezone: "Asia/Kolkata" }).TZ).toBeUndefined();
   });
 

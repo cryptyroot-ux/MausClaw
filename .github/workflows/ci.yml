@@ -95,10 +95,10 @@ jobs:
     # the release lane) all three. A pull request that
     # cannot affect a platform's results leaves it out, and one that changes
     # only translations runs the locale tests alone. Linux runs every file;
-    # Windows and macOS run every file but the e2e files that test only OMB's
-    # own logic (OMB_VITEST_E2E=host, scripts/testing/host-e2e.ts). The split
+    # Windows and macOS run every file but the e2e files that test only MausClaw's
+    # own logic (MAUSCLAW_VITEST_E2E=host, scripts/testing/host-e2e.ts). The split
     # is deterministic, so a failure names the same shard on every run, and
-    # the same --shard and OMB_VITEST_E2E reproduce it locally.
+    # the same --shard and MAUSCLAW_VITEST_E2E reproduce it locally.
     name: vitest (${{ matrix.os }}, shard ${{ matrix.shard }}/${{ matrix.shards }})
     strategy:
       fail-fast: false
@@ -129,8 +129,8 @@ jobs:
         env:
           # scripts/testing/ci-retry-runner.ts records each listed flaky test
           # that needed a retry here (the runner context is step-level only).
-          OMB_VITEST_RETRY_LOG: ${{ runner.temp }}/vitest-retries.jsonl
-          OMB_VITEST_E2E: ${{ matrix.e2e }}
+          MAUSCLAW_VITEST_RETRY_LOG: ${{ runner.temp }}/vitest-retries.jsonl
+          MAUSCLAW_VITEST_E2E: ${{ matrix.e2e }}
         run: pnpm exec vitest run --shard=${{ matrix.shard }}/${{ matrix.shards }} --reporter=default --reporter=github-actions
       - name: Report flaky tests that needed a retry
         # Known flakes (scripts/testing/ci-retry-list.json) get two retries in
@@ -138,7 +138,7 @@ jobs:
         # flake stays visible until its entry is fixed and removed.
         if: ${{ !cancelled() }}
         env:
-          OMB_VITEST_RETRY_LOG: ${{ runner.temp }}/vitest-retries.jsonl
+          MAUSCLAW_VITEST_RETRY_LOG: ${{ runner.temp }}/vitest-retries.jsonl
         run: node scripts/testing/ci-retry-summary.mjs
       - name: Broker and Electron unit tests
         if: matrix.shard == 1
@@ -153,7 +153,7 @@ jobs:
     # The offline behavior-eval tiers (#1503): the evals' own vitest gate
     # (redaction, trace, golden replay), the tier-1 scenario runner, and the
     # tier-2 golden replay through the same entrypoint developers use. Tier
-    # 3's live models stay opt-in: CI never sets OMB_EVAL_LIVE or any live
+    # 3's live models stay opt-in: CI never sets MAUSCLAW_EVAL_LIVE or any live
     # env, and the last step proves the offline gate holds by asserting the
     # skip line is what CI gets.
     name: behavior evals (offline tiers 1-3)
@@ -316,12 +316,12 @@ jobs:
           node-version: 24
       - name: Install and reuse the pinned connector in an isolated fixture
         env:
-          OMB_ARM64_FIXTURE: ${{ runner.temp }}/omb-cloudflared-arm64
+          MAUSCLAW_ARM64_FIXTURE: ${{ runner.temp }}/mausclaw-cloudflared-arm64
         run: |
           node --input-type=module -e 'import assert from "node:assert/strict"; assert.equal(process.platform, "linux"); assert.equal(process.arch, "arm64");'
-          node scripts/prepare-cloudflared.mjs --current --root "$OMB_ARM64_FIXTURE"
-          node scripts/prepare-cloudflared.mjs --current --root "$OMB_ARM64_FIXTURE"
-          "$OMB_ARM64_FIXTURE/dist-native/cloudflared/linux-arm64/cloudflared" version
+          node scripts/prepare-cloudflared.mjs --current --root "$MAUSCLAW_ARM64_FIXTURE"
+          node scripts/prepare-cloudflared.mjs --current --root "$MAUSCLAW_ARM64_FIXTURE"
+          "$MAUSCLAW_ARM64_FIXTURE/dist-native/cloudflared/linux-arm64/cloudflared" version
 
   foss:
     needs: static
@@ -348,14 +348,14 @@ jobs:
       - run: pnpm exec vitest run server/enterprise.test.ts server/brand.test.ts
       - name: The server boots and reports the open-source edition
         run: |
-          mkdir -p /tmp/omb-foss/home
-          HOME=/tmp/omb-foss/home OMB_DATA_DIR=/tmp/omb-foss/data OMB_PORT=18797 OMB_WEBHOOK_PORT=18796 \
-            OMB_BROWSER_CONNECTION=/tmp/omb-foss/browser-connection.json OMB_LICENSE_KEY=omb1.not.real \
-            node --experimental-strip-types server/index.ts > /tmp/omb-foss/server.log 2>&1 &
+          mkdir -p /tmp/mausclaw-foss/home
+          HOME=/tmp/mausclaw-foss/home MAUSCLAW_DATA_DIR=/tmp/mausclaw-foss/data MAUSCLAW_PORT=18797 MAUSCLAW_WEBHOOK_PORT=18796 \
+            MAUSCLAW_BROWSER_CONNECTION=/tmp/mausclaw-foss/browser-connection.json MAUSCLAW_LICENSE_KEY=omb1.not.real \
+            node --experimental-strip-types server/index.ts > /tmp/mausclaw-foss/server.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:18797/api/health >/dev/null && break; sleep 1; done
-          curl -sf http://127.0.0.1:18797/api/edition | tee /tmp/omb-foss/edition.json; echo
-          grep -q '"edition":"oss"' /tmp/omb-foss/edition.json
-          grep -q 'no enterprise layer exists' /tmp/omb-foss/edition.json
+          curl -sf http://127.0.0.1:18797/api/edition | tee /tmp/mausclaw-foss/edition.json; echo
+          grep -q '"edition":"oss"' /tmp/mausclaw-foss/edition.json
+          grep -q 'no enterprise layer exists' /tmp/mausclaw-foss/edition.json
           kill %1; wait %1 || true
 
   control-plane:
@@ -436,7 +436,7 @@ jobs:
     # docs/verification/chat-ui.md run by a machine. It downloads the pinned
     # agent-browser release (digest verified) and its Chrome, drives the real
     # <App/> against the isolated fake-engine fixture, and keeps the screenshot.
-    name: renderer smoke (control-omb ui, Ubuntu 24.04)
+    name: renderer smoke (control-mausclaw ui, Ubuntu 24.04)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -455,20 +455,20 @@ jobs:
         # This is Chrome's own documented fix for 23.10+; a developer machine
         # needs nothing, and the sandbox itself stays on.
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - name: Drive the real renderer through control-omb ui
+      - name: Drive the real renderer through control-mausclaw ui
         env:
-          OMB_UI_E2E: "1"
-          OMB_UI_EVIDENCE_DIR: .omb-scratch/verify-evidence
-        run: pnpm exec vitest run scripts/testing/control-omb-ui.e2e.test.ts scripts/testing/bot-tools-ui.e2e.test.ts scripts/testing/thinking-timer-ui.e2e.test.ts scripts/testing/team-share-ui.e2e.test.ts scripts/testing/org-library-ui.e2e.test.ts scripts/testing/presets-ui.e2e.test.ts scripts/testing/browser-evidence.e2e.test.ts scripts/testing/rich-table-composer-ui.e2e.test.ts scripts/testing/computer-panel-focus-ui.e2e.test.ts
+          MAUSCLAW_UI_E2E: "1"
+          MAUSCLAW_UI_EVIDENCE_DIR: .mausclaw-scratch/verify-evidence
+        run: pnpm exec vitest run scripts/testing/control-mausclaw-ui.e2e.test.ts scripts/testing/bot-tools-ui.e2e.test.ts scripts/testing/thinking-timer-ui.e2e.test.ts scripts/testing/team-share-ui.e2e.test.ts scripts/testing/org-library-ui.e2e.test.ts scripts/testing/presets-ui.e2e.test.ts scripts/testing/browser-evidence.e2e.test.ts scripts/testing/rich-table-composer-ui.e2e.test.ts scripts/testing/computer-panel-focus-ui.e2e.test.ts
       - name: Upload the renderer screenshot
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: control-omb-ui-chat-screenshot
+          name: control-mausclaw-ui-chat-screenshot
           path: |
-            .omb-scratch/verify-evidence/chat-ui.png
-            .omb-scratch/verify-evidence/thinking-timer-anchored.png
-            .omb-scratch/verify-evidence/share-team-dialog.png
+            .mausclaw-scratch/verify-evidence/chat-ui.png
+            .mausclaw-scratch/verify-evidence/thinking-timer-anchored.png
+            .mausclaw-scratch/verify-evidence/share-team-dialog.png
           if-no-files-found: warn
           retention-days: 7
 
@@ -476,11 +476,11 @@ jobs:
     needs: static
     if: needs.static.outputs.runtime == 'true'
     # Advisory, outside the required gate: the pinned agent-browser drives a
-    # real Chrome for Testing through OMB's launcher and identity connection
+    # real Chrome for Testing through MausClaw's launcher and identity connection
     # (scripts/testing/browser-identity.e2e.test.ts): a 1280x720 page whose
     # user agent and client hints are the browser's own in the page, a
     # worker, a service worker and a cross-site frame. On Windows this is
-    # also the check that the 0.36.0-omb.1 engine starts Chrome through the
+    # also the check that the 0.36.0-mausclaw.1 engine starts Chrome through the
     # generated batch file. browser-passkey.e2e.test.ts: a passkey step's
     # request ends at once there, so Try another way works. The same
     # platforms as the vitest matrix.
@@ -506,7 +506,7 @@ jobs:
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Drive a real Chrome through the launcher
         env:
-          OMB_UI_E2E: "1"
+          MAUSCLAW_UI_E2E: "1"
         # One file at a time: a runner's first Chrome launch is slow (on Windows it waits for a scan of the binary), and two
         # at once ran the identity probe past its 30 s.
         run: pnpm exec vitest run scripts/testing/browser-identity.e2e.test.ts scripts/testing/browser-passkey.e2e.test.ts --no-file-parallelism
@@ -559,23 +559,23 @@ jobs:
           sudo chmod 4755 release/linux-unpacked/chrome-sandbox
           test "$(stat -c '%U:%G %a' release/linux-unpacked/chrome-sandbox)" = "root:root 4755"
       - name: Verify the installed browser with Ubuntu sandbox restrictions
-        run: node scripts/smoke-browser-bundle.mjs --resources /opt/OpenMausBot/resources
+        run: node scripts/smoke-browser-bundle.mjs --resources /opt/MausClaw/resources
       - name: Launch packaged app and verify lifecycle
         env:
-          OMB_KEEP_SMOKE_DIR: "1"
-          OMB_SMOKE_INSTALLED_DEB: "1"
+          MAUSCLAW_KEEP_SMOKE_DIR: "1"
+          MAUSCLAW_SMOKE_INSTALLED_DEB: "1"
         run: pnpm smoke:linux-package
       - name: Remove the installed upgrade fixture
         if: always()
-        run: sudo dpkg --purge openmausbot || true
+        run: sudo dpkg --purge mausclaw || true
       - name: Upload smoke diagnostics on failure
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: openmausbot-ubuntu-smoke-diagnostics
+          name: mausclaw-ubuntu-smoke-diagnostics
           path: |
-            /tmp/omb-linux-smoke-*
-            /tmp/omb-linux-smoke-runtime-*
+            /tmp/mausclaw-linux-smoke-*
+            /tmp/mausclaw-linux-smoke-runtime-*
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 7
@@ -584,7 +584,7 @@ jobs:
     needs: static
     if: needs.static.outputs.runtime == 'true'
     # Advisory, outside the CI gate until it has run green for a while: the
-    # omb-cdp S4 conformance suites and the new browser's checklist and viewer
+    # mausclaw-cdp S4 conformance suites and the new browser's checklist and viewer
     # suites on the runner's own Google Chrome (PRs run Linux and Windows, the
     # full lane all three; pushes to main and merge groups leave it out), then
     # on Linux inside the server image's runtime as a non-root
@@ -628,7 +628,7 @@ jobs:
       - name: S4 on the runner's Google Chrome
         # The headed-identity case needs a display, which Linux runners get from Xvfb.
         env:
-          OMB_CDP_E2E: "1"
+          MAUSCLAW_CDP_E2E: "1"
         shell: bash
         run: |
           run=(pnpm exec vitest run server/browser/cdp/s4- server/browser/checklist.e2e server/browser/passkey-wall.e2e server/browser/viewers/viewers.e2e server/browser/viewers/stream-v2.e2e --reporter=verbose --silent=false --reporter=github-actions)
@@ -645,9 +645,9 @@ jobs:
         # even when the host leg failed: they test different Chromes.
         if: ${{ !cancelled() && runner.os == 'Linux' }}
         run: |
-          docker build --target runtime -t omb-runtime:s4 .
+          docker build --target runtime -t mausclaw-runtime:s4 .
           mkdir -p node_modules/.vite && chmod a+w . node_modules/.vite
           docker run --rm --init --shm-size=512m --user maus -e CI=true \
-            -e OMB_CDP_CHROME=/opt/openmausbot-browser/chrome -e OMB_CDP_HOST=container -e OMB_BROWSER_SANDBOX=0 \
-            -v "$PWD:/src" -w /src omb-runtime:s4 \
+            -e MAUSCLAW_CDP_CHROME=/opt/mausclaw-browser/chrome -e MAUSCLAW_CDP_HOST=container -e MAUSCLAW_BROWSER_SANDBOX=0 \
+            -v "$PWD:/src" -w /src mausclaw-runtime:s4 \
             node node_modules/vitest/vitest.mjs run server/browser/cdp/s4- server/browser/checklist.e2e server/browser/passkey-wall.e2e server/browser/viewers/viewers.e2e server/browser/viewers/stream-v2.e2e --reporter=verbose --silent=false

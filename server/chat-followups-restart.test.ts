@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 it("survives a real server crash: queued sends keep receipts, cancellation and uncertain dispatch never replay", async () => {
@@ -57,12 +57,12 @@ it("survives a real server crash: queued sends keep receipts, cancellation and u
       if (["SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "LANG", "LC_ALL", "TZ"].includes(key.toUpperCase()) && value) env[key.toUpperCase()] = value;
     }
     Object.assign(env, {
-      HOME: dataDir, USERPROFILE: dataDir, OMB_DATA_DIR: dataDir,
+      HOME: dataDir, USERPROFILE: dataDir, MAUSCLAW_DATA_DIR: dataDir,
       APPDATA: join(dataDir, "AppData", "Roaming"), LOCALAPPDATA: join(dataDir, "AppData", "Local"),
       XDG_CONFIG_HOME: join(dataDir, ".config"), XDG_CACHE_HOME: join(dataDir, ".cache"),
       XDG_DATA_HOME: join(dataDir, ".local", "share"), HERMES_HOME: join(dataDir, ".hermes"),
       TEMP: join(dataDir, "tmp"), TMP: join(dataDir, "tmp"), TMPDIR: join(dataDir, "tmp"),
-      OMB_PORT: new URL(url).port, OMB_WEBHOOK_PORT: String(Number(new URL(url).port) + 1), PATH: dirname(process.execPath),
+      MAUSCLAW_PORT: new URL(url).port, MAUSCLAW_WEBHOOK_PORT: String(Number(new URL(url).port) + 1), PATH: dirname(process.execPath),
     });
     const log = openSync(logPath, "a", 0o600);
     restarted = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
@@ -118,7 +118,7 @@ it("survives a real server crash: queued sends keep receipts, cancellation and u
     // thread would be steered in. Let the turn finish and have a second task
     // hold the bot's one slot: the attachment then waits in the durable queue.
     writeFileSync(join(dataDir, `${bot.threadId}.gate`), "finish the first task");
-    expect(await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--url", url])).toMatchObject({ status: "settled" });
+    expect(await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--url", url])).toMatchObject({ status: "settled" });
     const holder = (await api("POST", `/api/bots/${bot.id}/tasks`, { title: "Hold the slot" }, 201)).task;
     await api("POST", `/api/bots/${bot.id}/messages`, { text: "Hold the slot", threadId: holder.threadId }, 202);
     await expect.poll(() => prompts(holder.threadId).length, { timeout: 15_000 }).toBe(1);
@@ -202,7 +202,7 @@ it("survives a real server crash: queued sends keep receipts, cancellation and u
     expect((await messages(stoppedTask.threadId)).some((message) => message.queueId === stoppedReceipt.queueId && message.kind === "activity")).toBe(false);
     expect(prompts(stoppedTask.threadId)).toHaveLength(1);
     await expect.poll(async () => (await messages(bot.threadId)).filter((message) => message.sendId === body.sendId).length, { timeout: 15_000 }).toBe(1);
-    const settled = await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--url", url]);
+    const settled = await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--url", url]);
     expect(settled).toMatchObject({ status: "settled" });
     expect((await api("POST", `/api/bots/${bot.id}/messages`, body, 202)).message).toMatchObject({
       sendId: body.sendId, queueId: queued.queueId, replyToId, text, sender: PAIRED,
@@ -226,7 +226,7 @@ it("survives a real server crash: queued sends keep receipts, cancellation and u
       text: channelBody.text, queueId: channelQueued.queueId, replyToId: initial.message.id, channelMode: "chat", via: "api",
     });
     expect((await api("POST", `/api/groups/${channel.id}/messages`, channelCancelledBody, 409)).error).toContain("cancelled");
-    const channelSettled = await runControlOmb(["wait", "--channel", channel.id, "--url", url]);
+    const channelSettled = await runControlMausclaw(["wait", "--channel", channel.id, "--url", url]);
     expect(channelSettled).toMatchObject({ status: "settled" });
     await expect.poll(() => journal().some((row) => row.id === queued.queueId || row.id === channelQueued.queueId)).toBe(false);
     const interrupted = await messages(later.threadId);

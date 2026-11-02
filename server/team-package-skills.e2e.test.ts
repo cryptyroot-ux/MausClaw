@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { request } from "../scripts/mcp-server.ts";
 import { parseBotPackage } from "./bot-package.ts";
 
@@ -10,7 +10,7 @@ it("transfers only selected skills disabled, preserves originals, and rolls back
   console.log(JSON.stringify({ fixture: fixture.info }));
   const url = fixture.info.url;
   const post = (path: string, body: unknown) => request(path, { method: "POST", body: JSON.stringify(body) }, url);
-  const command = (...args: string[]) => runControlOmb([...args, "--url", url]);
+  const command = (...args: string[]) => runControlMausclaw([...args, "--url", url]);
   const instructions = (name: string, body: string) => `---\nname: ${name}\ndescription: Fixture instructions.\n---\n${body}\n`;
   const sharedText = instructions("source-check", "SHARED_SKILL_FIXTURE_MARKER");
   const privateText = instructions("private-notes", "PRIVATE_SKILL_FIXTURE_MARKER");

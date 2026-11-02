@@ -9,11 +9,11 @@ import en from "./en.json";
 import { locales } from "./index";
 
 const RETIRED: ReadonlyArray<readonly [string, RegExp, string]> = [
-  ["OMB Cloud", /OMB Cloud/i, "MausBot Cloud"],
-  ["OpenMausBot Cloud", /OpenMausBot Cloud/i, "MausBot Cloud"],
+  ["MausClaw Cloud", /MausClaw Cloud/i, "MausBot Cloud"],
+  ["MausClaw Cloud", /MausClaw Cloud/i, "MausBot Cloud"],
   ["MausBot Pro", /MausBot Pro\b/, "MausBot Cloud"],
-  // \b before "_" fails, so environment names such as OMB_PUBLIC_IPV4 pass.
-  ["OMB", /\bOMB\b/, "MausBot"],
+  // \b before "_" fails, so environment names such as MAUSCLAW_PUBLIC_IPV4 pass.
+  ["MausClaw", /\bOMB\b/, "MausBot"],
   ["Cloud box", /Cloud box/i, "cloud desktop"],
   ["Hosted desktop", /Hosted desktop/i, "cloud desktop"],
   ["Cloud VM", /Cloud VM/i, "cloud desktop"],
@@ -54,8 +54,8 @@ const isSource = (name: string) => /\.(?:ts|tsx|mjs|cjs|js)$/.test(name) && !/\.
 const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = [
   { file: "shared/credential-request.ts", snippet: "when Boat is selected", why: "the card that asks for a person's own Boat key" },
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
-  { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
-  { file: "electron/company-backups.mjs", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
+  { file: "server/workspace-backup.ts", snippet: "MausClaw-WORKSPACE-1", why: "a backup file's format marker" },
+  { file: "electron/company-backups.mjs", snippet: "MausClaw-WORKSPACE-1", why: "a backup file's format marker" },
 ];
 
 function* sources(dir: string): Generator<string> {
@@ -108,7 +108,7 @@ describe("one name per thing", () => {
   });
 
   const productNames = RETIRED.filter(([, , use]) => use === "MausBot Cloud");
-  it("translations never show OMB, T3 or an old name for MausBot Cloud, keep its name as it is, and say Boat only where the English does", () => {
+  it("translations never show MausClaw, T3 or an old name for MausBot Cloud, keep its name as it is, and say Boat only where the English does", () => {
     const offending = Object.entries(locales).filter(([code]) => code !== "en").flatMap(([code, pack]) =>
       Object.entries(pack)
         .filter(([key]) => !PENDING_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)))
@@ -133,7 +133,7 @@ describe("one name per thing", () => {
   });
 
   it("the public docs name MausBot Cloud and the Cloud as the app does", () => {
-    const names = new Set(["OMB Cloud", "OpenMausBot Cloud", "MausBot Pro", "Connect to my Cloud", "your Cloud", "my Cloud"]);
+    const names = new Set(["MausClaw Cloud", "MausClaw Cloud", "MausBot Pro", "Connect to my Cloud", "your Cloud", "my Cloud"]);
     const cloudNames = RETIRED.filter(([word]) => names.has(word));
     const pages = (dir: string): string[] => readdirSync(dir).flatMap((name) => {
       const path = join(dir, name);
@@ -173,15 +173,15 @@ describe("one name per thing", () => {
 
   it("the check catches each retired word, and lets own-key Boat and env names through", () => {
     for (const bad of [
-      "Sign in to OMB Cloud", "Sign in to OpenMausBot Cloud", "Get OpenMausBot Pro", "MausBot Pro plans",
-      "restart OMB", "Cloud box", "Hosted desktop", "Run it in its cloud VM", "Boat cloud runner",
+      "Sign in to MausClaw Cloud", "Sign in to MausClaw Cloud", "Get MausClaw Pro", "MausBot Pro plans",
+      "restart MausClaw", "Cloud box", "Hosted desktop", "Run it in its cloud VM", "Boat cloud runner",
       "Open your Cloud dashboard", "Connect to my Cloud", "Your Cloud is ready", "Let my Cloud use this Mac",
       "Local (this computer)", "Choose Cloud to wake", "Auto, Cloud or Browser", "including one from T3",
       "Auto uses this Boat", "New Boat computer",
     ]) expect(retiredIn(bad), bad).not.toEqual([]);
     for (const good of [
-      "Sign in to MausBot Cloud", "Pro active · verified by MausBot Cloud", "Restart OpenMausBot", "locked by another OpenMausBot process",
-      "set OMB_PUBLIC_IPV4", "Open My Cloud", "Open the Cloud", "Choose Cloud desktop to wake", "Auto, Cloud desktop or Browser",
+      "Sign in to MausBot Cloud", "Pro active · verified by MausBot Cloud", "Restart MausClaw", "locked by another MausClaw process",
+      "set MAUSCLAW_PUBLIC_IPV4", "Open My Cloud", "Open the Cloud", "Choose Cloud desktop to wake", "Auto, Cloud desktop or Browser",
       "Included with your Cloud plan", "Add a Boat API key in Settings → API keys", "Connect Boat", "Check boat.dev",
       "Bots here can get their own cloud desktops from Boat, a paid service", "Cloud desktops by Boat",
       "Local VM", "Open your Plan page",

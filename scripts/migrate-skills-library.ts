@@ -16,7 +16,7 @@ if (dataDirFlag !== -1 && (!args[dataDirFlag + 1]?.trim() || args[dataDirFlag + 
 const dataDir = dataDirFlag !== -1 ? resolve(args[dataDirFlag + 1]!) : undefined;
 // A bare invocation runs against the real application data dir: a scratch
 // fallback here would report success while migrating nothing.
-if (dataDir) process.env.OMB_DATA_DIR = dataDir;
+if (dataDir) process.env.MAUSCLAW_DATA_DIR = dataDir;
 
 const { botIdsWithSkillState, migrateBotSkillsToLibrary, readPendingAssignments, writePendingAssignments } =
   await import("../server/skills-library-migration.ts");

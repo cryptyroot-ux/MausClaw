@@ -7,7 +7,7 @@ import { HighLevelRelayError, type RelayTokens } from "./relay.ts";
 import { sameTokens, type HighLevelConnection, type HighLevelStore } from "./store.ts";
 
 export const HIGHLEVEL_API_URL = "https://services.leadconnectorhq.com";
-export const HIGHLEVEL_API_ENV = "OMB_HIGHLEVEL_API_URL";
+export const HIGHLEVEL_API_ENV = "MAUSCLAW_HIGHLEVEL_API_URL";
 export const HIGHLEVEL_VERSION = "2021-07-28";
 export const HIGHLEVEL_CONVERSATIONS_VERSION = "2021-04-15";
 
@@ -227,11 +227,11 @@ async function textUpTo(response: Response, max: number): Promise<string | null>
 
 export function assertAllowedPath(method: string, path: string): void {
   if (!path.startsWith("/") || path.includes("..") || path.includes("?") || path.includes("#")) throw new HighLevelError("HighLevel request path is not valid.");
-  if (FORBIDDEN_PATHS.some((pattern) => pattern.test(path))) throw new HighLevelError("OpenMausBot never sends messages, runs campaigns or workflows, or moves money through HighLevel.");
-  if (path.startsWith("/conversations") && method !== "GET") throw new HighLevelError("OpenMausBot reads conversations only; it never writes to them.");
-  if (path.startsWith("/calendars") && method !== "GET") throw new HighLevelError("OpenMausBot reads calendars only; it never books or changes events.");
-  if (path.startsWith("/locations") && method !== "GET") throw new HighLevelError("OpenMausBot never changes the location's settings.");
-  if (method === "DELETE" && !/^\/contacts\/[^/]+\/tags$/u.test(path)) throw new HighLevelError("OpenMausBot never deletes HighLevel records.");
+  if (FORBIDDEN_PATHS.some((pattern) => pattern.test(path))) throw new HighLevelError("MausClaw never sends messages, runs campaigns or workflows, or moves money through HighLevel.");
+  if (path.startsWith("/conversations") && method !== "GET") throw new HighLevelError("MausClaw reads conversations only; it never writes to them.");
+  if (path.startsWith("/calendars") && method !== "GET") throw new HighLevelError("MausClaw reads calendars only; it never books or changes events.");
+  if (path.startsWith("/locations") && method !== "GET") throw new HighLevelError("MausClaw never changes the location's settings.");
+  if (method === "DELETE" && !/^\/contacts\/[^/]+\/tags$/u.test(path)) throw new HighLevelError("MausClaw never deletes HighLevel records.");
 }
 
 export class HighLevelClient {
@@ -299,7 +299,7 @@ export class HighLevelClient {
         this.store.markNeedsSignIn("The saved token was rejected by HighLevel.", current);
         throw new HighLevelError(HIGHLEVEL_SIGNED_OUT_TEXT, { status: 401, signedOut: true });
       }
-      if (!this.refreshViaRelay) throw new HighLevelError("HighLevel's sign-in has expired and no OpenMausBot relay is configured to refresh it; ask the person to reconnect.", { signedOut: true });
+      if (!this.refreshViaRelay) throw new HighLevelError("HighLevel's sign-in has expired and no MausClaw relay is configured to refresh it; ask the person to reconnect.", { signedOut: true });
       let tokens: RelayTokens;
       try {
         tokens = await this.refreshViaRelay(current.refreshToken);
@@ -309,7 +309,7 @@ export class HighLevelClient {
           this.store.markNeedsSignIn("HighLevel rejected the saved sign-in (it was revoked or the app was uninstalled).", current);
           throw new HighLevelError(HIGHLEVEL_SIGNED_OUT_TEXT, { status: 401, signedOut: true });
         }
-        throw new HighLevelError("HighLevel's sign-in could not be refreshed right now (the OpenMausBot relay did not answer); try again in a minute.", { status: 503 });
+        throw new HighLevelError("HighLevel's sign-in could not be refreshed right now (the MausClaw relay did not answer); try again in a minute.", { status: 503 });
       }
       return this.store.rotate({
         accessToken: tokens.accessToken, refreshToken: tokens.refreshToken,
@@ -730,7 +730,7 @@ export function tokenCheckError(status: number, body: unknown, token: string, pa
   const said = detail ? ` HighLevel said: ${detail}` : "";
   if (status === 401 && isScopeRefusal(body)) {
     return new HighLevelError(
-      "This token is missing the View Locations permission (401), which OpenMausBot needs to check it. In HighLevel, open Settings → Private Integrations, " +
+      "This token is missing the View Locations permission (401), which MausClaw needs to check it. In HighLevel, open Settings → Private Integrations, " +
       `edit this integration, turn on View Locations and save, then connect again: the token stays the same.${said}`, { status });
   }
   if (status === 401) {

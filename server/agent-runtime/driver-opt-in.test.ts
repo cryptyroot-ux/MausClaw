@@ -98,7 +98,7 @@ describe("OpenAI-compatible native opt-in", () => {
       await instance.adapter.sendTurn({
         threadId: "thread-native",
         botId: "bot-native",
-        agentEngine: "omb-native",
+        agentEngine: "mausclaw-native",
         text: "Use the audit tool.",
         model: "fixture-model",
         approvalMode: "full",
@@ -113,7 +113,7 @@ describe("OpenAI-compatible native opt-in", () => {
       await instance.adapter.sendTurn({
         threadId: "thread-legacy",
         botId: "bot-legacy",
-        agentEngine: "omb-native",
+        agentEngine: "mausclaw-native",
         text: "Answer without the native engine.",
         model: "fixture-model",
         approvalMode: "full",

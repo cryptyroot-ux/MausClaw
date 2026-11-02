@@ -46,7 +46,7 @@ describe("the bot's Activity log", () => {
   let dataDir: string;
   let eventsDir: string;
   beforeEach(() => {
-    dataDir = mkdtempSync(join(tmpdir(), "omb-bridge-activity-"));
+    dataDir = mkdtempSync(join(tmpdir(), "mausclaw-bridge-activity-"));
     eventsDir = join(dataDir, "events");
     mkdirSync(eventsDir);
   });

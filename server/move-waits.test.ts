@@ -208,7 +208,7 @@ describe("POST /api/move/freeze with the move's own rule", () => {
     let answered: { status: number; body: unknown } | undefined;
     await route({ path: "/api/move/freeze", method: "POST", url: new URL("http://127.0.0.1/api/move/freeze"), req: {} as never, res: {} as never,
       auth: { kind: "loopback", scopes: ["admin"] } as never, json: (_res: unknown, status: number, value: unknown) => { answered = { status, body: value }; },
-      readBody: async () => ({ cloud: "https://omb-t-1.fly.dev" }) } as never);
+      readBody: async () => ({ cloud: "https://mausclaw-t-1.fly.dev" }) } as never);
     return answered!;
   };
 

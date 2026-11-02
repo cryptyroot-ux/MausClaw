@@ -1,5 +1,5 @@
 // The Data surface: what the server, the bots' tools and the panel agree on.
-// DuckDB runs in the OMB server, one database per bot.
+// DuckDB runs in the MausClaw server, one database per bot.
 
 /** The five tools a bot gets, in the order the catalog lists them. */
 export const DATA_TOOL_NAMES = ["data_load", "data_describe", "data_sql", "data_show", "data_export"] as const;
@@ -33,7 +33,7 @@ export const DATA_LIMITS = {
 
 /** Where materialised results live inside a bot's database. DuckDB temp tables
  * are per connection; a real schema is visible to both and survives a restart. */
-export const DATA_RESULTS_SCHEMA = "omb_results";
+export const DATA_RESULTS_SCHEMA = "mausclaw_results";
 
 export type DataErrorCode =
   | "invalid_input"
@@ -100,7 +100,7 @@ export interface DataSource {
 /** What a bot says when it wants a chart. Small on purpose: the server
  * compiles it to SQL (with the reduction) and to Vega-Lite, so the model
  * never writes a chart grammar. */
-export interface OmbChartSpec {
+export interface MausclawChartSpec {
   type: "bar" | "line" | "area" | "scatter" | "histogram" | "pie" | "heatmap";
   /** Column for the x axis (the category, the time, or the value to bin). */
   x: string;
@@ -148,7 +148,7 @@ export interface DataCard {
   truncated?: boolean;
   /** Chart cards: the bot's spec, the compiled Vega-Lite (data-free; the
    * panel binds the reduced rows as the dataset named "table"), the reduction. */
-  chart?: OmbChartSpec;
+  chart?: MausclawChartSpec;
   vegaLite?: Record<string, unknown>;
   reduction?: DataReduction;
   /** Text cards: Markdown. */
@@ -209,7 +209,7 @@ export interface DataRunRequest {
   cardId?: string;
   title?: string;
   /** Chart the result instead of tabling it. */
-  chart?: OmbChartSpec;
+  chart?: MausclawChartSpec;
   vegaLite?: Record<string, unknown>;
   /** Replace an existing result only after a successful, current live edit. */
   live?: boolean;

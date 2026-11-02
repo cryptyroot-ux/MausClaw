@@ -34,7 +34,7 @@ export interface FillLoginTurnDeps {
   stepContext(bot: BotRecord, turn: Turn): StepContext;
 }
 
-const ONLY_IN_BROWSER = "fill_login types a password only into a page of your own browser, where OpenMausBot checks the page's site first";
+const ONLY_IN_BROWSER = "fill_login types a password only into a page of your own browser, where MausClaw checks the page's site first";
 
 export function createFillLoginTurn(deps: FillLoginTurnDeps) {
   // Security: on a screen the server cannot prove which site a focused box belongs to, so a secret is never typed there.
@@ -57,7 +57,7 @@ export function createFillLoginTurn(deps: FillLoginTurnDeps) {
       return { ok: false, text: `${ONLY_IN_BROWSER}${notHere}, and this run cannot move to your browser. ${signIn} For runs like this to sign in by themselves, the person can choose Browser under where this bot works.` };
     }
     const chrome = deps.myChrome(current) ? ", which is the person's own Chrome (My Chrome), signed in as them" : "";
-    return { ok: false, text: `${ONLY_IN_BROWSER}${notHere}. OpenMausBot is moving this conversation to your own browser${chrome}. End this turn now without using the screen tools: the request continues there with your browser tools. Open the site's sign-in page in that browser, then call fill_login.` };
+    return { ok: false, text: `${ONLY_IN_BROWSER}${notHere}. MausClaw is moving this conversation to your own browser${chrome}. End this turn now without using the screen tools: the request continues there with your browser tools. Open the site's sign-in page in that browser, then call fill_login.` };
   }
 
   async function fillLoginForTurn(bot: BotRecord, capability: Turn, rawUsername: unknown, rawSubmit: unknown): Promise<Answer> {

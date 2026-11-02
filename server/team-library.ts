@@ -4,8 +4,8 @@ import { PACKAGE_V1_VERSION } from "../shared/package-format.ts";
 import { parseTeamManifest, type ParsedTeamManifest } from "./team-manifest.ts";
 import { grokMarketplaceSlugFrom, grokMarketplaceUrl, grokShareIdFrom, grokShareUrl, type GrokTemplateCard } from "../shared/grok-import.ts";
 
-export const TEAM_LIBRARY_REPOSITORY = "https://github.com/milind-soni/openmausbot-teams";
-export const TEAM_LIBRARY_RAW_ROOT = "https://raw.githubusercontent.com/milind-soni/openmausbot-teams/main";
+export const TEAM_LIBRARY_REPOSITORY = "https://github.com/milind-soni/mausclaw-teams";
+export const TEAM_LIBRARY_RAW_ROOT = "https://raw.githubusercontent.com/milind-soni/mausclaw-teams/main";
 export const TEAM_LIBRARY_CATALOG_URL = `${TEAM_LIBRARY_RAW_ROOT}/catalog.json`;
 
 const MAX_CATALOG_BYTES = 256_000;

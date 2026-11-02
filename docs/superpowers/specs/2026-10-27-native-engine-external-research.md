@@ -1,12 +1,12 @@
-# OMB Native Engine — External Research and Capability Roadmap
+# MausClaw Native Engine — External Research and Capability Roadmap
 
 Date: 2026-10-27
 Scope: context management, tool orchestration, reliability, planning/verification, and evaluation in
-Claude Code, Codex, OpenCode, Hermes Agent, Pi, and Google Antigravity — and what the OMB native engine
+Claude Code, Codex, OpenCode, Hermes Agent, Pi, and Google Antigravity — and what the MausClaw native engine
 should adopt next.
 
 This is a source-grounded comparison, not a benchmark. Vendor documentation describes intended
-behaviour; it does not prove task quality. Section 5 defines the measurements needed before OMB claims
+behaviour; it does not prove task quality. Section 5 defines the measurements needed before MausClaw claims
 to match or beat another engine.
 
 ## 1. What each engine actually does
@@ -140,11 +140,11 @@ to match or beat another engine.
 8. **Evaluation is the differentiator.** SWE-bench Verified, Terminal-Bench, CodeClash, and ProgramBench
    measure different things; cost, tokens, and human interventions matter alongside resolve rate.
 
-## 3. OMB native engine today
+## 3. MausClaw native engine today
 
 Already present:
 
-- OMB-owned loop, provider-neutral model adapter, capability grants, approvals, cancellation, retry,
+- MausClaw-owned loop, provider-neutral model adapter, capability grants, approvals, cancellation, retry,
   recovery (`recovery_required`), SQLite run/capability journal.
 - Steering between model rounds; announcement nudge; optional-tool downgrade; request-size recovery
   with history shrinking.
@@ -153,7 +153,7 @@ Already present:
 
 Not yet present (relative to the leaders):
 
-| Capability | OMB now | Leader pattern |
+| Capability | MausClaw now | Leader pattern |
 |---|---|---|
 | Lossy summarization compaction | Truncation/shrink only | LLM summary + keep window + iterative summary |
 | Precompute/background compaction | No | OpenCode precompute, Claude PreCompact hook |
@@ -213,7 +213,7 @@ Benchmarks:
 - **Terminal-Bench 4.0** — terminal tasks; report resolution rate, cost, tokens; confidence intervals.
 - **CodeClash** — goal-oriented development, not single tasks.
 - **ProgramBench** — building software artifacts from scratch.
-- **Internal OMB suite** — the repo's own acceptance fixtures plus 30–50 curated tasks with deterministic
+- **Internal MausClaw suite** — the repo's own acceptance fixtures plus 30–50 curated tasks with deterministic
   checks.
 
 Protocol:
@@ -223,7 +223,7 @@ Protocol:
 - Record full traces (model rounds, tool calls, compactions, retries, approvals, recovery states).
 - Measure **cost per resolved task**, not only resolve rate; a 2% gain at 3× cost is not automatically
   an improvement.
-- Separate model quality from harness quality: the same model must be run through OMB and through the
+- Separate model quality from harness quality: the same model must be run through MausClaw and through the
   comparison harness before claiming a harness win.
 - Never train on benchmark tasks; keep a held-out internal set.
 

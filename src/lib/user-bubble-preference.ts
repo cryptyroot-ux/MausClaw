@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export const USER_BUBBLE_COLOR_KEY = "omb-color-user-bubbles";
+export const USER_BUBBLE_COLOR_KEY = "mausclaw-color-user-bubbles";
 
 let sessionChoice: boolean | undefined;
 const listeners = new Set<() => void>();

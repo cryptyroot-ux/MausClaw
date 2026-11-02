@@ -10,7 +10,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) removeTempDir(dir); });
 
 function folders() {
-  const base = realpathSync.native(mkdtempSync(join(tmpdir(), "omb-upload-")));
+  const base = realpathSync.native(mkdtempSync(join(tmpdir(), "mausclaw-upload-")));
   dirs.push(base);
   const attachments = join(base, "attachments"), workspace = join(base, "workspace"), outside = join(base, "outside");
   for (const dir of [attachments, workspace, outside]) mkdirSync(dir);
@@ -94,13 +94,13 @@ describe("the name a page sees", () => {
 
 describe("the files a boxed browser is given", () => {
   it("copies every file into the one folder the box shows Chrome, under the person's name or its own", async () => {
-    const root = realpathSync.native(mkdtempSync(join(tmpdir(), "omb-boxed-upload-")));
+    const root = realpathSync.native(mkdtempSync(join(tmpdir(), "mausclaw-boxed-upload-")));
     const source = join(root, "work", "report.txt"), stored = join(root, "attachments", "a1b2.pdf");
     mkdirSync(dirname(source), { recursive: true });
     mkdirSync(dirname(stored), { recursive: true });
     writeFileSync(source, "report");
     writeFileSync(stored, "pdf");
-    const folder = join(root, "profile", "omb-uploads");
+    const folder = join(root, "profile", "mausclaw-uploads");
     const linked = await namedUploadPaths([{ file: source, name: null }, { file: stored, name: "Invoice.pdf" }], folder, Date.now(), { everyFile: true });
     expect(linked.every((path) => path.startsWith(folder + sep))).toBe(true);
     expect(linked.map((path) => basename(path))).toEqual(["report.txt", "Invoice.pdf"]);

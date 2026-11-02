@@ -14,7 +14,7 @@ export function createUpdateApplyRoutes(): RouteHandler {
         return json(res, 400, { error: "Auto-update only supported for git installs" });
       }
       // Spawn update in background
-      const child = spawn("bash", ["-c", "cd /root/OMB-Claw && git pull && pnpm install && pnpm build && systemctl restart omb-claw.service"], {
+      const child = spawn("bash", ["-c", "cd /root/MausClaw && git pull && pnpm install && pnpm build && systemctl restart mausclaw.service"], {
         detached: true,
         stdio: "ignore",
       });

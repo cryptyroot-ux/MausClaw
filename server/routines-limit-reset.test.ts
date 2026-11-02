@@ -12,7 +12,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function harness() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-limit-routines-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-limit-routines-"));
   dirs.push(dir);
   let now = START;
   const resets = new Map<string, number | null>();

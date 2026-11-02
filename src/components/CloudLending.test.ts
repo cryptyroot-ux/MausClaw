@@ -208,7 +208,7 @@ it("while the bots move to My Cloud, an off switch says it turns on by itself on
 
 it("says how it is lent when Computer access lent it, terminal included, and when My Cloud last used it", async () => {
   const viaAccess: CloudLendingSnapshot = { available: true, screenAvailable: true,
-    activity: [{ at: Date.now() - 3 * 60_000, server: "My Cloud", origin: "https://omb-u-1.fly.dev", action: "computer_call", detail: "", ok: true }],
+    activity: [{ at: Date.now() - 3 * 60_000, server: "My Cloud", origin: "https://mausclaw-u-1.fly.dev", action: "computer_call", detail: "", ok: true }],
     state: { enabled: true, folders: [], screen: true, internet: false, chrome: false, busy: false, via: "access", terminal: true, problem: "access-off" } };
   expect(lendingStatusKey(viaAccess, true)).toBe("lending.status.accessOff");
   await ready(viaAccess);

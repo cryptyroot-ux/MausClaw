@@ -1,16 +1,16 @@
-// Assert the first-run workflow against a handle from `control-omb ui launch`.
+// Assert the first-run workflow against a handle from `control-mausclaw ui launch`.
 // The handle gate refuses live-app URLs and stopped fixtures. All profile,
 // bot and onboarding writes below stay inside that launch's disposable home.
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { runControlOmb } from "./control-omb.ts";
+import { runControlMausclaw } from "./control-mausclaw.ts";
 import { TOUR_STEPS } from "../src/lib/guided-tour.ts";
 
 const handle = process.argv[2];
 if (!handle) throw new Error("Usage: node --experimental-strip-types scripts/verify-onboarding-ui.ts /path/to/fixture/ui.json");
-const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
+const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
 const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
 const click = async (name: string) => {
   // Let the 320ms spotlight transition land before sending a real pointer
@@ -32,7 +32,7 @@ const poll = async (read: () => Promise<unknown>, expected: unknown, label: stri
   assert.deepEqual(result, expected, label);
 };
 const textVisible = (text: string) => poll(async () => (await snapshot()).includes(text), true, text);
-const evidence = resolve(".omb-scratch/verify-evidence/onboarding");
+const evidence = resolve(".mausclaw-scratch/verify-evidence/onboarding");
 mkdirSync(evidence, { recursive: true });
 const screenshot = (name: string) => ui("screenshot", "--out", resolve(evidence, `${name}.png`));
 const openSettings = async () => {
@@ -64,8 +64,8 @@ await evaluate("fetch('/api/config', {method:'PUT', headers:{'Content-Type':'app
 // The standard fixture has MausBot met already (no first-launch card); a new install's has met nobody yet.
 await evaluate("fetch('/api/bots').then(r => r.json()).then(data => Promise.all(data.bots.filter(bot => bot.defaultBot).map(bot => fetch('/api/bots/' + bot.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({welcomed:false})}).then(r => r.ok)))).then(oks => oks.length > 0 && oks.every(Boolean))");
 // A new install opens in Simple mode; this page's own writes after the clear would otherwise read as an earlier run.
-await evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('omb-advanced-mode', '0'); setTimeout(() => { location.search = '?onboarding=1'; }, 0); true");
-await textVisible("Meet OpenMausBot");
+await evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('mausclaw-advanced-mode', '0'); setTimeout(() => { location.search = '?onboarding=1'; }, 0); true");
+await textVisible("Meet MausClaw");
 await evaluate("document.documentElement.dataset.reducedMotion = 'true'; true");
 await screenshot("welcome");
 // Two screens, no form: the first asks nothing and shows no steps, Back or Skip.
@@ -116,8 +116,8 @@ assert.equal(starter.modelSelection.model, selected.models.default);
 // The failed save left the server's record empty: a browser without this one's local mark shows the welcome again,
 // and this time it is saved.
 // MausBot has met the person by now, so the Chief step is not shown again: Next lands in the Chief's chat.
-await evaluate("localStorage.removeItem('omb-email-gate'); setTimeout(() => location.reload(), 0); true");
-await textVisible("Meet OpenMausBot");
+await evaluate("localStorage.removeItem('mausclaw-email-gate'); setTimeout(() => location.reload(), 0); true");
+await textVisible("Meet MausClaw");
 await click("Next");
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "Next lands in the chat");
 await textVisible(composer);
@@ -169,7 +169,7 @@ console.log("PASS Settings replay and Skip queued behind slow Next");
 
 await openSettings();
 await click("Replay welcome tour");
-await textVisible("Meet OpenMausBot");
+await textVisible("Meet MausClaw");
 await holdConfigWrite();
 await click("Next");
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "slow completion cannot trap welcome");

@@ -1,4 +1,4 @@
-// POST <OMB_CLOUD_DECIDER_URL>/v1/extract, shared with Cloud's Admin through fixtures/extract-relay.json: change both
+// POST <MAUSCLAW_CLOUD_DECIDER_URL>/v1/extract, shared with Cloud's Admin through fixtures/extract-relay.json: change both
 // together. { seam, fields, input } → { values, model }. A request that breaks a rule here never goes through the
 // included token, and an answer that breaks one is malformed: a value is never taken on trust.
 import type { ExtractedValues, ExtractImage, ExtractInput, ExtractSeam, FieldSchema, FieldSpec, FieldType, FieldValue } from "./types.ts";
@@ -24,7 +24,7 @@ const SEAMS: ReadonlySet<string> = new Set<ExtractSeam>(["inboxTriage", "botExtr
 
 export const EXTRACT_KEY_CHECK = {
   fields: { ok: { type: "boolean", description: "Is this a connection check?" } } satisfies FieldSchema,
-  input: { text: "OpenMausBot is checking that an extraction-model key works." },
+  input: { text: "MausClaw is checking that an extraction-model key works." },
 };
 
 /** The proactive inbox reads these from one email, and the relay takes inbox triage only with exactly these. */

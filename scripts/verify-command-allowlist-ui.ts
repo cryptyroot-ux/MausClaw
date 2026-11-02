@@ -1,14 +1,14 @@
-// Real renderer and API against an explicit control-omb UI fixture handle.
+// Real renderer and API against an explicit control-mausclaw UI fixture handle.
 // The only substituted responses exercise unavailable-provider and retry UI.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { runControlOmb } from "./control-omb.ts";
+import { runControlMausclaw } from "./control-mausclaw.ts";
 
 const handle = process.argv[2];
 if (!handle) throw new Error("Usage: node --experimental-strip-types scripts/verify-command-allowlist-ui.ts /path/to/fixture/ui.json");
-const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
+const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
 const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
 const click = (name: string) => ui("click", "--name", name);
 const type = (name: string, text: string) => ui("type", "--name", name, "--text", text);
@@ -27,7 +27,7 @@ const poll = async (read: () => Promise<unknown>, expected: unknown, label: stri
 const visible = (text: string) => poll(async () => (await snapshot()).includes(text), true, text);
 const activeLabel = () => evaluate("document.activeElement?.getAttribute('aria-label')");
 const dialogOpen = () => evaluate("[...document.querySelectorAll('[role=dialog]')].some(e => e.querySelector('h2')?.textContent === 'Command allowlist')");
-const evidenceDir = resolve(".omb-scratch/verify-evidence/command-allowlist");
+const evidenceDir = resolve(".mausclaw-scratch/verify-evidence/command-allowlist");
 mkdirSync(evidenceDir, { recursive: true });
 const screenshot = (name: string) => ui("screenshot", "--out", resolve(evidenceDir, `${name}.png`));
 

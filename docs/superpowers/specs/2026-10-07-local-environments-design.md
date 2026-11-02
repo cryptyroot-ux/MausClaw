@@ -3,13 +3,13 @@
 ## Summary
 
 One desktop installation can be running only one configuration at a time: the
-bots, providers, groups, routines and history under `~/.openmausbot`. Users who
+bots, providers, groups, routines and history under `~/.mausclaw`. Users who
 work on several unrelated projects (for example a ham-radio bot team and a
 mobile-app bot team) want completely separate teams, model choices, MCP servers
 and histories, and want to switch between them at the start of a work session.
 
 Every piece of that isolation already exists in code. `DATA_DIR` resolves once
-at server boot from `OMB_DATA_DIR` (`server/config.ts:963`), and every state
+at server boot from `MAUSCLAW_DATA_DIR` (`server/config.ts:963`), and every state
 file derives from it. The desktop shell already has an "environments" registry
 (`electron/environments.cjs`, `DesktopWorkspaceSwitcher.tsx`) that switches
 between "This computer" and paired remote servers — but exactly one local
@@ -25,7 +25,7 @@ at a time, with a ~15 s in-app restart. The server binary is unchanged.
   servers, groups, routines, message history, memories, checkpoints, events.
 - Safe handoff: only one process may hold an environment; a failed switch must
   leave the user exactly where they were.
-- Zero migration: the current `~/.openmausbot` remains "This computer" and
+- Zero migration: the current `~/.mausclaw` remains "This computer" and
   behaves exactly as today.
 - Reuse the data-dir lease so two app processes can never share an environment.
 
@@ -57,7 +57,7 @@ copy never says "workspace". A bot's directory stays a "folder".
   "version": 2,
   "environments": [
     { "id": "local-aprs", "kind": "local", "name": "APRS Chat",
-      "dataDir": "/Users/me/.openmausbot-aprs" },
+      "dataDir": "/Users/me/.mausclaw-aprs" },
     { "id": "a1b2c3", "kind": "remote", "name": "Office box",
       "origin": "https://box.example" }
   ],
@@ -67,9 +67,9 @@ copy never says "workspace". A bot's directory stays a "folder".
 
 - Migration: `version: 1` entries are all remote; reading v1 stamps
   `kind: "remote"`. The implicit singleton `local` ("This computer",
-  `~/.openmausbot`) stays addressable without an entry.
-- Default path for a new environment: `~/.openmausbot-<slug>` — the sibling
-  pattern the companion app already uses (`~/.openmausbot-companion`). Never
+  `~/.mausclaw`) stays addressable without an entry.
+- Default path for a new environment: `~/.mausclaw-<slug>` — the sibling
+  pattern the companion app already uses (`~/.mausclaw-companion`). Never
   nested inside another environment's directory (rejected at create time).
 - A custom directory is accepted only through the native folder picker; the
   path must be absolute, non-nested in any registered environment, and not the
@@ -91,7 +91,7 @@ wired thinly from `main.mjs`).
    re-acquire the old lease, restart the old child, tell the user.
 4. Acquire the lease on the target (a held lease means the environment runs
    elsewhere → abort the same way).
-5. Fork the server child with `OMB_DATA_DIR` set to the target (the launch env
+5. Fork the server child with `MAUSCLAW_DATA_DIR` set to the target (the launch env
    is already rebuilt per `startServerOn` call); health-probe as at boot.
 6. Health OK → persist `activeId`, reload the window to the local origin.
    Health fails → kill the child, re-acquire the old lease, restart the old
@@ -129,7 +129,7 @@ confirm.
 
 ## Server changes
 
-None. `OMB_DATA_DIR` already isolates everything, `environment-id` is
+None. `MAUSCLAW_DATA_DIR` already isolates everything, `environment-id` is
 per-directory already, and the CLI attach check (`server/cli.ts:367`) already
 refuses to attach across directories.
 
@@ -149,7 +149,7 @@ refuses to attach across directories.
 
 Proposed issue: "Switch between multiple local environments (separate bots,
 providers and settings on one machine)". Prior art to cite in the issue:
-`OMB_DATA_DIR` + `--data-dir`, the environments switcher, fleet (server-side
+`MAUSCLAW_DATA_DIR` + `--data-dir`, the environments switcher, fleet (server-side
 multi-workspace), `workspace-backup.ts`. Fleet proves the model; this gives
 desktop users the same capability without systemd.
 

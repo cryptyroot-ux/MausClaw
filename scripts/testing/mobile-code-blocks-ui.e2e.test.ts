@@ -2,13 +2,13 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../control-mausclaw.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { ensureUiBrowser } from "./control-omb-ui.ts";
+import { ensureUiBrowser } from "./control-mausclaw-ui.ts";
 import { fixtureApi, mountPreview, type MountedPreview } from "./preview-fixture.ts";
 
-const enabled = process.env.OMB_UI_E2E === "1";
-if (!enabled) console.log("skipping mobile code-block UI: set OMB_UI_E2E=1 for isolated browser qualification");
+const enabled = process.env.MAUSCLAW_UI_E2E === "1";
+if (!enabled) console.log("skipping mobile code-block UI: set MAUSCLAW_UI_E2E=1 for isolated browser qualification");
 
 const snippets = [
   "  First plaintext block\n    Keep this indentation.\n\n",
@@ -74,14 +74,14 @@ async function connect(url: string) {
     const tools = await ensureUiBrowser();
     if (!tools.chrome) throw new Error("This recipe needs the pinned Chrome for Testing");
     fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_REPLIES: JSON.stringify([reply]) });
-    evidence = process.env.OMB_MOBILE_BLOCKS_EVIDENCE_DIR || join(process.env.OMB_UI_EVIDENCE_DIR || dirname(fixture.info.logPath), "mobile-code-blocks");
+    evidence = process.env.MAUSCLAW_MOBILE_BLOCKS_EVIDENCE_DIR || join(process.env.MAUSCLAW_UI_EVIDENCE_DIR || dirname(fixture.info.logPath), "mobile-code-blocks");
     mkdirSync(evidence, { recursive: true });
     const save = () => writeFileSync(join(evidence!, "receipt.json"), JSON.stringify(receipts, null, 2));
     const api = fixtureApi(fixture.info.url);
     await api("PATCH", "/api/config", { language: "en" });
     const { bots } = await api("GET", "/api/bots");
     for (const bot of bots.filter((bot: { defaultBot?: unknown }) => bot.defaultBot)) await api("PATCH", `/api/bots/${bot.id}`, { welcomed: true });
-    const created = await runControlOmb(["new-bot", "--name", "Pepper", "--url", fixture.info.url]) as { bot: { id: string; activeTaskId: string } };
+    const created = await runControlMausclaw(["new-bot", "--name", "Pepper", "--url", fixture.info.url]) as { bot: { id: string; activeTaskId: string } };
     preview = await mountPreview(fixture, { entry: "/scripts/testing/threads-preview.tsx", route: "/__mobile-blocks.html", title: "Isolated mobile code blocks", logLevel: "warn" });
     const profile = join(fixture.info.dataDir, "chrome");
     mkdirSync(profile, { recursive: true });
@@ -121,7 +121,7 @@ async function connect(url: string) {
     await request("Input.insertText", { text: "Show separate text and code examples" });
     await request("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
     await request("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-    const settled = await runControlOmb(["wait", "--bot", created.bot.id, "--task", created.bot.activeTaskId, "--timeout", "60", "--url", fixture.info.url]);
+    const settled = await runControlMausclaw(["wait", "--bot", created.bot.id, "--task", created.bot.activeTaskId, "--timeout", "60", "--url", fixture.info.url]);
     receipts.settled = settled;
     await expect.poll(() => evaluate(`${blocks}.length`), { timeout: 30_000 }).toBe(snippets.length);
     await expect.poll(() => evaluate(`${blocks}[1].querySelector('pre')?.classList.contains('shiki')`), { timeout: 30_000 }).toBe(true);

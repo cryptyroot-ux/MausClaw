@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 const MCP_FIXTURE = `
 import { createInterface } from 'node:readline';
@@ -81,7 +81,7 @@ it("a real isolated server runs an OpenAI-compatible bot through the native loop
     expect(response.ok, JSON.stringify(result)).toBe(true);
     return result;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
 
   try {
     await api("PATCH", "/api/config", {

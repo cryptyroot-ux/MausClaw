@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { rebuiltSessionNotice } from "./resume-recovery.ts";
 
 /** Pesto's account, as the CLI's rate_limit_event reported it on Oct 9. */
@@ -32,7 +32,7 @@ async function launch() {
     expect(response.ok, `${method} ${path} ${response.status}: ${JSON.stringify(value)}`).toBe(true);
     return value;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const messages = async (threadId: string) => (await api("GET", `/api/threads/${threadId}/messages?limit=100`)).messages as any[];
   const modes = join(dataDir, "fake-modes.json");
   writeFileSync(modes, "{}");
@@ -43,8 +43,8 @@ async function launch() {
     'import { join } from "node:path";',
     'const at = process.argv.indexOf("--mcp-config");',
     'const agents = at < 0 ? {} : JSON.parse(readFileSync(process.argv[at + 1], "utf8")).mcpServers?.agents?.env ?? {};',
-    'const thread = agents.OMB_THREAD_ID ?? "probe";',
-    'const bot = agents.OMB_BOT_ID ?? "probe";',
+    'const thread = agents.MAUSCLAW_THREAD_ID ?? "probe";',
+    'const bot = agents.MAUSCLAW_BOT_ID ?? "probe";',
     `const modes = JSON.parse(readFileSync(${JSON.stringify(modes)}, "utf8"));`,
     "const plan = modes[`${thread}:${bot}`] ?? modes[thread] ?? modes[bot] ?? {};",
     'process.env.FAKE_CLAUDE_MODE = plan.mode ?? "happy";',

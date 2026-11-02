@@ -16,7 +16,7 @@ const cleanup: Array<() => Promise<unknown> | void> = [];
 afterEach(async () => { for (const step of cleanup.splice(0)) await step(); });
 
 async function serve() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-evidence-routes-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-evidence-routes-"));
   const evidence = new BrowserEvidence({ root: join(dir, "evidence") });
   cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
   const record = async (threadId: string, picture: Buffer | null) => {

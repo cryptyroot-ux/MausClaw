@@ -314,7 +314,7 @@ describe("Settings → Appearance", () => {
     ["wide", "Wide"],
     ["full", "Full width"],
   ])("shows the saved chat width (%s) alongside message colors", (width, label) => {
-    vi.stubGlobal("localStorage", { getItem: (key: string) => key === "omb-chat-width" ? width : null });
+    vi.stubGlobal("localStorage", { getItem: (key: string) => key === "mausclaw-chat-width" ? width : null });
     const html = render();
     expect(html).toContain('aria-label="Chat width"');
     expect(html).toContain(`<option value="${width}" selected="">${label}</option>`);
@@ -388,7 +388,7 @@ describe("Settings → Appearance", () => {
     const html = render();
     expect(html).toContain('<option value="backups" selected="">Backups</option>');
     expect(html).toContain("Export full backup");
-    expect(html).toContain('type="file" accept=".ombbackup"');
+    expect(html).toContain('type="file" accept=".mausclawbackup"');
     expect(html).toContain("Older team backups and shareable templates");
   });
 
@@ -434,7 +434,7 @@ describe("Settings → Appearance", () => {
     expect(local).toContain("Server address or pairing link");
     expect(local).toContain("Name (optional)");
     expect(local).toContain("Your servers");
-    expect(local).toContain("npx openmausbot pair --label");
+    expect(local).toContain("npx mausclaw pair --label");
     fixture.section = "general";
     vi.stubGlobal("window", { ogb: { workspaces: {} } });
     expect(render()).not.toContain('<option value="desktopWorkspaces"');

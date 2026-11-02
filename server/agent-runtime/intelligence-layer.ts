@@ -3,7 +3,7 @@
 // before executing a plan. Gated behind a feature flag so it can be disabled
 // without touching the base engine.
 //
-// Additive extension: OpenMausBot-Pivot's per-phase intelligence pipeline
+// Additive extension: MausClaw-Pivot's per-phase intelligence pipeline
 // (classify → route → plan → execute → verify → done) with LLM planner,
 // LLM verifier, budget guard, fallback chain, and per-phase streaming.
 

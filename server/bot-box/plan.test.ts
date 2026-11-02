@@ -5,7 +5,7 @@ import { engineInstallRoots } from "../engine-roots.ts";
 import { BOX_MUTATIONS, argvPaths, bwrapArgs, planBox, taskWorkspaceIds, visibleInBox, type BoxMutation, type BoxSetup } from "./plan.ts";
 
 const home = "/data";
-const dataDir = "/data/.openmausbot";
+const dataDir = "/data/.mausclaw";
 const setup = (mutate?: BoxMutation[]): BoxSetup => ({
   dataDir, home, codeRoots: ["/app"], engineRoots: engineInstallRoots(dataDir), seccompFd: 3,
   bridges: [{ name: "egress", port: 3128, socket: `${dataDir}/box/egress.sock` }, { name: "harness", port: 8799, socket: `${dataDir}/box/harness.sock` }],
@@ -13,7 +13,7 @@ const setup = (mutate?: BoxMutation[]): BoxSetup => ({
 });
 const cwd = join(dataDir, "task-workspaces", "bot-a", "thread-1");
 const turn = (mutate?: BoxMutation[]) => planBox(setup(mutate), {
-  command: "/usr/local/bin/claude", args: ["-p", "--mcp-config", "/tmp/omb-mcp-x/mcp.json", "--append-system-prompt-file=/tmp/omb-system-y/prompt.txt"],
+  command: "/usr/local/bin/claude", args: ["-p", "--mcp-config", "/tmp/mausclaw-mcp-x/mcp.json", "--append-system-prompt-file=/tmp/mausclaw-system-y/prompt.txt"],
   cwd, env: { PATH: "/usr/bin", HOME: home, CLAUDE_CONFIG_DIR: "/data/.claude" }, rw: [join(dataDir, "perm-abc.sock")],
 });
 
@@ -29,8 +29,8 @@ linuxBox("the box plan", () => {
     expect(visibleInBox(plan, join(dataDir, "workspaces", "bot-a", "MEMORY.md"))).toBe("rw");
     expect(visibleInBox(plan, join(dataDir, "perm-abc.sock"))).toBe("rw");
     expect(visibleInBox(plan, "/data/.claude/settings.json")).toBe("rw");
-    expect(visibleInBox(plan, "/tmp/omb-mcp-x/mcp.json")).toBe("ro");
-    expect(visibleInBox(plan, "/tmp/omb-system-y/prompt.txt")).toBe("ro");
+    expect(visibleInBox(plan, "/tmp/mausclaw-mcp-x/mcp.json")).toBe("ro");
+    expect(visibleInBox(plan, "/tmp/mausclaw-system-y/prompt.txt")).toBe("ro");
     expect(visibleInBox(plan, "/app/dist-server/index.js")).toBe("ro");
     expect(visibleInBox(plan, "/usr/local/bin/claude")).toBe("ro");
     for (const hidden of ["messages.db", "config.json", "logins.json", "providers/x", "tools/y", "box/egress.sock",
@@ -45,7 +45,7 @@ linuxBox("the box plan", () => {
   it("writes the bubblewrap argv in mount order, with its own namespaces and the bridged sockets", () => {
     const args = bwrapArgs(turn());
     const text = args.join(" ");
-    for (const flag of ["--unshare-user", "--unshare-pid", "--unshare-net", "--unshare-ipc", "--unshare-uts", "--die-with-parent", "--hostname omb-box", "--seccomp 3", `--chdir ${cwd}`]) expect(text).toContain(flag);
+    for (const flag of ["--unshare-user", "--unshare-pid", "--unshare-net", "--unshare-ipc", "--unshare-uts", "--die-with-parent", "--hostname mausclaw-box", "--seccomp 3", `--chdir ${cwd}`]) expect(text).toContain(flag);
     expect(bwrapArgs(planBox({ ...setup(), seccompFd: undefined }, { command: "/usr/bin/x", args: [], env: {} })).join(" ")).not.toContain("--seccomp");
     expect(text).toContain("--ro-bind /usr /usr");
     expect(text).toContain("--symlink usr/bin /bin");
@@ -56,11 +56,11 @@ linuxBox("the box plan", () => {
     expect(args[order[1]! + 1]).toBe(dataDir);
     expect(order[0]).toBeLessThan(order[1]!);
     expect(order[1]).toBeLessThan(order[2]!);
-    expect(text).toContain(`--dir /run/omb --bind ${dataDir}/box/egress.sock /run/omb/egress.sock --bind ${dataDir}/box/harness.sock /run/omb/harness.sock`);
+    expect(text).toContain(`--dir /run/mausclaw --bind ${dataDir}/box/egress.sock /run/mausclaw/egress.sock --bind ${dataDir}/box/harness.sock /run/mausclaw/harness.sock`);
     expect(text).not.toContain("--new-session");
   });
 
-  it("puts the engines OpenMausBot installed back whole and read-only, whatever else the turn may write", () => {
+  it("puts the engines MausClaw installed back whole and read-only, whatever else the turn may write", () => {
     // npm's bin entries are relative links into the prefix: `bin/opencode -> ../lib/node_modules/opencode-ai/bin/opencode.exe`.
     const prefix = join(dataDir, "tools", "npm");
     const engineFiles = [`${prefix}/bin/opencode`, `${prefix}/lib/node_modules/opencode-ai/bin/opencode.exe`, `${prefix}/bin/codex`,
@@ -80,7 +80,7 @@ linuxBox("the box plan", () => {
     const args = bwrapArgs(turn());
     const engines = args.findIndex((arg, i) => arg === "--ro-bind-try" && args[i + 1] === prefix && args[i + 2] === prefix);
     expect(engines).toBeGreaterThan(args.findIndex((arg, i) => arg === "--tmpfs" && args[i + 1] === dataDir));
-    const lastWritable = args.reduce((last, arg, i) => (arg === "--bind" || arg === "--bind-try") && !args[i + 2]!.startsWith("/run/omb/") ? i : last, -1);
+    const lastWritable = args.reduce((last, arg, i) => (arg === "--bind" || arg === "--bind-try") && !args[i + 2]!.startsWith("/run/mausclaw/") ? i : last, -1);
     expect(engines).toBeGreaterThan(lastWritable);
   });
 
@@ -88,9 +88,9 @@ linuxBox("the box plan", () => {
     const own = join(dataDir, "engine-homes", "member-aaaaaaaaaaaaaaaa");
     const team = planBox(setup(), { command: "opencode", args: [], cwd, env: { HOME: own }, home: own });
     expect(visibleInBox(team, join(dataDir, "tools", "npm", "bin", "opencode"))).toBe("ro");
-    const apart = planBox({ ...setup(), dataDir: "/srv/omb", home: "/home/maus", engineRoots: engineInstallRoots("/srv/omb") }, { command: "opencode", args: [], cwd: "/srv/omb/task-workspaces/b/t", env: {} });
-    expect(visibleInBox(apart, "/srv/omb/tools/npm/bin/opencode")).toBe("ro");
-    expect(visibleInBox(apart, "/srv/omb/messages.db")).toBe("none");
+    const apart = planBox({ ...setup(), dataDir: "/srv/mausclaw", home: "/home/maus", engineRoots: engineInstallRoots("/srv/mausclaw") }, { command: "opencode", args: [], cwd: "/srv/mausclaw/task-workspaces/b/t", env: {} });
+    expect(visibleInBox(apart, "/srv/mausclaw/tools/npm/bin/opencode")).toBe("ro");
+    expect(visibleInBox(apart, "/srv/mausclaw/messages.db")).toBe("none");
   });
 
   it("TMPDIR never puts the host's /tmp back; another temp folder is put back", () => {
@@ -102,12 +102,12 @@ linuxBox("the box plan", () => {
   });
 
   it("a shared-network box (a browser) has no bridges and no network namespace", () => {
-    const plan = planBox(setup(), { command: "/opt/chrome", args: [], env: {}, net: "shared", rw: ["/data/.openmausbot/browser/profiles/p1"] });
+    const plan = planBox(setup(), { command: "/opt/chrome", args: [], env: {}, net: "shared", rw: ["/data/.mausclaw/browser/profiles/p1"] });
     expect(plan.net).toBe("shared");
     expect(bwrapArgs(plan).join(" ")).not.toContain("--unshare-net");
-    expect(bwrapArgs(plan).join(" ")).not.toContain("/run/omb");
-    expect(visibleInBox(plan, "/data/.openmausbot/browser/profiles/p1/Default")).toBe("rw");
-    expect(visibleInBox(plan, "/data/.openmausbot/messages.db")).toBe("none");
+    expect(bwrapArgs(plan).join(" ")).not.toContain("/run/mausclaw");
+    expect(visibleInBox(plan, "/data/.mausclaw/browser/profiles/p1/Default")).toBe("rw");
+    expect(visibleInBox(plan, "/data/.mausclaw/messages.db")).toBe("none");
   });
 
   it("Antigravity's own profile (GEMINI_HOME) goes back read-write, and no other account's", () => {
@@ -129,7 +129,7 @@ linuxBox("the box plan", () => {
   it("on a Team Cloud the turn's HOME is its audience's engine home: the server's HOME and every other audience's home are not there", () => {
     const own = join(dataDir, "engine-homes", "member-aaaaaaaaaaaaaaaa"), other = join(dataDir, "engine-homes", "member-bbbbbbbbbbbbbbbb");
     const plan = planBox(setup(), {
-      command: "/usr/local/bin/claude", args: [], cwd, env: { HOME: own, CLAUDE_CONFIG_DIR: `${own}/.claude-work`, CODEX_HOME: `${own}/.omb-folders/CODEX_HOME-abc` },
+      command: "/usr/local/bin/claude", args: [], cwd, env: { HOME: own, CLAUDE_CONFIG_DIR: `${own}/.claude-work`, CODEX_HOME: `${own}/.mausclaw-folders/CODEX_HOME-abc` },
       home: own, shared: [{ source: "/data/.claude/.credentials.json", target: `${own}/.claude/.credentials.json` }, { source: "/data/x", target: "/elsewhere/x" }],
     });
     expect(visibleInBox(plan, `${own}/.claude/projects/p/s.jsonl`)).toBe("rw");
@@ -148,17 +148,17 @@ linuxBox("the box plan", () => {
     expect(at("--tmpfs", dataDir)).toBeLessThan(at("--bind", own));
     expect(at("--bind", own)).toBeLessThan(at("--bind-try", `${own}/.claude/.credentials.json`));
     expect(args.join(" ")).toContain(`--bind-try /data/.claude/.credentials.json ${own}/.claude/.credentials.json`);
-    expect(args.filter((arg) => arg.startsWith(`${own}/.omb-folders`) || arg === `${own}/.claude-work`)).toEqual([]);
+    expect(args.filter((arg) => arg.startsWith(`${own}/.mausclaw-folders`) || arg === `${own}/.claude-work`)).toEqual([]);
     // Without an engine home (a My Cloud, a desktop) the box has the server's HOME as before.
     expect(visibleInBox(turn(), "/data/.claude/projects/p/s.jsonl")).toBe("rw");
   });
 
   it("a data folder outside HOME is simply not there", () => {
-    const plan = planBox({ ...setup(), dataDir: "/srv/omb", home: "/home/maus" }, { command: "/usr/bin/x", args: [], cwd: "/srv/omb/task-workspaces/b/t", env: {} });
-    expect(visibleInBox(plan, "/srv/omb/messages.db")).toBe("none");
-    expect(visibleInBox(plan, "/srv/omb/task-workspaces/b/t")).toBe("rw");
-    expect(visibleInBox(plan, "/srv/omb/workspaces/b")).toBe("rw");
-    expect(bwrapArgs(plan).join(" ")).not.toContain("--tmpfs /srv/omb");
+    const plan = planBox({ ...setup(), dataDir: "/srv/mausclaw", home: "/home/maus" }, { command: "/usr/bin/x", args: [], cwd: "/srv/mausclaw/task-workspaces/b/t", env: {} });
+    expect(visibleInBox(plan, "/srv/mausclaw/messages.db")).toBe("none");
+    expect(visibleInBox(plan, "/srv/mausclaw/task-workspaces/b/t")).toBe("rw");
+    expect(visibleInBox(plan, "/srv/mausclaw/workspaces/b")).toBe("rw");
+    expect(bwrapArgs(plan).join(" ")).not.toContain("--tmpfs /srv/mausclaw");
   });
 
   it("each mutation opens exactly the hole it names", () => {

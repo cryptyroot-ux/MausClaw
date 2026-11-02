@@ -10,7 +10,7 @@ import type { Routine, RoutineRun } from "./routines.ts";
 import { installLibrarySkill, readSkillLibraryIndex } from "./skill-library.ts";
 import { WebhookManager } from "./webhooks.ts";
 
-const HERE = "/Users/amit/.openmausbot";
+const HERE = "/Users/amit/.mausclaw";
 const OWNER = { person: "p_owner0000000000000000", name: "Amit" };
 
 /** Routines held in memory as the routine manager holds them, adopting the way it does. */
@@ -54,7 +54,7 @@ describe("what a move compares", () => {
   it("hashes a definition the same on both servers once each names its own data folder, apart from its switch and next time", () => {
     const here = routinesHeld([routine()], [run("run-1", "completed")]);
     const [mine] = moveItems(deps(HERE, { routines: () => here }), new Set(["b1"])).filter((item) => item.kind === "routine");
-    const cloud = "/data/.openmausbot";
+    const cloud = "/data/.mausclaw";
     const moved = routine({ prompt: `Read ${cloud}/workspaces/b1/notes.md`, attachments: [{ id: "a1", kind: "file", name: "plan.md", path: `${cloud}/attachments/plan.md`, size: 4 }] as never,
       enabled: false, nextRunAt: null, updatedAt: 99 });
     const [theirs] = moveItems(deps(cloud, { routines: () => routinesHeld([moved], [run("run-1", "completed", { output: `Wrote ${cloud}/workspaces/b1/out.md` })]) }), new Set(["b1"]));
@@ -79,7 +79,7 @@ describe("what a move compares", () => {
 
 describe("My Cloud takes a routine", () => {
   it("under its own id, switched off, with its finished runs, this computer's folder named as its own, and as its owner's", async () => {
-    const cloud = mkdtempSync(join(tmpdir(), "omb-kinds-"));
+    const cloud = mkdtempSync(join(tmpdir(), "mausclaw-kinds-"));
     const held = routinesHeld();
     const d = deps(cloud, { routines: () => held });
     const runs = [run("run-1", "completed"), run("run-2", "running"), run("run-3", "failed", { routineId: "r9" })];
@@ -106,7 +106,7 @@ describe("My Cloud takes a routine", () => {
 
 describe("My Cloud takes a webhook and a call", () => {
   it("a webhook gets an address and a secret of its own there and starts off; taken again, it keeps them and its switch", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-kinds-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-kinds-"));
     const here = new WebhookManager({ file: join(dir, "here.json"), botState: () => "ready", enqueue: () => ({ runId: "x" }) } as never);
     const there = new WebhookManager({ file: join(dir, "there.json"), botState: () => "ready", enqueue: () => ({ runId: "x" }) } as never);
     const made = here.create({ name: "Orders", prompt: "File it.", botId: "b1" });
@@ -125,7 +125,7 @@ describe("My Cloud takes a webhook and a call", () => {
   });
 
   it("a scheduled call starts unscheduled until it is switched on there", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-kinds-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-kinds-"));
     const calls = new CalendarCallManager({ file: join(dir, "calls.json"), botExists: (id) => id === "b1" });
     const call = { id: "c1", name: "Sync", description: "", botIds: ["b1"], schedule: { type: "daily" as const, time: "10:00", weekdays: [1] }, durationMinutes: 30,
       attachments: [], nextRunAt: 999, createdAt: 1, updatedAt: 2 };

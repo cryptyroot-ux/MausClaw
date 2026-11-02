@@ -14,8 +14,8 @@ Ctrl-C closes the fixture and removes its data; the printed server log is retain
 ## Automated browser check
 
 Use an installed Playwright module and Chromium executable. Set
-`OMB_VERIFY_PLAYWRIGHT` to that module's absolute entry path and
-`OMB_VERIFY_BROWSER_CHROME` to the browser executable when they are not available
+`MAUSCLAW_VERIFY_PLAYWRIGHT` to that module's absolute entry path and
+`MAUSCLAW_VERIFY_BROWSER_CHROME` to the browser executable when they are not available
 through the normal Playwright installation. Pass the printed URL explicitly:
 
 ```sh
@@ -26,7 +26,7 @@ The script creates a fresh browser context, checks sorting, rich Markdown links,
 RTL, expansion/Escape/focus return, lazy file loading, scrolling to the final CSV
 row, sticky headers, bounded DOM, whole-result copy/download, TSV newlines,
 malformed-file errors, network retry, dismissal during loading, and narrow/light
-layout. Screenshots go to `OMB_TABLE_EVIDENCE` or `/tmp/omb-rich-tables-evidence`.
+layout. Screenshots go to `MAUSCLAW_TABLE_EVIDENCE` or `/tmp/mausclaw-rich-tables-evidence`.
 The supplied address must be loopback and name this fixture page.
 
 ## Focused regression checks

@@ -1,4 +1,4 @@
-# OpenMausBot Enterprise
+# MausClaw Enterprise
 
 Source-available features for hosted and white-labelled deployments. This
 folder has its own [LICENSE](./LICENSE); everything outside it is Apache 2.0.
@@ -9,7 +9,7 @@ loads `enterprise/server/index.ts` (or the bundled `index.js`) if it exists
 and otherwise reports the open-source edition. No core file imports anything
 from here.
 
-Where core looks, in order: `OMB_ENTERPRISE_DIR` when it is set (and then
+Where core looks, in order: `MAUSCLAW_ENTERPRISE_DIR` when it is set (and then
 only there); otherwise beside the server root (a checkout's `enterprise/`,
 the npm package's `<package>/enterprise/`), then inside it
 (`dist-server/enterprise/`, which is all the Docker image and the packaged
@@ -18,7 +18,7 @@ LICENSE there).
 
 ## How a deployment turns enterprise
 
-Set `OMB_LICENSE_KEY` on the server. The key is `omb1.<claims>.<signature>`:
+Set `MAUSCLAW_LICENSE_KEY` on the server. The key is `omb1.<claims>.<signature>`:
 the claims are visible JSON (who it is for, which entitlements, when it
 expires), signed with an Ed25519 key whose public half is baked into
 `enterprise/server/license.ts`. Verification is offline, and one build serves
@@ -28,8 +28,8 @@ every customer, because the key decides the feature set rather than the code.
 
 ```json
 { "edition": "enterprise", "customer": "Acme", "features": ["budgets", "whitelabel"], "expiresAt": "2027-09-02", "expiresInDays": 12 }
-{ "edition": "enterprise", "customer": "Acme", "features": ["budgets", "whitelabel"], "expiresAt": "2027-09-02", "expiresInDays": -2, "graceEndsAt": "2027-09-09", "notice": "OMB_LICENSE_KEY expired on 2027-09-02; enterprise features keep working until 2027-09-09 while it is renewed" }
-{ "edition": "oss", "features": [], "notice": "enterprise layer disabled: OMB_LICENSE_KEY expired on 2027-09-02; renew it to keep enterprise features" }
+{ "edition": "enterprise", "customer": "Acme", "features": ["budgets", "whitelabel"], "expiresAt": "2027-09-02", "expiresInDays": -2, "graceEndsAt": "2027-09-09", "notice": "MAUSCLAW_LICENSE_KEY expired on 2027-09-02; enterprise features keep working until 2027-09-09 while it is renewed" }
+{ "edition": "oss", "features": [], "notice": "enterprise layer disabled: MAUSCLAW_LICENSE_KEY expired on 2027-09-02; renew it to keep enterprise features" }
 ```
 
 `expiresInDays` is present whenever the key has an expiry; a non-admin
@@ -71,7 +71,7 @@ node enterprise/scripts/issue-license.mjs issue --customer "Acme" --features whi
 ```
 
 The signing key lives outside the repo (default
-`~/.config/openmausbot-enterprise/signing-key.json`). Rotate by generating a
+`~/.config/mausclaw-enterprise/signing-key.json`). Rotate by generating a
 new pair and appending its public key: keys signed by older pairs keep
 working until they expire.
 
@@ -91,17 +91,17 @@ invitations, provider gateway and deployment automation are not shipped in
 this repository. The desktop and ordinary self-hosted server do not start
 or depend on a hosted console.
 
-Operators opt a workspace into this protocol using `OMB_ADMIN_URL`,
-`OMB_ADMIN_WORKSPACE` and `OMB_PUBLIC_URL`; a valid `admin` entitlement is
+Operators opt a workspace into this protocol using `MAUSCLAW_ADMIN_URL`,
+`MAUSCLAW_ADMIN_WORKSPACE` and `MAUSCLAW_PUBLIC_URL`; a valid `admin` entitlement is
 required. The default keeps the local sign-in allow-list as an additional,
 narrowing check. Operators may explicitly delegate membership for verified
-portal sessions with `OMB_ADMIN_MEMBERSHIP=portal`; this never exempts ordinary
+portal sessions with `MAUSCLAW_ADMIN_MEMBERSHIP=portal`; this never exempts ordinary
 email or pairing sessions. See the [protocol and isolated verification recipe](../docs/verification/hosted-workspaces.md).
 
 ## White-label (`whitelabel`)
 
-Put a `brand.json` in the server's data dir (`OMB_DATA_DIR`, the `/data`
-volume in Docker) or point `OMB_BRAND_FILE` at one:
+Put a `brand.json` in the server's data dir (`MAUSCLAW_DATA_DIR`, the `/data`
+volume in Docker) or point `MAUSCLAW_BRAND_FILE` at one:
 
 ```json
 {

@@ -20,7 +20,7 @@ const desktop = randomUUID(), lending = randomUUID();
 const notes = randomUUID(), big = randomUUID(), docs = randomUUID();
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "omb-lent-copies-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-lent-copies-"));
   now = Date.UTC(2026, 9, 27, 12);
   const store = new CloudSyncStore({ dataDir: join(dir, "data"), root: join(dir, "Synced") });
   const folder = store.register({ computerId: randomUUID(), computerName: "Ash-MBP", pcPath: "/Users/ash/Notes", name: "Notes" });

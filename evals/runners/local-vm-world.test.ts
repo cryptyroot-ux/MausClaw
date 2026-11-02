@@ -3,7 +3,7 @@ import { scenarioSchema } from "../types.ts";
 import { runScenario } from "./run-scenario.ts";
 
 // installSkill writes to <parent-of-eval-gates>/skills and the server hot-loads
-// <OMB_DATA_DIR>/skills, so eval-gates must sit under the data dir.
+// <MAUSCLAW_DATA_DIR>/skills, so eval-gates must sit under the data dir.
 describe("localVm world installSkill", () => {
   it("lands user skills where the server hot-loads them", async () => {
     const scenario = scenarioSchema.parse({

@@ -1,13 +1,13 @@
-# OMB Platform Independence — Architecture Audit and Migration Plan
+# MausClaw Platform Independence — Architecture Audit and Migration Plan
 
 Date: 2026-10-27
 Status: proposed direction, awaiting execution approval
-Scope: separate the Agent Engine, LLM Provider/Model, and Capability System so OMB is a standalone agent
+Scope: separate the Agent Engine, LLM Provider/Model, and Capability System so MausClaw is a standalone agent
 platform, not an application that rides an external agent engine.
 
 ## 1. Target
 
-OMB must own the agent lifecycle. Three components must be separable and independently testable:
+MausClaw must own the agent lifecycle. Three components must be separable and independently testable:
 
 1. **Agent Engine** — the operational brain: turn admission, model rounds, tool-call orchestration, state,
    context, retry, cancellation, recovery, steering, budgets.
@@ -35,7 +35,7 @@ ProviderRegistry
                       ├─ createChatToolApproval(...)     <-- approval in the driver
                       ├─ legacy loop (when no agentEngine flag)
                       └─ native branch
-                           └─ AgentEngine.run()          <-- OMB engine is a subcomponent
+                           └─ AgentEngine.run()          <-- MausClaw engine is a subcomponent
                                 ├─ ModelAdapter.generate()
                                 └─ CapabilitySession.invoke()
 ```
@@ -63,7 +63,7 @@ driver, and the driver still owns turn admission, tool mounting, approvals, and 
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ TurnRuntime (OMB engine)                                     │
+│ TurnRuntime (MausClaw engine)                                     │
 │  admission · rounds · state · context · retry · recovery     │
 │  steering · budgets · compaction · journal · eval hooks      │
 └───────────────┬──────────────────────────────┬───────────────┘
@@ -137,9 +137,9 @@ Phase 1b step 4 (deferred): retiring the legacy loop is NOT done yet. Removing i
 those behaviors live in the legacy loop's `complete()` (`noteKeyRejected`, `rejectsKey`) and are not yet
 handled by the native model adapter. To retire safely: (a) move key-rejection / provider-error
 classification into `server/agent-runtime/model-adapter.ts` (and the Anthropic/Gemini/Responses adapters
-in Phase 2), (b) update the affected tests to pass `agentEngine: "omb-native"` (or keep a legacy suite
+in Phase 2), (b) update the affected tests to pass `agentEngine: "mausclaw-native"` (or keep a legacy suite
 behind an explicit flag per audit §4). Until then the legacy loop stays as unreachable-in-production
-code (API drivers always set `agentEngine: "omb-native"` via `usesNativeAgentEngine`). Phase 2 is the
+code (API drivers always set `agentEngine: "mausclaw-native"` via `usesNativeAgentEngine`). Phase 2 is the
 next phase.
 
 Acceptance: `rg "nativeEngine.run" server/drivers` returns no driver-owned call; only `TurnRuntime`
@@ -192,7 +192,7 @@ Acceptance: reproducible eval report, not vendor claims.
 PATH=/nonexistent-native-agent-path pnpm exec vitest run server/native-only.e2e.test.ts
 ```
 
-The fixture already launches a real OMB server, a loopback model provider, a real MCP server, and a
+The fixture already launches a real MausClaw server, a loopback model provider, a real MCP server, and a
 real approval card. Extend it to assert:
 
 - no external engine binary is available (`claude`, `codex`, `opencode`, `hermes`, `pi`, `antigravity`);
@@ -222,14 +222,14 @@ Phase 1, smallest safe step:
 4. Keep the legacy driver loop unreachable for API drivers; delete it only after the suite is green.
 
 This preserves the working engine while correcting the ownership boundary. It is the difference
-between “OMB has a native loop inside a driver” and “OMB is a native agent platform with replaceable
+between “MausClaw has a native loop inside a driver” and “MausClaw is a native agent platform with replaceable
 providers and capabilities.”
 
 Phase 4 (done, acceptance met): supportedAgentDrivers contains only API providers (engine-support.test.ts green, including anthropic/gemini/openai-responses); sealed-PATH test (PATH=/nonexistent-native-agent-path) passes native-only.e2e.test.ts; no agent-engine child process is spawned by the native loop. External CLI/ACP code remains quarantined in server/drivers (not registered, not launched).
 
 Phase 4 cleanup (partial): key-rejection marking (noteKeyRejected) has been moved into all four model adapters (OpenAI, Anthropic, Gemini, Responses) so the native path now marks rejected keys. The legacy driver loop remains (reachable in tests) because migrating 40+ openai-chat.test.ts cases to the native path is high-risk; deferred. generateText helper now routes through the adapter for non-OpenAI providers (Phase 2 follow-up).
 
-Upstream check (2026-10-28): fetched origin/main (v0.1.129, 40+ commits since base bd569fb78). Reviewed all: only `0cd63a7db` (Gemini tool calls stream whole with id and no index) was relevant — applied to model-adapter.ts and openai-chat-protocol.ts. Other commits are UI/feature improvements (bot-apps tool grants, tool-receipts stale, i18n, desktop update, LM Studio catalog) — not critical for OMB-Claw native engine. No security fixes requiring cherry-pick.
+Upstream check (2026-10-28): fetched origin/main (v0.1.129, 40+ commits since base bd569fb78). Reviewed all: only `0cd63a7db` (Gemini tool calls stream whole with id and no index) was relevant — applied to model-adapter.ts and openai-chat-protocol.ts. Other commits are UI/feature improvements (bot-apps tool grants, tool-receipts stale, i18n, desktop update, LM Studio catalog) — not critical for MausClaw native engine. No security fixes requiring cherry-pick.
 
 Phase 5 (done): independence proof = native-only.e2e.test.ts (sealed PATH, no external engine process, agent_runs completed, MCP tool executed, artifact created). Eval report = evals/runners/run-evals.ts produces reproducible JSON report with resolve rate, model rounds, tool calls, wall time, request count, compactions, recovery_required (latest: 100% resolve, 1/1 task). External benchmarks (SWE-bench Verified, Terminal-Bench, CodeClash, ProgramBench) remain for future work; the harness skeleton exists under evals/.
 

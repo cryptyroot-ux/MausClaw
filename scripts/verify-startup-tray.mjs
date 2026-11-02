@@ -9,9 +9,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 
-const flag = "--omb-startup-fixture";
+const flag = "--mausclaw-startup-fixture";
 if (!process.versions.electron) {
-  const output = mkdtempSync(join(tmpdir(), "openmausbot-startup-evidence-"));
+  const output = mkdtempSync(join(tmpdir(), "mausclaw-startup-evidence-"));
   const env = { ...process.env, HOME: output, USERPROFILE: output,
     APPDATA: join(output, "roaming"), LOCALAPPDATA: join(output, "local") };
   delete env.ELECTRON_RUN_AS_NODE;

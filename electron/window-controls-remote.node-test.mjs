@@ -11,7 +11,7 @@ function loadPreload(origin) {
   let bridge;
   const invoked = [];
   vm.runInNewContext(preloadSource, {
-    process: { platform: "win32", argv: [`--omb-local-origin=${LOCAL}`] },
+    process: { platform: "win32", argv: [`--mausclaw-local-origin=${LOCAL}`] },
     location: { origin },
     navigator: {},
     TextEncoder,

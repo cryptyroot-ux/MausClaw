@@ -22,7 +22,7 @@ path; they do not identify the exact cache responsible in an old live session.
 
 Build the generated `managedImageDockerfile()` under a dedicated fixture image
 tag, rather than replacing an image used by running user desktops. Set explicit
-`OMB_VERIFY_PODMAN`, `OMB_VERIFY_MACHINE`, and `OMB_VERIFY_IMAGE`, then run:
+`MAUSCLAW_VERIFY_PODMAN`, `MAUSCLAW_VERIFY_MACHINE`, and `MAUSCLAW_VERIFY_IMAGE`, then run:
 
 ```sh
 node --experimental-strip-types scripts/verify-japanese-desktop.ts
@@ -30,13 +30,13 @@ node --experimental-strip-types scripts/verify-japanese-desktop.ts
 
 The script saves a minimal UTF-8 HTML file, launches Firefox in two independently
 created desktops, records actual screenshots and removes its containers and
-engine-host temporary workspaces. Use `OMB_VERIFY_OUTPUT` for a separate evidence
+engine-host temporary workspaces. Use `MAUSCLAW_VERIFY_OUTPUT` for a separate evidence
 directory when comparing the old image. The receipt reports capture completion;
 glyph correctness requires inspecting the PNGs.
 
 App imports use a fresh temporary HOME and data directory under the output
 directory. Podman alone keeps its existing connection and SSH configuration.
-Each container has a unique `omb-font-fixture-` name. The script resolves the
+Each container has a unique `mausclaw-font-fixture-` name. The script resolves the
 chosen image to an immutable local ID once, records that ID in the receipt, and
 also removes partially created containers after a failed launch. It removes
 temporary app data and home on normal completion or a caught failure. After a

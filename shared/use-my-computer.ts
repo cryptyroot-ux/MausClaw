@@ -1,6 +1,6 @@
-/** The link a bot on My Cloud gives the person when it needs their computer: in OpenMausBot on that computer it opens
+/** The link a bot on My Cloud gives the person when it needs their computer: in MausClaw on that computer it opens
  * the app's own Use my Mac popup, which turns on every part of Let my bots use this Mac. Anywhere else it is plain text. */
-export const USE_MY_COMPUTER_URL = "openmausbot://use-my-computer";
+export const USE_MY_COMPUTER_URL = "mausclaw://use-my-computer";
 
 export function isUseMyComputerUrl(value: string): boolean {
   return value.trim().toLowerCase() === USE_MY_COMPUTER_URL;

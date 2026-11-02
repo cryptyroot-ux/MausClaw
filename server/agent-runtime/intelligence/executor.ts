@@ -1,5 +1,5 @@
 // Executor: runs plan steps in dependency order with an optional verifier.
-// Additive port of OpenMausBot-Pivot's server/intelligence/executor.ts.
+// Additive port of MausClaw-Pivot's server/intelligence/executor.ts.
 import type { Plan, PlanStep, VerificationResult } from "./types.ts";
 import { Verifier as VerifierImpl } from "./verifier.ts";
 import type { StepExecutionOutcome, ExecutionResult, StepExecutionStatus } from "./types.ts";

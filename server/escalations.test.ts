@@ -17,7 +17,7 @@ import {
   type EscalationBot,
 } from "./escalations.ts";
 
-const FENCE = /^\[.+ from OpenMausBot — not from the person\. .+\]$/;
+const FENCE = /^\[.+ from MausClaw — not from the person\. .+\]$/;
 
 const bot = (over: Partial<EscalationBot> = {}): EscalationBot => ({
   id: "b-mira",

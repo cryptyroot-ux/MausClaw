@@ -23,7 +23,7 @@ export const LIVE_DATA_CHANNEL = {
 
 /** Only a loopback http URL is accepted, read at call time. */
 export function liveBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
-  const override = env.OMB_OPENAI_LIVE_URL?.trim() ?? "";
+  const override = env.MAUSCLAW_OPENAI_LIVE_URL?.trim() ?? "";
   return /^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(override) ? override : OPENAI_BASE;
 }
 
@@ -70,7 +70,7 @@ export function liveInstructions(bot: LiveBot, { cloudHome = false }: { cloudHom
   const name = oneLine(bot.name) || "the agent";
   const title = oneLine(bot.title ?? "");
   const description = oneLine(bot.description ?? "").slice(0, 400);
-  const where = cloudHome ? `runs on ${CLOUD_HOME_PLACE}` : "runs in OpenMausBot on the user's own computer";
+  const where = cloudHome ? `runs on ${CLOUD_HOME_PLACE}` : "runs in MausClaw on the user's own computer";
   const changes = cloudHome ? "My Cloud" : "the computer";
   return [
     `You are ${name}${title ? `, ${title}` : ""}, an AI agent that ${where}.${description ? ` ${description}` : ""}`,

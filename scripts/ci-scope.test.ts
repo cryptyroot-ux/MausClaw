@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 function fixture(source = "src/page.ts") {
-  const directory = mkdtempSync(join(tmpdir(), "omb-ci-scope-"));
+  const directory = mkdtempSync(join(tmpdir(), "mausclaw-ci-scope-"));
   temporaryDirectories.push(directory);
   const git = (...args: string[]) => execFileSync("git", args, { cwd: directory, encoding: "utf8" }).trim();
   git("init", "--quiet");
@@ -97,7 +97,7 @@ describe("CI path scope", () => {
   });
 
   it("runs a test under scripts/ wherever the suite runs, without the build", () => {
-    expect(selectCiScope(["scripts/generate-locale.test.mjs", "scripts/testing/control-omb-ui.e2e.test.ts"]))
+    expect(selectCiScope(["scripts/generate-locale.test.mjs", "scripts/testing/control-mausclaw-ui.e2e.test.ts"]))
       .toEqual({ areas: ["script-tests"], checks: ["browser-identity", "host-tests", "linux-tests", "ui-smoke"] });
   });
 
@@ -415,7 +415,7 @@ describe("CI scope CLI", () => {
 });
 
 const pkg = (version: string, extra: Record<string, unknown> = {}) =>
-  `${JSON.stringify({ name: "openmausbot", private: true, version, scripts: { test: "vitest run" }, ...extra }, null, 2)}\n`;
+  `${JSON.stringify({ name: "mausclaw", private: true, version, scripts: { test: "vitest run" }, ...extra }, null, 2)}\n`;
 
 describe("version-only package.json", () => {
   it("is only a changed top-level version", () => {
@@ -429,7 +429,7 @@ describe("version-only package.json", () => {
     ["a dependency added", pkg("0.1.100"), pkg("0.1.101", { dependencies: { zod: "4" } })],
     ["a script changed", pkg("0.1.100"), pkg("0.1.101").replace("vitest run", "vitest run --bail")],
     ["a nested version changed", pkg("0.1.100", { engines: { version: "1" } }), pkg("0.1.101", { engines: { version: "2" } })],
-    ["other keys reordered", pkg("0.1.100"), JSON.stringify({ private: true, name: "openmausbot", version: "0.1.101", scripts: { test: "vitest run" } })],
+    ["other keys reordered", pkg("0.1.100"), JSON.stringify({ private: true, name: "mausclaw", version: "0.1.101", scripts: { test: "vitest run" } })],
     ["no version before", JSON.stringify({ name: "x" }), JSON.stringify({ name: "x", version: "1.0.0" })],
     ["not JSON", "{", pkg("0.1.101")],
     ["not an object", "[]", "[]"],

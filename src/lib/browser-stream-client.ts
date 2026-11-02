@@ -1,7 +1,7 @@
 // Adapted from pingdotgg/t3code@00cdceb1 packages/client-runtime/src/preview/serverBrowserStream.ts, MIT License,
-// Copyright (c) 2026 T3 Tools Inc. (full text in third_party/t3-code/LICENSE); modified: OpenMausBot's routes and
+// Copyright (c) 2026 T3 Tools Inc. (full text in third_party/t3-code/LICENSE); modified: MausClaw's routes and
 // access, a viewer that may operate sizes the page while it only watches, a larger frame cap is sent in place and a
-// reconnect opens with the newest size and cap, and OpenMausBot's own messages are passed on.
+// reconnect opens with the newest size and cap, and MausClaw's own messages are passed on.
 
 /** The browser's host cannot run Chrome until it is set up; the close reason names the fix. */
 export const PREVIEW_STREAM_HOST_SETUP_CLOSE_CODE = 4503;
@@ -247,7 +247,7 @@ export interface PreviewStreamEvents {
   readonly onPopup?: (tabId: string) => void;
   /** The page opened a file picker (`null` once answered or replaced). */
   readonly onFileChooser?: (chooser: PreviewStreamFileChooser | null) => void;
-  /** OpenMausBot's own messages: tabs, nav, selectPopup, cursor, authPrompt, starting, notice, asleep, awake. */
+  /** MausClaw's own messages: tabs, nav, selectPopup, cursor, authPrompt, starting, notice, asleep, awake. */
   readonly onMessage?: (message: Readonly<Record<string, unknown>>) => void;
   /** Input sent while disconnected is dropped. */
   readonly onConnectedChange: (connected: boolean) => void;
@@ -543,7 +543,7 @@ const decodeHostSetup = (reason: string): PreviewStreamHostSetup => {
       return { need: value.need, command: value.command };
     }
   } catch {}
-  return { need: "sandbox", command: "sudo openmausbot browser setup" };
+  return { need: "sandbox", command: "sudo mausclaw browser setup" };
 };
 
 /** What a viewer tells the person; `command` is shown beside it, ready to copy. */

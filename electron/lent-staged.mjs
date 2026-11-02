@@ -71,7 +71,7 @@ async function applyOne({ client, folderId, folder, change, protectedRoots, now,
   fs.mkdirSync(path.dirname(target), { recursive: true });
   // Named like Files' own half-downloaded files, so a crash leaves nothing a scan would carry.
   const tag = createHash("sha256").update(`${folderId}\n${change.id}`).digest("hex").slice(0, 8);
-  const temporary = path.join(path.dirname(target), `.${path.basename(target).slice(0, 180)}.omb-sync-${tag}`);
+  const temporary = path.join(path.dirname(target), `.${path.basename(target).slice(0, 180)}.mausclaw-sync-${tag}`);
   try {
     await client.stagedFile(folderId, change.id, temporary);
     if (await sha256File(temporary) !== change.sha256) throw new Error("The change was damaged on its way; it will be fetched again.");

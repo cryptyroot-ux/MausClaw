@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 
 /** The Simple mode popup was closed in this browser. Kept per browser, next to the mode it is about (interface-mode's
- * omb-advanced-mode), since each browser keeps its own mode. */
-export const SIMPLE_MODE_PROMPT_KEY = "omb-simple-mode-prompt";
+ * mausclaw-advanced-mode), since each browser keeps its own mode. */
+export const SIMPLE_MODE_PROMPT_KEY = "mausclaw-simple-mode-prompt";
 
 /** Where this page cannot write its storage, its memory stands in, so the popup still closes for the session. */
 let closedHere = false;

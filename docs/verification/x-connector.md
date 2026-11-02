@@ -2,7 +2,7 @@
 
 The X card in Apps shows whether bots can search and read X, and through what:
 a MausBot Cloud plan's included calls (with this month's use from the relay's
-`GET <OMB_CLOUD_X_URL>/usage`), or the person's own treg key, which is used
+`GET <MAUSCLAW_CLOUD_X_URL>/usage`), or the person's own treg key, which is used
 first. The card reads `GET /api/x/status`, which resolves the credential with
 the same function as the X tools' own routes.
 
@@ -12,13 +12,13 @@ Use an installed Playwright module and Chromium executable, as for the
 [Whop fixture](whop.md), then run:
 
 ```sh
-OMB_UI_EVIDENCE_DIR=/tmp/omb-x-connector-evidence \
+MAUSCLAW_UI_EVIDENCE_DIR=/tmp/mausclaw-x-connector-evidence \
   node --experimental-strip-types scripts/verify-x-connector.ts
 ```
 
 It starts two fake-engine servers, one without a plan and one wired to a
 loopback stand-in for the relay, with the same stand-in as treg
-(`OMB_TREG_URL`). It drives the real Apps pop-up and checks:
+(`MAUSCLAW_TREG_URL`). It drives the real Apps pop-up and checks:
 
 - With neither a key nor a plan, the card asks for a treg key and links to
   treg.to. The managed install's Composio Twitter tile, which cannot connect

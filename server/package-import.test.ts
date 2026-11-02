@@ -10,7 +10,7 @@ const fixture = (name: string): any => JSON.parse(readFileSync(join(FIXTURES, na
 let home: string;
 
 async function installation(options: { refuse?: (name: string) => string | undefined; servers?: Record<string, unknown> } = {}) {
-  home = mkdtempSync(join(tmpdir(), "omb-package-import-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-package-import-"));
   vi.resetModules();
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);

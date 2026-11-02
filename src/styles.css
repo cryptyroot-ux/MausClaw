@@ -1016,12 +1016,12 @@
    the machine has one. Geist and the UI stack do not carry those glyphs,
    and a generic family listed later would otherwise win. */
 @font-face {
-  font-family: "omb-chat";
+  font-family: "mausclaw-chat";
   src: local("Noto Naskh Arabic"), local("Noto Sans Arabic"), local("Geeza Pro"), local("SF Arabic");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: "omb-chat";
+  font-family: "mausclaw-chat";
   src: local("Noto Sans Hebrew"), local("Arial Hebrew"), local("SF Hebrew");
   unicode-range: U+0590-05FF, U+FB1D-FB4F;
 }
@@ -1033,7 +1033,7 @@
 .chat-text,
 .chat-md {
   line-height: 1.75;
-  font-family: "omb-chat", var(--font-sans);
+  font-family: "mausclaw-chat", var(--font-sans);
 }
 .chat-md :is(strong, b) {
   font-weight: 600;
@@ -2705,7 +2705,7 @@ button:disabled.bg-danger {
   }
 }
 
-::highlight(omb-citation-source) {
+::highlight(mausclaw-citation-source) {
   background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 

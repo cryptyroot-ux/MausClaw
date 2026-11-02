@@ -27,7 +27,7 @@ function world() {
   mkdirSync(ATTACHMENTS_DIR, { recursive: true });
   writeFileSync(join(ATTACHMENTS_DIR, "ada-1.png"), PNG);
   writeFileSync(join(ATTACHMENTS_DIR, "ada-2.png"), Buffer.concat([PNG, Buffer.from([0])]));
-  const people = createTeamPeople(mkdtempSync(join(tmpdir(), "omb-team-pictures-")));
+  const people = createTeamPeople(mkdtempSync(join(tmpdir(), "mausclaw-team-pictures-")));
   people.seen(ADA, "owner");
   people.seen(BOB, "member");
   const profiles: Record<string, { name?: string; avatarUrl?: string; aboutMe?: string }> = {

@@ -19,7 +19,7 @@ it("lets a Team Cloud member list and read only their own notification feed", as
     const opened = await team.as(owner.token!, "POST", `/api/bots/${bot.id}/tasks`, { title: "Ada's private chat" });
     expect(opened.status).toBe(201);
     expect((await team.as(owner.token!, "GET", "/api/notifications")).status).toBe(200);
-    const db = new DatabaseSync(join(team.home, ".openmausbot", "messages.db"));
+    const db = new DatabaseSync(join(team.home, ".mausclaw", "messages.db"));
     try {
       const insert = db.prepare("INSERT INTO notification_log(id, at, kind, bot_id, bot_name, thread_id, title, body, for_person) VALUES (?, ?, ?, ?, 'Scout', ?, 'Fixture', '', ?)");
       const ada = personKey({ id: "", email: "ada@notifications.test" });
@@ -68,7 +68,7 @@ it("keeps admin spend alerts unread when a Team Cloud member opens a shared conv
       return listed.body.notifications.filter((entry: { read: boolean }) => !entry.read).map((entry: { id: string }) => entry.id).sort();
     };
     await unread();
-    const db = new DatabaseSync(join(team.home, ".openmausbot", "messages.db"));
+    const db = new DatabaseSync(join(team.home, ".mausclaw", "messages.db"));
     try {
       const insert = db.prepare("INSERT INTO notification_log(id, at, kind, bot_id, bot_name, thread_id, title, body) VALUES (?, ?, 'spend', ?, 'Scout', ?, 'Fixture spend', '$12 of $20 spent')");
       insert.run("shared-spend", Date.now(), bot.id, bot.mainThreadId);

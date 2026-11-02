@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { BUSY_POLL_MS, CHECK_PASSES, createTeamMove, RETRY_MS, routinesOn } from "./team-move.mjs";
 
-const ACME = { id: "team-acme", name: "Acme", origin: "https://omb-u-acme.fly.dev" };
+const ACME = { id: "team-acme", name: "Acme", origin: "https://mausclaw-u-acme.fly.dev" };
 const SCOUT = { id: "scout-1", name: "Scout" };
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 

@@ -172,7 +172,7 @@ export function createAgentEngine(dependencies: {
   };
 
   return {
-    engineId: "omb-native",
+    engineId: "mausclaw-native",
 
     async run(request: AgentRunRequest) {
       if (activeByThread.has(request.threadId)) throw new AgentRuntimeError("thread_busy", "A native run is already active for this thread");
@@ -207,7 +207,7 @@ export function createAgentEngine(dependencies: {
       const startedAt = Date.now();
       dependencies.store.createRun({
         runId,
-        engineId: "omb-native",
+        engineId: "mausclaw-native",
         providerModel: request.providerModel,
         status: "queued",
         threadId: request.threadId,
@@ -268,7 +268,7 @@ export function createAgentEngine(dependencies: {
         try {
           signal.throwIfAborted();
           updateStatus("running");
-          emit(request.threadId, { type: "run.started", runId, engineId: "omb-native", providerModel: request.providerModel });
+          emit(request.threadId, { type: "run.started", runId, engineId: "mausclaw-native", providerModel: request.providerModel });
 
           const adapterChain = [dependencies.adapters.resolve(request.providerModel), ...(request.fallbackProviders ?? []).map((ref) => dependencies.adapters.resolve(ref))];
           let adapterIndex = 0;
@@ -886,8 +886,8 @@ export function createAgentEngine(dependencies: {
               if (correctiveRounds < maxCorrective) {
                 correctiveRounds += 1;
                 const feedback = verificationFailure && verificationFeedback
-                  ? `[OpenMausBot: verification failed (${verificationFeedback}). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]`
-                  : "[OpenMausBot: a tool call in this turn failed (its result is marked ok:false). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]";
+                  ? `[MausClaw: verification failed (${verificationFeedback}). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]`
+                  : "[MausClaw: a tool call in this turn failed (its result is marked ok:false). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]";
                 messages.push({ role: "assistant", content: responseText || "" }, { role: "user", content: feedback });
                 precomputed = null;
                 continue;

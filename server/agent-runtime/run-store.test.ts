@@ -5,8 +5,8 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import type { AgentRunRecord } from "./contracts.ts";
 
-const dataDir = mkdtempSync(join(tmpdir(), "omb-agent-runs-"));
-process.env.OMB_DATA_DIR = dataDir;
+const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-agent-runs-"));
+process.env.MAUSCLAW_DATA_DIR = dataDir;
 
 const { createSqliteAgentRunStore } = await import("./run-store.ts");
 const { closeMessageDb, readAgentCapabilityCall, readAgentCompactions, readAgentToolOutput } = await import("../message-db.ts");
@@ -15,7 +15,7 @@ const run = (runId: string, status: AgentRunRecord["status"] = "running"): Agent
   runId,
   botId: "bot-1",
   threadId: "thread-1",
-  engineId: "omb-native",
+  engineId: "mausclaw-native",
   providerModel: { providerId: "fixture", modelId: "fixture-model" },
   status,
   startedAt: 1_000,

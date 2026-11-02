@@ -24,7 +24,7 @@ test("a password prompt is only attempted where one can appear", () => {
   assert.equal(canInstallElevated({ ...ok, env: { WAYLAND_DISPLAY: "wayland-0" } }), true);
   assert.equal(canInstallElevated({ ...ok, platform: "darwin" }), false);
   assert.equal(canInstallElevated({ ...ok, env: {} }), false, "no graphical session: ssh, a service");
-  assert.equal(canInstallElevated({ ...ok, env: { DISPLAY: ":0", OMB_UPDATE_INSTALL: "terminal" } }), false);
+  assert.equal(canInstallElevated({ ...ok, env: { DISPLAY: ":0", MAUSCLAW_UPDATE_INSTALL: "terminal" } }), false);
   assert.equal(canInstallElevated({ ...ok, access: () => { throw new Error("ENOENT"); } }), false);
 });
 
@@ -41,10 +41,10 @@ test("the feed's checksum becomes the hex the script compares", () => {
 });
 
 function fixture() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-elevated-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-elevated-"));
   const cache = join(dir, "cache dir", "o'brien", "pending");
   mkdirSync(cache, { recursive: true });
-  const file = join(cache, "OpenMausBot-2.0.0-amd64.deb");
+  const file = join(cache, "MausClaw-2.0.0-amd64.deb");
   writeFileSync(file, "deb bytes");
   return { dir, file, cache, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
@@ -139,7 +139,7 @@ test("nothing is run for a file or checksum that cannot be trusted", async () =>
 const linuxOnly = { skip: process.platform !== "linux" && "the root script runs only on Linux" };
 
 function runScript(file, expected, { aptBody } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-script-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-script-"));
   const bin = join(dir, "bin");
   const log = join(dir, "apt.log");
   mkdirSync(bin);

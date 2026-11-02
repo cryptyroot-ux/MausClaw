@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DEFAULT_RESULT_BUDGET, trimResultText } from "./mcp-trim.ts";
 
-const BANNER = "⚠️ TRUNCATED by OpenMausBot:";
+const BANNER = "⚠️ TRUNCATED by MausClaw:";
 /** What was kept, between the banner at the start and the one at the end. */
 const keptBody = (text: string) => text.slice(text.indexOf("\n\n") + 2, text.lastIndexOf(`\n\n${BANNER}`));
 
@@ -105,7 +105,7 @@ describe("trimResultText", () => {
   it("keeps the whole result, banners included, within a small budget", () => {
     const text = JSON.stringify({ products: Array.from({ length: 200 }, (_, i) => product(i)) });
     for (const budget of [512, 700, 1_000, 1_500]) {
-      for (const input of [{ text }, { text: "z".repeat(50_000) }, { text, spillPath: "/tmp/omb-results/a-long-thread-name/search_products-1.json", spillHint: true }]) {
+      for (const input of [{ text }, { text: "z".repeat(50_000) }, { text, spillPath: "/tmp/mausclaw-results/a-long-thread-name/search_products-1.json", spillHint: true }]) {
         const out = trimResultText({ ...input, budget });
         expect(out.text.length).toBeLessThanOrEqual(budget);
         expect(out.text.startsWith(BANNER)).toBe(true);
@@ -158,7 +158,7 @@ describe("trimResultText with a held result", () => {
     const out = trimResultText({ text, spillPath: "/data/tool-results/7.json", toolName: "search_products", held: { handle: "r3", shape: "object{nextOffset, products}; products: 200 items{id, name, price, rating, description, images}" } });
     expect(out.trimmed).toBe(true);
     expect(out.text.length).toBeLessThan(DEFAULT_RESULT_BUDGET);
-    expect(out.text.startsWith("⚠️ SHAPED by OpenMausBot:")).toBe(true);
+    expect(out.text.startsWith("⚠️ SHAPED by MausClaw:")).toBe(true);
     expect(out.text).toContain('query_result {"result":"r3","query":');
     expect(out.text).toContain("200 items{id, name, price");
     expect(out.text).not.toContain("/data/tool-results");

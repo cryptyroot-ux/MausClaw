@@ -139,7 +139,7 @@ One active call per harness. Responsibilities, moved from today's renderer
    to send `session.close`, so no session is left open.
 8. **Bound to whoever started it.** A call remembers the sign-in that started
    it and, for a phone, the paired device the companion vouched for
-   (`x-openmausbot-companion-device` on `POST /api/live/session`). A phone's
+   (`x-mausclaw-companion-device` on `POST /api/live/session`). A phone's
    requests reach the harness as the computer's own (loopback), so only the
    companion knows when a phone is unpaired: it then sends
    `POST /api/live/device-revoked` over its authenticated relay path, and the
@@ -156,7 +156,7 @@ One active call per harness. Responsibilities, moved from today's renderer
 | `POST /api/live/call/end` | `{ callId }` | `200 { call }` after `session.closed` or 5 s |
 | `GET /api/live/call` | — | `200 { call: LiveCallState \| null }` |
 | `PATCH /api/live/settings` | `{ voice?, readTypedReplies?, idleMinutes? }` | `200 { live: LiveSettings }` — non-secret settings only; the key is never writable from a phone |
-| `POST /api/live/device-revoked` | — (headers `x-openmausbot-companion: 1` and `x-openmausbot-companion-device`; under the desktop app also the companion's private relay token) | `200 { call: LiveCallState \| null }` (the call it ended) · `403` without the companion marker · `400` without a well-formed device id. The companion's own notice that it unpaired a phone: not on the phone allowlist (`companion/src/routes.ts` `COMPANION_NOTICES`); the harness accepts it only with the relay token, or from loopback for a standalone harness |
+| `POST /api/live/device-revoked` | — (headers `x-mausclaw-companion: 1` and `x-mausclaw-companion-device`; under the desktop app also the companion's private relay token) | `200 { call: LiveCallState \| null }` (the call it ended) · `403` without the companion marker · `400` without a well-formed device id. The companion's own notice that it unpaired a phone: not on the phone allowlist (`companion/src/routes.ts` `COMPANION_NOTICES`); the harness accepts it only with the relay token, or from loopback for a standalone harness |
 
 `LiveCallState = { callId, botId, threadId, client, voice, startedAt, status: "connecting" | "live" | "ending" | "ended", endReason?, error? }`,
 with `endReason` one of the codes under **End reasons**. A phone's
@@ -440,7 +440,7 @@ call counts as dropped, which is what offers **Try again**:
 | `expired` | "Call ended: it reached OpenAI's time limit." | no |
 | `content` | "OpenAI ended the call under its content rules." | no |
 | `deleted` | "Call ended: the chat was deleted." | no |
-| `shutdown` | "Call ended: OpenMausBot restarted." | no |
+| `shutdown` | "Call ended: MausClaw restarted." | no |
 | `signed-out` | "Call ended: you were signed out." | no |
 | `remote-hangup` | "Call dropped." | yes |
 | `connection-lost` | "Call dropped." | yes |
@@ -505,7 +505,7 @@ spoken line is answered aloud). The docs page says so.
 | Phone cannot reach the computer | Call button explains; no call starts |
 | OpenAI refuses (key, quota, voice) | Clear message in the bar (existing `liveErrorMessage`) |
 | Media or sideband drops | Bar shows the harness's words when it sent them, else "Call dropped." + **Try again**; bot work continues into the chat |
-| Harness restarts mid-call | Call ends; clients show "Call ended: OpenMausBot restarted." when the harness says `shutdown`, else "Call ended."; no Try again |
+| Harness restarts mid-call | Call ends; clients show "Call ended: MausClaw restarted." when the harness says `shutdown`, else "Call ended."; no Try again |
 | Phone unpaired, or sign-in revoked, mid-call | Call ends at once, reason `signed-out` with the harness's words; no Try again. A phone the computer no longer takes hangs up by itself at once (`session.close` on its own channel) and shows "Call ended: you were signed out." (the iPhone on its unpaired screen) |
 | Bot turn fails / no text | Voice says the result is in the chat |
 | Bot waits for an app to connect or a credential | Voice points to the chat once; never asks for a credential aloud |
@@ -527,13 +527,13 @@ spoken line is answered aloud). The docs page says so.
 - **Fake GPT-Live** (`server/testing/fake-openai-live.ts`): HTTP
   `POST /v1/live/sessions` + WebSocket `/v1/live/sessions/:id/attach` that plays
   scripted events and records commands; the harness reads its base URL from
-  `OMB_OPENAI_LIVE_URL` (tests and fixtures only).
+  `MAUSCLAW_OPENAI_LIVE_URL` (tests and fixtures only).
 - Unit tests: controller (delegation → turn with `via: "call"`, relays,
   approvals yes/no/unclear, skill refusal, typed messages, idle hang-up,
   sideband loss, one call at a time), routes, companion allowlist, settings
   validation, desktop components, iOS `CompanionCore` (`swift test`), Android
   `:core`/`:app` unit tests.
-- Isolated fixture (`scripts/control-omb.ts launch`) + fake GPT-Live for the
+- Isolated fixture (`scripts/control-mausclaw.ts launch`) + fake GPT-Live for the
   end-to-end server path; the desktop UI in the browser pane; the iOS app in the
   simulator and the Android app in an emulator against a fixture.
 - Real audio needs a microphone and a real key: each client is tested with

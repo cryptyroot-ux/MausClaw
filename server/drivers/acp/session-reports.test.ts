@@ -185,13 +185,13 @@ describe("ACP plan lines", () => {
     expect(acpPlanLinesEnabled({})).toBe(true);
   });
 
-  it("follow OMB_ACP_PLAN_LINES over the file when it is 1 or 0", () => {
-    expect(acpPlanLinesEnabled({ OMB_ACP_PLAN_LINES: "1" })).toBe(true);
+  it("follow MAUSCLAW_ACP_PLAN_LINES over the file when it is 1 or 0", () => {
+    expect(acpPlanLinesEnabled({ MAUSCLAW_ACP_PLAN_LINES: "1" })).toBe(true);
     // anything else is not an answer: the file decides
-    expect(acpPlanLinesEnabled({ OMB_ACP_PLAN_LINES: "true" })).toBe(false);
+    expect(acpPlanLinesEnabled({ MAUSCLAW_ACP_PLAN_LINES: "true" })).toBe(false);
     saveConfig({ features: { acpPlanLines: true } });
-    expect(acpPlanLinesEnabled({ OMB_ACP_PLAN_LINES: "0" })).toBe(false);
-    expect(acpPlanLinesEnabled({ OMB_ACP_PLAN_LINES: "" })).toBe(true);
+    expect(acpPlanLinesEnabled({ MAUSCLAW_ACP_PLAN_LINES: "0" })).toBe(false);
+    expect(acpPlanLinesEnabled({ MAUSCLAW_ACP_PLAN_LINES: "" })).toBe(true);
   });
 });
 
@@ -199,10 +199,10 @@ describe("readSessionReport: plan", () => {
   const plan = (...entries: Array<[status: string, content: string]>) => ({
     sessionUpdate: "plan", entries: entries.map(([status, content]) => entry(status, content)),
   });
-  const on = { OMB_ACP_PLAN_LINES: "1" };
+  const on = { MAUSCLAW_ACP_PLAN_LINES: "1" };
 
   it("says nothing while plan lines are off", () => {
-    expect(readSessionReport(plan(["in_progress", "Read the brief"]), undefined, turn(), live(), { OMB_ACP_PLAN_LINES: "0" })).toEqual({});
+    expect(readSessionReport(plan(["in_progress", "Read the brief"]), undefined, turn(), live(), { MAUSCLAW_ACP_PLAN_LINES: "0" })).toEqual({});
   });
 
   it("gives one step each time the plan reads differently, with the list as its input", () => {

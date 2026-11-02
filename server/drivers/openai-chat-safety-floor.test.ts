@@ -51,7 +51,7 @@ interface ChatRequest { messages: Array<{ role: string; content: unknown; tool_c
 
 const cleanups: Array<() => Promise<void>> = [];
 // A shell that already exports the switch must not turn the floor on here.
-beforeEach(() => { delete process.env.OMB_SAFETY_FLOOR; });
+beforeEach(() => { delete process.env.MAUSCLAW_SAFETY_FLOOR; });
 afterEach(async () => {
   bindSafetyFloor(() => ({}));
   for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
@@ -66,7 +66,7 @@ function sse(response: ServerResponse, delta: unknown, finishReason: string) {
 /** A chat-completions provider that asks for one `shell_exec` call per
  * command, in order, then answers; and the fixture MCP server it calls. */
 async function fixture(commands: string[]) {
-  const directory = mkdtempSync(join(tmpdir(), "omb-chat-floor-"));
+  const directory = mkdtempSync(join(tmpdir(), "mausclaw-chat-floor-"));
   const requests: ChatRequest[] = [];
   const server = createServer(async (request, response) => {
     if (request.url === "/v1/models") {

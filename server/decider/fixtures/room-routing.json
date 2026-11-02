@@ -1,5 +1,5 @@
 {
-  "source": "_plans/jev-omb-2026-09-28/bench (datasets.mjs ROOMS + ROOM_HARD_ITEMS), scored 53/53 with a nobody option",
+  "source": "_plans/jev-mausclaw-2026-09-28/bench (datasets.mjs ROOMS + ROOM_HARD_ITEMS), scored 53/53 with a nobody option",
   "rooms": {
     "launch": {
       "name": "#launch",

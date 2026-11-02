@@ -71,7 +71,7 @@ vi.mock("node:child_process", async (original) => {
 let cua;
 let localOriginModule;
 beforeEach(async () => {
-  fixture.home = mkdtempSync(join(tmpdir(), "omb-cua-async-"));
+  fixture.home = mkdtempSync(join(tmpdir(), "mausclaw-cua-async-"));
   fixture.script = "setTimeout(() => process.exit(0), 120)";
   fixture.socketReady = false;
   fixture.children = [];
@@ -79,7 +79,7 @@ beforeEach(async () => {
   fixture.embeddedDelays = [];
   fixture.hosts = [];
   fixture.handlers.clear();
-  vi.stubEnv("OPENMAUSBOT_CUA_EMBEDDED", "1");
+  vi.stubEnv("MAUSCLAW_CUA_EMBEDDED", "1");
   vi.stubEnv("CUA_DRIVER_PATH", "/fixture/cua-driver");
   vi.resetModules();
   cua = await import("./cua.mjs");

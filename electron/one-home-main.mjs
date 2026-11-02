@@ -23,7 +23,7 @@ const KEEP_LABEL = "Bring this computer's bots home";
 /** This computer as the Admin knows it, the same across sign-outs and sign-ins: a hash of its own server's identity, so
  * the identity itself never leaves it. */
 export function installationOf(environmentId) {
-  return createHash("sha256").update(`openmausbot-installation:${environmentId}`).digest("base64url");
+  return createHash("sha256").update(`mausclaw-installation:${environmentId}`).digest("base64url");
 }
 
 /** One home's view of the person's Cloud, from the Admin's last verified word; null while nobody is signed in. An ended
@@ -32,7 +32,7 @@ export function installationOf(environmentId) {
  * none) and what it is (server/routes/move-freeze.ts). */
 export function freezeAnswer(got) {
   if (got.status === 409 && typeof got.body?.busy === "string") return { busy: got.body.busy, ...(typeof got.body.what === "string" ? { what: got.body.what } : {}) };
-  if (!got.ok || got.body?.frozen !== true) throw Object.assign(new Error("OpenMausBot on this computer could not pause."), { status: got.status });
+  if (!got.ok || got.body?.frozen !== true) throw Object.assign(new Error("MausClaw on this computer could not pause."), { status: got.status });
   return { frozen: true };
 }
 
@@ -141,7 +141,7 @@ export function installOneHome({ localRequest, account, journalFile, tempRoot, l
       ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }) })),
     async json(route) {
       const got = await local.call("GET", route);
-      if (!got.ok) throw new Error("OpenMausBot on this computer did not answer. Try again in a moment.");
+      if (!got.ok) throw new Error("MausClaw on this computer did not answer. Try again in a moment.");
       return got.body;
     },
   };
@@ -150,7 +150,7 @@ export function installOneHome({ localRequest, account, journalFile, tempRoot, l
   /** This computer's installation (`installationOf`), once its server has said who it is; null until then. */
   const installation = async () => {
     if (known) return known;
-    const id = (await local.json("/.well-known/openmausbot/environment").catch(() => null))?.environmentId;
+    const id = (await local.json("/.well-known/mausclaw/environment").catch(() => null))?.environmentId;
     if (typeof id === "string" && id) known = installationOf(id);
     return known;
   };
@@ -199,7 +199,7 @@ export function installOneHome({ localRequest, account, journalFile, tempRoot, l
       freeze: async (origin) => freezeAnswer(await local.call("POST", "/api/move/freeze", { cloud: origin })),
       async unfreeze(options) {
         const got = await local.call("DELETE", "/api/move/freeze", options?.automations === "off" ? { automations: "off" } : undefined);
-        if (!got.ok) throw Object.assign(new Error("OpenMausBot on this computer could not go on again."), { status: got.status });
+        if (!got.ok) throw Object.assign(new Error("MausClaw on this computer could not go on again."), { status: got.status });
       },
       frozen: async () => (await local.json("/api/move/freeze"))?.frozen === true,
       async forget() {

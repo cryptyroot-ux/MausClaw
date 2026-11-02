@@ -63,17 +63,17 @@ with two scripted replies:
 ```sh
 FAKE_CLAUDE_REPLIES='["I drafted the email to Sam about Friday. Shall I send it?","Sent it to Sam."]' \
 FAKE_CLAUDE_REPLY_STATE=/tmp/reactions-reply-state \
-  node --experimental-strip-types scripts/control-omb.ts ui launch --tool-calls '[]'
+  node --experimental-strip-types scripts/control-mausclaw.ts ui launch --tool-calls '[]'
 ```
 
 Then, with the printed handle:
 
 ```sh
-H=/tmp/openmausbot-verify-data-XXXXXX/ui.json
-pnpm control:omb ui type --ui $H --name "Message Pepper" --text "Draft an email to Sam about Friday."
-pnpm control:omb ui press --ui $H --keys Enter
-pnpm control:omb ui wait-settle --ui $H --timeout 60
-pnpm control:omb ui snapshot --ui $H --interactive
+H=/tmp/mausclaw-verify-data-XXXXXX/ui.json
+pnpm control:mausclaw ui type --ui $H --name "Message Pepper" --text "Draft an email to Sam about Friday."
+pnpm control:mausclaw ui press --ui $H --keys Enter
+pnpm control:mausclaw ui wait-settle --ui $H --timeout 60
+pnpm control:mausclaw ui snapshot --ui $H --interactive
 ```
 
 The question's action row holds **Add reaction**; the snapshot lists one per
@@ -82,12 +82,12 @@ keyboard focus; hover it first with `ui eval` (a `pointerenter` with
 `pointerType: "mouse"` on its `[data-message-row]`), then:
 
 ```sh
-pnpm control:omb ui click --ui $H --ref @eN
-pnpm control:omb ui screenshot --ui $H --out .omb-scratch/verify-evidence/reactions-open.png
-pnpm control:omb ui click --ui $H --name "Thumbs up: yes, go ahead"
-pnpm control:omb ui wait-settle --ui $H --timeout 60
-pnpm control:omb ui snapshot --ui $H
-pnpm control:omb ui console --ui $H
+pnpm control:mausclaw ui click --ui $H --ref @eN
+pnpm control:mausclaw ui screenshot --ui $H --out .mausclaw-scratch/verify-evidence/reactions-open.png
+pnpm control:mausclaw ui click --ui $H --name "Thumbs up: yes, go ahead"
+pnpm control:mausclaw ui wait-settle --ui $H --timeout 60
+pnpm control:mausclaw ui snapshot --ui $H
+pnpm control:mausclaw ui console --ui $H
 ```
 
 Expected: the open row is a toolbar named `Reactions` with six toggle buttons,

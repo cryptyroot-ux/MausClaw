@@ -18,7 +18,7 @@ afterEach(async () => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-async function serve(adopts: boolean, dataDir = mkdtempSync(join(tmpdir(), "omb-tz-route-"))) {
+async function serve(adopts: boolean, dataDir = mkdtempSync(join(tmpdir(), "mausclaw-tz-route-"))) {
   dirs.push(dataDir);
   const changed = vi.fn();
   const routes = [createTimeZoneRoutes({ adopts, dataDir, changed })];

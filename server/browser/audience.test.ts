@@ -32,7 +32,7 @@ describe("the name an audience gives a bot's browser", () => {
 });
 
 describe("which audiences have had a browser", () => {
-  const file = () => join(mkdtempSync(join(tmpdir(), "omb-audience-browsers-")), "browser", "audiences.json");
+  const file = () => join(mkdtempSync(join(tmpdir(), "mausclaw-audience-browsers-")), "browser", "audiences.json");
 
   it("starts with the team's alone, keeps each new suffix on disk once, and reads it back after a restart", () => {
     const path = file();

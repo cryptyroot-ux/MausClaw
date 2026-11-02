@@ -8,5 +8,5 @@ puppeteer-core 24.37.5 (Apache-2.0, see `LICENSE`; Copyright 2017 Google Inc.).
 Puppeteer's `CdpKeyboard` in `src/cdp/Input.ts` from the same release.
 
 Modified: each definition is written on one line, the `KeyInput` type union is
-left out, and the table is typed as a plain record. The driver adds OMB's own
+left out, and the table is typed as a plain record. The driver adds MausClaw's own
 chord parsing, macOS editing commands and Shift handling around it.

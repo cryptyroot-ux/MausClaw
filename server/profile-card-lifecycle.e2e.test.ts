@@ -2,11 +2,11 @@ import { mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("applies the bot's own alert and voice changes at once, refuses a stale Undo, and supersedes credential requests in an isolated conversation", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-profile-cards-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-profile-cards-"));
   const gate = join(gates, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate });
   const evidence: unknown[] = [];
@@ -22,7 +22,7 @@ it("applies the bot's own alert and voice changes at once, refuses a stale Undo,
     return result;
   };
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", fixture.info.url]) as any;
+    const result = await runControlMausclaw([...args, "--url", fixture.info.url]) as any;
     evidence.push({ command: args, result });
     return result;
   };
@@ -31,7 +31,7 @@ it("applies the bot's own alert and voice changes at once, refuses a stale Undo,
     await control("send", "--bot", bot.id, "--task", bot.threadId, "--text", "Review my profile preferences.");
     let token = "";
     await expect.poll(() => {
-      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN; }
+      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN; }
       catch { return false; }
       return Boolean(token);
     }, { timeout: 15_000 }).toBe(true);
@@ -53,7 +53,7 @@ it("applies the bot's own alert and voice changes at once, refuses a stale Undo,
     await control("send", "--bot", bot.id, "--task", bot.threadId, "--text", "Propose fresh preferences after the old cards expired.");
     await expect.poll(() => JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).pid,
       { timeout: 15_000 }).not.toBe(previousPid);
-    token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN;
+    token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN;
     const toggle = await propose({ notifications: false, speakReplies: true });
     const credential = (reason: string) => api("POST", "/api/internal/request-credential", {
       fromBotId: bot.id, fromThreadId: bot.threadId, credentialId: "openaiImageApiKey", reason,

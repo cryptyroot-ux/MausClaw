@@ -75,7 +75,7 @@ function makeDerived(overrides: Partial<ReturnType<typeof useBotSettingsDerived>
     browserAllowed: true,
     browserEnabled: false,
     browserSelectable: false,
-    browserDisabledReason: "The built-in browser needs the OpenMausBot desktop app",
+    browserDisabledReason: "The built-in browser needs the MausClaw desktop app",
     sectionName: "General",
     currentChief: undefined,
     botRoutines: [],

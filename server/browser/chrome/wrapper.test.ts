@@ -32,7 +32,7 @@ describe("the launcher agent-browser runs instead of Chrome", () => {
   });
 
   it.skipIf(!posix)("passes every argument through a POSIX shell byte for byte, commas, quotes and dollars included", () => {
-    const folder = mkdtempSync(join(tmpdir(), "omb-launcher-"));
+    const folder = mkdtempSync(join(tmpdir(), "mausclaw-launcher-"));
     folders.push(folder);
     const chromeFolder = join(folder, "Chrome's \"odd\" $place");
     mkdirSync(chromeFolder);
@@ -79,7 +79,7 @@ describe("the launcher of a Team Cloud's boxed browsers", () => {
   const settings: LauncherSettings = { chrome: "/opt/chrome/chrome", userAgent: UA, screen: { width: 1920, height: 1080 } };
 
   it.skipIf(!posix)("starts Chrome through bubblewrap with only the profile it was given, the seccomp filter on descriptor 9 and HOME private", () => {
-    const folder = mkdtempSync(join(tmpdir(), "omb-boxed-launcher-"));
+    const folder = mkdtempSync(join(tmpdir(), "mausclaw-boxed-launcher-"));
     folders.push(folder);
     const bwrap = join(folder, "bwrap");
     // A stand-in for bubblewrap: what it was asked, and whether descriptor 9 holds the filter.
@@ -122,22 +122,22 @@ describe("the display, language and time zone the launcher gives Chrome", () => 
     expect(await primaryScreen("linux", { DISPLAY: ":0" }, answer(xrandr))).toEqual({ width: 1920, height: 1080 });
     expect(await primaryScreen("linux", {}, answer(xrandr))).toEqual({ width: 1920, height: 1080 });
     expect(await primaryScreen("darwin", {}, fail)).toEqual({ width: 1920, height: 1080 });
-    expect(await primaryScreen("darwin", { OMB_BROWSER_SCREEN: "2560x1440" }, fail)).toEqual({ width: 2560, height: 1440 });
+    expect(await primaryScreen("darwin", { MAUSCLAW_BROWSER_SCREEN: "2560x1440" }, fail)).toEqual({ width: 2560, height: 1440 });
   });
 
   it("takes the language only when it is known, never guessing over Chrome's own", () => {
-    expect(browserLanguage({ OMB_BROWSER_LANG: "de-DE", LANG: "en_US.UTF-8" })).toBe("de-DE");
+    expect(browserLanguage({ MAUSCLAW_BROWSER_LANG: "de-DE", LANG: "en_US.UTF-8" })).toBe("de-DE");
     expect(browserLanguage({ LANG: "en_GB.UTF-8" })).toBe("en-GB");
     expect(browserLanguage({ LC_ALL: "fr_FR@euro", LANG: "en_US.UTF-8" })).toBe("fr-FR");
     expect(browserLanguage({ LANG: "C.UTF-8" })).toBeUndefined();
     expect(browserLanguage({ LANG: "POSIX" })).toBeUndefined();
     expect(browserLanguage({})).toBeUndefined();
-    expect(browserLanguage({ OMB_BROWSER_LANG: "en US; rm" })).toBeUndefined();
+    expect(browserLanguage({ MAUSCLAW_BROWSER_LANG: "en US; rm" })).toBeUndefined();
   });
 
   it("gives Chrome the server's time zone, where Chrome reads TZ", () => {
     expect(browserTimeZone({ TZ: "Asia/Kolkata" }, "linux")).toBe("Asia/Kolkata");
-    expect(browserTimeZone({ OMB_BROWSER_TIMEZONE: "Europe/Berlin", TZ: "UTC" }, "linux")).toBe("Europe/Berlin");
+    expect(browserTimeZone({ MAUSCLAW_BROWSER_TIMEZONE: "Europe/Berlin", TZ: "UTC" }, "linux")).toBe("Europe/Berlin");
     expect(browserTimeZone({ TZ: "Asia/Kolkata" }, "win32")).toBeUndefined();
     expect(browserTimeZone({}, "darwin")).toBeUndefined();
     expect(browserTimeZone({ TZ: "Asia/Kolkata'; reboot" }, "linux")).toBeUndefined();

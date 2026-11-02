@@ -23,12 +23,12 @@ export const DEFAULT_ATTACHMENTS_MAX_BYTES = 512 * 1024 * 1024;
 /** A person's own Cloud is the only home of everything their computers held, on a volume a move grows to fit. */
 export const CLOUD_HOME_ATTACHMENTS_MAX_BYTES = 8 * 1024 * 1024 * 1024;
 
-/** A team server can raise the ceiling with OMB_ATTACHMENTS_MAX_BYTES; a missing or invalid value keeps 512 MB, or 8 GB on a Cloud home. */
+/** A team server can raise the ceiling with MAUSCLAW_ATTACHMENTS_MAX_BYTES; a missing or invalid value keeps 512 MB, or 8 GB on a Cloud home. */
 export function attachmentsMaxBytes(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env.OMB_ATTACHMENTS_MAX_BYTES?.trim();
+  const raw = env.MAUSCLAW_ATTACHMENTS_MAX_BYTES?.trim();
   const parsed = raw ? Number(raw) : NaN;
   if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
-  return env.OMB_CLOUD_ROLE === "home" || env.OMB_CLOUD_ROLE === "team" ? CLOUD_HOME_ATTACHMENTS_MAX_BYTES : DEFAULT_ATTACHMENTS_MAX_BYTES;
+  return env.MAUSCLAW_CLOUD_ROLE === "home" || env.MAUSCLAW_CLOUD_ROLE === "team" ? CLOUD_HOME_ATTACHMENTS_MAX_BYTES : DEFAULT_ATTACHMENTS_MAX_BYTES;
 }
 
 /** Never evict: prompts refer to attachment paths, so at this ceiling a new upload gets an explicit 507. */

@@ -10,7 +10,7 @@ let dir: string;
 const file = () => join(dir, "outbound-counts.json");
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "omb-outbound-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-outbound-"));
 });
 
 afterEach(async () => {

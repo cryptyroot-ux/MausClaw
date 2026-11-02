@@ -134,7 +134,7 @@ export async function runSetup(
     const runtime = instanceConfigs(cfg);
     const existing = Object.entries(runtime).filter(([id, entry]) =>
       !!cfg.instances?.[id] && ["openai-compat"].includes(entry.driver) && entry.enabled !== false);
-    io.log("\nWelcome to OpenMausBot\n");
+    io.log("\nWelcome to MausClaw\n");
     io.log("Let's connect your AI. Choose a provider, then a model.");
     io.log("Existing bots and conversations stay untouched. Ctrl-C cancels.");
     io.log("You can add integrations and change settings later.\n");
@@ -230,7 +230,7 @@ export async function runSetup(
     return true;
   } catch (error) {
     if (!(error instanceof SetupCancelled)) throw error;
-    io.log("\nSetup cancelled. No OpenMausBot settings were changed. Provider sign-ins or installs already completed are kept.");
+    io.log("\nSetup cancelled. No MausClaw settings were changed. Provider sign-ins or installs already completed are kept.");
     return false;
   } finally {
     lease.release();

@@ -3,9 +3,9 @@
 // most its share; the engine's own tools are never trimmed, and a server still answers a call to a tool it left out.
 
 /** The most tools one MCP server lists for this turn, in the environment of each server the turn hands an engine. */
-export const TOOL_LIMIT_ENV = "OMB_TOOL_LIMIT";
-/** The same on OpenMausBot's own MCP endpoints, reached over HTTP. */
-export const TOOL_LIMIT_HEADER = "x-omb-tool-limit";
+export const TOOL_LIMIT_ENV = "MAUSCLAW_TOOL_LIMIT";
+/** The same on MausClaw's own MCP endpoints, reached over HTTP. */
+export const TOOL_LIMIT_HEADER = "x-mausclaw-tool-limit";
 
 export function parseToolLimit(value: unknown): number | undefined {
   return typeof value === "string" && /^\d{1,5}$/.test(value) ? Number(value) : undefined;

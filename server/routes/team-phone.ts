@@ -91,6 +91,6 @@ async function pairing(deps: TeamPhoneRouteDeps, { req, res, path, method, auth,
     inviteUrl: base ? phonePairingLink({ address: base, token: opened.credential, name: team.name }) : null,
     serverName: team.name,
     team: { id: team.id, name: team.name, role: owner.member.role },
-    hint: base ? null : "this server has no public address to put in a link: set OMB_PUBLIC_URL, or open /pair on the address you use and type the code",
+    hint: base ? null : "this server has no public address to put in a link: set MAUSCLAW_PUBLIC_URL, or open /pair on the address you use and type the code",
   });
 }

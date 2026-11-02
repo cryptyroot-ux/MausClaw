@@ -12,10 +12,10 @@ import {
 } from "../src/highlevel";
 import { createWorker } from "../src/index";
 
-const BASE_URL = "https://auth.openmausbot.test";
+const BASE_URL = "https://auth.mausclaw.test";
 const CLIENT_ID = "68e9f2a1b3c4d5e6f7a8b9c0-mf1x2y3z";
 const CLIENT_SECRET = "test-only-highlevel-client-secret-0123456789";
-const REDIRECT_URL = "https://auth.openmausbot.test/v1/highlevel/callback";
+const REDIRECT_URL = "https://auth.mausclaw.test/v1/highlevel/callback";
 const SCOPES = "contacts.readonly contacts.write locations.readonly";
 const CODE = "7676cjcbdc6t76cdcbkjcd09821jknnkj";
 const ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.access-token-for-location.sig";
@@ -244,7 +244,7 @@ describe("HighLevel OAuth relay", () => {
     expect(page.headers.get("cache-control")).toBe("no-store");
     const html = await page.text();
     expect(html).toContain("Connected");
-    expect(html).toContain("Close this tab and go back to OpenMausBot.");
+    expect(html).toContain("Close this tab and go back to MausClaw.");
     expect(html).not.toContain(flow.state);
 
     expect(highLevel.calls).toHaveLength(1);
@@ -423,7 +423,7 @@ describe("HighLevel OAuth relay", () => {
     expect(page.status).toBe(502);
     const html = await page.text();
     expect(html).toContain("Connection failed");
-    expect(html).toContain("Go back to OpenMausBot and try again.");
+    expect(html).toContain("Go back to MausClaw and try again.");
     expect(highLevel.calls).toHaveLength(1);
     expect(logs.some((line) => line.includes('"errorCode":"highlevel_exchange_failed"') && line.includes('"status":400'))).toBe(true);
     expect((await claim(worker, testEnv, flow.state)).status).toBe(404);

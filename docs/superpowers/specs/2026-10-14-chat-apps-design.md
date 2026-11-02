@@ -42,7 +42,7 @@ This builds on the chat widgets branch (PR #2820, `docs/superpowers/specs/2026-1
 | Excalidraw: `create_view` (`readOnlyHint: true`) → `ui://excalidraw/mcp-app.html`, 432 KB, `_meta.ui` on the content item: `csp.resourceDomains` and `csp.connectDomains` both `["https://esm.sh"]`, `permissions.clipboardWrite`, `prefersBorder: true`. It has three app-only tools with no `readOnlyHint`: `export_to_excalidraw`, `save_checkpoint` and `read_checkpoint`. | HTTP probe, no sign-in |
 | Claude Code 2.1.288 advertises only `roots` and `elicitation`, with no UI extension. It first sends `server/discover` with clientCapabilities in `_meta` (protocol 2026-07-28), then `initialize`. It hides app-only tools from the model. It replaces the model's tool_result with `structuredContent` when one is present. Its stream-json `user` event carries `tool_use_result: {content, structuredContent, _meta}`. Its `tools/call` carries `_meta["claudecode/toolUseId"]`. | `claude -p` probe against a fake stdio app server that logs frames |
 | Codex 0.153.4 advertises only `elicitation`. Its exec JSON `mcp_tool_call` result carries `content`, `structured_content` and `_meta`. | `codex exec --json` probe, same fake server |
-| OMB's own `server/mcp-remote-proxy.ts` relays tool `_meta`, the full `tools/call` result (`structuredContent` and `_meta`) and `resources/read` unchanged. It also passes app-only tools to the engine. | Ran the proxy from this branch against `server-debug` over HTTP |
+| MausClaw's own `server/mcp-remote-proxy.ts` relays tool `_meta`, the full `tools/call` result (`structuredContent` and `_meta`) and `resources/read` unchanged. It also passes app-only tools to the engine. | Ran the proxy from this branch against `server-debug` over HTTP |
 | Electron 43.7.9: a `srcdoc` iframe with `sandbox="allow-scripts allow-forms"` and a CSP meta injected first runs correctly inside a page served with `frame-ancestors 'none'` + `X-Frame-Options: DENY`. Inline script runs, and a declared cdnjs script loads. Blocked: undeclared scripts, fetch, WebSocket, images, CSS images, prefetch, form posts (`onsubmit` still fires), eval (no `'unsafe-eval'`), `localStorage`, cookies, the parent DOM, clipboard writes, `window.open` and `target=_blank` (the window-open handler is never called), and top navigation. The preload bridge is `undefined` in the frame, whose origin is `"null"`. A self-navigation fires `will-frame-navigate` with `frame.origin === "null"` and an empty `frame.url`; `preventDefault()` stopped it, and the HTTP sink logged only the host page. | Electron probe in the scratchpad (headless window) |
 
 The product survey is in "Real products" below. Facts that could not be verified are listed at the end.
@@ -59,11 +59,11 @@ The product survey is in "Real products" below. Facts that could not be verified
    - The same module runs in the desktop renderer, and bundled into one static host page that both phones load in their web view. The protocol logic exists once.
 4. **The server builds the frame document.** `srcdoc` is assembled server-side: doctype, the CSP meta as the first element, then (bot HTML only) theme variables and the helper, then the content. Clients set it verbatim. CSP construction and injection are one tested function, not three.
 5. **Frames are `srcdoc` iframes with `sandbox="allow-scripts allow-forms"` and an opaque origin, on every platform.** Phones load a bundled host page that holds the same iframe, so the `window.parent.postMessage` contract that SDK views assume holds everywhere. The spec's double-iframe "sandbox proxy" exists so web hosts can give a View a real but foreign origin. We give it none, which is stricter, at the cost of `localStorage` and `domain` (see "Known limitations").
-6. **MCP traffic is observed inside OMB's own MCP plumbing, not in driver activity.** The remote proxy (`mcp-remote-proxy.ts`, OMB's own client) observes URL servers. The gate (`mcp-gate.ts`, which relays every stdio frame) observes command servers. The chat-completions runtime observes in-process.
+6. **MCP traffic is observed inside MausClaw's own MCP plumbing, not in driver activity.** The remote proxy (`mcp-remote-proxy.ts`, MausClaw's own client) observes URL servers. The gate (`mcp-gate.ts`, which relays every stdio frame) observes command servers. The chat-completions runtime observes in-process.
    - Driver activity is lossy: tool previews are truncated, and only Claude Code exposes `tool_use_result`.
    - The engines do not advertise the UI extension. A server that adapts its tools to the client's capability would never show a UI to an engine's own connection.
-7. **App servers are always mounted through those observers.** An "app server" is one whose catalog has a tool with `_meta.ui`, cached in `server/mcp-app-catalog.ts`. On Claude Code, a URL app server goes through OMB's remote proxy instead of the CLI's native HTTP. This is how every other engine already reaches URL servers, and Claude Code's own tool search still works over stdio (it ran `ToolSearch` against the stdio probe server). On every engine, a command app server goes through the gate even without a tool selection or budget. Servers without apps keep today's mounts exactly.
-8. **OMB advertises the UI extension, with a fallback.** OMB's client (`RemoteMcpClient`, the gate's rewrite of the CLI's `initialize`, the in-process chat client) adds the UI extension capability. If the server refuses that `initialize` (HTTP 400 or a JSON-RPC error), OMB resends the original handshake once without it and records `uiExtension: "refused"`, so strict servers (the Voluum case the fake `strictInitialize` server models) keep working.
+7. **App servers are always mounted through those observers.** An "app server" is one whose catalog has a tool with `_meta.ui`, cached in `server/mcp-app-catalog.ts`. On Claude Code, a URL app server goes through MausClaw's remote proxy instead of the CLI's native HTTP. This is how every other engine already reaches URL servers, and Claude Code's own tool search still works over stdio (it ran `ToolSearch` against the stdio probe server). On every engine, a command app server goes through the gate even without a tool selection or budget. Servers without apps keep today's mounts exactly.
+8. **MausClaw advertises the UI extension, with a fallback.** MausClaw's client (`RemoteMcpClient`, the gate's rewrite of the CLI's `initialize`, the in-process chat client) adds the UI extension capability. If the server refuses that `initialize` (HTTP 400 or a JSON-RPC error), MausClaw resends the original handshake once without it and records `uiExtension: "refused"`, so strict servers (the Voluum case the fake `strictInitialize` server models) keep working.
 9. **The server does `resources/read` and app tool calls on its own pooled connection** (`server/mcp-app-connections.ts`), not through the engine's live connection.
    - That connection ends with the turn on most engines, and an app stays interactive long after.
    - URL servers get `withMcpSignIn` tokens, as turns do. Command servers are spawned on demand like Settings → Test and closed after 5 idle minutes.
@@ -215,21 +215,21 @@ Why these hosts:
 
 ### Who observes, per engine
 
-| Engine | URL servers today | Command servers today | App servers after this change | What OMB sees |
+| Engine | URL servers today | Command servers today | App servers after this change | What MausClaw sees |
 |---|---|---|---|---|
-| Claude Code | CLI's native HTTP (gate + proxy only with a tool selection) | gated if bot-owned with a result budget, or with a selection | URL → OMB remote proxy (stdio); command → gate | everything, through the proxy or gate |
-| Codex | always OMB remote proxy | gated only with a selection | command → gate | everything |
-| ACP family (Gemini, Grok, Qwen, Cursor, Kimi, Droid, OpenCode, Cline, Hermes, custom) and Muse Code (`turn-mcp.ts`) | OMB remote proxy | mounted directly, gated only with a selection | command → gate | everything |
+| Claude Code | CLI's native HTTP (gate + proxy only with a tool selection) | gated if bot-owned with a result budget, or with a selection | URL → MausClaw remote proxy (stdio); command → gate | everything, through the proxy or gate |
+| Codex | always MausClaw remote proxy | gated only with a selection | command → gate | everything |
+| ACP family (Gemini, Grok, Qwen, Cursor, Kimi, Droid, OpenCode, Cline, Hermes, custom) and Muse Code (`turn-mcp.ts`) | MausClaw remote proxy | mounted directly, gated only with a selection | command → gate | everything |
 | Pi | gate / proxy | gate (budget) | adds the apps settings | everything |
-| Chat Completions family (`chat-mcp-tools.ts`) | proxy child, driven by OMB's in-process client | OMB's in-process stdio client | observed in-process | everything |
+| Chat Completions family (`chat-mcp-tools.ts`) | proxy child, driven by MausClaw's in-process client | MausClaw's in-process stdio client | observed in-process | everything |
 
 Harness-owned mounts (agents, browser, computer, composio, data, dweb, phone) never have apps and are never observed.
 
-Only the innermost OMB component on the path reports. The remote proxy reports for URL servers. The gate reports only when its upstream is a command server, never when its upstream is the remote proxy.
+Only the innermost MausClaw component on the path reports. The remote proxy reports for URL servers. The gate reports only when its upstream is a command server, never when its upstream is the remote proxy.
 
 ### Advertising and filtering
 
-- OMB's `initialize` carries `capabilities.extensions["io.modelcontextprotocol/ui"] = { mimeTypes: ["text/html;profile=mcp-app"] }` unless the catalog says `uiExtension: "refused"` or the server's `apps` switch is off.
+- MausClaw's `initialize` carries `capabilities.extensions["io.modelcontextprotocol/ui"] = { mimeTypes: ["text/html;profile=mcp-app"] }` unless the catalog says `uiExtension: "refused"` or the server's `apps` switch is off.
 - `RemoteMcpClient.initialize(name, signal, { extensions })` gains the option and the one-retry fallback. The gate rewrites the CLI's `initialize` the same way. If the server answers that frame with an error, the gate sends the CLI's original frame and relays the second answer.
 - `tools/list` answers through the gate or proxy drop every tool whose `_meta.ui.visibility` is set and lacks `"model"`. A model `tools/call` to such a tool is refused with `-32602 "This tool belongs to an app view."`. Directory mode (`mcp-directory.ts`) applies the same filter before indexing.
 - A tool's UI is `_meta.ui.resourceUri`, else the deprecated `_meta["ui/resourceUri"]`. It must start with `ui://`. Anything else means no UI.
@@ -252,7 +252,7 @@ interface McpAppReport {
 }
 ```
 
-- The capability is the one the agents server already holds (`OMB_HARNESS_URL` and `OMB_COMMS_TOKEN` from `turn.integrations.agents`). It travels in the mount's private settings: `OMB_GATE_APPS` in the gate's env record and `OMB_REMOTE_MCP_APPS` in the proxy's. Codex keeps its private `--config-env` records. A turn without the agents integration observes nothing; the text still works.
+- The capability is the one the agents server already holds (`MAUSCLAW_HARNESS_URL` and `MAUSCLAW_COMMS_TOKEN` from `turn.integrations.agents`). It travels in the mount's private settings: `MAUSCLAW_GATE_APPS` in the gate's env record and `MAUSCLAW_REMOTE_MCP_APPS` in the proxy's. Codex keeps its private `--config-env` records. A turn without the agents integration observes nothing; the text still works.
 - Size: the whole body is ≤ 900 KB (the internal `readBody` cap is 1,000,000). If it does not fit, `structuredContent` is dropped and `oversized` is set; past that, the text content is clipped.
 
 `createAgentCard` sends `tool: "mcp_app"` to `recordMcpAppCall` in `server/chat-apps-mcp.ts`, which:
@@ -309,7 +309,7 @@ Every server-proxied bridge method goes through one route: `POST /api/bots/:botI
    - The tool exists in the server's current catalog, and its visibility includes `"app"` (default `["model","app"]`). Otherwise `-32602`.
    - Tool selection: a tool whose visibility includes `"model"` needs `allowsTool(scope, {kind:"mcp", server, name})`. An app-only tool needs only `canUseMcpServer`. The Access settings list hides app-only tools.
    - Arguments must be ≤ 64 KB and pass `lenientToolValidator(inputSchema)`.
-   - Approval follows the bot's own level (`approvalModeFor({...bot, threadId})`), and OpenMausBot draws no card of its own:
+   - Approval follows the bot's own level (`approvalModeFor({...bot, threadId})`), and MausClaw draws no card of its own:
      - `readOnlyHint: true` → run.
      - App-only, without `destructiveHint: true` → run.
      - Mode `full` → run.
@@ -387,7 +387,7 @@ Survey of 2026-10-14 (vendor docs, launch posts, and unauthenticated probes of e
 | Amplitude | Yes (`render_amplitude_chart`), also in Cursor | `https://mcp.amplitude.com/mcp` | DCR open |
 | Hex | Yes (chart carousel; widgets expire after 24 h) | `https://app.hex.tech/mcp` | DCR open (Team and Enterprise plans) |
 | Clay | Yes in Claude, per Anthropic | `https://api.clay.com/v3/mcp` | DCR open (an admin toggle can block "Unknown" clients) |
-| Atlassian (Rovo) | Yes ("widgets display in iFrames") | `https://mcp.atlassian.com/v2/mcp` | DCR. Redirect domains are admin-allow-listed; the default list includes `http://localhost` and `127.0.0.1`, which OMB's loopback sign-in uses. |
+| Atlassian (Rovo) | Yes ("widgets display in iFrames") | `https://mcp.atlassian.com/v2/mcp` | DCR. Redirect domains are admin-allow-listed; the default list includes `http://localhost` and `127.0.0.1`, which MausClaw's loopback sign-in uses. |
 | Excalidraw | **Yes, checked directly** | `https://mcp.excalidraw.com/mcp` | No auth |
 | tldraw | Yes, checked directly | `https://tldraw-mcp-app.tldraw.workers.dev/mcp` (from third-party directories) | No auth |
 | Linear, HubSpot, Zapier, Stripe | None documented (Stripe unclear) | — | — |
@@ -397,7 +397,7 @@ Hosts that ship MCP Apps include Claude (web, desktop, mobile), ChatGPT (it also
 What this means:
 
 - Excalidraw is the first real target: no sign-in, a 432 KB view, CSP domains, an app-only tool set and a permission request we deny.
-- Amplitude, Hex, Clay and Atlassian need only OMB's existing DCR sign-in.
+- Amplitude, Hex, Clay and Atlassian need only MausClaw's existing DCR sign-in.
 - Asana and Canva need a client id and secret pasted into the existing "pre-registered sign-in app" fields.
 - **Figma, which Omkar named, cannot be reached until MausBot is in Figma's MCP catalog** (see "Open questions").
 - Notion ships no MCP App UI today.
@@ -598,7 +598,7 @@ Server:
 
 Build order: **S1 → S2 → (S3 ∥ S4) → (I1 ∥ A1)**. Each task is sized for one builder. File ownership is listed so the parallel tasks do not collide.
 
-### S1. Shared core (OpenMausBot)
+### S1. Shared core (MausClaw)
 
 Pure TypeScript, no UI. Files:
 
@@ -618,7 +618,7 @@ Tests:
 - `bridge.test.ts`: handshake order, the method table, engagement, rate limits, size clamp, teardown, malformed and oversized messages, the wrong `source`.
 - A compatibility test that drives the bridge with the SDK's `App` class (`@modelcontextprotocol/ext-apps` as a devDependency for tests only) over a fake window pair: `connect()` resolves, and `callServerTool`, `sendMessage`, `openLink`, `updateModelContext` and `requestDisplayMode` reach the adapters.
 
-### S2. Server: bot HTML, documents, routes, send path (OpenMausBot)
+### S2. Server: bot HTML, documents, routes, send path (MausClaw)
 
 Owns:
 
@@ -636,7 +636,7 @@ Tests:
 - the companion allowlist test;
 - the route scope tests.
 
-### S3. Desktop renderer and Electron (OpenMausBot)
+### S3. Desktop renderer and Electron (MausClaw)
 
 Owns:
 
@@ -657,7 +657,7 @@ Tests:
 - an Electron security test that ports the probe in this spec (rules 1 to 6 and 8) against a real `AppDocument` from S2;
 - an isolated fixture run (`docs/verification/README.md`): a fake engine's `show_html` renders, `mausbot.send` lands as a "Sent from" message and starts a turn, and `update_html` reloads in place.
 
-### S4. Server: MCP Apps plumbing (OpenMausBot)
+### S4. Server: MCP Apps plumbing (MausClaw)
 
 Owns:
 
@@ -715,7 +715,7 @@ Example servers, verified to run on Node 24.14 on 2026-10-14 (put each in its ow
 
 - Command, stdio: `npx -y --silent --registry=https://registry.npmjs.org/ @modelcontextprotocol/server-basic-vanillajs --stdio`. Tool `get-time` returns `structuredContent.time`; the 218 KB view has "Get Server Time", "Send Message", "Send Log" and "Open Link" buttons.
 - Command, stdio: `npx -y --silent --registry=https://registry.npmjs.org/ @modelcontextprotocol/server-debug --stdio`. `debug-tool` (all result shapes, delay, error) plus the app-only `debug-refresh` and `debug-log`; the 235 KB view has buttons for every SDK method.
-- URL, stateless streamable HTTP: `PORT=3911 npx -y --silent --registry=https://registry.npmjs.org/ @modelcontextprotocol/server-debug`, then add `http://127.0.0.1:3911/mcp`. OMB's remote proxy from this branch relayed its `_meta` and full results.
+- URL, stateless streamable HTTP: `PORT=3911 npx -y --silent --registry=https://registry.npmjs.org/ @modelcontextprotocol/server-debug`, then add `http://127.0.0.1:3911/mcp`. MausClaw's remote proxy from this branch relayed its `_meta` and full results.
 - Real: `https://mcp.excalidraw.com/mcp` (no sign-in) and `https://tldraw-mcp-app.tldraw.workers.dev/mcp`.
 
 End-to-end, on an isolated instance (`docs/verification/README.md`, never the installed app):
@@ -741,7 +741,7 @@ Security: the Electron test (S3) and the two phone web-view tests (I1, A1) run e
 ## Known limitations
 
 - **Opaque origin.** Views that require `localStorage`, or a stable origin for CORS (`_meta.ui.domain`, e.g. Claude's `<hash>.claudemcpcontent.com`), will not work fully. Most views reach data through `tools/call`, which works. A per-server real origin (a custom-protocol sandbox page on desktop) is the follow-up if a target app needs it.
-- **Separate app connection.** App calls use OMB's own connection, not the engine's live one. A stateful stdio server that keeps per-process state sees app calls on a different process from the bot's.
+- **Separate app connection.** App calls use MausClaw's own connection, not the engine's live one. A stateful stdio server that keeps per-process state sees app calls on a different process from the bot's.
 - **Protocol version.** Servers moving to the 2026-07-28 protocol (`server/discover`, capabilities in each request's `_meta`) will need `RemoteMcpClient` to speak it. Claude Code 2.1.288 already tries it first.
 - **Sign-in gates.** Figma's client allow-list, and the no-DCR servers (Asana, Slack, Box, HubSpot), are sign-in matters, not rendering ones.
 
@@ -813,5 +813,5 @@ S4 (2026-10-14). Deviations from the text above:
 - **recordMcpAppCall** answers the observer (which ignores it) with 409 for a room or apps off, 404 for an unmounted or out-of-scope server, 400 for a malformed report; no row in each case. `border` is `prefersBorder !== false`. Row text and title pass `redactSecretsInText`; the stored result does not.
 - **createAgentCard** is overloaded: `tool: "mcp_app"` answers with a promise, every other tool synchronously. `ChatApps` gained `recordMcpAppCall`, set by `createChatAppsMcp` beside `mcpAccess`.
 - **Connections.** Pooled per (name, whole spec including headers), so a new sign-in token opens a new client; the UI resource cache is per (name, configuration hash, uri). Command servers the pool started are sent SIGTERM when the server process exits.
-- **Codex.** A command app server without a selection now goes through the gate, whose settings sit in its private `OMB_GATE_CONFIG_*` record; the gate accepts a private record that holds a selection or an observer.
+- **Codex.** A command app server without a selection now goes through the gate, whose settings sit in its private `MAUSCLAW_GATE_CONFIG_*` record; the gate accepts a private record that holds a selection or an observer.
 - **End-to-end on real servers** (isolated server, fake Claude engine, the four servers in "Test plan with real servers", each in its own empty directory): the catalog marked all four as having apps with `uiExtension: ok` (Test passed for three; for the basic server it timed out at 8 s on that loaded machine, and the background probe recorded it); the turn mounted the two command servers through observing gates and the two URL servers through observing proxies; each tool call (`get-time`, `debug-tool` with `includeMeta`, the same over HTTP on port 3911, Excalidraw `create_view`) wrote an app row whose document carried the whole result (`structuredContent`, `_meta.debugInfo`; equal to what the engine got, up to key order) and the server's page (218 KB, 235 KB, 235 KB, 450 KB; Excalidraw's CSP allows only `https://esm.sh`); the model saw no app-only tool; and the frame's calls reached the servers (`get-time`, `debug-refresh` on both debug servers, Excalidraw `save_checkpoint` then `read_checkpoint`). A report with a bogus capability got 401. The frames themselves (the debug view's buttons) are S3's and the phones' to drive.

@@ -31,9 +31,9 @@ is "The call id and the call row" in
 
 Live calls need no plan, from any client: the desktop app, a web browser, or a
 phone through the companion. Each call uses the person's own OpenAI key: the
-separate Live key when one is saved (`live.key`, `OMB_OPENAI_LIVE_KEY`, or the
+separate Live key when one is saved (`live.key`, `MAUSCLAW_OPENAI_LIVE_KEY`, or the
 desktop credential `openaiLiveKey`), else the OpenAI API key from Settings →
-API keys (`openai.key`, `OMB_OPENAI_API_KEY`); `liveCallKey` in
+API keys (`openai.key`, `MAUSCLAW_OPENAI_API_KEY`); `liveCallKey` in
 `server/live-settings.ts`. `GET /api/config` reports `live.configured` and
 `live.keySource` (`live` or `openai`), never the key. Without either key,
 `POST /api/live/session` answers
@@ -95,17 +95,17 @@ standalone fake cannot be scripted from the shell, so nothing is asked on it:
 node --experimental-strip-types server/testing/fake-openai-live.ts
 # terminal 2: the renderer fixture, pointed at it (the key only ever reaches
 # the fake)
-OMB_OPENAI_LIVE_URL=http://127.0.0.1:FAKE_PORT OMB_OPENAI_LIVE_KEY=sk-fake \
-  node --experimental-strip-types scripts/control-omb.ts ui launch
+MAUSCLAW_OPENAI_LIVE_URL=http://127.0.0.1:FAKE_PORT MAUSCLAW_OPENAI_LIVE_KEY=sk-fake \
+  node --experimental-strip-types scripts/control-mausclaw.ts ui launch
 # terminal 3, with the url, botId and ui handle it prints
-pnpm control:omb messages --bot BOT_ID --url http://127.0.0.1:PORT
+pnpm control:mausclaw messages --bot BOT_ID --url http://127.0.0.1:PORT
 curl -s -X POST http://127.0.0.1:PORT/api/live/session -H 'content-type: application/json' \
   -d '{"botId":"BOT_ID","sdp":"v=0\r\no=- 1 1 IN IP4 127.0.0.1\r\n","client":"desktop"}'
 curl -s http://127.0.0.1:PORT/api/live/call
 curl -s -X POST http://127.0.0.1:PORT/api/live/call/end -H 'content-type: application/json' \
   -d '{"callId":"CALL_ID"}'
-pnpm control:omb ui wait-settle --ui /tmp/openmausbot-verify-data-XXXXXX/ui.json --timeout 60
-pnpm control:omb ui snapshot --ui /tmp/openmausbot-verify-data-XXXXXX/ui.json
+pnpm control:mausclaw ui wait-settle --ui /tmp/mausclaw-verify-data-XXXXXX/ui.json --timeout 60
+pnpm control:mausclaw ui snapshot --ui /tmp/mausclaw-verify-data-XXXXXX/ui.json
 curl -s "http://127.0.0.1:PORT/api/threads/THREAD_ID/messages?limit=20"
 ```
 
@@ -120,7 +120,7 @@ no `title`, because nothing was asked; and the snapshot's transcript has
 
 ## Gotchas
 
-- `pnpm control:omb messages` projects a fixed set of fields: it shows the
+- `pnpm control:mausclaw messages` projects a fixed set of fields: it shows the
   row's `kind` and its text, but not `via`, `callId` or `call`. Read the last
   command above for those.
 - Only generated thread titles name a call (`features.llmThreadTitles`; see
@@ -134,9 +134,9 @@ no `title`, because nothing was asked; and the snapshot's transcript has
   upgrade and the retry is accepted.
 - Only one call runs at a time: while one is open, another start answers `409`.
   End a call a failed run left open, or restart the fixture.
-- `OMB_OPENAI_LIVE_URL` crosses into a fixture only when it is a loopback
-  `http://127.0.0.1:PORT`, and `OMB_OPENAI_LIVE_KEY` only with it.
-- Without `OMB_OPENAI_LIVE_KEY` the fixture answers every start with `409`
+- `MAUSCLAW_OPENAI_LIVE_URL` crosses into a fixture only when it is a loopback
+  `http://127.0.0.1:PORT`, and `MAUSCLAW_OPENAI_LIVE_KEY` only with it.
+- Without `MAUSCLAW_OPENAI_LIVE_KEY` the fixture answers every start with `409`
   `needsKey`, and the desktop shows "Live calls use your own OpenAI key" with
   **Open API keys** under the call button. That is the way to see it by hand.
 

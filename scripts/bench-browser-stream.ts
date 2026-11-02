@@ -21,10 +21,10 @@ const { values } = parseArgs({
   },
 });
 const MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const chrome = values.chrome ?? process.env.OMB_CDP_CHROME ?? (existsSync(MAC_CHROME) ? MAC_CHROME : "");
+const chrome = values.chrome ?? process.env.MAUSCLAW_CDP_CHROME ?? (existsSync(MAC_CHROME) ? MAC_CHROME : "");
 if (!chrome) throw new Error("Name a Chrome with --chrome PATH.");
 // The test service reads which Chrome to run when it loads.
-process.env.OMB_CDP_CHROME = chrome;
+process.env.MAUSCLAW_CDP_CHROME = chrome;
 
 const { displayScreen } = await import("../server/browser/display.ts");
 const { FixtureServer } = await import("../server/browser/cdp/testing/fixtures.ts");
@@ -88,7 +88,7 @@ const route = createBrowserViewerRoutes({
     answerFileChooser: async () => false,
     download: () => undefined,
   },
-  browser: async (botId) => ({ botId, session: target.session, spec: { command: "omb-cdp", args: [target.key], env: {} } }),
+  browser: async (botId) => ({ botId, session: target.session, spec: { command: "mausclaw-cdp", args: [target.key], env: {} } }),
   authorize: async () => null,
   current: () => true,
   restartRefusal: () => null,

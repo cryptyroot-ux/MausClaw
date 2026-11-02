@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-/** Every Chrome-related file OMB keeps lives under `<data dir>/browser`. */
+/** Every Chrome-related file MausClaw keeps lives under `<data dir>/browser`. */
 export function browserRoot(dataDir: string): string {
   return join(dataDir, "browser");
 }
@@ -62,7 +62,7 @@ export interface ProfileRecord {
   migratedFrom?: string;
 }
 
-const RECORD_FILE = "omb-profile.json";
+const RECORD_FILE = "mausclaw-profile.json";
 
 export function readProfileRecord(dir: string): ProfileRecord | null {
   const record = readJson(join(dir, RECORD_FILE)) as ProfileRecord | null;

@@ -70,7 +70,7 @@ export function createHighLevelService(options: HighLevelServiceOptions): HighLe
     connected: () => store.get()?.state === "signed-in",
     status,
     async startSignIn() {
-      if (!signIn) throw new HighLevelError("HighLevel sign-in is not available: no OpenMausBot relay is configured. Use a Private Integration token instead.", { status: 503 });
+      if (!signIn) throw new HighLevelError("HighLevel sign-in is not available: no MausClaw relay is configured. Use a Private Integration token instead.", { status: 503 });
       return signIn.start();
     },
     signInStatus: (flowId) => signIn?.status(flowId) ?? null,

@@ -39,7 +39,7 @@ export class FakeRelay {
   constructor(session = "bot-test") {
     this.session = session;
     this.sessionName = session;
-    this.dir = mkdtempSync(join(tmpdir(), "omb-relay-"));
+    this.dir = mkdtempSync(join(tmpdir(), "mausclaw-relay-"));
     mkdirSync(join(this.dir, "s"), { recursive: true });
   }
 

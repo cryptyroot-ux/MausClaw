@@ -15,7 +15,7 @@ afterAll(async () => { for (const folder of folders) await removeTempDir(folder)
 
 /** A LocalBackend on a fake Chrome per start, each cancelling its first navigation as Chrome for Testing on Windows can. */
 function backend(platform: NodeJS.Platform) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-backends-test-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-backends-test-"));
   folders.push(dataDir);
   const chromes: FakeChrome[] = [];
   const local = new LocalBackend({
@@ -71,7 +71,7 @@ describe("a fresh profile's first navigation on Windows", () => {
 
 describe("a local browser's profile folder", () => {
   it("is held from the sweep while Chrome starts, and let go when the start fails", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-backends-test-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-backends-test-"));
     folders.push(dataDir);
     const registry = new ProcessRegistry(browserRoot(dataDir));
     const dir = profileDir(dataDir, "temp:a");

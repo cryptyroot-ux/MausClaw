@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { appendUsage, flushUsageLedger } from "./usage-ledger.ts";
 import type { WireBot, WireGroup } from "../shared/wire.ts";
 
 it("projects historical usage, clears it on thread switch, and refreshes after a real fixture turn", async () => {
   const fixture = await launchVerificationServer();
   const { url, dataDir } = fixture.info;
-  const control = (...args: string[]) => runControlOmb([...args, "--url", url]);
+  const control = (...args: string[]) => runControlMausclaw([...args, "--url", url]);
   const post = async (path: string, body = {}) => {
     const response = await fetch(url + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const result = await response.json() as { group: WireGroup };

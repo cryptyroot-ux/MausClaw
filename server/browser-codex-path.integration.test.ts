@@ -35,9 +35,9 @@ describe.skipIf(process.platform === "win32")("Codex browser turns with a minima
   };
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-browser-codex-path-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-browser-codex-path-"));
     bin = join(home, ".local", "bin");
-    const data = join(home, ".openmausbot");
+    const data = join(home, ".mausclaw");
     mkdirSync(bin, { recursive: true });
     mkdirSync(data);
     // The extensionless executable must exercise /usr/bin/env node, rather
@@ -66,8 +66,8 @@ describe.skipIf(process.platform === "win32")("Codex browser turns with a minima
     child = spawn(process.execPath, [join(SERVER_DIR, "index.ts")], {
       cwd: join(SERVER_DIR, ".."),
       env: {
-        PATH: FINDER_PATH, HOME: home, OMB_DATA_DIR: data, OMB_PORT: String(port),
-        OMB_AGENT_BROWSER_PATH: browser, VITEST: "1",
+        PATH: FINDER_PATH, HOME: home, MAUSCLAW_DATA_DIR: data, MAUSCLAW_PORT: String(port),
+        MAUSCLAW_AGENT_BROWSER_PATH: browser, VITEST: "1",
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -79,7 +79,7 @@ describe.skipIf(process.platform === "win32")("Codex browser turns with a minima
       child.once("exit", () => { clearTimeout(timer); reject(new Error(`Fixture exited: ${stderr}`)); });
       child.stdout!.on("data", (chunk) => {
         output += chunk;
-        if (output.includes(`openmausbot server on ${base}`)) { clearTimeout(timer); resolve(); }
+        if (output.includes(`mausclaw server on ${base}`)) { clearTimeout(timer); resolve(); }
       });
     });
     events = await openSse(`${base}/api/events`);
@@ -118,8 +118,8 @@ describe.skipIf(process.platform === "win32")("Codex browser turns with a minima
     // each only the names in its env_vars. A token name two servers share
     // holds the last mount's value, and the browser was refused.
     const envVars = (server: string) => JSON.parse(dump.argv.find((arg: string) => arg.startsWith(`mcp_servers.${server}.env_vars=`))?.split("=").slice(1).join("=") ?? "[]") as string[];
-    const browserToken = envVars("browser").filter((name) => name.startsWith("OMB_MCP_TOKEN"));
-    const dataToken = envVars("data").filter((name) => name.startsWith("OMB_MCP_TOKEN"));
+    const browserToken = envVars("browser").filter((name) => name.startsWith("MAUSCLAW_MCP_TOKEN"));
+    const dataToken = envVars("data").filter((name) => name.startsWith("MAUSCLAW_MCP_TOKEN"));
     expect(browserToken).toHaveLength(1);
     expect(dataToken).toHaveLength(1);
     expect(browserToken[0]).not.toBe(dataToken[0]);

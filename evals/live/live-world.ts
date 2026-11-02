@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { runControlOmb } from "../../scripts/control-omb.ts";
+import { runControlMausclaw } from "../../scripts/control-mausclaw.ts";
 import { readHandoffs as readRuntimeHandoffs } from "../../server/testing/handoff-rows.ts";
 import type { Scenario, Step } from "../types.ts";
 import { BaseWorld, type WorldContext } from "../runners/base-world.ts";
@@ -46,8 +46,8 @@ export class LiveWorld extends BaseWorld {
   /** Creates one more bot mid-run (the judge gets its own bot so its turns
    * never pollute the scenario bot's evidence). */
   async createBot(key: string, name: string): Promise<void> {
-    const created = (await runControlOmb(["new-bot", "--name", name], {
-      env: { OPENMAUSBOT_URL: this.session!.url },
+    const created = (await runControlMausclaw(["new-bot", "--name", name], {
+      env: { MAUSCLAW_URL: this.session!.url },
     })) as { bot: { id: string; activeTaskId: string } };
     this.bots.set(key, { id: created.bot.id, threadId: created.bot.activeTaskId });
     const response = await this.api.patch("/api/bots/" + created.bot.id, {

@@ -1,15 +1,15 @@
 // Claude Code runs this with the hook's JSON on stdin and waits for it, so it ALWAYS exits 0, stops within
-// OMB_HOOK_TIMEOUT_MS (default 4000, below Claude Code's own hook timeout) and only forwards to the loopback harness.
-// The token is read from OMB_HOOK_TOKEN_FILE at run time: it rotates per turn while the CLI lives on.
+// MAUSCLAW_HOOK_TIMEOUT_MS (default 4000, below Claude Code's own hook timeout) and only forwards to the loopback harness.
+// The token is read from MAUSCLAW_HOOK_TOKEN_FILE at run time: it rotates per turn while the CLI lives on.
 // stdout is the hook channel: never console.log anything else here.
 import { readFileSync } from "node:fs";
 
 const CONTEXT_EVENTS = new Set(["SessionStart", "UserPromptSubmit"]);
-const requestedBudget = Number(process.env.OMB_HOOK_TIMEOUT_MS);
+const requestedBudget = Number(process.env.MAUSCLAW_HOOK_TIMEOUT_MS);
 const budgetMs = Number.isFinite(requestedBudget) && requestedBudget > 0 ? Math.min(requestedBudget, 4_000) : 4_000;
 const MAX_INPUT_BYTES = 1024 * 1024;
-const url = process.env.OMB_HOOK_URL ?? "";
-const tokenFile = process.env.OMB_HOOK_TOKEN_FILE ?? "";
+const url = process.env.MAUSCLAW_HOOK_URL ?? "";
+const tokenFile = process.env.MAUSCLAW_HOOK_TOKEN_FILE ?? "";
 
 const done = (out?: string) => {
   if (out === undefined) process.exit(0);

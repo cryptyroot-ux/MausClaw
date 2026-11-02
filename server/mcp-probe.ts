@@ -103,7 +103,7 @@ async function probeRemoteMcpServer(
   const combined = signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal;
   const client = new RemoteMcpClient(server, { maxBytes: MAX_REMOTE_MCP_BYTES });
   try {
-    await client.initialize("OpenMausBot", combined, options.extension ? { extensions: { [APP_EXTENSION_KEY]: UI_EXTENSION } } : {});
+    await client.initialize("MausClaw", combined, options.extension ? { extensions: { [APP_EXTENSION_KEY]: UI_EXTENSION } } : {});
     const result = await client.request("tools/list", {}, combined);
     const tools = result && typeof result === "object" ? (result as { tools?: unknown }).tools : undefined;
     if (!Array.isArray(tools)) return { ok: false, error: "The server did not return a valid MCP tools list." };
@@ -139,7 +139,7 @@ async function probeRemoteMcpServer(
   }
 }
 
-const INITIALIZE = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "OpenMausBot", version: "probe" } };
+const INITIALIZE = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "MausClaw", version: "probe" } };
 
 /** Always reaped, never inherits OpenMaus credentials. */
 function probeStdioMcpServer(

@@ -14,7 +14,7 @@ import { createLendingIndicator } from "./lending-indicator.mjs";
 import { autostartEntry, createOpenAtLogin, HIDDEN_ARG } from "./open-at-login.mjs";
 import { createAllWindowsClosedQuit } from "./window-all-closed.mjs";
 
-const ORIGIN = "https://omb-u-fixture.fly.dev";
+const ORIGIN = "https://mausclaw-u-fixture.fly.dev";
 const env = { id: "my-cloud", name: "My Cloud", origin: ORIGIN };
 
 const until = async (check, what, ms = 5000) => {
@@ -32,7 +32,7 @@ function cloudHome({ link = true, chrome = false } = {}) {
     const route = new URL(url).pathname;
     state.calls.push(route);
     if (route === "/api/auth/session") return json({ kind: "session", id: state.sessionId, scopes: ["admin", "client"], cloudHome: true });
-    if (route === "/.well-known/openmausbot/environment") return json({ environmentId: state.environmentId, capabilities: { sharedComputers: true, lendingDetails: true, ...(link ? { deviceLink: true } : {}), ...(chrome ? { myChromeLink: true } : {}) } });
+    if (route === "/.well-known/mausclaw/environment") return json({ environmentId: state.environmentId, capabilities: { sharedComputers: true, lendingDetails: true, ...(link ? { deviceLink: true } : {}), ...(chrome ? { myChromeLink: true } : {}) } });
     const body = init?.body ? JSON.parse(init.body) : {};
     if (route === "/api/shared-computers/connect") { state.connects.push(body); state.registered.add(body.id); return json({ ok: true }); }
     if (route.endsWith("/poll")) {
@@ -70,7 +70,7 @@ const SIGNED_IN = Object.freeze({ status: "connected", accountId: "acct_1", orig
 /** `myCloud`: this app knows which saved server is My Cloud, as the desktop app does, so it lends its internet connection
  * by default. `signIn`: the verified Cloud sign-in it starts with. */
 async function fixture(t, { link = true, chrome = false, adminWord = null, myCloud = false, signIn = SIGNED_IN } = {}) {
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-use-my-mac-")));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "mausclaw-use-my-mac-")));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const home = cloudHome({ link, chrome });
   const sockets = fakeSockets((url) => home.registered.has(new URL(url).pathname.split("/")[3]));
@@ -83,7 +83,7 @@ async function fixture(t, { link = true, chrome = false, adminWord = null, myClo
   const make = () => createComputerSharing({
     file, fetch: home.fetch, environments: () => [env], enabled: async () => false, ...(myCloud ? { myCloud: () => env } : {}),
     cloud: () => account, home: path.join(dir, "home"), cuaConnection: async () => null,
-    power, WebSocket: sockets.FakeSocket, linkHeaders: () => ({ cookie: "omb_session_fixture=token" }), onChange: (summary) => summaries.push(summary),
+    power, WebSocket: sockets.FakeSocket, linkHeaders: () => ({ cookie: "mausclaw_session_fixture=token" }), onChange: (summary) => summaries.push(summary),
     egress: {
       interfaces: () => ({}),
       resolve: async (host) => [{ address: host.startsWith("lan.") ? "192.168.1.1" : "93.184.215.14", family: 4 }],
@@ -105,10 +105,10 @@ test("the internet connection alone is lent: it registers with My Cloud and open
   assert.equal(home.connects.length, 1);
   assert.deepEqual({ folders: home.connects[0].folders, computer: home.connects[0].computer, internet: home.connects[0].internet }, { folders: [], computer: false, internet: true });
   const [socket] = sockets.made;
-  assert.equal(socket.url, `wss://omb-u-fixture.fly.dev/api/shared-computers/${home.connects[0].id}/link`);
-  assert.equal(socket.headers.cookie, "omb_session_fixture=token");
-  assert.match(socket.headers["x-omb-computer-secret"], /^[a-f0-9]{64}$/);
-  assert.equal(socket.headers["x-omb-background"], "1", "the link never counts as the person using My Cloud");
+  assert.equal(socket.url, `wss://mausclaw-u-fixture.fly.dev/api/shared-computers/${home.connects[0].id}/link`);
+  assert.equal(socket.headers.cookie, "mausclaw_session_fixture=token");
+  assert.match(socket.headers["x-mausclaw-computer-secret"], /^[a-f0-9]{64}$/);
+  assert.equal(socket.headers["x-mausclaw-background"], "1", "the link never counts as the person using My Cloud");
   assert.equal(socket.headers.origin, ORIGIN);
   assert.deepEqual({ internet: sharing.cloudState(env).internet, link: sharing.cloudState(env).link }, { internet: true, link: "on" });
 });
@@ -216,7 +216,7 @@ test("the person's own Off survives a restart: lending stays off, the link is ne
 });
 
 test("lending on opens the app at login, out of sight; off removes only the login item this app added", async (t) => {
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-login-item-")));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "mausclaw-login-item-")));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const calls = [];
   const fakeApp = (settings = { openAtLogin: false, wasOpenedAtLogin: false }) => ({
@@ -239,24 +239,24 @@ test("lending on opens the app at login, out of sight; off removes only the logi
   assert.equal(theirs.settings.openAtLogin, true, "a login item the person set up is theirs");
   assert.equal(kept.startedHidden(), false, "and it opens the window as before");
   const windows = fakeApp();
-  const win = createOpenAtLogin({ app: windows, file: path.join(dir, "win.json"), platform: "win32", home: dir, argv: ["OpenMausBot.exe", HIDDEN_ARG] });
+  const win = createOpenAtLogin({ app: windows, file: path.join(dir, "win.json"), platform: "win32", home: dir, argv: ["MausClaw.exe", HIDDEN_ARG] });
   win.follow(true);
   assert.deepEqual(calls.filter(([kind]) => kind === "set").at(-1), ["set", { openAtLogin: true, args: [HIDDEN_ARG] }]);
   assert.equal(win.startedHidden(), true);
-  assert.equal(createOpenAtLogin({ app: windows, file: path.join(dir, "win.json"), platform: "win32", home: dir, argv: ["OpenMausBot.exe"] }).startedHidden(), false);
+  assert.equal(createOpenAtLogin({ app: windows, file: path.join(dir, "win.json"), platform: "win32", home: dir, argv: ["MausClaw.exe"] }).startedHidden(), false);
   const config = path.join(dir, "config");
   const linux = createOpenAtLogin({ app: fakeApp(), file: path.join(dir, "linux.json"), platform: "linux", home: dir, env: { XDG_CONFIG_HOME: config, APPIMAGE: "/home/me/Apps/Open Maus$Bot.AppImage" } });
   linux.follow(true);
-  const entry = path.join(config, "autostart", "openmausbot.desktop");
+  const entry = path.join(config, "autostart", "mausclaw.desktop");
   assert.equal(await readFile(entry, "utf8"), autostartEntry("/home/me/Apps/Open Maus$Bot.AppImage"));
-  assert.match(await readFile(entry, "utf8"), /^Exec="\/home\/me\/Apps\/Open Maus\\\$Bot\.AppImage" --omb-hidden$/m);
+  assert.match(await readFile(entry, "utf8"), /^Exec="\/home\/me\/Apps\/Open Maus\\\$Bot\.AppImage" --mausclaw-hidden$/m);
   linux.follow(false);
   await assert.rejects(readFile(entry, "utf8"), { code: "ENOENT" });
   await mkdir(path.dirname(entry), { recursive: true });
-  await writeFile(entry, "[Desktop Entry]\nExec=openmausbot\n");
+  await writeFile(entry, "[Desktop Entry]\nExec=mausclaw\n");
   linux.follow(true);
   linux.follow(false);
-  assert.equal(await readFile(entry, "utf8"), "[Desktop Entry]\nExec=openmausbot\n", "an autostart entry the person wrote is never replaced or removed");
+  assert.equal(await readFile(entry, "utf8"), "[Desktop Entry]\nExec=mausclaw\n", "an autostart entry the person wrote is never replaced or removed");
   const unpackaged = { ...fakeApp(), isPackaged: false };
   createOpenAtLogin({ app: unpackaged, file: path.join(dir, "dev.json"), platform: "darwin", home: dir }).follow(true);
   assert.equal(unpackaged.settings.openAtLogin, false, "a development build never registers itself");
@@ -349,14 +349,14 @@ test("a desktop signed in to My Cloud shares its internet connection by itself: 
   again.start();
   await until(() => home.connects.length === 2 && sockets.open().length === 1 && again.cloudState(env).link === "on", "the same grant to come back after the app restarts");
   assert.equal(home.connects[1].id, lent.id);
-  assert.equal(sockets.made.at(-1).headers["x-omb-computer-secret"], sockets.made[0].headers["x-omb-computer-secret"]);
+  assert.equal(sockets.made.at(-1).headers["x-mausclaw-computer-secret"], sockets.made[0].headers["x-mausclaw-computer-secret"]);
 });
 
 test("nothing is lent until this app is signed in to My Cloud itself, and only to My Cloud", async (t) => {
   const state = await fixture(t, { myCloud: true, signIn: { status: "restoring", accountId: null, origin: null } });
   state.sharing.start();
   for (const signIn of [{ status: "signed-out", accountId: null, origin: null }, { status: "reauth-required", accountId: "acct_1", origin: null },
-    { status: "connected", accountId: null, origin: ORIGIN }, { status: "connected", accountId: "acct_1", origin: "https://omb-u-other.fly.dev" }]) state.signIn(signIn);
+    { status: "connected", accountId: null, origin: ORIGIN }, { status: "connected", accountId: "acct_1", origin: "https://mausclaw-u-other.fly.dev" }]) state.signIn(signIn);
   await delay(150);
   assert.deepEqual(state.home.calls, [], "nothing called My Cloud");
   await assert.rejects(readFile(state.file, "utf8"), { code: "ENOENT" }, "and nothing was kept");
@@ -454,9 +454,9 @@ test("when My Cloud restarts and forgets this computer, lending registers again 
 });
 
 test("a person whose only Cloud is a Team Cloud lends nothing by default: lending is personal", async (t) => {
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-team-cloud-")));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "mausclaw-team-cloud-")));
   t.after(() => rm(dir, { recursive: true, force: true }));
-  const team = { id: "team-cloud", name: "Acme", origin: "https://omb-t-acme.fly.dev" };
+  const team = { id: "team-cloud", name: "Acme", origin: "https://mausclaw-t-acme.fly.dev" };
   const account = { status: "connected", account: { id: "acct_1" }, teams: [{ id: "team-acme", name: "Acme", role: "member", machine: { status: "ready", origin: team.origin } }] };
   const target = createLendingTarget({ account: () => ({ state: () => account }), environments: () => [team] });
   const calls = [];
@@ -485,15 +485,15 @@ test("the menu bar says it is the internet connection when that is all that is l
     iconPath: "icon.png", onStop: () => {}, onOpen: () => {}, device: "PC" });
   indicator.update({ lending: true, internetOnly: true, busy: false });
   assert.equal(trays[0].menu[0].label, "Your bots can use this PC's internet connection");
-  assert.equal(trays[0].tip, "OpenMausBot: your bots can use this PC's internet connection");
+  assert.equal(trays[0].tip, "MausClaw: your bots can use this PC's internet connection");
   indicator.update({ lending: true, internetOnly: false, busy: false });
   assert.equal(trays[0].menu[0].label, "Your bots can use this PC");
 });
 
 test("another Cloud of the person's own that the Admin says is asleep is never dialled, even after its own hold ends, and lends once the Admin says it is awake", async (t) => {
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-use-my-mac-")));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "mausclaw-use-my-mac-")));
   t.after(() => rm(dir, { recursive: true, force: true }));
-  const OTHER = "https://omb-c-b.fly.dev";
+  const OTHER = "https://mausclaw-c-b.fly.dev";
   const mine = env, other = { id: "client-b", name: "Client B", origin: OTHER, cloud: { id: "c-b", role: "owner" } };
   const homes = { [ORIGIN]: cloudHome(), [OTHER]: cloudHome() };
   const sockets = fakeSockets((url) => { const at = new URL(url.replace(/^wss:/, "https:")); return homes[at.origin].registered.has(at.pathname.split("/")[3]); });

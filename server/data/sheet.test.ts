@@ -8,7 +8,7 @@ import { DataSheetRegistry, DataSheetStore, SHEET_FILE } from "./sheet.ts";
 
 const dirs: string[] = [];
 function freshDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "omb-sheet-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-sheet-"));
   dirs.push(dir);
   return dir;
 }

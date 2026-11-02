@@ -135,7 +135,7 @@ function describe(input: DevsReportInput, redact: (text: string) => string): str
 
 function diagnose(input: DevsReportInput, redact: (text: string) => string): string {
   const lines = [
-    "OpenMausBot @devs report", `Sent: ${iso(input.now)}`, `App version: ${input.appVersion}`, `Runs on: ${input.runsOn}`,
+    "MausClaw @devs report", `Sent: ${iso(input.now)}`, `App version: ${input.appVersion}`, `Runs on: ${input.runsOn}`,
     `OS: ${input.os}`, `Node: ${input.node}`, `Server uptime: ${duration(input.uptimeSeconds)}`,
     ...(input.language ? [`Language: ${input.language}`] : []), `Install: ${input.installId}`,
     "", "## Conversation", `Conversation: ${input.threadId}`, `Message: ${input.messageId}`, ...(input.groupId ? [`Group chat: ${input.groupId}`] : []),

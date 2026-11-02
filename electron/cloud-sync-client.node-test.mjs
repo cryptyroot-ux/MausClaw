@@ -6,9 +6,9 @@ import test from "node:test";
 import { SyncAuthError, createSyncClient } from "./cloud-sync-client.mjs";
 import { CloudAsleepError, createCloudPowerGate } from "./cloud-power.mjs";
 
-const ORIGIN = "https://omb-u-1a2b3c4d5e6f.fly.dev";
+const ORIGIN = "https://mausclaw-u-1a2b3c4d5e6f.fly.dev";
 const reply = (status, body, headers = {}) => new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
-function dir(t) { const path = mkdtempSync(join(tmpdir(), "omb-sync-client-")); t.after(() => rmSync(path, { recursive: true, force: true })); return path; }
+function dir(t) { const path = mkdtempSync(join(tmpdir(), "mausclaw-sync-client-")); t.after(() => rmSync(path, { recursive: true, force: true })); return path; }
 
 test("sends the Cloud origin and the window's sign-in, and turns 401 into a sign-in error", async () => {
   const seen = [];
@@ -24,14 +24,14 @@ test("marks every call as background work, so My Cloud never counts Files as the
   const client = createSyncClient({ origin: ORIGIN, fetch: async (url, init) => { seen.push(init.headers); return reply(200, { folders: [] }); } });
   await client.summary();
   await client.changes(0, 10, new AbortController().signal);
-  assert.deepEqual(seen.map((headers) => headers["x-omb-background"]), ["1", "1"]);
+  assert.deepEqual(seen.map((headers) => headers["x-mausclaw-background"]), ["1", "1"]);
 });
 
 test("My Cloud going to sleep: its 503 asleep answer holds Files back, and nothing is called while it sleeps", async () => {
   const at = 1_792_355_000_000;
   let power = { state: "awake", since: at, sleeps: true }, calls = 0;
   const gate = createCloudPowerGate({ power: () => power });
-  const client = createSyncClient({ origin: ORIGIN, power: gate, fetch: async () => { calls++; return reply(503, { error: "asleep" }, { "x-omb-cloud-power": "asleep" }); } });
+  const client = createSyncClient({ origin: ORIGIN, power: gate, fetch: async () => { calls++; return reply(503, { error: "asleep" }, { "x-mausclaw-cloud-power": "asleep" }); } });
   await assert.rejects(client.changes(0, 10, new AbortController().signal), CloudAsleepError);
   assert.equal(gate.asleep(), true);
   await assert.rejects(client.summary(), CloudAsleepError);
@@ -74,10 +74,10 @@ test("an upload answers a full Cloud and a lost race plainly", async (t) => {
 });
 
 test("a download resumes a partial file with a range", async (t) => {
-  const temporary = join(dir(t), ".a.txt.omb-sync-1a2b3c4d");
+  const temporary = join(dir(t), ".a.txt.mausclaw-sync-1a2b3c4d");
   writeFileSync(temporary, "hello ");
   let range;
-  const client = createSyncClient({ origin: ORIGIN, fetch: async (_url, init) => { range = init.headers.range; return new Response("world", { status: 206, headers: { "x-omb-sha256": "s" } }); } });
+  const client = createSyncClient({ origin: ORIGIN, fetch: async (_url, init) => { range = init.headers.range; return new Response("world", { status: 206, headers: { "x-mausclaw-sha256": "s" } }); } });
   assert.deepEqual(await client.download("f", "a.txt", temporary), { sha256: "s" });
   assert.equal(range, "bytes=6-");
   assert.equal(readFileSync(temporary, "utf8"), "hello world");
@@ -101,7 +101,7 @@ test("a part that times out is sent again smaller, and a timed-out download fail
   assert.deepEqual(await client.upload({ folderId: "f", path: "a.bin", file, size: 32, sha256: "s", baseSha256: null }), { ok: true });
   assert.deepEqual(puts, [32, 16, 8, 8, 8, 8]);
   const slow = createSyncClient({ origin: ORIGIN, fetch: async () => { throw new DOMException("The operation timed out.", "TimeoutError"); } });
-  const error = await slow.download("f", "a.txt", join(dir(t), ".a.txt.omb-sync-1a2b3c4d")).catch((caught) => caught);
+  const error = await slow.download("f", "a.txt", join(dir(t), ".a.txt.mausclaw-sync-1a2b3c4d")).catch((caught) => caught);
   assert.notEqual(error.name, "TimeoutError");
   assert.match(error.message, /too slow/);
 });

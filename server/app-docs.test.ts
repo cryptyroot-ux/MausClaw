@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { APP_DOCS_SWEEP_GRACE_MS, AppDocs } from "./app-docs.ts";
 
-const fresh = () => join(mkdtempSync(join(tmpdir(), "omb-app-docs-")), "app-docs");
+const fresh = () => join(mkdtempSync(join(tmpdir(), "mausclaw-app-docs-")), "app-docs");
 const files = (dir: string, kind: string) => { try { return readdirSync(join(dir, kind)); } catch { return []; } };
 const age = (dir: string, ms: number) => {
   const then = new Date(Date.now() - ms);

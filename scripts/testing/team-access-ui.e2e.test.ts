@@ -4,14 +4,14 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env }));
+const enabled = process.env.MAUSCLAW_UI_E2E === "1" || Boolean(resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env }));
 
 (enabled ? it : it.skip)("lets an owner select and revoke exactly the Chief's additional teams in the real settings UI", async () => {
-  const child = spawn(process.execPath, ["--experimental-strip-types", "scripts/control-omb.ts", "ui", "launch"], {
+  const child = spawn(process.execPath, ["--experimental-strip-types", "scripts/control-mausclaw.ts", "ui", "launch"], {
     cwd: ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";
@@ -33,7 +33,7 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
       if (!response.ok) throw new Error(JSON.stringify(result));
       return result;
     };
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<any>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", info.ui, ...args]) as Promise<any>;
     const click = (name: string) => ui("click", "--name", name);
     // The browser harness does not assign refs to native <summary> nodes.
     const toggleTeams = () => ui("eval", "--js", "document.querySelector('[data-bot-settings-section=permissions] summary').click()");

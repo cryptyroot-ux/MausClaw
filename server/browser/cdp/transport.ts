@@ -75,7 +75,7 @@ export function pipeTransport(writable: Writable, readable: Readable): CdpTransp
   };
 }
 
-/** A browser's DevTools WebSocket, for a Chrome OMB did not launch (the person's own, or a cloud browser). */
+/** A browser's DevTools WebSocket, for a Chrome MausClaw did not launch (the person's own, or a cloud browser). */
 export function webSocketTransport(url: string, { timeoutMs = 15_000 }: { timeoutMs?: number } = {}): Promise<CdpTransport> {
   if (!/^wss?:\/\//i.test(url)) return Promise.reject(new Error(`Not a DevTools WebSocket address: ${url}`));
   const socket = new WebSocket(url);

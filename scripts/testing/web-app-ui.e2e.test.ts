@@ -4,14 +4,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../control-mausclaw.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { ensureUiBrowser } from "./control-omb-ui.ts";
+import { ensureUiBrowser } from "./control-mausclaw-ui.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const enabled = process.env.OMB_UI_E2E === "1";
-const build = process.env.OMB_WEB_APP_BUILD || join(root, "dist");
-if (!enabled) console.log("skipping web app UI: build the UI and set OMB_UI_E2E=1 for browser qualification");
+const enabled = process.env.MAUSCLAW_UI_E2E === "1";
+const build = process.env.MAUSCLAW_WEB_APP_BUILD || join(root, "dist");
+if (!enabled) console.log("skipping web app UI: build the UI and set MAUSCLAW_UI_E2E=1 for browser qualification");
 
 async function connect(url: string) {
   const socket = new WebSocket(url);
@@ -49,7 +49,7 @@ async function connect(url: string) {
 }
 
 (enabled ? it : it.skip)("qualifies the served phone web app and keeps controls inside safe areas", async () => {
-  if (!existsSync(join(build, "index.html"))) throw new Error("Run pnpm build before OMB_UI_E2E=1 web-app qualification");
+  if (!existsSync(join(build, "index.html"))) throw new Error("Run pnpm build before MAUSCLAW_UI_E2E=1 web-app qualification");
   let fixture: VerificationServer | undefined;
   let chrome: ChildProcess | undefined;
   let cdp: Awaited<ReturnType<typeof connect>> | undefined;
@@ -58,7 +58,7 @@ async function connect(url: string) {
     if (!tools.chrome) throw new Error("This recipe needs the pinned Chrome for Testing");
     fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, [], undefined, build);
     const { url, dataDir, logPath } = fixture.info;
-    const { bot } = await runControlOmb(["new-bot", "--name", "Pepper", "--url", url]) as { bot: { id: string; activeTaskId: string } };
+    const { bot } = await runControlMausclaw(["new-bot", "--name", "Pepper", "--url", url]) as { bot: { id: string; activeTaskId: string } };
     const profile = join(dataDir, "chrome");
     mkdirSync(profile, { recursive: true });
     chrome = spawn(tools.chrome, ["--headless=new", "--no-sandbox", "--no-first-run", "--no-default-browser-check",
@@ -80,7 +80,7 @@ async function connect(url: string) {
       return value.result.value;
     };
     await request("Page.enable");
-    await request("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('omb-analytics-opt-out','1');localStorage.setItem('omb-email-gate','skipped');" });
+    await request("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('mausclaw-analytics-opt-out','1');localStorage.setItem('mausclaw-email-gate','skipped');" });
     await request("Runtime.enable");
     await request("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
     await request("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -120,7 +120,7 @@ async function connect(url: string) {
     await request("Input.insertText", { text: "Phone web app fixture message" });
     await request("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
     await request("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-    const settled = await runControlOmb(["wait", "--bot", bot.id, "--task", bot.activeTaskId, "--timeout", "25", "--url", url]) as { status: string };
+    const settled = await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.activeTaskId, "--timeout", "25", "--url", url]) as { status: string };
     expect(settled.status).toBe("settled");
     await expect.poll(() => evaluate("document.body.textContent.includes('Phone web app fixture message')"), { timeout: 15_000 }).toBe(true);
     await request("Page.reload");

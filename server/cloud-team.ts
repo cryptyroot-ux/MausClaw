@@ -10,7 +10,7 @@ export const TEAM_ROLES: readonly TeamRole[] = ["owner", "admin", "member"];
 export interface CloudTeam {
   id: string;
   name: string;
-  /** The team's default language from the Admin (OMB_CLOUD_TEAM_LANGUAGE), used while this server sets none. */
+  /** The team's default language from the Admin (MAUSCLAW_CLOUD_TEAM_LANGUAGE), used while this server sets none. */
   language?: string;
 }
 

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
 
 const STALLED = "error: no activity for 20 minutes — the turn was stopped";
@@ -17,10 +17,10 @@ afterEach(async () => {
 });
 
 it("stops a silent turn but spares one whose tool is still running", async () => {
-  fixture = await launchVerificationServer({ ...process.env, OMB_TEST_STALL_CLOCK: "1", FAKE_CLAUDE_MODE: "hang" },
+  fixture = await launchVerificationServer({ ...process.env, MAUSCLAW_TEST_STALL_CLOCK: "1", FAKE_CLAUDE_MODE: "hang" },
     undefined, undefined, undefined, undefined, undefined, ["cline"]);
   const { url, dataDir } = fixture.info;
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const gate = join(dataDir, "tool.gate");
   const wrapper = join(dataDir, "acp-slow-tool.mjs");
   writeFileSync(wrapper, [

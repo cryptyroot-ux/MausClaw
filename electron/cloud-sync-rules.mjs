@@ -28,7 +28,7 @@ const WINDOWS_CHARACTERS = /[<>:"\\|?*\u0000-\u001f]/;
 export function skipped(name, directory) {
   if (directory) return SKIP_DIRS.has(name);
   return SKIP_FILES.has(name.toLowerCase()) || name.startsWith("~$") || /\.(?:tmp|crdownload|part)$/i.test(name)
-    || /^\.~lock\..*#$/.test(name) || /\.omb-sync-[0-9a-f]+$/.test(name);
+    || /^\.~lock\..*#$/.test(name) || /\.mausclaw-sync-[0-9a-f]+$/.test(name);
 }
 
 /** A path as it travels: well-formed Unicode, relative, "/"-separated, NFC, with no empty, "." or ".." part, and no direction override. */

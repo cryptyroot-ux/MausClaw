@@ -8,17 +8,17 @@ accounts, invitations and provider gateway.
 
 ## Configuration and protocol
 
-An operator configures the workspace with an HTTPS `OMB_ADMIN_URL` origin,
-its `OMB_ADMIN_WORKSPACE` slug, its exact HTTPS `OMB_PUBLIC_URL`, and an
+An operator configures the workspace with an HTTPS `MAUSCLAW_ADMIN_URL` origin,
+its `MAUSCLAW_ADMIN_WORKSPACE` slug, its exact HTTPS `MAUSCLAW_PUBLIC_URL`, and an
 active `admin` entitlement. Partial or invalid hosted configuration denies
 remote access; it never enables legacy email or QR sign-in as a fallback.
 Unproxied loopback without a session is a *service*, not the owner, on a hosted
 workspace (see [shared-workspace trust](shared-workspace-trust.md)): it keeps
 health, the Slack worker's guarded routes and the bots' capability routes, and
 every admin change needs a session. For recovery an operator restarts with
-`OMB_LOOPBACK_TRUST=owner`.
+`MAUSCLAW_LOOPBACK_TRUST=owner`.
 The `identity.example.test` URLs below illustrate external identity-service
-endpoints; requests use the configured `OMB_ADMIN_URL`, not the tenant origin.
+endpoints; requests use the configured `MAUSCLAW_ADMIN_URL`, not the tenant origin.
 
 1. The workspace's `/api/auth/hosted/start` creates bounded, expiring state
    and a secure host-only handoff cookie. It redirects to the identity
@@ -58,7 +58,7 @@ advertises `contractVersion: 1`, `supportedContractVersions: [1]` and
 `legacyPolicy: "legacy-v1"`; supported versions are an explicit list, not an
 assumption that arbitrary older or newer versions work.
 
-An operator may explicitly set `OMB_ADMIN_MEMBERSHIP=portal` when the identity
+An operator may explicitly set `MAUSCLAW_ADMIN_MEMBERSHIP=portal` when the identity
 service is the sole membership authority. This requires the complete valid
 hosted configuration above. Only sessions internally marked after a successful
 portal grant exchange may skip the local allow-list; ordinary email sessions,
@@ -72,8 +72,8 @@ The public `GET /api/health/hosted` capability probe returns `200` only when
 complete hosted configuration, explicit portal membership, the loaded access
 hook, and a currently valid `admin` entitlement are all present; otherwise it
 returns a generic `503`. Its successful response
-includes `{ok:true,service:"openmausbot",membershipAuthority:"portal",workspace:"<slug>"}`
-plus the contract metadata above and the `X-OMB-Hosted-Contract-Version: 1`
+includes `{ok:true,service:"mausclaw",membershipAuthority:"portal",workspace:"<slug>"}`
+plus the contract metadata above and the `X-MausClaw-Hosted-Contract-Version: 1`
 response header, emitted by the running runtime for an authenticated deployment
 probe to relay. A wrapper must not manufacture this version for an older runtime.
 It exposes no credentials or sessions

@@ -1,11 +1,11 @@
-// Real OMB server and renderer; only the paid Boat provider is an owned local
+// Real MausClaw server and renderer; only the paid Boat provider is an owned local
 // HTTP stand-in. No guest commands execute and no real credentials are read.
 import { createServer } from "node:http";
 import { once } from "node:events";
 import { resolve } from "node:path";
 import { Writable } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { launchUi } from "./control-omb-ui.ts";
+import { launchUi } from "./control-mausclaw-ui.ts";
 import { fakeDesktopFrame } from "./fake-desktop-frame.ts";
 import { fixtureApi } from "./preview-fixture.ts";
 

@@ -54,7 +54,7 @@ export function BuiltInBrowserRow() {
   );
 }
 
-/** browserEngine.engine: the bots' browsers run on OpenMausBot's own Chrome driver instead of agent-browser. */
+/** browserEngine.engine: the bots' browsers run on MausClaw's own Chrome driver instead of agent-browser. */
 export function NewBrowserSettings() {
   const { state, dispatch } = useStore();
   const on = state.config?.browserEngine?.engine === "chrome";

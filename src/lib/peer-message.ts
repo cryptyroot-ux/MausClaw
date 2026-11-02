@@ -12,7 +12,7 @@ export interface PeerLine {
 }
 
 const PROVENANCE_NOTE =
-  /^\[(Message from|Delegated by|Thread opened by) @([^,\]]+), another bot in this OpenMausBot workspace[^\]]*\]\s*/;
+  /^\[(Message from|Delegated by|Thread opened by) @([^,\]]+), another bot in this MausClaw workspace[^\]]*\]\s*/;
 
 const DELIVERY: Record<string, PeerDelivery> = {
   "Message from": "ask_bot",

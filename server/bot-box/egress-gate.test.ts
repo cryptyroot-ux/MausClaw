@@ -17,7 +17,7 @@ function connectVia(socketPath: string, target: string): Promise<{ status: strin
       buffer += chunk.toString("latin1");
       if (!buffer.includes("\r\n\r\n")) return;
       socket.destroy();
-      resolve({ status: /^HTTP\/1\.1 (\d{3})/.exec(buffer)?.[1] ?? "malformed", blocked: /X-Omb-Blocked: (\S+)/.exec(buffer)?.[1] ?? null });
+      resolve({ status: /^HTTP\/1\.1 (\d{3})/.exec(buffer)?.[1] ?? "malformed", blocked: /X-Mausclaw-Blocked: (\S+)/.exec(buffer)?.[1] ?? null });
     });
     socket.once("error", reject);
   });
@@ -50,7 +50,7 @@ linuxBox("the box's egress gate", () => {
   afterEach(async () => { for (const fn of cleanup.splice(0).reverse()) await fn(); });
 
   async function gate(options: Partial<Parameters<typeof openBoxEgressGate>[0]> = {}): Promise<BoxEgressGate> {
-    const dir = mkdtempSync(join(tmpdir(), "omb-egress-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-egress-"));
     cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
     const opened = await openBoxEgressGate({ socketPath: join(dir, "e.sock"), ...options });
     cleanup.push(() => opened.close());
@@ -60,12 +60,12 @@ linuxBox("the box's egress gate", () => {
   it("refuses this machine, the local network, link-local, the metadata service and reserved addresses by their resolved addresses", async () => {
     const refused: string[] = [];
     const opened = await gate({ resolve: async (host) => [{ address: host, family: 4 }], onRefusal: (_target, reason) => refused.push(reason) });
-    expect(await connectVia(opened.socketPath, "127.0.0.1:8799")).toEqual({ status: "403", blocked: "omb" });
+    expect(await connectVia(opened.socketPath, "127.0.0.1:8799")).toEqual({ status: "403", blocked: "mausclaw" });
     expect(await connectVia(opened.socketPath, "10.0.0.5:443")).toEqual({ status: "403", blocked: "local-network" });
     expect(await connectVia(opened.socketPath, "192.168.1.1:80")).toEqual({ status: "403", blocked: "local-network" });
     expect(await connectVia(opened.socketPath, "169.254.169.254:80")).toEqual({ status: "403", blocked: "metadata" });
     expect(await connectVia(opened.socketPath, "0.0.0.0:80")).toEqual({ status: "403", blocked: "reserved" });
-    expect(refused).toEqual(["omb", "local-network", "local-network", "metadata", "reserved"]);
+    expect(refused).toEqual(["mausclaw", "local-network", "local-network", "metadata", "reserved"]);
     expect(opened.refused).toBe(5);
   });
 
@@ -133,7 +133,7 @@ linuxBox("the box's egress gate", () => {
 
   it("with the real policy a public address passes the decision and a loopback one does not", async () => {
     expect(await boxRefusal({ host: "example.com", port: 443 }, [PUBLIC])).toBeNull();
-    expect(await boxRefusal({ host: "localhost", port: 8799 }, [{ address: "127.0.0.1", family: 4 }])).toBe("omb");
+    expect(await boxRefusal({ host: "localhost", port: 8799 }, [{ address: "127.0.0.1", family: 4 }])).toBe("mausclaw");
     expect(await boxRefusal({ host: "x", port: 443 }, [{ address: "fd12::1", family: 6 }])).toBe("local-network");
     expect(BOX_EGRESS_RULES.host).toBe("cloud");
     expect(await BOX_EGRESS_RULES.botPort(3000)).toBe(false);

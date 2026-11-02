@@ -21,17 +21,17 @@ export const promptIdleTimeoutMs = (): number => {
 export const formatQuietLimit = (ms: number): string =>
   ms >= 120_000 && ms % 60_000 === 0 ? `${ms / 60_000} min` : `${Math.round(ms / 1000)} s`;
 
-/** Silence before the first "what is it doing" notice (OMB_ACP_QUIET_NOTICE_MS overrides). */
+/** Silence before the first "what is it doing" notice (MAUSCLAW_ACP_QUIET_NOTICE_MS overrides). */
 export const DEFAULT_QUIET_NOTICE_MS = 60_000;
-/** How often a quiet turn or a long tool call is looked at again (OMB_ACP_QUIET_TICK_MS overrides). */
+/** How often a quiet turn or a long tool call is looked at again (MAUSCLAW_ACP_QUIET_TICK_MS overrides). */
 export const DEFAULT_QUIET_TICK_MS = 15_000;
 
 const knob = (name: string, fallback: number): number => {
   const ms = Number(process.env[name]);
   return Number.isFinite(ms) && ms > 0 ? ms : fallback;
 };
-export const quietNoticeMs = (): number => knob("OMB_ACP_QUIET_NOTICE_MS", DEFAULT_QUIET_NOTICE_MS);
-export const quietTickMs = (): number => knob("OMB_ACP_QUIET_TICK_MS", DEFAULT_QUIET_TICK_MS);
+export const quietNoticeMs = (): number => knob("MAUSCLAW_ACP_QUIET_NOTICE_MS", DEFAULT_QUIET_NOTICE_MS);
+export const quietTickMs = (): number => knob("MAUSCLAW_ACP_QUIET_TICK_MS", DEFAULT_QUIET_TICK_MS);
 
 export type LogSignal =
   | { kind: "retry"; status: number | null; delayMs: number | null; attempt: number | null }

@@ -68,7 +68,7 @@ and preservation of personal controls have focused renderer regressions.
 
 Use **Server → Sign in with your organization…** in the installed desktop app, or
 **Use desktop app → Open desktop app** in Admin. The fixed
-`openmausbot://organization` link opens local settings only; it carries no
+`mausclaw://organization` link opens local settings only; it carries no
 credentials and does not approve enrollment. Remote pages do not gain access
 to the organization bridge. Existing hosted server selections are not reset
 on an ordinary update.
@@ -91,15 +91,15 @@ update or invoking an OS protocol handler. Companion restart/keychain behavior
 is controller-tested, not a production migration claim.
 
 2026-09-20: the extended isolated desktop workflow passed. Evidence:
-`/var/folders/91/pdc4mdh53xs59x0r4z7_0qzc0000gn/T/omb-organization-ui-kdmfy4/`.
+`/var/folders/91/pdc4mdh53xs59x0r4z7_0qzc0000gn/T/mausclaw-organization-ui-kdmfy4/`.
 Installed-app update/protocol testing and production rollout remain separate
 follow-ups; no customer workspace was changed.
 
 2026-09-16: the extended isolated Electron workflow passed, including logo
 decoding, avatar selection/retrieval and removal propagation. Evidence:
-`/var/folders/91/pdc4mdh53xs59x0r4z7_0qzc0000gn/T/omb-organization-ui-ndaRQH/`.
+`/var/folders/91/pdc4mdh53xs59x0r4z7_0qzc0000gn/T/mausclaw-organization-ui-ndaRQH/`.
 The separate private Admin/native runtime integration also passed with branding
-enabled (`/tmp/omb-desktop-integration-ql2mMS/receipt.json`). Neither test used
+enabled (`/tmp/mausclaw-desktop-integration-ql2mMS/receipt.json`). Neither test used
 customer accounts or changed the operator's desktop app.
 
 ## 2026-09-23 renewal, licence lapse and organization policy

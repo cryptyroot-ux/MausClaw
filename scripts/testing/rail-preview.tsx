@@ -87,7 +87,7 @@ Object.assign(window, { ogb: {
   onOpenAppSettings: (callback: (section?: string) => void) => { openSettings = callback; return () => {}; },
   applySkin: ok, setUnreadCount: () => {}, permStatus: async () => ({}),
   workspaces: {
-    state: async () => (computer ? { local: true, name: "This computer" } : { local: false, name: "My Cloud", origin: "https://omb-u-1.fly.dev", color: "blue" }),
+    state: async () => (computer ? { local: true, name: "This computer" } : { local: false, name: "My Cloud", origin: "https://mausclaw-u-1.fly.dev", color: "blue" }),
     menu: ok, line: async () => null, open: ok, add: ok,
     places: async () => (hidden ? { ...rail, places: [] } : chrome ? { ...rail, places: [], beside: true as const } : rail),
     onChanged: (heard: () => void) => { placesHeard.add(heard); return () => { placesHeard.delete(heard); }; },

@@ -27,24 +27,24 @@ export function passwdIds(passwd: string, name: string): { uid: number; gid: num
 }
 
 /** An allow-list by name, so a secret the platform adds later never reaches the server. Every setting the image's ENV
- * gives the server belongs here too (docker-image.test.ts checks): without OMB_DUCKDB_DIR the server found neither the
+ * gives the server belongs here too (docker-image.test.ts checks): without MAUSCLAW_DUCKDB_DIR the server found neither the
  * 1Password SDK nor DuckDB, which the image keeps in /app/duckdb, and said 1Password was "not available in this build". */
 const SERVER_ENV_NAMES = new Set([
   "PATH", "SHELL", "HOSTNAME", "LANG", "LANGUAGE", "TZ", "TERM", "TMPDIR", "NO_COLOR", "NODE_ENV", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
-  "AGENT_BROWSER_EXECUTABLE_PATH", "OMB_STATIC_DIR", "OMB_DATA_DIR", "OMB_DUCKDB_DIR",
-  "OMB_CLOUD_ROLE", "OMB_CLOUD_MACHINE_ID", "OMB_CLOUD_ADMIN_URL", "OMB_CLOUD_IMAGE", "OMB_PUBLIC_URL", "OMB_WEBHOOK_PUBLIC_URL",
-  "OMB_CLOUD_TEAM_ID", "OMB_CLOUD_TEAM_NAME", "OMB_CLOUD_BOAT_URL", "OMB_CLOUD_VOICE_URL", "OMB_CLOUD_DECIDER_URL", "OMB_CLOUD_AI_URL", "OMB_CLOUD_X_URL", "OMB_TTS_DEFAULT_VOICE",
-  "OMB_HIGHLEVEL_RELAY_URL", "OMB_COMPOSIO_BROKER_URL",
+  "AGENT_BROWSER_EXECUTABLE_PATH", "MAUSCLAW_STATIC_DIR", "MAUSCLAW_DATA_DIR", "MAUSCLAW_DUCKDB_DIR",
+  "MAUSCLAW_CLOUD_ROLE", "MAUSCLAW_CLOUD_MACHINE_ID", "MAUSCLAW_CLOUD_ADMIN_URL", "MAUSCLAW_CLOUD_IMAGE", "MAUSCLAW_PUBLIC_URL", "MAUSCLAW_WEBHOOK_PUBLIC_URL",
+  "MAUSCLAW_CLOUD_TEAM_ID", "MAUSCLAW_CLOUD_TEAM_NAME", "MAUSCLAW_CLOUD_BOAT_URL", "MAUSCLAW_CLOUD_VOICE_URL", "MAUSCLAW_CLOUD_DECIDER_URL", "MAUSCLAW_CLOUD_AI_URL", "MAUSCLAW_CLOUD_X_URL", "MAUSCLAW_TTS_DEFAULT_VOICE",
+  "MAUSCLAW_HIGHLEVEL_RELAY_URL", "MAUSCLAW_COMPOSIO_BROKER_URL",
   // The bot box switch (server/bot-box/detect.ts): the Admin may turn a home's box off for support.
-  "OMB_BOT_BOX",
+  "MAUSCLAW_BOT_BOX",
   // An ended Cloud started only for its owner's export: the server runs frozen (server/move-freeze.ts).
-  "OMB_CLOUD_EXPORT_ONLY",
+  "MAUSCLAW_CLOUD_EXPORT_ONLY",
 ]);
 export function serverEnvironmentAllowed(name: string): boolean {
   return SERVER_ENV_NAMES.has(name) || name.startsWith("LC_");
 }
 
-/** Caddy duration for OMB_CLOUD_EDGE_HOLD: whole seconds, at most 120; anything else is no hold (0s). */
+/** Caddy duration for MAUSCLAW_CLOUD_EDGE_HOLD: whole seconds, at most 120; anything else is no hold (0s). */
 export function edgeHold(raw: string | undefined): string {
   const match = /^(\d{1,3})s$/.exec(raw?.trim() ?? "");
   return match && Number(match[1]) <= 120 ? `${Number(match[1])}s` : "0s";
@@ -56,15 +56,15 @@ export function edgeHold(raw: string | undefined): string {
  * port, so only the Cloudflare tunnel, running in this home's own network namespace, may name a client, in
  * Cf-Connecting-IP; a header from any other peer is ignored. The address feeds the pairing lockout, never authorization.
  */
-export function edgeClientAddress(env: NodeJS.ProcessEnv): { OMB_CLOUD_EDGE_CLIENT_IP_HEADER: string; OMB_CLOUD_EDGE_TRUSTED_PROXIES: string } {
+export function edgeClientAddress(env: NodeJS.ProcessEnv): { MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: string; MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: string } {
   return env.FLY_APP_NAME?.trim()
-    ? { OMB_CLOUD_EDGE_CLIENT_IP_HEADER: "Fly-Client-IP", OMB_CLOUD_EDGE_TRUSTED_PROXIES: "private_ranges" }
-    : { OMB_CLOUD_EDGE_CLIENT_IP_HEADER: "Cf-Connecting-IP", OMB_CLOUD_EDGE_TRUSTED_PROXIES: "127.0.0.1/32 ::1/128" };
+    ? { MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: "Fly-Client-IP", MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: "private_ranges" }
+    : { MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: "Cf-Connecting-IP", MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: "127.0.0.1/32 ::1/128" };
 }
 
 /** The server's data directory on the volume. */
 export function cloudHomeDataDir(env: NodeJS.ProcessEnv, home: string): string {
-  return env.OMB_DATA_DIR || posix.join(home, ".openmausbot");
+  return env.MAUSCLAW_DATA_DIR || posix.join(home, ".mausclaw");
 }
 
 /** flock(1)'s exit status when another process holds the lock (its --conflict-exit-code). */
@@ -118,19 +118,19 @@ export function cloudHomeChildEnvironments(config: CloudHomeConfig, env: NodeJS.
   const dropped = Object.keys(offered).filter((name) => !serverEnvironmentAllowed(name) && name !== "HOME").sort();
   const dataDir = cloudHomeDataDir(env, home);
   const server: NodeJS.ProcessEnv = {
-    ...allowed, HOME: home, OMB_DATA_DIR: dataDir,
+    ...allowed, HOME: home, MAUSCLAW_DATA_DIR: dataDir,
     // Node keys the entries by its own version and the file's hash, so a stale entry is never used after an image upgrade.
     NODE_COMPILE_CACHE: posix.join(dataDir, "cache", "node-compile"),
-    OMB_PORT: "8799", OMB_WEBHOOK_PORT: "8800", OMB_PUBLIC_URL: config.publicOrigin,
-    OMB_WEBHOOK_PUBLIC_URL: env.OMB_WEBHOOK_PUBLIC_URL || config.publicOrigin,
+    MAUSCLAW_PORT: "8799", MAUSCLAW_WEBHOOK_PORT: "8800", MAUSCLAW_PUBLIC_URL: config.publicOrigin,
+    MAUSCLAW_WEBHOOK_PUBLIC_URL: env.MAUSCLAW_WEBHOOK_PUBLIC_URL || config.publicOrigin,
     [CLOUD_SECRETS_FD_ENV]: String(SECRETS_FD),
   };
   const edge: NodeJS.ProcessEnv = {
-    PATH: env.PATH ?? "/usr/local/bin:/usr/bin:/bin", HOME: "/tmp/omb-edge",
-    XDG_DATA_HOME: "/tmp/omb-edge/data", XDG_CONFIG_HOME: "/tmp/omb-edge/config",
-    OMB_CLOUD_PUBLIC_HOST: cloudHomeHost(config),
+    PATH: env.PATH ?? "/usr/local/bin:/usr/bin:/bin", HOME: "/tmp/mausclaw-edge",
+    XDG_DATA_HOME: "/tmp/mausclaw-edge/data", XDG_CONFIG_HOME: "/tmp/mausclaw-edge/config",
+    MAUSCLAW_CLOUD_PUBLIC_HOST: cloudHomeHost(config),
     // A plan whose home sleeps: requests wait this long for the server while it starts (deploy/fly/Caddyfile). Unset: 0s.
-    OMB_CLOUD_EDGE_HOLD: edgeHold(env.OMB_CLOUD_EDGE_HOLD),
+    MAUSCLAW_CLOUD_EDGE_HOLD: edgeHold(env.MAUSCLAW_CLOUD_EDGE_HOLD),
     ...edgeClientAddress(env),
   };
   return { server, edge, secrets: cloudHomeSecrets(env), dropped };
@@ -138,11 +138,11 @@ export function cloudHomeChildEnvironments(config: CloudHomeConfig, env: NodeJS.
 
 /** What root does to the machine before anything runs as `maus` (docs/bot-box.md, "What each layer stops"): /proc hides
  * other users' processes (`hidepid=invisible`), so no `maus` process lists root's, and Fly's local API socket folder is
- * root's alone. Each step is one command; a failure is logged, never fatal, and OMB_CLOUD_HARDEN=0 skips them all. */
+ * root's alone. Each step is one command; a failure is logged, never fatal, and MAUSCLAW_CLOUD_HARDEN=0 skips them all. */
 export function hardenHost(env: NodeJS.ProcessEnv, run: { exec: (command: string, args: string[]) => { status: number | null; stderr?: string }; chmod: (path: string, mode: number) => void; exists: (path: string) => boolean } = {
   exec: (command, args) => spawnSync(command, args, { stdio: ["ignore", "ignore", "pipe"], encoding: "utf8", timeout: 10_000 }), chmod: chmodSync, exists: existsSync,
 }): string[] {
-  if (env.OMB_CLOUD_HARDEN === "0") return ["hardening skipped (OMB_CLOUD_HARDEN=0)"];
+  if (env.MAUSCLAW_CLOUD_HARDEN === "0") return ["hardening skipped (MAUSCLAW_CLOUD_HARDEN=0)"];
   const notes: string[] = [];
   const remount = run.exec("mount", ["-o", "remount,hidepid=invisible", "/proc"]);
   notes.push(remount.status === 0 ? "/proc: hidepid=invisible" : `/proc: hidepid not applied (${String(remount.stderr ?? "").trim().split("\n")[0] || `exit ${remount.status}`})`);
@@ -212,8 +212,8 @@ export function startCloudHome(env: NodeJS.ProcessEnv = process.env) {
   }
   for (const record of prepared.cleared) console.log(`cloud home: cleared a stale data-directory record machine ${record.host} (process ${record.pid}) left on this volume: ${record.path}`);
   const here = dirname(fileURLToPath(import.meta.url));
-  const edgeBin = env.OMB_CLOUD_EDGE_BIN || "/usr/local/bin/caddy";
-  const edgeConfig = env.OMB_CLOUD_EDGE_CONFIG || "/app/cloud/Caddyfile";
+  const edgeBin = env.MAUSCLAW_CLOUD_EDGE_BIN || "/usr/local/bin/caddy";
+  const edgeConfig = env.MAUSCLAW_CLOUD_EDGE_CONFIG || "/app/cloud/Caddyfile";
   if (ids) {
     const problem = codeTrustProblem([process.execPath, fileURLToPath(import.meta.url), join(here, "index.js"), edgeBin, edgeConfig], home);
     if (problem) throw new Error(`This image's code is not safe to run as root: ${problem}. Rebuild it with docker build --target cloud-home.`);

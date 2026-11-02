@@ -1,12 +1,12 @@
 // A real fake-engine server in a temporary home that can be stopped and started again on the same data and port, so a
-// test can prove what survives a restart. Same environment as control-omb's launch: no user data, no developer CLIs.
+// test can prove what survives a restart. Same environment as control-mausclaw's launch: no user data, no developer CLIs.
 import { spawn, type ChildProcess } from "node:child_process";
 import { closeSync, mkdirSync, mkdtempSync, openSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { verificationServerArgs, verificationServerEnvironment } from "../../scripts/control-omb.ts";
+import { verificationServerArgs, verificationServerEnvironment } from "../../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "./cleanup.ts";
 import { freePortBlock } from "./ports.ts";
 
@@ -30,7 +30,7 @@ export interface RestartableServer {
 export async function launchRestartableServer(options: { scripted?: boolean; dataDirRoot?: string } = {}): Promise<RestartableServer> {
   const port = await freePortBlock([0, 1]);
   // Native browser daemons use UNIX sockets, and a macOS temp home can exceed their path limit.
-  const dataDir = mkdtempSync(join(options.dataDirRoot ?? tmpdir(), "omb-restartable-"));
+  const dataDir = mkdtempSync(join(options.dataDirRoot ?? tmpdir(), "mausclaw-restartable-"));
   mkdirSync(join(dataDir, "tmp"), { recursive: true });
   const planPath = join(dataDir, "room-plan.json");
   if (options.scripted) writeFileSync(planPath, "{}");
@@ -39,7 +39,7 @@ export async function launchRestartableServer(options: { scripted?: boolean; dat
     ...(options.scripted ? { environment: { FAKE_GROK_ROOM_PLAN: planPath } } : {}),
   } } }, null, 2));
   // Kept after close, for a failed run's evidence.
-  const evidenceDir = join(tmpdir(), "openmausbot-verification-evidence");
+  const evidenceDir = join(tmpdir(), "mausclaw-verification-evidence");
   mkdirSync(evidenceDir, { recursive: true });
   const logPath = join(evidenceDir, `restartable-${Date.now()}-${process.pid}.log`);
   const url = `http://127.0.0.1:${port}`;
@@ -55,7 +55,7 @@ export async function launchRestartableServer(options: { scripted?: boolean; dat
       if (child.exitCode !== null) throw new Error(`the server exited before it was ready; see ${logPath}`);
       try {
         const body = await (await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(1_000) })).json() as { app?: string };
-        if (body.app === "openmausbot") return;
+        if (body.app === "mausclaw") return;
       } catch { /* not listening yet */ }
       if (Date.now() > deadline) throw new Error(`the server did not become ready; see ${logPath}`);
       await new Promise((resolve) => setTimeout(resolve, 150));

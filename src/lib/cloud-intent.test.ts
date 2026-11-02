@@ -7,7 +7,7 @@ const record = (extra: Partial<OnboardingStatus> = {}): OnboardingStatus => ({ .
 const facts = (extra: Record<string, unknown> = {}) => ({ viewer: owner, connected: true, enginesKnown: true, onboarding: record(), reopened: false, ...extra });
 
 async function load(stored: string | null = null) {
-  const saved = new Map<string, string>(stored ? [["omb.cloudIntent.pending", stored]] : []);
+  const saved = new Map<string, string>(stored ? [["mausclaw.cloudIntent.pending", stored]] : []);
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => saved.get(key) ?? null,
     setItem: (key: string, value: string) => { saved.set(key, value); },
@@ -50,10 +50,10 @@ describe("the waiting job", () => {
     const snapshot = () => ({ pending: null, reopened: false, dismissed: false, sent: null });
     expect(module.cloudIntentShown(true, snapshot())).toBe(true);
     module.setPendingIntent("  watch my page  ");
-    expect(saved.get("omb.cloudIntent.pending")).toBe("watch my page");
+    expect(saved.get("mausclaw.cloudIntent.pending")).toBe("watch my page");
     expect(module.cloudIntentShown(true, { ...snapshot(), pending: "watch my page" })).toBe(false);
     module.setPendingIntent(null);
-    expect(saved.has("omb.cloudIntent.pending")).toBe(false);
+    expect(saved.has("mausclaw.cloudIntent.pending")).toBe(false);
     const again = await load("watch my page");
     const { createElement } = await import("react");
     const { renderToStaticMarkup } = await import("react-dom/server");
@@ -73,8 +73,8 @@ describe("the job once sent", () => {
   it("is the bot's: it stops waiting in the same step, and the bot is remembered on this device", async () => {
     const { module, saved } = await load("watch my page");
     module.markIntentSent("b2", 1_000_000);
-    expect(saved.has("omb.cloudIntent.pending")).toBe(false);
-    expect(JSON.parse(saved.get("omb.cloudIntent.sent")!)).toEqual({ botId: "b2", at: 1_000_000 });
+    expect(saved.has("mausclaw.cloudIntent.pending")).toBe(false);
+    expect(JSON.parse(saved.get("mausclaw.cloudIntent.sent")!)).toEqual({ botId: "b2", at: 1_000_000 });
   });
 
   it("is set up by that bot's first routine made after it, not by another bot's or an older one", async () => {

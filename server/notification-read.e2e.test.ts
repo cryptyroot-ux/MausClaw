@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { openSse } from "./testing/sse.ts";
 
 it("opening a conversation reads its notifications in the feed and tells every open app, leaving other conversations' alone", async () => {
@@ -17,7 +17,7 @@ it("opening a conversation reads its notifications in the feed and tells every o
   };
   const notifications = async () => (await api("GET", "/api/notifications")).notifications as any[];
   const answered = async (name: string) => {
-    const { bot } = await runControlOmb(["new-bot", "--name", name, "--url", url]) as any;
+    const { bot } = await runControlMausclaw(["new-bot", "--name", name, "--url", url]) as any;
     const threadId = (await api("GET", "/api/bots")).bots.find((candidate: any) => candidate.id === bot.id).threadId as string;
     await api("POST", `/api/bots/${bot.id}/messages`, { threadId, text: "Summarize the queue." }, 202);
     await expect.poll(async () => (await notifications()).some((entry) => entry.threadId === threadId && !entry.read), { timeout: 30_000 }).toBe(true);

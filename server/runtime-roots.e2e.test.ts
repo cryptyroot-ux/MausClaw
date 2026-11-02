@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb, verificationServerArgs, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerArgs, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { createControlClient } from "./control-client.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
@@ -17,16 +17,16 @@ import { ownTurnText } from "./testing/room-handoff-agent.ts";
 import { withAnswer } from "./testing/your-computer.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const RERUN_NOTE = "OpenMausBot restarted while your previous turn here was running";
+const RERUN_NOTE = "MausClaw restarted while your previous turn here was running";
 const RERUN_CHIP = "Resuming after a restart";
-const SECRET_PROVIDED = "OpenMausBot credential update: the user securely provided";
-const CONNECTED = "OpenMausBot connection update: the user securely connected";
+const SECRET_PROVIDED = "MausClaw credential update: the user securely provided";
+const CONNECTED = "MausClaw connection update: the user securely connected";
 const STEP_CAP_CONTINUES = "stopped at the step limit";
 const SEAT_FREE = "the computer this conversation waited for is free again";
-const SIGNED_IN = "OpenMausBot sign-in update: the person finished signing in to";
-const INTERRUPTED_OUTWARD = "Interrupted by an OpenMausBot restart after it already";
+const SIGNED_IN = "MausClaw sign-in update: the person finished signing in to";
+const INTERRUPTED_OUTWARD = "Interrupted by an MausClaw restart after it already";
 const SETTLED = "Your downstream room requests have settled.";
-const REPORT_FROM_MIRA = "[OpenMausBot report from @Mira";
+const REPORT_FROM_MIRA = "[MausClaw report from @Mira";
 
 const jsonl = (path: string): any[] => existsSync(path)
   ? readFileSync(path, "utf8").trim().split("\n").filter(Boolean).map((line) => JSON.parse(line)) : [];
@@ -108,7 +108,7 @@ async function composioStub() {
   await new Promise<void>((resolve) => stub.listen(0, "127.0.0.1", resolve));
   const origin = `http://127.0.0.1:${(stub.address() as AddressInfo).port}`;
   return {
-    env: { OMB_COMPOSIO_API: `${origin}/api/v3.1`, OMB_COMPOSIO_TOOLKITS_API: `${origin}/api/v3` },
+    env: { MAUSCLAW_COMPOSIO_API: `${origin}/api/v3.1`, MAUSCLAW_COMPOSIO_TOOLKITS_API: `${origin}/api/v3` },
     connect: (slug: string) => connected.add(slug),
     close: async () => { stub.closeAllConnections(); await new Promise<void>((resolve) => stub.close(() => resolve())); },
   };
@@ -143,7 +143,7 @@ async function scenario(test: (f: any) => Promise<void>, options: { env?: Record
       try { parsed = JSON.parse(raw); } catch {}
       return { status: response.status, body: parsed };
     };
-    const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+    const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
     const bot = async (name: string, section: string) => (await cli("new-bot", "--name", name, "--section", section)).bot;
     const clive = await bot("Clive", "Leadership");
     const planPath = join(dataDir, "room-plan.json");
@@ -184,7 +184,7 @@ async function scenario(test: (f: any) => Promise<void>, options: { env?: Record
     const settle = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const token = (server: "agents" | "composio" = "agents") => {
       const env = JSON.parse(readFileSync(session.fixtureDumpPath, "utf8")).mcpConfig.mcpServers[server].env;
-      return (server === "agents" ? env.OMB_COMMS_TOKEN : env.OMB_CONNECTOR_TOKEN) as string;
+      return (server === "agents" ? env.MAUSCLAW_COMMS_TOKEN : env.MAUSCLAW_CONNECTOR_TOKEN) as string;
     };
     const internal = async (path: string, body: unknown, bearer: string) => {
       const response = await fetch(`${url}${path}`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
@@ -351,7 +351,7 @@ it("T5 reruns a person's cut turn once after a restart, with the restart note fi
   expect(f.roots()[0]).toMatchObject({ id: cut.id, status: "completed", outcome: "done", restarts: 1, executions: 2, result: "T5-FINAL: migrated once." });
   expect(f.eventsOf(cut.id)).toContain("restart_reconciled");
   expect(await f.chips(job, RERUN_CHIP)).toHaveLength(1);
-  expect(await f.chips(job, "turn interrupted — OpenMausBot restarted")).toHaveLength(0);
+  expect(await f.chips(job, "turn interrupted — MausClaw restarted")).toHaveLength(0);
   await f.settle(500);
   expect(f.turns(f.clive.id).filter((record: any) => record.planKey === "C-RERUN")).toHaveLength(1);
 }), hostTimeout(90_000));
@@ -390,7 +390,7 @@ it("T6 continues a person's step-capped turn in place on the same root", async (
 const itHost = process.platform === "linux" ? it.skip : it;
 itHost("T7 queues a root on the computer seat at the wait ceiling and continues it when the seat frees", async () => {
   const CEILING_MS = 1_500;
-  const home = mkdtempSync(join(tmpdir(), "omb-runtime-roots-seat-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-runtime-roots-seat-"));
   const data = join(home, "data");
   const ui = join(home, "static");
   const stateFile = join(home, "vm.json");
@@ -420,9 +420,9 @@ itHost("T7 queues a root on the computer seat at the wait ceiling and continues 
   };
   const dumpFor = (botId: string): Promise<any> => until((): any => {
     if (!existsSync(dumpFile)) return null;
-    try { const sent = JSON.parse(readFileSync(dumpFile, "utf8")); return sent.mcpConfig?.mcpServers?.computer?.env?.OMB_CONTROL_URL?.includes(botId) ? sent : null; } catch { return null; }
+    try { const sent = JSON.parse(readFileSync(dumpFile, "utf8")); return sent.mcpConfig?.mcpServers?.computer?.env?.MAUSCLAW_CONTROL_URL?.includes(botId) ? sent : null; } catch { return null; }
   }, Boolean);
-  const gate = (sent: any) => createControlClient({ url: sent.mcpConfig.mcpServers.computer.env.OMB_CONTROL_URL, token: sent.mcpConfig.mcpServers.computer.env.OMB_CONTROL_TOKEN }).state(true);
+  const gate = (sent: any) => createControlClient({ url: sent.mcpConfig.mcpServers.computer.env.MAUSCLAW_CONTROL_URL, token: sent.mcpConfig.mcpServers.computer.env.MAUSCLAW_CONTROL_TOKEN }).state(true);
   const taskOf = (botId: string, threadId: string) => api("GET", "/api/bots?messages=0").then(({ body }) =>
     body.bots.find((bot: any) => bot.id === botId)?.tasks.find((task: any) => task.threadId === threadId));
   const roots = () => readRuntimeDb(data).assignments.filter((row) => !row.parentId);
@@ -445,10 +445,10 @@ itHost("T7 queues a root on the computer seat at the wait ceiling and continues 
       "--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
-        TEMP: home, TMP: home, TMPDIR: home, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui, OMB_TEST_VM_STATE: stateFile,
-        OMB_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"), OMB_COMPUTER_CALL_WAIT_MS: "4000", OMB_COMPUTER_CALL_ACT_WITHIN_MS: "1000",
-        OMB_COMPUTER_WAIT_MAX_MS: String(CEILING_MS),
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data, APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
+        TEMP: home, TMP: home, TMPDIR: home, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: ui, MAUSCLAW_TEST_VM_STATE: stateFile,
+        MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"), MAUSCLAW_COMPUTER_CALL_WAIT_MS: "4000", MAUSCLAW_COMPUTER_CALL_ACT_WITHIN_MS: "1000",
+        MAUSCLAW_COMPUTER_WAIT_MAX_MS: String(CEILING_MS),
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;
@@ -691,7 +691,7 @@ it("T10 parks a teammate's turn on its credential card, tells the Chief at once,
 }), hostTimeout(90_000));
 
 it("T11 does not rerun a cut turn that already pushed: the root ends with what it did, said once", async () => {
-  const home = mkdtempSync(join(tmpdir(), "omb-runtime-roots-outward-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-runtime-roots-outward-"));
   try {
     await scenario(async (f) => {
       const job = f.clive.activeTaskId;
@@ -711,7 +711,7 @@ it("T11 does not rerun a cut turn that already pushed: the root ends with what i
       expect(line.tool.name.startsWith("error: ")).toBe(true);
       expect(line.tool.name).toContain("git push");
       expect(await f.chips(job, RERUN_CHIP)).toHaveLength(0);
-      expect(await f.chips(job, "turn interrupted — OpenMausBot restarted")).toHaveLength(0);
+      expect(await f.chips(job, "turn interrupted — MausClaw restarted")).toHaveLength(0);
       await f.settle(1_500);
       expect(f.roots()).toHaveLength(1);
       expect(f.roots()[0]).toMatchObject({ status: "failed", executions: 1 });
@@ -728,7 +728,7 @@ it("T11 does not rerun a cut turn that already pushed: the root ends with what i
   }
 }, hostTimeout(90_000));
 
-const STALL_CLOCK = { OMB_TEST_STALL_CLOCK: "1" };
+const STALL_CLOCK = { MAUSCLAW_TEST_STALL_CLOCK: "1" };
 
 type CardState = { status?: string; stopped?: boolean; resumed?: boolean };
 type StallFixture = {

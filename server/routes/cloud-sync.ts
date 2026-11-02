@@ -63,7 +63,7 @@ export function createCloudSyncRoutes(options: {
       if (method === "POST" && (m = match(`/api/sync/folders/${FOLDER}/staged/${UPLOAD}`))) { lent.stagedDone(m[1]!, m[2]!, await readBody(req, 10_000)); json(res, 200, { ok: true }); return; }
       if (method === "GET" && (m = match(`/api/sync/folders/${FOLDER}/staged/${UPLOAD}`))) {
         const file = lent.stagedFile(m[1]!, m[2]!);
-        res.writeHead(200, { "content-type": "application/octet-stream", "content-length": String(file.size), "x-omb-sha256": file.sha256,
+        res.writeHead(200, { "content-type": "application/octet-stream", "content-length": String(file.size), "x-mausclaw-sha256": file.sha256,
           "x-content-type-options": "nosniff", "content-disposition": "attachment", "content-security-policy": "sandbox" });
         createReadStream(file.file).on("error", () => res.destroy()).pipe(res);
         return;
@@ -106,7 +106,7 @@ export function createCloudSyncRoutes(options: {
         const range = /^bytes=(\d+)-$/.exec(String(req.headers.range ?? ""));
         const start = range ? Math.min(Number(range[1]), file.size) : 0;
         res.writeHead(range ? 206 : 200, {
-          "content-type": "application/octet-stream", "content-length": String(file.size - start), "x-omb-sha256": file.sha256,
+          "content-type": "application/octet-stream", "content-length": String(file.size - start), "x-mausclaw-sha256": file.sha256,
           "x-content-type-options": "nosniff", "content-disposition": "attachment", "content-security-policy": "sandbox",
           ...(range ? { "content-range": `bytes ${start}-${Math.max(file.size - 1, start)}/${file.size}` } : {}),
         });

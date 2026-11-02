@@ -4,10 +4,10 @@ Approval levels belong to a bot and apply to its next provider turn, including
 when that provider resumes an existing native thread. You can also change one
 while the bot is working (see below). Each level is one of the
 provider's own permission modes, passed through. A native tool request that
-reaches you is one the provider left for you. OpenMausBot only answers from an
+reaches you is one the provider left for you. MausClaw only answers from an
 explicit grant: Full Access, a saved exact command or MCP read-shaped tool, or
 the narrow built-in web-search allowance under Approve for me. In Full Access,
-OMB also applies its own configuration tools without another approval.
+MausClaw also applies its own configuration tools without another approval.
 
 Every bot and conversation starts at **Full access**, the default T3 Code uses
 too: each engine runs in its own most permissive mode, and a real question or
@@ -23,8 +23,8 @@ from the operator's dedicated policy.
 | **Ask for approval** | Requests approval for commands and file changes, the way the provider's supervised mode does. |
 | **Auto-accept edits** | Approves file edits automatically; other actions can still require approval. Offered where the provider has such a mode (Claude, Grok, Antigravity). |
 | **Approve for me** | Uses the provider's automatic review on Codex, Claude, Cursor, and Grok to approve routine actions and ask about others. Providers without an equivalent fall back to asking. |
-| **Full access** | Enables the provider's permissive mode for commands, edits, and selected-computer actions, including potentially destructive or sensitive work. Residual native permission prompts are answered for you. OMB profile changes, routine actions, team setup, bot deletion, and enabled skill authoring apply without a second approval. Peer-review prompts are skipped within the bot's authorized scope. Sends through connected apps (email, messages, posts, payments) go out without the "Send on your behalf?" card or a daily allowance; apps outside the bot's connected-app scope are still refused. Work handed on with `coordinate_bots` uses the receiving bot's setting, never the sender's — except from a Chief of Staff, whose level flows down (below). Actual questions and missing credentials still need your input. |
-| **Custom (`config.toml`)** | Codex only. OpenMausBot reads and reapplies the effective approval and sandbox settings from your Codex configuration. |
+| **Full access** | Enables the provider's permissive mode for commands, edits, and selected-computer actions, including potentially destructive or sensitive work. Residual native permission prompts are answered for you. MausClaw profile changes, routine actions, team setup, bot deletion, and enabled skill authoring apply without a second approval. Peer-review prompts are skipped within the bot's authorized scope. Sends through connected apps (email, messages, posts, payments) go out without the "Send on your behalf?" card or a daily allowance; apps outside the bot's connected-app scope are still refused. Work handed on with `coordinate_bots` uses the receiving bot's setting, never the sender's — except from a Chief of Staff, whose level flows down (below). Actual questions and missing credentials still need your input. |
+| **Custom (`config.toml`)** | Codex only. MausClaw reads and reapplies the effective approval and sandbox settings from your Codex configuration. |
 
 Full access applies the moment you pick it: no confirmation dialog, no second
 step. It can be turned on from any client that can reach the app's API: the
@@ -45,11 +45,11 @@ is hidden in development, standalone web, and remote pages.
 ### Changing the level while the bot works
 
 You don't have to stop a bot to change its level. From the moment you pick
-one, every approval decision OMB makes in that conversation uses it. How far
+one, every approval decision MausClaw makes in that conversation uses it. How far
 that reaches depends on who runs the tools:
 
 - **API engines** (OpenAI-compatible, Grok API, MiniMax, Mistral, Cerebras,
-  Groq, Meta): OMB's tool gate reads the level before each tool call, so the
+  Groq, Meta): MausClaw's tool gate reads the level before each tool call, so the
   change applies from the next call, up or down.
 - **Engines with their own modes** (Codex, Claude, Cursor, Antigravity, Grok
   Build, Qwen Code, Gemini CLI, Droid, Pi's custom MCP tools): the engine got
@@ -58,8 +58,8 @@ that reaches depends on who runs the tools:
   to Full access applies to the next request. Lowering from Full access, and
   moving between Ask, Auto-accept edits and Approve for me, applies from the
   next turn.
-- **Agents whose requests OMB answers** (OpenCode, Cline, Kimi, Hermes, custom
-  ACP agents, Pi's computer-control confirms): every request reaches OMB, so
+- **Agents whose requests MausClaw answers** (OpenCode, Cline, Kimi, Hermes, custom
+  ACP agents, Pi's computer-control confirms): every request reaches MausClaw, so
   the change applies from the next request, up or down.
 
 A request already on screen stays for you to answer, and an action already
@@ -96,7 +96,7 @@ set a level on follows the default, and so does each of its threads without a
 level of its own. Bots and threads that saved Ask before Full access became
 the default keep it: choose Full access in the bot's settings, or **Set for
 all bots in this team…**, to move a bot and every one of its threads at once.
-OpenMausBot adds no review card of its own at any level: a bot's profile,
+MausClaw adds no review card of its own at any level: a bot's profile,
 working folder, model, skill, team setup and team memory changes apply at
 once and leave a one-line receipt with Undo, so the bot continues in the same
 turn. Routine requests keep their own rule until Triggers v2 replaces them,
@@ -164,7 +164,7 @@ conversations, including newly delegated work. Saved entries are visible and
 revocable in the bot's Access settings.
 
 The harness's own agents tools (coordinating teammates, threads, memory) never
-ask on Claude, Codex or API models: OpenMausBot authorizes each of those
+ask on Claude, Codex or API models: MausClaw authorizes each of those
 routes itself.
 
 Auto-accept edits and Ask card whatever the provider asks about. Approve for
@@ -258,17 +258,17 @@ multi-question card renders its structured form on current apps instead.
 | Droid | Session mode `normal` (reads only) | not offered | Ask (no reviewer) | Session mode `auto-high`, plus automatic approval of remaining ACP permission requests |
 | Kimi, Hermes, custom ACP agents | The agent's own default | not offered | Ask (no reviewer) | Approve individual ACP permission requests, never task questions |
 | Pi | Pi's own tools run; computer control and custom MCP tools ask | not offered | Ask (no reviewer) | Custom MCP tools run without asking; computer-control confirms are approved |
-| API engines (OpenAI-compatible, Grok API, MiniMax, Mistral, Cerebras, Groq, Meta) | OMB's tool gate asks | not offered | Ask (no reviewer) | OMB's tool gate approves each call |
+| API engines (OpenAI-compatible, Grok API, MiniMax, Mistral, Cerebras, Groq, Meta) | MausClaw's tool gate asks | not offered | Ask (no reviewer) | MausClaw's tool gate approves each call |
 
 These settings apply on each turn, including resumed conversations. Switching
 to a different provider while on Custom requires leaving Custom first;
 choose Ask. Switching models within Antigravity keeps the selected level.
-Native modes require a CLI version that supports them; OpenMausBot does not
+Native modes require a CLI version that supports them; MausClaw does not
 silently substitute unrestricted access when a mode is rejected.
 
 ### Read-only integration tools
 
-OpenMausBot's built-in agents MCP server describes its scoped reads with
+MausClaw's built-in agents MCP server describes its scoped reads with
 explicit read-only, non-destructive, idempotent, closed-world metadata:
 `list_bots`, `list_rooms`, `list_threads`, `assignment_status`,
 `session_search`, `session_read`, `list_triggers`, and `skills_list`.
@@ -284,7 +284,7 @@ The level set follows the provider-boundary approach in
 [T3 Code's permission modes](https://github.com/pingdotgg/t3code/blob/e16b8b059c9f5ff6dfed1addecffb831c6aee043/docs/user/permission-modes.md):
 Supervised, Auto-accept edits, Auto, and Full access, each a provider mode
 rather than an app rule, with a remembered approval that belongs to the
-provider's session. Its default is Full access, and so is OpenMausBot's
+provider's session. Its default is Full access, and so is MausClaw's
 (`DEFAULT_APPROVAL_MODE` in `shared/approval-mode.ts`).
 
 ## Verification for contributors

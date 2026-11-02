@@ -42,7 +42,7 @@ function importComputerProvidersInChild(dataDir: string): Promise<void> {
       process.execPath,
       ["--experimental-strip-types", "--input-type=module", "--eval", source],
       {
-        env: { ...process.env, OMB_DATA_DIR: dataDir },
+        env: { ...process.env, MAUSCLAW_DATA_DIR: dataDir },
         stdio: ["ignore", "ignore", "pipe"],
       },
     );
@@ -60,13 +60,13 @@ function importComputerProvidersInChild(dataDir: string): Promise<void> {
 
 afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
-  delete process.env.OMB_APP_VERSION;
-  delete process.env.OMB_ENVIRONMENT_LABEL;
+  delete process.env.MAUSCLAW_APP_VERSION;
+  delete process.env.MAUSCLAW_ENVIRONMENT_LABEL;
 });
 
 describe("environment identity", () => {
   it("creates the id once, owner-only, and keeps it across restarts", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-env-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-env-"));
     dirs.push(dir);
     const id = loadEnvironmentId(dir);
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
@@ -75,7 +75,7 @@ describe("environment identity", () => {
   });
 
   it("publishes one complete id when independent processes start together", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-env-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-env-"));
     dirs.push(dir);
 
     const ids = await Promise.all(Array.from({ length: 12 }, () => loadEnvironmentIdInChild(dir)));
@@ -86,7 +86,7 @@ describe("environment identity", () => {
   });
 
   it("fails closed instead of rotating a malformed existing identity", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-env-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-env-"));
     dirs.push(dir);
     const file = join(dir, "environment-id");
     writeFileSync(join(dir, "environment-id"), "garbage\n");
@@ -95,19 +95,19 @@ describe("environment identity", () => {
   });
 
   it("rejects UUID-shaped garbage and an unreadable identity path", () => {
-    const malformedDir = mkdtempSync(join(tmpdir(), "omb-env-"));
+    const malformedDir = mkdtempSync(join(tmpdir(), "mausclaw-env-"));
     dirs.push(malformedDir);
     writeFileSync(join(malformedDir, "environment-id"), "------------------------------------\n");
     expect(() => loadEnvironmentId(malformedDir)).toThrow(/not a valid UUID/);
 
-    const unreadableDir = mkdtempSync(join(tmpdir(), "omb-env-"));
+    const unreadableDir = mkdtempSync(join(tmpdir(), "mausclaw-env-"));
     dirs.push(unreadableDir);
     mkdirSync(join(unreadableDir, "environment-id"));
     expect(() => loadEnvironmentId(unreadableDir)).toThrow(/Cannot read the existing environment identity/);
   });
 
   it("does not create the data directory merely by importing computer providers", async () => {
-    const parent = mkdtempSync(join(tmpdir(), "omb-provider-import-"));
+    const parent = mkdtempSync(join(tmpdir(), "mausclaw-provider-import-"));
     dirs.push(parent);
     const dataDir = join(parent, "not-created-yet");
     await importComputerProvidersInChild(dataDir);
@@ -115,8 +115,8 @@ describe("environment identity", () => {
   });
 
   it("describes the server for clients without leaking anything secret", () => {
-    process.env.OMB_APP_VERSION = "0.1.99";
-    process.env.OMB_ENVIRONMENT_LABEL = "cab mini";
+    process.env.MAUSCLAW_APP_VERSION = "0.1.99";
+    process.env.MAUSCLAW_ENVIRONMENT_LABEL = "cab mini";
     const d = environmentDescriptor({ environmentId: "abc", desktopManaged: true });
     expect(d).toEqual({
       environmentId: "abc",
@@ -149,13 +149,13 @@ describe("environment identity", () => {
   });
 
   it("falls back to the checkout's package.json version, then to unknown", () => {
-    delete process.env.OMB_APP_VERSION;
+    delete process.env.MAUSCLAW_APP_VERSION;
     expect(serverVersion()).toMatch(/^\d+\.\d+\.\d+/);
   });
 
   it("reads the version the bundle carries when no package.json sits beside it, as in the Cloud home image", () => {
-    delete process.env.OMB_APP_VERSION;
-    const image = mkdtempSync(join(tmpdir(), "omb-image-"));
+    delete process.env.MAUSCLAW_APP_VERSION;
+    const image = mkdtempSync(join(tmpdir(), "mausclaw-image-"));
     dirs.push(image);
     const bundle = join(image, "dist-server");
     mkdirSync(bundle);
@@ -164,8 +164,8 @@ describe("environment identity", () => {
     expect(serverVersion(bundle)).toBe("unknown");
     writeFileSync(join(bundle, "package.json"), '{"type":"module","version":"0.1.117"}\n');
     expect(serverVersion(bundle)).toBe("0.1.117");
-    process.env.OMB_APP_VERSION = "0.1.120";
+    process.env.MAUSCLAW_APP_VERSION = "0.1.120";
     expect(serverVersion(bundle)).toBe("0.1.120");
-    delete process.env.OMB_APP_VERSION;
+    delete process.env.MAUSCLAW_APP_VERSION;
   });
 });

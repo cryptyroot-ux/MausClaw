@@ -210,13 +210,13 @@ export function createResearchClient(credential: ServiceCredential, options: { f
       }
       if (!answer) throw new XResearchError("unavailable", own ? "Couldn't reach treg. Try again in a minute." : RESEARCH_MESSAGES.unavailable);
       const { body, headers } = answer;
-      const costUsd = own ? costOf(headers.get("x-treg-cost-micro"), 1_000_000) : costOf(headers.get("x-omb-research-charged-usd"), 1);
-      const failed = headers.get(own ? "x-treg-upstream-failed" : "x-omb-research-upstream-failed")?.slice(0, 200);
+      const costUsd = own ? costOf(headers.get("x-treg-cost-micro"), 1_000_000) : costOf(headers.get("x-mausclaw-research-charged-usd"), 1);
+      const failed = headers.get(own ? "x-treg-upstream-failed" : "x-mausclaw-research-upstream-failed")?.slice(0, 200);
       const callId = headers.get("x-treg-call-id")?.trim();
       return {
         result: body,
         ...(costUsd === undefined ? {} : { costUsd }),
-        ...(!own && headers.get("x-omb-research-pending") === "true" ? { costPending: true as const } : {}),
+        ...(!own && headers.get("x-mausclaw-research-pending") === "true" ? { costPending: true as const } : {}),
         ...(callId ? { callId } : {}),
         ...(failed ? { upstreamFailed: failed } : {}),
       };

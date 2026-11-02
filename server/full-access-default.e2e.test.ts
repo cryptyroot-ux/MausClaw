@@ -4,7 +4,7 @@ import { closeSync, existsSync, openSync, readFileSync, writeFileSync } from "no
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 it("starts new bots and threads at Full access on each engine family, and keeps a person's Ask", async () => {
@@ -33,7 +33,7 @@ it("starts new bots and threads at Full access on each engine family, and keeps 
       try { return (await fetch(url + "/api/health", { signal: AbortSignal.timeout(1_000) })).ok; } catch { return false; }
     }, { timeout: 20_000 }).toBe(true);
   };
-  const control = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const control = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const send = (botId: string, threadId: string) => control("send", "--bot", botId, "--task", threadId, "--text", "Check the fixture report.");
   const wait = (botId: string, threadId: string) => control("wait", "--bot", botId, "--task", threadId, "--timeout", "30");
   const stored = (botId: string) => JSON.parse(readFileSync(join(dataDir, "bots.json"), "utf8")).find((bot: any) => bot.id === botId);

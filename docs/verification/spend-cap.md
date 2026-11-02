@@ -33,7 +33,7 @@ pnpm exec vitest run --no-file-parallelism server/spend-cap-api.test.ts
 ```
 
 The test writes a stand-in enterprise layer (the folder shape core loads,
-granting `budgets` and `billing`) and launches the `control-omb` fixture with
+granting `budgets` and `billing`) and launches the `control-mausclaw` fixture with
 it through `launchVerificationServer(..., { dir, licenseKey })`. It sets a
 $0.015 cap and a default price list, sends two turns that the fake engine
 books at $0.01 each, and checks the third is refused with 409 `spend_cap`,
@@ -46,9 +46,9 @@ It prints the fixture's server log path and removes its temporary homes.
 The memory regression also proves that one helper reaching the cap blocks
 the next step in that same upkeep pass, and that raising the cap resumes it.
 
-For the same by hand, launch a fixture with `OMB_ENTERPRISE_DIR` pointing at a
+For the same by hand, launch a fixture with `MAUSCLAW_ENTERPRISE_DIR` pointing at a
 folder whose `server/index.js` exports such a `register()`, and
-`OMB_LICENSE_KEY` set to any value, then use the normal chat-turn commands.
+`MAUSCLAW_LICENSE_KEY` set to any value, then use the normal chat-turn commands.
 
 ## Unit regressions
 

@@ -4,10 +4,10 @@ import { augmentedPath } from "./env-path.ts";
 import { localComputerCallQuery, localComputerResultLine } from "./local-computer-guidance.ts";
 
 const {
-  OMB_CUA_COMMAND: command,
-  OMB_CUA_ARGS: encodedArgs,
-  OMB_CONTROL_URL: url,
-  OMB_CONTROL_TOKEN: token,
+  MAUSCLAW_CUA_COMMAND: command,
+  MAUSCLAW_CUA_ARGS: encodedArgs,
+  MAUSCLAW_CONTROL_URL: url,
+  MAUSCLAW_CONTROL_TOKEN: token,
   ...childEnv
 } = process.env;
 

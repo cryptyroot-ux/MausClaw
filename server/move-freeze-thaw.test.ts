@@ -18,7 +18,7 @@ const HOUR = 3_600_000;
  * that runs at every start, one due now, a scheduled call due now, a webhook and an app event, all on.
  */
 function frozenCopy({ exportOnly = false } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-thaw-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-thaw-"));
   dirs.push(dir);
   let clock = Date.UTC(2026, 9, 20, 8, 0);
   const now = () => clock;
@@ -35,7 +35,7 @@ function frozenCopy({ exportOnly = false } = {}) {
   const webhook = webhooks.create({ name: "Orders", prompt: "File it.", botId: "b1" }).webhook;
   const appEvents = { switched: [] as Array<[string, unknown]>, list: () => [{ id: "e1", enabled: true }], update: async (id: string, patch: unknown) => { appEvents.switched.push([id, patch]); return null; } };
   const freeze = createMoveFreeze({ dataDir: dir, exportOnly });
-  freeze.freeze("https://omb-t-1.fly.dev");
+  freeze.freeze("https://mausclaw-t-1.fly.dev");
   freeze.hold(() => routines.start(), () => routines.stop());
   freeze.hold(() => calls.start(), () => calls.stop());
   // Frozen past both times: the morning routine and the call are due the moment the schedulers start.

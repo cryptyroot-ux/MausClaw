@@ -9,7 +9,7 @@
 
 ## 0. Intent
 
-OMB already has a native Agent Engine (Layer 1) that owns a single turn: admission, model rounds, tool orchestration, compaction, retry/recovery, and budget. Layer 3 adds **multi-step orchestration**: plan multiple steps, execute each via the existing engine, carry context/results between steps, and support approval gates at plan and step level.
+MausClaw already has a native Agent Engine (Layer 1) that owns a single turn: admission, model rounds, tool orchestration, compaction, retry/recovery, and budget. Layer 3 adds **multi-step orchestration**: plan multiple steps, execute each via the existing engine, carry context/results between steps, and support approval gates at plan and step level.
 
 This is **not** replacing the engine. The engine stays a single-turn executor. A new `Orchestrator` layer sits on top, coordinating many engine runs into one plan.
 
@@ -381,7 +381,7 @@ No existing types renamed or removed. All new types are additive.
 
 - OpenAI Swarm (orchestrator above agent): https://github.com/openai/swarm
 - oh-my-claudecode (multi-agent layer above Claude Code): https://github.com/Yeachan-Heo/oh-my-claudecode
-- OMB-CLAW-PROJECT-STATUS.md: Layer 3 design phase, discussion required → resolved by this document (Option A).
+- MausClaw-CLAW-PROJECT-STATUS.md: Layer 3 design phase, discussion required → resolved by this document (Option A).
 - Existing contracts: `server/agent-runtime/contracts.ts`
 - Existing engine: `server/agent-runtime/runtime.ts` (`createAgentEngine`)
 - Existing run store: `server/agent-runtime/run-store.ts` (`createSqliteAgentRunStore`)

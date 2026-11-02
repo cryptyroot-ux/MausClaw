@@ -1,28 +1,28 @@
-# OMB-Claw Native Engine Perfection Plan
+# MausClaw Native Engine Perfection Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Port 8 native engine improvements from OpenMausBot-Pivot to OMB-Claw, making OMB-Claw's native engine superior while maintaining 100% native (no external engines).
+**Goal:** Port 8 native engine improvements from MausClaw-Pivot to MausClaw, making MausClaw's native engine superior while maintaining 100% native (no external engines).
 
-**Architecture:** OMB-Claw's native engine (`createNativeChatEngine`) currently uses a single adapter, hardcoded `enabled: true`, heuristic verifier only, and no task-based routing. Pivot's native engine has per-model adapter resolution with fallback cache, task-based model routing (6 task types), BudgetGuard per-run, LLM verifier with SuccessCriteria, feature flag gate, and more. We port these improvements one by one.
+**Architecture:** MausClaw's native engine (`createNativeChatEngine`) currently uses a single adapter, hardcoded `enabled: true`, heuristic verifier only, and no task-based routing. Pivot's native engine has per-model adapter resolution with fallback cache, task-based model routing (6 task types), BudgetGuard per-run, LLM verifier with SuccessCriteria, feature flag gate, and more. We port these improvements one by one.
 
 **Tech Stack:** TypeScript, Node.js 24, pnpm, Vitest
 
-**Spec:** Based on byte-by-byte diff of `/tmp/OpenMausBot-Pivot/server/drivers/native-engine.ts` vs `/root/OMB-Claw/server/drivers/native-engine.ts`
+**Spec:** Based on byte-by-byte diff of `/tmp/MausClaw-Pivot/server/drivers/native-engine.ts` vs `/root/MausClaw/server/drivers/native-engine.ts`
 
 ## Global Constraints
 
 - Version: 0.2.0, Node >=24, pnpm 10.33.0
 - All changes must pass `pnpm typecheck` and `pnpm lint`
 - All changes must not break existing tests
-- Follow existing code patterns in OMB-Claw
+- Follow existing code patterns in MausClaw
 - Only ADD new fields/types (contract freeze)
 - Do NOT re-introduce external engine drivers
 
 ## Review Focus
 
 1. **Adapter resolution must not break existing single-model flows** — the new `getAdapterForModel` must return the same adapter for the default model
-2. **Feature flag must default to enabled** — OMB-Claw should keep intelligence on by default (unlike Pivot which defaults off)
+2. **Feature flag must default to enabled** — MausClaw should keep intelligence on by default (unlike Pivot which defaults off)
 3. **LLM verifier must fall back to heuristic** — if model caller fails, must not crash
 4. **BudgetGuard must not block on errors** — guard errors should be non-fatal
 5. **Orchestrator verify signature change** — must not break callers that pass only output
@@ -296,5 +296,5 @@ Expected: All pass
 
 ```bash
 git add -A
-git commit -m "feat: port 8 native engine improvements from Pivot to OMB-Claw"
+git commit -m "feat: port 8 native engine improvements from Pivot to MausClaw"
 ```

@@ -39,7 +39,7 @@ describe("app fixtures", () => {
   });
 
   it("are written where the phone apps read them, with the host page copied byte for byte", () => {
-    const root = mkdtempSync(join(tmpdir(), "omb-mobile-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-mobile-"));
     const files = writeAppFixtures(root);
     // Relative to the checkout, with "/" on Windows too (writeAppFixtures joins with the platform's separator).
     expect(files.map((file) => relative(root, file).split(sep).join("/"))).toEqual([

@@ -7,8 +7,8 @@ import { t } from "@/lib/i18n";
 import { showRun, type RunStep } from "@/lib/verify-steps";
 
 const steps: RunStep[] = [
-  { id: "s1", label: "doctor", command: "pnpm control:omb doctor --url http://127.0.0.1:8799", status: "passed", dryRun: false, verified: true },
-  { id: "s2", label: "send", command: "node --experimental-strip-types scripts/control-omb.ts send --bot x --text y", status: "failed", dryRun: false, verified: true },
+  { id: "s1", label: "doctor", command: "pnpm control:mausclaw doctor --url http://127.0.0.1:8799", status: "passed", dryRun: false, verified: true },
+  { id: "s2", label: "send", command: "node --experimental-strip-types scripts/control-mausclaw.ts send --bot x --text y", status: "failed", dryRun: false, verified: true },
   { id: "s3", label: "git push", command: "git push origin main", status: "running", dryRun: false, verified: false },
 ];
 const TAG = `>${t("chat.verify.verifiedTag")}<`;
@@ -30,7 +30,7 @@ describe("VerifyCard", () => {
     expect(markup).toContain(">doctor<");
     expect(markup).toContain(">send<");
     expect(markup).toContain(">git push<");
-    expect(markup).toContain('title="pnpm control:omb doctor --url http://127.0.0.1:8799"');
+    expect(markup).toContain('title="pnpm control:mausclaw doctor --url http://127.0.0.1:8799"');
     expect(markup).toContain('title="git push origin main"');
     expect(markup.match(new RegExp(TAG, "g"))).toHaveLength(2);
     expect(markup).toMatch(new RegExp(`>doctor</span><span class="[^"]*text-success">${t("chat.verify.verifiedTag")}</span><code`));

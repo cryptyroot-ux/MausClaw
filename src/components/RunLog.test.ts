@@ -16,11 +16,11 @@ describe("Run log", () => {
 
   it("renders commands, failure and pending states without fabricating output", () => {
     const html = render(timelineEvents([
-      { id: "a", at: 1, role: "bot", kind: "activity", tool: { name: "Bash", summary: "pnpm control:omb doctor", ok: true } },
-      { id: "b", at: 2, role: "bot", kind: "activity", tool: { name: "Bash", summary: "pnpm control:omb ui click --name Missing", ok: false } },
+      { id: "a", at: 1, role: "bot", kind: "activity", tool: { name: "Bash", summary: "pnpm control:mausclaw doctor", ok: true } },
+      { id: "b", at: 2, role: "bot", kind: "activity", tool: { name: "Bash", summary: "pnpm control:mausclaw ui click --name Missing", ok: false } },
       { id: "c", at: 3, role: "bot", kind: "activity", tool: { name: "Read" } },
     ]));
-    expect(html).toContain("pnpm control:omb doctor");
+    expect(html).toContain("pnpm control:mausclaw doctor");
     expect(html).toContain("Completed");
     expect(html).toContain("Failed");
     expect(html).toContain("No result");

@@ -59,7 +59,7 @@ export function PairPage({ initialCode, initialEmail = null, reason }: { initial
   }, []);
 
   useEffect(() => {
-    void fetch("/.well-known/openmausbot/environment")
+    void fetch("/.well-known/mausclaw/environment")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: EnvironmentDescriptor | null) => {
         setEnvironment(d);

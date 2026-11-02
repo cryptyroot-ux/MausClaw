@@ -129,7 +129,7 @@ export interface ConfigStatus {
   /** The enrolled organisation's read-only desktop policy; null when this
    * desktop is not enrolled or its Admin sends no policy. */
   managedPolicy?: ManagedPolicySummary | null;
-  /** This server is an OMB Cloud home: it offers no "this computer" and no
+  /** This server is an MausClaw Cloud home: it offers no "this computer" and no
    * Local VM (server/cloud-home.ts). Absent everywhere else. */
   cloudHome?: boolean;
   /** A Team Cloud: the team this server is the home of, and the Plan page (MausBot Cloud) where its people and plan
@@ -164,7 +164,7 @@ export interface BrowserEngineSummary {
   myChromeOn?: { name: string; device: "PC" | "Mac" | "computer"; online: boolean };
   /** On My Cloud with no computer lending Chrome: it can be lent from the desktop app. */
   myChromeLendable?: true;
-  /** browserEngine.engine: "chrome" when the bots' browsers run on OpenMausBot's own Chrome driver. */
+  /** browserEngine.engine: "chrome" when the bots' browsers run on MausClaw's own Chrome driver. */
   engine?: "agent-browser" | "chrome";
 }
 

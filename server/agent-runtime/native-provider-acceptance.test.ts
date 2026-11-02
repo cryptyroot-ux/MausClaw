@@ -4,9 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 
-const dataDir = mkdtempSync(join(tmpdir(), "omb-native-provider-"));
-const originalDataDir = process.env.OMB_DATA_DIR;
-process.env.OMB_DATA_DIR = dataDir;
+const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-native-provider-"));
+const originalDataDir = process.env.MAUSCLAW_DATA_DIR;
+process.env.MAUSCLAW_DATA_DIR = dataDir;
 const originalPath = process.env.PATH;
 process.env.PATH = "/nonexistent-native-agent-path";
 
@@ -19,8 +19,8 @@ const { closeMessageDb } = await import("../message-db.ts");
 
 afterAll(() => {
   process.env.PATH = originalPath;
-  if (originalDataDir === undefined) delete process.env.OMB_DATA_DIR;
-  else process.env.OMB_DATA_DIR = originalDataDir;
+  if (originalDataDir === undefined) delete process.env.MAUSCLAW_DATA_DIR;
+  else process.env.MAUSCLAW_DATA_DIR = originalDataDir;
   closeMessageDb();
   rmSync(dataDir, { recursive: true, force: true });
 });
@@ -153,7 +153,7 @@ describe("native ProviderAdapter acceptance", () => {
     await runtime.adapter.sendTurn({
       threadId: "thread-1",
       text: "Run both fixture capabilities.",
-      agentEngine: "omb-native",
+      agentEngine: "mausclaw-native",
       model: "fixture-model",
       approvalMode: "full",
     });
@@ -226,7 +226,7 @@ describe("native ProviderAdapter acceptance", () => {
       await runtime.adapter.sendTurn({
         threadId: "thread-steer",
         text: "Take your time.",
-        agentEngine: "omb-native",
+        agentEngine: "mausclaw-native",
         model: "fixture-model",
         approvalMode: "full",
       });
@@ -291,7 +291,7 @@ describe("native ProviderAdapter acceptance", () => {
     await expect(runtime.adapter.sendTurn({
       threadId: "thread-images",
       text: "Look at this.",
-      agentEngine: "omb-native",
+      agentEngine: "mausclaw-native",
       model: "fixture-model",
       approvalMode: "full",
       images: [{ path: "/nonexistent.png", mime: "image/png", bytes: 0 }],
@@ -355,7 +355,7 @@ describe("native ProviderAdapter acceptance", () => {
     await runtime.adapter.sendTurn({
       threadId: "thread-image",
       text: "Look at this.",
-      agentEngine: "omb-native",
+      agentEngine: "mausclaw-native",
       model: "fixture-model",
       approvalMode: "full",
       images: [{ path: imagePath, mime: "image/png", bytes: image.length }],

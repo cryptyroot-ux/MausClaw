@@ -48,7 +48,7 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
   let stop: (() => Promise<void>) | null = null;
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), "omb-fleet-agent-"));
+    root = mkdtempSync(join(tmpdir(), "mausclaw-fleet-agent-"));
     socketPath = join(root, "fleet.sock");
   });
 
@@ -60,7 +60,7 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
 
   async function boot(m: ReturnType<typeof machine>) {
     const logs: string[] = [];
-    const server = await startFleetAgent({ socketPath, node: "/usr/bin/node", script: "/usr/lib/node_modules/openmausbot/cli.js", root: m.root, deps: m.deps, auditFile: join(m.root, "audit.jsonl"), licenseKey: "omb1.k", now: () => new Date("2026-09-10T12:00:00Z") }, { log: (line) => logs.push(line) });
+    const server = await startFleetAgent({ socketPath, node: "/usr/bin/node", script: "/usr/lib/node_modules/mausclaw/cli.js", root: m.root, deps: m.deps, auditFile: join(m.root, "audit.jsonl"), licenseKey: "omb1.k", now: () => new Date("2026-09-10T12:00:00Z") }, { log: (line) => logs.push(line) });
     stop = () => new Promise((resolve) => server.close(() => resolve()));
     return logs;
   }
@@ -71,10 +71,10 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     await boot(m);
     const created = await fleetRequest(socketPath, "POST", "/workspaces", { slug: "acme", admins: ["owner@example.test"], portalUrl: "https://admin.example.test", openrouterKey: "scoped-secret", openrouterUrl: "https://admin.example.test/api/gateway/acme/openrouter/v1", openrouterModels: ["provider/first"], openrouterDefault: true });
     expect(created.status).toBe(200);
-    const configPath = join(root, "var/lib/openmausbot/acme/.openmausbot/config.json");
+    const configPath = join(root, "var/lib/mausclaw/acme/.mausclaw/config.json");
     const original = m.files.get(configPath);
     expect(JSON.parse(original!).defaultModelSelection).toEqual({ instanceId: "opencodeGo", model: `${MANAGED_OPENROUTER}/provider/first` });
-    const path = join(root, "var/lib/openmausbot/acme/.config/opencode/opencode.json");
+    const path = join(root, "var/lib/mausclaw/acme/.config/opencode/opencode.json");
     const count = m.calls.length;
     expect((await fleetRequest(socketPath, "POST", "/workspaces/acme/providers", { models: ["provider/second"] })).status).toBe(200);
     expect(JSON.parse(m.files.get(path)!).provider[MANAGED_OPENROUTER]).toMatchObject({ options: { apiKey: "scoped-secret" }, models: { "provider/second": { name: "provider/second" } } });
@@ -102,22 +102,22 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
 
     const created = await fleetRequest(socketPath, "POST", "/workspaces", { slug: "acme", admins: ["ada@example.test"], members: ["@acme.test"], cap: 40, anthropicKey: "sk-ant-fixture", brandJson: '{"name":"Acme"}', portalUrl: "https://admin.example.test", anthropicUrl: "https://admin.example.test/api/gateway/acme/anthropic" });
     expect(created).toMatchObject({ status: 200, body: { ok: true, log: [expect.stringContaining("https://acme.agentada.cc is ready")] } });
-    expect(m.calls).toContain("useradd --system --create-home --home-dir " + join(root, "var/lib/openmausbot/acme") + " --shell /usr/sbin/nologin --user-group omb-acme");
-    expect(JSON.parse(m.files.get(join(root, "var/lib/openmausbot/acme/.openmausbot/config.json"))!)).toMatchObject({ anthropic: { key: "sk-ant-fixture", url: "https://admin.example.test/api/gateway/acme/anthropic" }, budgets: { monthlyUsd: 40 } });
-    expect(m.files.get(join(root, "etc/openmausbot/instances/acme.env"))).toContain("OMB_LICENSE_KEY=omb1.k");
-    expect(m.files.get(join(root, "etc/openmausbot/instances/acme.env"))).toContain("OMB_ADMIN_URL=https://admin.example.test");
-    expect(m.files.get(join(root, "etc/openmausbot/instances/acme.env"))).toContain("OMB_ADMIN_WORKSPACE=acme");
+    expect(m.calls).toContain("useradd --system --create-home --home-dir " + join(root, "var/lib/mausclaw/acme") + " --shell /usr/sbin/nologin --user-group mausclaw-acme");
+    expect(JSON.parse(m.files.get(join(root, "var/lib/mausclaw/acme/.mausclaw/config.json"))!)).toMatchObject({ anthropic: { key: "sk-ant-fixture", url: "https://admin.example.test/api/gateway/acme/anthropic" }, budgets: { monthlyUsd: 40 } });
+    expect(m.files.get(join(root, "etc/mausclaw/instances/acme.env"))).toContain("MAUSCLAW_LICENSE_KEY=omb1.k");
+    expect(m.files.get(join(root, "etc/mausclaw/instances/acme.env"))).toContain("MAUSCLAW_ADMIN_URL=https://admin.example.test");
+    expect(m.files.get(join(root, "etc/mausclaw/instances/acme.env"))).toContain("MAUSCLAW_ADMIN_WORKSPACE=acme");
 
     // The fixture's ledger is summarized by the mocked unprivileged-usage seam.
     // The filesystem suite exercises the real privilege-dropped child.
-    const dataDir = join(root, "var/lib/openmausbot/acme/.openmausbot");
+    const dataDir = join(root, "var/lib/mausclaw/acme/.mausclaw");
     mkdirSync(dataDir, { recursive: true });
     appendUsage(dataDir, { at: "2026-09-03T10:00:00.000Z", botId: "b", botName: "B", threadId: "t", instanceId: "claude", driverKind: "claudeAgent", model: "m", input: 10, output: 5, costUsd: 0.25, trigger: { kind: "owner" } });
     appendUsage(dataDir, { at: "2026-08-03T10:00:00.000Z", botId: "b", botName: "B", threadId: "t", instanceId: "claude", driverKind: "claudeAgent", model: "m", input: 10, output: 5, costUsd: 9, trigger: { kind: "owner" } });
     await flushUsageLedger(dataDir);
     const listed = await fleetRequest(socketPath, "GET", "/workspaces");
     expect(listed).toMatchObject({ status: 200, body: { domain: "agentada.cc", operator: "maus", workspaces: [{ slug: "acme", host: "acme.agentada.cc", port: 8810, live: "active", usage: { month: "2026-09", turns: 1, costUsd: 0.25 } }] } });
-    expect(m.calls).toContain(`usage ${dataDir} as omb-acme`);
+    expect(m.calls).toContain(`usage ${dataDir} as mausclaw-acme`);
 
     const added = await fleetRequest(socketPath, "POST", "/workspaces/acme/users", { action: "add", email: "bob@acme.test", chatOnly: true });
     expect(added.status).toBe(200);
@@ -125,10 +125,10 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     expect(await fleetRequest(socketPath, "POST", "/workspaces/acme/users", { action: "remove", email: "nobody@acme.test" })).toMatchObject({ status: 400, body: { error: expect.stringContaining("not on the list") } });
 
     expect((await fleetRequest(socketPath, "POST", "/workspaces/acme/suspend")).status).toBe(200);
-    expect(m.calls).toContain("systemctl disable --now openmausbot@acme.service");
+    expect(m.calls).toContain("systemctl disable --now mausclaw@acme.service");
     expect((await fleetRequest(socketPath, "DELETE", "/workspaces/acme", { keepData: true })).status).toBe(200);
     expect(m.calls.some((call) => call.startsWith("userdel"))).toBe(false);
-    expect(m.files.get(layout.fenceFile)).toContain("omb-acme");
+    expect(m.files.get(layout.fenceFile)).toContain("mausclaw-acme");
     expect(await fleetRequest(socketPath, "GET", "/workspaces")).toMatchObject({ status: 200, body: { workspaces: [{ slug: "acme", status: "retained", live: "retained" }] } });
 
     const audit = readFileSync(join(root, "audit.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line));
@@ -159,7 +159,7 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     expect(writeText).not.toHaveBeenCalled();
     expect(remove).not.toHaveBeenCalled();
     expect([...m.files]).toEqual(files);
-    expect(m.calls).toEqual(["systemctl is-active openmausbot@alpha.service", "systemctl is-active openmausbot@beta.service"]);
+    expect(m.calls).toEqual(["systemctl is-active mausclaw@alpha.service", "systemctl is-active mausclaw@beta.service"]);
     expect((await fleetRequest(socketPath, "GET", "/workspaces?statusOnly=false")).status).toBe(200);
     expect(usage).toHaveBeenCalledTimes(3);
   });
@@ -180,32 +180,32 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     expect(await fleetRequest(socketPath, "POST", "/workspaces", { slug: "beta", admins: ["b@example.test"] })).toMatchObject({ status: 400, body: { error: expect.stringContaining("already exists") } });
     expect(await fleetRequest(socketPath, "POST", "/workspaces/beta/resume")).toMatchObject({ status: 400, body: { error: expect.stringContaining("operator recovery") } });
     expect(await fleetRequest(socketPath, "GET", "/workspaces")).toMatchObject({ status: 200, body: { workspaces: [{ slug: "beta", status: "error", live: "error" }] } });
-    expect(m.calls).not.toContain("systemctl is-active openmausbot@beta.service");
+    expect(m.calls).not.toContain("systemctl is-active mausclaw@beta.service");
   });
 
   it("serializes complete mutations and exposes the reservation while creation is pending", async () => {
     let release!: () => void;
     const blocked = new Promise<void>((resolve) => { release = resolve; });
     const m = machine(root, { beforeRun: async (argv) => {
-      if (argv[0] === "useradd" && argv.at(-1) === "omb-alpha") await blocked;
+      if (argv[0] === "useradd" && argv.at(-1) === "mausclaw-alpha") await blocked;
     } });
     const layout = fleetLayout(root);
     m.files.set(layout.registryFile, JSON.stringify(emptyRegistry("agentada.cc")));
     await boot(m);
     const alpha = fleetRequest(socketPath, "POST", "/workspaces", { slug: "alpha", admins: ["a@example.test"] });
     try {
-      await vi.waitFor(() => expect(m.calls.some((call) => call.endsWith("omb-alpha"))).toBe(true));
+      await vi.waitFor(() => expect(m.calls.some((call) => call.endsWith("mausclaw-alpha"))).toBe(true));
       expect(await fleetRequest(socketPath, "GET", "/workspaces")).toMatchObject({ status: 200, body: { workspaces: [{ slug: "alpha", status: "provisioning", accountCreated: false, live: "provisioning" }] } });
       const beta = fleetRequest(socketPath, "POST", "/workspaces", { slug: "beta", admins: ["b@example.test"] });
       expect((await fleetRequest(socketPath, "GET", "/health")).status).toBe(200);
-      expect(m.calls.some((call) => call.endsWith("omb-beta"))).toBe(false);
+      expect(m.calls.some((call) => call.endsWith("mausclaw-beta"))).toBe(false);
       release();
       expect((await alpha).status).toBe(200);
       expect((await beta).status).toBe(200);
       const registry = JSON.parse(m.files.get(layout.registryFile)!);
       expect(registry).toMatchObject({ nextPort: 8830, workspaces: { alpha: { port: 8810, status: "running" }, beta: { port: 8820, status: "running" } } });
-      expect(m.files.get(layout.fenceFile)).toContain("omb-alpha");
-      expect(m.files.get(layout.fenceFile)).toContain("omb-beta");
+      expect(m.files.get(layout.fenceFile)).toContain("mausclaw-alpha");
+      expect(m.files.get(layout.fenceFile)).toContain("mausclaw-beta");
     } finally {
       release();
       await alpha;
@@ -218,7 +218,7 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     m.files.set(layout.registryFile, JSON.stringify(emptyRegistry("agentada.cc")));
     const writeText = m.deps.writeText;
     m.deps.writeText = (path, content, mode, owner) => {
-      if (path.endsWith("/alpha/.openmausbot/config.json")) throw new Error("fixture write refused");
+      if (path.endsWith("/alpha/.mausclaw/config.json")) throw new Error("fixture write refused");
       writeText(path, content, mode, owner);
     };
     await boot(m);
@@ -229,7 +229,7 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     expect(alpha).toMatchObject({ status: 500, body: { error: "fixture write refused" } });
     expect(beta.status).toBe(200);
     expect(JSON.parse(m.files.get(layout.registryFile)!)).toMatchObject({ nextPort: 8830, workspaces: { alpha: { status: "error", accountCreated: true, port: 8810 }, beta: { status: "running", port: 8820 } } });
-    expect(m.files.get(layout.fenceFile)).toContain("omb-alpha");
+    expect(m.files.get(layout.fenceFile)).toContain("mausclaw-alpha");
     expect(await fleetRequest(socketPath, "POST", "/workspaces/alpha/users", { action: "add", email: "x@example.test" })).toMatchObject({ status: 400, body: { error: expect.stringContaining("operator recovery") } });
   });
 
@@ -245,9 +245,9 @@ describe.skipIf(process.platform === "win32")("fleet agent over its socket", () 
     const entry = (slug: string, port: number) => ({ slug, host: `${slug}.agentada.cc`, port, webhookPort: port + 1, status: "running", createdAt: "" });
     m.files.set(fleetLayout(root).registryFile, JSON.stringify({ ...emptyRegistry("agentada.cc"), workspaces: { alpha: entry("alpha", 8810), beta: entry("beta", 8820) } }));
     m.deps.usage = (dataDir, owner, now) => {
-      expect(owner).toBe(dataDir.includes("/alpha/") ? "omb-alpha" : "omb-beta");
+      expect(owner).toBe(dataDir.includes("/alpha/") ? "mausclaw-alpha" : "mausclaw-beta");
       expect(now.toISOString()).toBe("2026-09-10T12:00:00.000Z");
-      if (owner === "omb-alpha") throw new Error("unsafe fixture-secret ledger");
+      if (owner === "mausclaw-alpha") throw new Error("unsafe fixture-secret ledger");
       return { turns: 2, costUsd: 0.5, billableUsd: null };
     };
     await boot(m);

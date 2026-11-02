@@ -67,7 +67,7 @@ function capabilityImages(images: ChatToolResultImages): CapabilityResult["image
 type ChatToolResultImages = Awaited<ReturnType<ChatToolSession["execute"]>>["images"];
 
 /**
- * Adapts the existing ChatToolSession and approval broker to the OMB
+ * Adapts the existing ChatToolSession and approval broker to the MausClaw
  * CapabilitySession contract. The bridge never grants authority: it only
  * forwards the current grant, approval decision, and MCP execution.
  */

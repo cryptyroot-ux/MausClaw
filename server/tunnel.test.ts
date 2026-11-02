@@ -43,7 +43,7 @@ function fakeIo(answers: string[]) {
 describe("tunnel credentials: a private file, and unreadable is not empty", () => {
   let dir: string;
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "omb-tunnel-cred-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-tunnel-cred-"));
   });
   afterEach(() => removeTempDir(dir));
 
@@ -75,9 +75,9 @@ describe("login and logout against the control plane", () => {
   let dir: string;
   let stub: ControlPlaneStub;
   beforeEach(async () => {
-    dir = mkdtempSync(join(tmpdir(), "omb-tunnel-login-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-tunnel-login-"));
     stub = await startControlPlaneStub();
-    vi.stubEnv("OMB_CONTROL_PLANE_URL", stub.url);
+    vi.stubEnv("MAUSCLAW_CONTROL_PLANE_URL", stub.url);
   });
   afterEach(async () => {
     vi.unstubAllEnvs();
@@ -174,10 +174,10 @@ describe("login and logout against the control plane", () => {
   });
 
   it("an unusable control-plane override is a clear error, not a silent default", async () => {
-    vi.stubEnv("OMB_CONTROL_PLANE_URL", "ftp://nope");
+    vi.stubEnv("MAUSCLAW_CONTROL_PLANE_URL", "ftp://nope");
     const io = fakeIo([]);
     expect(await runLogin(options(dir, { email: "a@b.test" }), io.io)).toBe(1);
-    expect(io.err.join("\n")).toMatch(/OMB_CONTROL_PLANE_URL/);
+    expect(io.err.join("\n")).toMatch(/MAUSCLAW_CONTROL_PLANE_URL/);
   });
 });
 
@@ -186,7 +186,7 @@ describe("where the pieces are", () => {
     expect(platformName("darwin")).toBe("darwin");
     expect(platformName("win32")).toBe("windows");
     expect(platformName("linux")).toBe("linux");
-    const bundled = mkdtempSync(join(tmpdir(), "omb-tunnel-bundled-"));
+    const bundled = mkdtempSync(join(tmpdir(), "mausclaw-tunnel-bundled-"));
     try {
       expect(guardianEntry(bundled)).toBeNull();
       writeFileSync(join(bundled, "tunnel-guardian.js"), "");
@@ -212,18 +212,18 @@ describe("where the pieces are", () => {
 
 describe.skipIf(!posix)("startTunnel: guardian, gateway and connector, verified through the gateway", () => {
   it("forwards the public address to the harness socket (no peer address = remote) and tears everything down on stop", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-tunnel-run-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-tunnel-run-"));
     const origin = createTunnelOrigin();
     const pidFile = join(dir, "connector.pid");
     const fake = join(dir, "cloudflared");
     writeFileSync(fake, `#!/bin/sh\necho $$ > "${pidFile}"\nexec sleep 300\n`, { mode: 0o755 });
     const harness = createServer((req, res) => {
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ app: "openmausbot", url: req.url, peer: req.socket.remoteAddress ?? null }));
+      res.end(JSON.stringify({ app: "mausclaw", url: req.url, peer: req.socket.remoteAddress ?? null }));
     });
     await new Promise<void>((done) => harness.listen(origin.socketPath, done));
     const originPort = await freePortBlock([0], 29_600);
-    const endpoint = "https://c-stub.openmausbot.invalid";
+    const endpoint = "https://c-stub.mausclaw.invalid";
     const guardian = guardianEntry();
     expect(guardian).toBeTruthy();
     const states: string[] = [];
@@ -233,7 +233,7 @@ describe.skipIf(!posix)("startTunnel: guardian, gateway and connector, verified 
       originTarget: { pid: process.pid, socketPath: origin.socketPath },
       binaryPath: fake,
       guardian: guardian ?? "",
-      env: { ...process.env, OMB_TUNNEL_ORIGIN_PORT: String(originPort) },
+      env: { ...process.env, MAUSCLAW_TUNNEL_ORIGIN_PORT: String(originPort) },
       fetchImpl: (input, init) => fetch(String(input).replace(endpoint, `http://127.0.0.1:${originPort}`), init),
       onState: (state) => states.push(state.status),
     });
@@ -241,7 +241,7 @@ describe.skipIf(!posix)("startTunnel: guardian, gateway and connector, verified 
       const settled = await tunnel.started;
       expect(settled.status, states.join(",")).toBe("ready");
       const viaGateway: any = await (await fetch(`http://127.0.0.1:${originPort}/api/health`)).json();
-      expect(viaGateway.app).toBe("openmausbot");
+      expect(viaGateway.app).toBe("mausclaw");
       expect(viaGateway.peer).toBeNull();
       // the connector is spawned right after the gateway binds; its shell writes the pid a moment later
       const connectorPidOtherThan = async (previous: number) => {
@@ -278,19 +278,19 @@ describe("a fleet's credential in the environment", () => {
   it("gets the public address with no account file and no emailed code; a rejected credential is a clear error", async () => {
     const stub = await startControlPlaneStub();
     try {
-      const env = { ...process.env, OMB_CONTROL_PLANE_URL: stub.url };
+      const env = { ...process.env, MAUSCLAW_CONTROL_PLANE_URL: stub.url };
       expect(fleetCredential({})).toBeNull();
-      expect(fleetCredential({ OMB_INSTALLATION_CREDENTIAL: "   " })).toBeNull();
+      expect(fleetCredential({ MAUSCLAW_INSTALLATION_CREDENTIAL: "   " })).toBeNull();
       const credential = stub.seedInstallation("boat-1");
-      expect(fleetCredential({ OMB_INSTALLATION_CREDENTIAL: ` ${credential} ` })).toBe(credential);
+      expect(fleetCredential({ MAUSCLAW_INSTALLATION_CREDENTIAL: ` ${credential} ` })).toBe(credential);
       const access = await fleetAccess({ credential, env, version: "9.8.7" });
       expect(access).toEqual({ endpoint: stub.endpointUrl, token: stub.connectorToken });
       expect(stub.calls).toContain("POST /v1/installations/self/endpoint");
       // The fleet created the installation without a version; the endpoint request reports this server's release.
       expect([...stub.installations.values()].find((inst) => inst.credential === credential)?.appVersion).toBe("9.8.7");
       expect(stub.calls.some((call) => call.includes("/api/auth/"))).toBe(false);
-      await expect(fleetAccess({ credential: `omb_install_${"x".repeat(22)}.${"y".repeat(43)}`, env })).rejects.toThrow(/rejected/);
-      await expect(fleetAccess({ credential, env: { ...env, OMB_CONTROL_PLANE_URL: "ftp://nope" } })).rejects.toThrow(/OMB_CONTROL_PLANE_URL/);
+      await expect(fleetAccess({ credential: `mausclaw_install_${"x".repeat(22)}.${"y".repeat(43)}`, env })).rejects.toThrow(/rejected/);
+      await expect(fleetAccess({ credential, env: { ...env, MAUSCLAW_CONTROL_PLANE_URL: "ftp://nope" } })).rejects.toThrow(/MAUSCLAW_CONTROL_PLANE_URL/);
     } finally {
       await stub.close();
     }

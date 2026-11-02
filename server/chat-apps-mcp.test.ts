@@ -34,7 +34,7 @@ const cleanup: Array<() => Promise<void> | void> = [];
 afterEach(async () => { for (const step of cleanup.splice(0).reverse()) await step(); });
 
 function setup(options: { servers?: Record<string, Record<string, unknown>>; scope?: BotRecord["toolScope"]; approval?: "ask" | "full"; needsSignIn?: string[]; probe?: typeof probeMcpServer } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-chat-apps-mcp-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-chat-apps-mcp-"));
   cleanup.push(() => removeTempDir(dataDir));
   const threads = new Map<string, Message[]>();
   const rows = (threadId: string) => threads.get(threadId) ?? threads.set(threadId, []).get(threadId)!;

@@ -12,7 +12,7 @@
     {
       "kind": "send",
       "bot": "helper",
-      "text": "Summarize https://this-domain-does-not-exist-omb.com/article."
+      "text": "Summarize https://this-domain-does-not-exist-mausclaw.com/article."
     },
     {
       "kind": "waitForTurns",

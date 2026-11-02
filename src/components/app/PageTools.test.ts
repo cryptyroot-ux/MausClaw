@@ -56,7 +56,7 @@ const button = (label: string, within: ParentNode = document) => Array.from(with
   .find((element) => element.textContent?.trim() === label || element.getAttribute("aria-label") === label)!;
 const click = (label: string, within?: ParentNode) => act(async () => { button(label, within).click(); await new Promise((resolve) => setTimeout(resolve, 0)); });
 const chips = () => JSON.parse(host.querySelector("[data-chips]")!.getAttribute("data-chips")!) as unknown[];
-const documents = () => fetchMock.mock.calls.map(([path]) => new URL(path, "http://omb.test")).filter((url) => url.pathname.endsWith("/app"));
+const documents = () => fetchMock.mock.calls.map(([path]) => new URL(path, "http://mausclaw.test")).filter((url) => url.pathname.endsWith("/app"));
 const posts = (ending: string) => fetchMock.mock.calls.filter(([path, init]) => path.endsWith(ending) && init?.method === "POST").map(([, init]) => JSON.parse(String(init!.body)));
 const fromFrame = (data: unknown, source: unknown) => act(async () => {
   window.dispatchEvent(new MessageEvent("message", { data, source: source as MessageEventSource }));
@@ -67,7 +67,7 @@ const PICK = { jsonrpc: "2.0", method: POINTED_METHOD, params: { tag: "button", 
 beforeEach(() => {
   fetchMock.mockReset();
   fetchMock.mockImplementation(async (path) => {
-    const url = new URL(path, "http://omb.test");
+    const url = new URL(path, "http://mausclaw.test");
     if (url.pathname.endsWith("/app/publish")) return json(200, { ok: true, card: LIVE });
     if (url.pathname.endsWith("/unpublish")) return json(200, { ok: true, card: { ...LIVE, state: "unpublished" } });
     const rev = url.searchParams.get("rev");

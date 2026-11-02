@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 it("remembers real permission requests, scopes and revokes grants, and preserves them across restart", async () => {

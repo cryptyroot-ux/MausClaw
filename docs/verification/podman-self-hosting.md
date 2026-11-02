@@ -14,32 +14,32 @@ shared control surface. Stop that fixture with Ctrl-C.
 Build the candidate Podman image from the same checkout. On Windows, enter the
 selected machine with `podman machine ssh MACHINE`, then run the Linux commands
 below. `repo` must be the candidate checkout's absolute Linux path, for example
-`/mnt/c/Projects/OpenMausBot`:
+`/mnt/c/Projects/MausClaw`:
 
 ```sh
 cd "$repo"
-podman build -f deploy/podman/Containerfile -t localhost/openmausbot-podman:verify .
-fixture=$(mktemp -d /tmp/omb-podman-verify-XXXXXXXX)
-mkdir -m 700 "$fixture/.openmausbot"
+podman build -f deploy/podman/Containerfile -t localhost/mausclaw-podman:verify .
+fixture=$(mktemp -d /tmp/mausclaw-podman-verify-XXXXXXXX)
+mkdir -m 700 "$fixture/.mausclaw"
 cp server/testing/fake-claude-cli.ts "$fixture/fake-claude-cli.ts"
 # Windows checkouts may have CRLF; the fake is executed via its shebang on Linux.
 sed -i 's/\r$//' "$fixture/fake-claude-cli.ts"
 chmod 700 "$fixture/fake-claude-cli.ts"
-cat > "$fixture/.openmausbot/config.json" <<EOF
+cat > "$fixture/.mausclaw/config.json" <<EOF
 {"profile":{"name":"Podman verification"},"instances":{"claude":{"driver":"claudeAgent","displayName":"Podman verification","config":{"cli":"$fixture/fake-claude-cli.ts"}}},"localVm":{"mode":"per-bot","maxInstances":2}}
 EOF
 cd deploy/podman
 umask 077
 cat > .env.fixture <<EOF
-COMPOSE_PROJECT_NAME=omb-podman-verify
-OMB_IMAGE_TAG=verify
-OMB_DATA_ROOT=$fixture
+COMPOSE_PROJECT_NAME=mausclaw-podman-verify
+MAUSCLAW_IMAGE_TAG=verify
+MAUSCLAW_DATA_ROOT=$fixture
 PODMAN_SOCKET=/run/user/$(id -u)/podman/podman.sock
-OMB_PORT=28799
-OMB_WEBHOOK_PORT=28800
-OMB_HTTP_PORT=28880
-OMB_PUBLIC_URL=http://localhost:28880
-OMB_HTTPS_HOST=https-disabled.invalid
+MAUSCLAW_PORT=28799
+MAUSCLAW_WEBHOOK_PORT=28800
+MAUSCLAW_HTTP_PORT=28880
+MAUSCLAW_PUBLIC_URL=http://localhost:28880
+MAUSCLAW_HTTPS_HOST=https-disabled.invalid
 ENGINES=
 EOF
 PODMAN_COMPOSE_PROVIDER=podman-compose podman compose --env-file .env.fixture -f compose.yaml up -d --no-build
@@ -52,7 +52,7 @@ model are required. The fake engine does not prove model-driven GUI interaction.
 
 ## Drive and observe
 
-Use the candidate checkout's `control-omb.ts` on the host. The explicit fixture
+Use the candidate checkout's `control-mausclaw.ts` on the host. The explicit fixture
 URL in this example is `http://127.0.0.1:28799` (WSL forwards the machine's loopback
 listener on Windows). Confirm `GET /api/config` has the fixture profile before
 issuing mutations. If it does not, stop: the URL is not your fixture.
@@ -60,7 +60,7 @@ issuing mutations. If it does not, stop: the URL is not your fixture.
 1. `GET /api/local-computer` must report `runtime: podman` and `daemonUp: true`.
    If `image` is false, `POST /api/local-computer/pull` prepares the official
    managed desktop image. This may take several minutes on a fresh machine.
-2. Use `control-omb.ts new-bot --name "Fixture A" --url URL` and repeat for B.
+2. Use `control-mausclaw.ts new-bot --name "Fixture A" --url URL` and repeat for B.
    Record each returned `bot.id`.
 3. For each ID, `PATCH /api/bots/ID` with `{"computer":"vm"}`, then
    `POST /api/bots/ID/local-computer/run` with `{}`. JSON requests must send

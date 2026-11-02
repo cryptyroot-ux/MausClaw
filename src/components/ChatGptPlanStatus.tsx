@@ -15,7 +15,7 @@ export function ManageUsageLink({ href, className, children }: { href: string; c
 /** Security: this marker only dismisses a welcome message; no sign-in data lives in the renderer. Settings passes
  * `welcome={false}`: its account rows stay mounted inside closed cards, where a modal would block the page unseen. */
 export function ChatGptPlanStatus({ instanceId, welcome = true }: { instanceId: string; welcome?: boolean }) {
-  const key = `omb:chatgpt-plan-welcome:${instanceId}`;
+  const key = `mausclaw:chatgpt-plan-welcome:${instanceId}`;
   const [acknowledged, setAcknowledged] = useState(() => {
     if (!welcome) return true;
     try { return localStorage.getItem(key) === "1"; } catch { return false; }

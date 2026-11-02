@@ -14,7 +14,7 @@ const TOKEN = `ops_fake-keep-${randomBytes(8).toString("hex")}`;
 let fx: CloudSendFixture, studio: CloudSendDesk;
 
 beforeAll(async () => {
-  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { OMB_ENVIRONMENT_LABEL: "MacBook Air" } });
+  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { MAUSCLAW_ENVIRONMENT_LABEL: "MacBook Air" } });
   studio = await fx.addDesk({ label: "Studio iMac" });
 }, hostTimeout(120_000));
 afterAll(async () => { await fx?.close(); });

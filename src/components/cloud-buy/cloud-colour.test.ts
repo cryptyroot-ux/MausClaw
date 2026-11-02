@@ -21,7 +21,7 @@ const mount = async (element: ReturnType<typeof createElement>) => {
 };
 
 it("the sidebar switcher shows a Cloud named and coloured while it was set up: its name on its colour's tile", async () => {
-  Object.assign(window, { ogb: { workspaces: { state: async () => ({ local: false, name: "Studio", origin: "https://omb-u-1.fly.dev", color: "teal" }), menu: async () => {} } } });
+  Object.assign(window, { ogb: { workspaces: { state: async () => ({ local: false, name: "Studio", origin: "https://mausclaw-u-1.fly.dev", color: "teal" }), menu: async () => {} } } });
   const root = await mount(createElement(DesktopWorkspaceSwitcher));
   expect(host.textContent).toContain("Studio");
   expect(host.innerHTML).toContain("background: var(--identity-teal)");
@@ -34,7 +34,7 @@ it("the sidebar switcher shows a Cloud named and coloured while it was set up: i
 
 it("Settings → Servers lists the Cloud under its name, on its colour's tile; other servers keep the plain mark", async () => {
   Object.assign(window, { ogb: { environments: { state: async () => ({ localOrigin: "http://127.0.0.1:1", remote: false, packaged: false, activeId: "local",
-    environments: [{ id: "c", kind: "remote", name: "Studio", origin: "https://omb-u-1.fly.dev", color: "purple" }, { id: "v", kind: "remote", name: "VPS", origin: "https://bots.example.test" }] }),
+    environments: [{ id: "c", kind: "remote", name: "Studio", origin: "https://mausclaw-u-1.fly.dev", color: "purple" }, { id: "v", kind: "remote", name: "VPS", origin: "https://bots.example.test" }] }),
     switch: vi.fn(), forget: vi.fn(), addFromLink: vi.fn(), onOpenSettings: () => () => {} } } });
   const root = await mount(createElement(ConnectedWorkspacesSettings));
   expect(host.textContent).toContain("Studio"); expect(host.textContent).toContain("VPS");

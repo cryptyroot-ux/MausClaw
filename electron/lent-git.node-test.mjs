@@ -20,7 +20,7 @@ test("only a github.com origin counts, as owner/name, without any user or token 
 });
 
 test("reads the repository, its branch and its commit from .git's own files", (t) => {
-  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "omb-lent-git-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "mausclaw-lent-git-")));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const repo = join(dir, "notes");
   mkdirSync(repo);

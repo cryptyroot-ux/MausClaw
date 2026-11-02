@@ -1,7 +1,7 @@
-// OpenMausBot Native Agent Runtime contracts.
+// MausClaw Native Agent Runtime contracts.
 //
-// These contracts define the boundary between the OMB-owned agent engine and
-// replaceable provider/model adapters plus OMB-owned capability execution.
+// These contracts define the boundary between the MausClaw-owned agent engine and
+// replaceable provider/model adapters plus MausClaw-owned capability execution.
 // They are intentionally protocol-neutral: no provider wire format, CLI, or
 // capability transport is allowed to leak through these interfaces.
 

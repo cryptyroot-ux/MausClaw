@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { PHONE_MCP_SERVER } from "../shared/phone-apps.ts";
 import { PHONE_INTERNAL_MCP_PATH } from "./phones/rpc.ts";
 import { waitForExit } from "./testing/cleanup.ts";
@@ -39,7 +39,7 @@ const pair = async (label: string, scopes: string[]) => {
   const opened = await api("POST", "/api/auth/pairing", { label, scopes });
   expect(opened.status).toBe(200);
   const paired = (await api("POST", "/api/auth/pair", { code: opened.body.code })).body as typeof pairing;
-  expect(paired.token).toMatch(/^omb_sess_/u);
+  expect(paired.token).toMatch(/^mausclaw_sess_/u);
   return paired;
 };
 const rpc = async (token: string, method: string, params: unknown = {}) => {
@@ -51,7 +51,7 @@ const rpc = async (token: string, method: string, params: unknown = {}) => {
 };
 const mint = async (botId: string, threadId: string) => {
   const response = await fetch(url + "/api/testing/internal-capability", {
-    method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": key },
+    method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": key },
     body: JSON.stringify({ botId, threadId, kind: "device" }),
   });
   expect(response.status).toBe(201);
@@ -109,7 +109,7 @@ const start = async () => {
   const log = openSync(fixture.info.logPath, "a", 0o600);
   child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
     cwd: fileURLToPath(new URL("..", import.meta.url)),
-    env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_RELEASE: release, FAKE_CLAUDE_TEXT_DUMP: join(fixture.info.dataDir, "one-shot-dump.json") }, fixture.info.dataDir, Number(new URL(url).port)), OMB_TEST_INTERNAL_CAPABILITY_KEY: key },
+    env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_RELEASE: release, FAKE_CLAUDE_TEXT_DUMP: join(fixture.info.dataDir, "one-shot-dump.json") }, fixture.info.dataDir, Number(new URL(url).port)), MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: key },
     stdio: ["ignore", log, log],
   });
   closeSync(log);

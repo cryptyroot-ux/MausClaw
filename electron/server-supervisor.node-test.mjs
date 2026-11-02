@@ -225,7 +225,7 @@ test("repeated quit requests join the exact same child cleanup", async (t) => {
   assert.equal(f.children.length, 1);
 });
 
-const LOCAL_FIXTURE = { id: "l1", kind: "local", name: "Work", dataDir: "/Users/me/.openmausbot-work", missing: false };
+const LOCAL_FIXTURE = { id: "l1", kind: "local", name: "Work", dataDir: "/Users/me/.mausclaw-work", missing: false };
 
 function runForget(state) {
   const start = MAIN_SOURCE.indexOf("async function forgetEnvironment(");
@@ -250,7 +250,7 @@ function runForget(state) {
     path,
     AbortSignal,
     remoteMicrophoneRefused: new Set(),
-    desktopDataDir: () => "/Users/me/.openmausbot",
+    desktopDataDir: () => "/Users/me/.mausclaw",
     slog: () => {},
     session: { defaultSession: { fetch: async () => ({ ok: true }), clearStorageData: async () => {} } },
   };
@@ -322,7 +322,7 @@ test("a purge of a missing folder still removes the entry (rm runs with force)",
 });
 
 function switchFixture(t, { startResults = [], releaseLeaseThrows = false, stopUtilityServer = async () => true } = {}) {
-  const targetDir = mkdtempSync(join(tmpdir(), "omb-switch-fixture-"));
+  const targetDir = mkdtempSync(join(tmpdir(), "mausclaw-switch-fixture-"));
   t.after(() => rmSync(targetDir, { recursive: true, force: true }));
   const forks = [];
   let forkIndex = 0;
@@ -351,7 +351,7 @@ function switchFixture(t, { startResults = [], releaseLeaseThrows = false, stopU
       return outcome === undefined ? { proc: { pid: 4000 + forkIndex } } : outcome;
     },
     environmentsState: { environments: [{ id: "l1", kind: "local", name: "Work", dataDir: targetDir }], activeId: "local" },
-    desktopDataDir: () => "/Users/me/.openmausbot",
+    desktopDataDir: () => "/Users/me/.mausclaw",
     startupEnvironmentDir: env.startupEnvironmentDir,
     withActive: env.withActive,
     persistEnvironments: (next) => { context.environmentsState = next; },

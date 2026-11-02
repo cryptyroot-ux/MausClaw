@@ -11,8 +11,8 @@ import path from "node:path";
 
 import { packageInstallCommand } from "../electron/package-install-command.mjs";
 
-const IMAGE = process.env.OMB_DEB_SMOKE_IMAGE || "ubuntu:24.04";
-const RUNTIME = process.env.OMB_DEB_SMOKE_RUNTIME || "docker";
+const IMAGE = process.env.MAUSCLAW_DEB_SMOKE_IMAGE || "ubuntu:24.04";
+const RUNTIME = process.env.MAUSCLAW_DEB_SMOKE_RUNTIME || "docker";
 if (!["docker", "podman"].includes(RUNTIME)) throw new Error("unsupported container runtime");
 
 function fail(message) {
@@ -25,7 +25,7 @@ if (!deb.endsWith(".deb") || !existsSync(deb)) fail("pass the path to a .deb");
 
 // Inside the container the package sits at a path with a space and an
 // apostrophe, so the quoting the app emits is exercised, not assumed.
-const staged = "/root/pending dir/o'brien/OpenMausBot.deb";
+const staged = "/root/pending dir/o'brien/MausClaw.deb";
 const command = packageInstallCommand("deb", staged);
 console.log(`[smoke-deb-command] command under test:\n    ${command}\n`);
 
@@ -67,8 +67,8 @@ const installed = inContainer(
   [
     prepare,
     command,
-    'dpkg-query -W -f="INSTALLED=\\${Version} \\${db:Status-Abbrev}\\n" openmausbot',
-    'test -x /opt/OpenMausBot/openmausbot && echo "EXECUTABLE=yes"',
+    'dpkg-query -W -f="INSTALLED=\\${Version} \\${db:Status-Abbrev}\\n" mausclaw',
+    'test -x /opt/MausClaw/mausclaw && echo "EXECUTABLE=yes"',
   ].join("\n"),
 );
 

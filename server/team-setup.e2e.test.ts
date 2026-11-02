@@ -2,11 +2,11 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("Clive sets up multi-provider teams at Ask with no card, keeps existing threads through setup and deletion, and adds a specialist it picked itself at once, with an Undo", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-team-setup-gates-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-team-setup-gates-"));
   const gate = join(gates, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate }, undefined, undefined, undefined, undefined, undefined, ["codex"]);
   const evidence: unknown[] = [{ fixture: fixture.info }];
@@ -20,7 +20,7 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
     expect(response.status, JSON.stringify(result)).toBe(expected); return result;
   };
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", fixture.info.url]) as any;
+    const result = await runControlMausclaw([...args, "--url", fixture.info.url]) as any;
     evidence.push({ command: args, result }); return result;
   };
   try {
@@ -30,7 +30,7 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
     expect(codex).toBeDefined();
     const selection = (instance: any) => ({ instanceId: instance.instanceId, model: instance.models.default });
     const chief = (await api("POST", "/api/bots", { name: "Clive", title: "Chief of Staff", section: "Operations", modelSelection: selection(claude) }, 201)).bot;
-    // At Ask: team setup applies at once, since OpenMausBot adds no card of its own.
+    // At Ask: team setup applies at once, since MausClaw adds no card of its own.
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true, approvalMode: "ask", connectorTools: { slack: { tools: ["SLACK_SEND_MESSAGE"] } } });
     const state = async () => (await api("GET", "/api/bots")).bots;
     // The fixture pins its starter's name, but identity is the honest comparison: a name once collided with a random starter.
@@ -44,7 +44,7 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
         return JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).pid !== previousPid;
       }, { timeout: 15_000 }).toBe(true);
       const dump = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")); previousPid = dump.pid;
-      return dump.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN as string;
+      return dump.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN as string;
     };
     const finish = async () => {
       writeFileSync(gate, "finish");
@@ -120,7 +120,7 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
     await expect.poll(() => JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).pid, { timeout: 15_000 }).not.toBe(previousPid);
     const groupDump = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")); previousPid = groupDump.pid;
     const roomPick = await api("POST", "/api/internal/create-bot", { name: "RoomHelper", role: "Room helper", instructions: "Help the room.", suggestion: true },
-      201, groupDump.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN);
+      201, groupDump.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN);
     expect(roomPick).toMatchObject({ state: "applied", applied: true });
     writeFileSync(gate, "finish");
     await control("wait", "--channel", room.id, "--task", room.activeTaskId, "--timeout", "15");

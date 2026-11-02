@@ -1,4 +1,4 @@
-// A stand-in for cloudflare/control-plane for `openmausbot login` and `serve --tunnel` tests: the routes
+// A stand-in for cloudflare/control-plane for `mausclaw login` and `serve --tunnel` tests: the routes
 // the desktop's client uses, accepting only credentials it issued, recording every call.
 import { randomBytes, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage } from "node:http";
@@ -29,7 +29,7 @@ export interface ControlPlaneStub {
 
 const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
 
-const newCredential = () => `omb_install_${randomBytes(16).toString("base64url")}.${randomBytes(32).toString("base64url")}`;
+const newCredential = () => `mausclaw_install_${randomBytes(16).toString("base64url")}.${randomBytes(32).toString("base64url")}`;
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   let raw = "";
@@ -40,7 +40,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
 
 export async function startControlPlaneStub(options: { otp?: string; endpointUrl?: string } = {}): Promise<ControlPlaneStub> {
   const otp = options.otp ?? "24681357";
-  const endpointUrl = options.endpointUrl ?? "https://c-stub.openmausbot.invalid";
+  const endpointUrl = options.endpointUrl ?? "https://c-stub.mausclaw.invalid";
   const connectorToken = `stub-connector-${randomBytes(48).toString("base64url")}`;
   let issuedConnectorToken = connectorToken;
   let reclaimedUntilProvision: string | null = null;
@@ -80,7 +80,7 @@ export async function startControlPlaneStub(options: { otp?: string; endpointUrl
     const byCredential = () => [...installations.values()].find((inst) => inst.credential === bearer) ?? null;
     const account = accountTokens.has(bearer);
 
-    if (method === "GET" && path === "/healthz") return send(200, { ok: true, service: "openmausbot-control-plane" });
+    if (method === "GET" && path === "/healthz") return send(200, { ok: true, service: "mausclaw-control-plane" });
     if (method === "POST" && path === "/api/auth/email-otp/send-verification-otp") {
       await readJson(req);
       return send(200, { success: true });

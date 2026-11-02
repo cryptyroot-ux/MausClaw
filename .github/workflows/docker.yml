@@ -36,19 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build image
-        run: docker build -t openmausbot:ci .
+        run: docker build -t mausclaw:ci .
       - name: Boot the container and prove the server + UI answer
         run: |
           set -euo pipefail
-          docker run -d --name omb openmausbot:ci
+          docker run -d --name mausclaw mausclaw:ci
           for i in $(seq 1 40); do
-            if docker exec omb curl -sf http://127.0.0.1:8799/api/health | grep -q openmausbot; then break; fi
+            if docker exec mausclaw curl -sf http://127.0.0.1:8799/api/health | grep -q mausclaw; then break; fi
             sleep 2
-            if [ "$i" = "40" ]; then docker logs omb; echo "server never became healthy"; exit 1; fi
+            if [ "$i" = "40" ]; then docker logs mausclaw; echo "server never became healthy"; exit 1; fi
           done
-          # the renderer is served by the server itself (OMB_STATIC_DIR)
-          docker exec omb curl -sf http://127.0.0.1:8799/ | grep -qi "<html" || { docker logs omb; echo "UI not served"; exit 1; }
-          docker logs omb | tail -5
+          # the renderer is served by the server itself (MAUSCLAW_STATIC_DIR)
+          docker exec mausclaw curl -sf http://127.0.0.1:8799/ | grep -qi "<html" || { docker logs mausclaw; echo "UI not served"; exit 1; }
+          docker logs mausclaw | tail -5
       - name: Prove the image finds its enterprise layer
         # The image ships dist-server/ alone, so the bundled layer sits inside
         # the server root (server/enterprise.ts looks there after the sibling
@@ -57,37 +57,37 @@ jobs:
         # and a licensed self-hoster would silently run the open-source edition.
         run: |
           set -euo pipefail
-          docker run -d --name omb-ent -e OMB_LICENSE_KEY=omb1.not.real openmausbot:ci
+          docker run -d --name mausclaw-ent -e MAUSCLAW_LICENSE_KEY=omb1.not.real mausclaw:ci
           for i in $(seq 1 40); do
-            if docker exec omb-ent curl -sf http://127.0.0.1:8799/api/health | grep -q openmausbot; then break; fi
+            if docker exec mausclaw-ent curl -sf http://127.0.0.1:8799/api/health | grep -q mausclaw; then break; fi
             sleep 2
-            if [ "$i" = "40" ]; then docker logs omb-ent; echo "server never became healthy"; exit 1; fi
+            if [ "$i" = "40" ]; then docker logs mausclaw-ent; echo "server never became healthy"; exit 1; fi
           done
-          edition=$(docker exec omb-ent curl -sf http://127.0.0.1:8799/api/edition)
+          edition=$(docker exec mausclaw-ent curl -sf http://127.0.0.1:8799/api/edition)
           echo "$edition"
           if grep -q 'no enterprise layer exists' <<<"$edition"; then echo "the image cannot find its enterprise layer"; exit 1; fi
           grep -q '"edition":"oss"' <<<"$edition"
-          grep -q 'enterprise layer disabled: OMB_LICENSE_KEY signature does not match' <<<"$edition"
-          docker exec omb-ent test -f /app/dist-server/enterprise/LICENSE
-          docker rm -f omb-ent >/dev/null
+          grep -q 'enterprise layer disabled: MAUSCLAW_LICENSE_KEY signature does not match' <<<"$edition"
+          docker exec mausclaw-ent test -f /app/dist-server/enterprise/LICENSE
+          docker rm -f mausclaw-ent >/dev/null
       - name: Prove the non-root user can browse with the baked-in Chrome
         run: |
           set -euo pipefail
-          test "$(docker exec omb id -un)" = maus
-          timeout 45 docker exec omb agent-browser --session ci-browser open 'data:text/html,<title>OMB browser smoke</title><h1>Browser ready</h1>'
-          timeout 15 docker exec omb agent-browser --session ci-browser get title | grep -Fx 'OMB browser smoke'
+          test "$(docker exec mausclaw id -un)" = maus
+          timeout 45 docker exec mausclaw agent-browser --session ci-browser open 'data:text/html,<title>MausClaw browser smoke</title><h1>Browser ready</h1>'
+          timeout 15 docker exec mausclaw agent-browser --session ci-browser get title | grep -Fx 'MausClaw browser smoke'
           # Chrome for Testing's page is 1280x577 until sized; the harness sizes
           # it to 1280x720 so pictures, boxes and clicks agree.
-          timeout 15 docker exec omb agent-browser --session ci-browser set viewport 1280 720
-          test "$(timeout 15 docker exec omb agent-browser --session ci-browser eval "innerWidth+'x'+innerHeight")" = '"1280x720"'
+          timeout 15 docker exec mausclaw agent-browser --session ci-browser set viewport 1280 720
+          test "$(timeout 15 docker exec mausclaw agent-browser --session ci-browser eval "innerWidth+'x'+innerHeight")" = '"1280x720"'
           # The harness reads and pictures a bot's browser over the engine's
           # loopback relay (server/browser-relay.ts); the daemon writes the file.
-          port=$(timeout 15 docker exec omb agent-browser --session ci-browser stream status --json | jq -r .data.port)
-          answer=$(docker exec omb curl -sf -X POST -H 'content-type: application/json' -H "origin: http://127.0.0.1:$port" \
+          port=$(timeout 15 docker exec mausclaw agent-browser --session ci-browser stream status --json | jq -r .data.port)
+          answer=$(docker exec mausclaw curl -sf -X POST -H 'content-type: application/json' -H "origin: http://127.0.0.1:$port" \
             --data '{"action":"screenshot","path":"/tmp/relay.jpg","format":"jpeg","quality":70}' "http://127.0.0.1:$port/api/command")
           grep -q '"success":true' <<<"$answer"
-          docker exec omb test -s /tmp/relay.jpg
-          timeout 15 docker exec omb agent-browser --session ci-browser close
+          docker exec mausclaw test -s /tmp/relay.jpg
+          timeout 15 docker exec mausclaw agent-browser --session ci-browser close
       - name: Prove the server never binds a public interface
         # The loopback-trust model is the auth model, so the image must keep
         # the server unreachable from the container's own network. Probe from a
@@ -96,13 +96,13 @@ jobs:
         run: |
           set -euo pipefail
           probe() { docker run --rm --network bridge curlimages/curl:8.14.1 -s --max-time 3 "http://$1:$2/" >/dev/null; }
-          docker run -d --name leaky --entrypoint node openmausbot:ci -e "require('http').createServer((q,s)=>s.end('leak')).listen(8799,'0.0.0.0')"
+          docker run -d --name leaky --entrypoint node mausclaw:ci -e "require('http').createServer((q,s)=>s.end('leak')).listen(8799,'0.0.0.0')"
           sleep 2
           leaky_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' leaky)
           test -n "$leaky_ip"
           probe "$leaky_ip" 8799 || { echo "probe cannot see a 0.0.0.0 listener; the check would be vacuous"; exit 1; }
           docker rm -f leaky >/dev/null
-          ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' omb)
+          ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mausclaw)
           test -n "$ip"
           if probe "$ip" 8799 || probe "$ip" 8800; then
             echo "server answered on $ip — it must only bind 127.0.0.1"; exit 1
@@ -116,35 +116,35 @@ jobs:
         # unbuffered, and that hooks stay reachable without a session.
         run: |
           set -euo pipefail
-          docker rm -f omb >/dev/null
-          docker tag openmausbot:ci ghcr.io/milind-soni/openmausbot:latest
+          docker rm -f mausclaw >/dev/null
+          docker tag mausclaw:ci ghcr.io/milind-soni/mausclaw:latest
           printf 'DOMAIN=localhost\nENGINES=\n' > deploy/.env
           docker compose -f deploy/docker-compose.yml up -d --no-build
           for i in $(seq 1 45); do
-            curl -sk -o /dev/null --max-time 2 https://localhost/.well-known/openmausbot/environment && break
+            curl -sk -o /dev/null --max-time 2 https://localhost/.well-known/mausclaw/environment && break
             sleep 2
             if [ "$i" = "45" ]; then docker compose -f deploy/docker-compose.yml logs; echo "caddy never answered"; exit 1; fi
           done
           code() { curl -sk -o /dev/null -w '%{http_code}' --max-time 5 "$@"; }
           body() { curl -sk --max-time 10 "$@"; }
           H=https://localhost
-          grep -q '"environmentId"' <<<"$(body $H/.well-known/openmausbot/environment)"   # descriptor is public
-          grep -q '^{"app":"openmausbot"}$' <<<"$(body $H/api/health)"             # the probe is public, and says only the app name
+          grep -q '"environmentId"' <<<"$(body $H/.well-known/mausclaw/environment)"   # descriptor is public
+          grep -q '^{"app":"mausclaw"}$' <<<"$(body $H/api/health)"             # the probe is public, and says only the app name
           test "$(code $H/api/bots)" = 403                                        # nothing else before pairing
           grep -q 'pair this device' <<<"$(body $H/api/bots)"
           grep -qi '<html' <<<"$(body $H/pair)"                                    # the UI shell is served so /pair can load
           test "$(code http://localhost/)" = 308                                   # HTTP redirects to HTTPS
-          pairing=$(docker compose -f deploy/docker-compose.yml exec -T omb node dist-server/pair-cli.js --label ci)
+          pairing=$(docker compose -f deploy/docker-compose.yml exec -T mausclaw node dist-server/pair-cli.js --label ci)
           echo "$pairing"
           pcode=$(grep -o 'code=[A-Z2-9-]*' <<<"$pairing" | head -1 | cut -d= -f2)
           test -n "$pcode"
           jar=$(mktemp)
           paired=$(curl -sk --max-time 10 -c "$jar" -D - -X POST $H/api/auth/pair -H 'content-type: application/json' -d "{\"code\":\"$pcode\",\"cookie\":true}")
-          grep -qi 'set-cookie: omb_session_' <<<"$paired"                        # cookie session
+          grep -qi 'set-cookie: mausclaw_session_' <<<"$paired"                        # cookie session
           grep -qi 'Secure' <<<"$paired"                                          # over TLS the cookie is Secure
           grep -qi 'HttpOnly' <<<"$paired"
           test "$(code -b "$jar" $H/api/health)" = 200                              # paired: the API answers
-          grep -q openmausbot <<<"$(body -b "$jar" $H/api/health)"
+          grep -q mausclaw <<<"$(body -b "$jar" $H/api/health)"
           test "$(code -b "$jar" -H 'Origin: https://evil.example' -X POST -d '{}' $H/api/bots)" = 403   # cookie is same-origin only
           test "$(code -b "$jar" -H 'Origin: https://localhost' $H/api/auth/session)" = 200
           grep -q '"via":"cookie"' <<<"$(body -b "$jar" $H/api/auth/session)"
@@ -154,7 +154,7 @@ jobs:
           # the proof is that bytes arrived within the window (a buffering proxy sends none).
           sse=$( (curl -sk -b "$jar" -N --max-time 4 $H/api/events || true) | head -c 64 )
           test -n "$sse"                                                           # SSE streams, not buffered
-          grep -q '"baseUrl":"https://localhost"' <<<"$(body -b "$jar" $H/api/webhooks)"   # OMB_WEBHOOK_PUBLIC_URL is advertised
+          grep -q '"baseUrl":"https://localhost"' <<<"$(body -b "$jar" $H/api/webhooks)"   # MAUSCLAW_WEBHOOK_PUBLIC_URL is advertised
           test "$(code $H/api/bots)" = 403                                        # and without the cookie it is still closed
           docker compose -f deploy/docker-compose.yml down -v
       - name: Cloud Pro home image (--target cloud-home) boots, stays private and pairs on a signed request
@@ -170,27 +170,27 @@ jobs:
         # included models, and tells the paired app to open its engine sign-in.
         run: |
           set -euo pipefail
-          docker build --target cloud-home --build-arg CLOUD_HOME_ENGINES= -t omb-cloud-home:ci .
+          docker build --target cloud-home --build-arg CLOUD_HOME_ENGINES= -t mausclaw-cloud-home:ci .
           rand43() { openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'; }
           b64url() { base64 | tr '+/' '-_' | tr -d '=\n'; }
           secret=$(rand43)
           test "${#secret}" = 43
-          host=omb-t-0123456789ab.fly.dev
+          host=mausclaw-t-0123456789ab.fly.dev
           relay=$(rand43)
           # A built Cloud registers with the real connected-apps service; this one is pointed at a closed port instead.
-          contract=(-e OMB_CLOUD_ROLE=home -e OMB_CLOUD_MACHINE_ID=3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93 -e OMB_CLOUD_ADMIN_URL=https://cloud.example.test
-            -e "OMB_PUBLIC_URL=https://$host" -e "OMB_CLOUD_BOOTSTRAP_SECRET=$secret" -e "OMB_CLOUD_BOAT_TOKEN=box_omb_$relay"
-            -e OMB_COMPOSIO_BROKER_URL=http://127.0.0.1:9)
+          contract=(-e MAUSCLAW_CLOUD_ROLE=home -e MAUSCLAW_CLOUD_MACHINE_ID=3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93 -e MAUSCLAW_CLOUD_ADMIN_URL=https://cloud.example.test
+            -e "MAUSCLAW_PUBLIC_URL=https://$host" -e "MAUSCLAW_CLOUD_BOOTSTRAP_SECRET=$secret" -e "MAUSCLAW_CLOUD_BOAT_TOKEN=box_mausclaw_$relay"
+            -e MAUSCLAW_COMPOSIO_BROKER_URL=http://127.0.0.1:9)
           # An incomplete contract exits instead of serving.
-          if timeout 60 docker run --name home-bad -e OMB_CLOUD_ROLE=home omb-cloud-home:ci; then echo "an incomplete contract served"; exit 1; fi
+          if timeout 60 docker run --name home-bad -e MAUSCLAW_CLOUD_ROLE=home mausclaw-cloud-home:ci; then echo "an incomplete contract served"; exit 1; fi
           grep -q "Cloud home configuration is invalid" <<<"$(docker logs home-bad 2>&1)"
           docker rm -f home-bad >/dev/null
           # A Fly Machine runs the launcher as root with every capability; Docker's defaults leave out the one that lowers an OOM score.
-          docker run -d --name home --cap-add SYS_RESOURCE -p 127.0.0.1:18080:8080 -v omb-home-ci:/data "${contract[@]}" omb-cloud-home:ci
+          docker run -d --name home --cap-add SYS_RESOURCE -p 127.0.0.1:18080:8080 -v mausclaw-home-ci:/data "${contract[@]}" mausclaw-cloud-home:ci
           E=http://127.0.0.1:18080
           healthy() {
             for i in $(seq 1 45); do
-              curl -sf --max-time 2 "$E/api/health" | grep -q openmausbot && return 0
+              curl -sf --max-time 2 "$E/api/health" | grep -q mausclaw && return 0
               sleep 2
             done
             docker logs home; echo "the cloud home never became healthy"; return 1
@@ -198,7 +198,7 @@ jobs:
           healthy
           logs=$(docker logs home 2>&1)
           grep -qF "bots run on the engines the person signs in to here" <<<"$logs"
-          if grep -qF "ignoring OMB_HOSTED" <<<"$logs"; then echo "a model gateway reached the boot contract"; exit 1; fi
+          if grep -qF "ignoring MAUSCLAW_HOSTED" <<<"$logs"; then echo "a model gateway reached the boot contract"; exit 1; fi
           if grep -qF "$secret" <<<"$logs"; then echo "the bootstrap secret reached the log"; exit 1; fi
           # The launcher stays root; the server and the edge run as maus. Chosen
           # by command line (a node process's comm is not always "node"), from
@@ -214,12 +214,12 @@ jobs:
           # engine's shell) can read it: root in the container lacks CAP_SYS_PTRACE for that.
           spid=$(docker exec home sh -c 'for p in /proc/[0-9]*; do case "$(tr "\0" " " < "$p/cmdline" 2>/dev/null)" in *"dist-server/in""dex.js"*) echo "${p#/proc/}";; esac; done')
           test -n "$spid"
-          docker exec -u maus home grep -qaF OMB_CLOUD_ROLE=home "/proc/$spid/environ"         # the probe reads it
+          docker exec -u maus home grep -qaF MAUSCLAW_CLOUD_ROLE=home "/proc/$spid/environ"         # the probe reads it
           # Out of memory, the kernel takes the engines first and the server and the edge (the health check) last.
           test "$(docker exec home cat "/proc/$spid/oom_score_adj")" = -800
           epid=$(docker exec home sh -c 'for p in /proc/[0-9]*; do case "$(tr "\0" " " < "$p/cmdline" 2>/dev/null)" in *"caddy r""un"*) echo "${p#/proc/}";; esac; done')
           test "$(docker exec home cat "/proc/$epid/oom_score_adj")" = -900
-          for value in "$secret" "box_omb_$relay"; do
+          for value in "$secret" "box_mausclaw_$relay"; do
             if docker exec -u maus home grep -qaF -- "$value" "/proc/$spid/environ"; then echo "a secret is in the server's environment"; exit 1; fi
           done
           # The root launcher runs only code maus cannot change; maus owns only the volume.
@@ -237,9 +237,9 @@ jobs:
             bh=$(printf %s "$body" | openssl dgst -sha256 -binary | b64url)
             sig=$(printf 'v1\n%s\n%s\nPOST\n/api/cloud/pairing\n%s' "$ts" "$nonce" "$bh" | openssl dgst -sha256 -hmac "$key" -binary | b64url)
             curl -s -o /tmp/pair-reply -w '%{http_code}' --max-time 5 "${H[@]}" -X POST -H 'content-type: application/json' \
-              -H "x-omb-cloud-timestamp: $ts" -H "x-omb-cloud-nonce: $nonce" -H "x-omb-cloud-signature: v1=$sig" --data-binary "$body" $E/api/cloud/pairing
+              -H "x-mausclaw-cloud-timestamp: $ts" -H "x-mausclaw-cloud-nonce: $nonce" -H "x-mausclaw-cloud-signature: v1=$sig" --data-binary "$body" $E/api/cloud/pairing
           }
-          body='{"label":"OpenMausBot app (Cloud)","ttlSeconds":300}'
+          body='{"label":"MausClaw app (Cloud)","ttlSeconds":300}'
           test "$(pair "$body" "$(rand43)" "$(date +%s)" "$(rand43)")" = 401                 # wrong key
           test "$(pair "$body" "$secret" "$(( $(date +%s) - 400 ))" "$(rand43)")" = 401      # stale
           nonce=$(rand43); now=$(date +%s)
@@ -266,7 +266,7 @@ jobs:
           test "$(pair "$body" "$(rand43)" "$(date +%s)" "$(rand43)")" = 401
           test "$(pair "$body" "$secret" "$(date +%s)" "$(rand43)")" = 200
           docker rm -f home >/dev/null
-          docker volume rm omb-home-ci >/dev/null
+          docker volume rm mausclaw-home-ci >/dev/null
       - name: Cloud home on an own server trusts only its tunnel to name a client, and starts again after an unclean kill
         # Without FLY_APP_NAME the home is on its own server, where any local process reaches the published port: only
         # the tunnel, in the home's own network namespace, names the client (Cf-Connecting-IP from loopback), so a header
@@ -280,15 +280,15 @@ jobs:
           b64url() { base64 | tr '+/' '-_' | tr -d '=\n'; }
           secret=$(rand43)
           host=home.own-server.invalid
-          contract=(-e OMB_CLOUD_ROLE=home -e OMB_CLOUD_MACHINE_ID=7d1e2f3a-4b5c-4d6e-8f70-8192a3b4c5d6 -e OMB_CLOUD_ADMIN_URL=https://cloud.example.test
-            -e "OMB_PUBLIC_URL=https://$host" -e "OMB_CLOUD_BOOTSTRAP_SECRET=$secret" -e OMB_COMPOSIO_BROKER_URL=http://127.0.0.1:9 -e OMB_HIGHLEVEL_RELAY_URL=off)
+          contract=(-e MAUSCLAW_CLOUD_ROLE=home -e MAUSCLAW_CLOUD_MACHINE_ID=7d1e2f3a-4b5c-4d6e-8f70-8192a3b4c5d6 -e MAUSCLAW_CLOUD_ADMIN_URL=https://cloud.example.test
+            -e "MAUSCLAW_PUBLIC_URL=https://$host" -e "MAUSCLAW_CLOUD_BOOTSTRAP_SECRET=$secret" -e MAUSCLAW_COMPOSIO_BROKER_URL=http://127.0.0.1:9 -e MAUSCLAW_HIGHLEVEL_RELAY_URL=off)
           run_home() { # name volume port [docker run options...]
             local name=$1 volume=$2 port=$3; shift 3
-            docker run -d --name "$name" --init --stop-timeout 30 -p "127.0.0.1:$port:8080" -v "$volume:/data" "${contract[@]}" "$@" omb-cloud-home:ci >/dev/null
+            docker run -d --name "$name" --init --stop-timeout 30 -p "127.0.0.1:$port:8080" -v "$volume:/data" "${contract[@]}" "$@" mausclaw-cloud-home:ci >/dev/null
           }
           healthy() { # name port
             for i in $(seq 1 45); do
-              curl -sf --max-time 2 "http://127.0.0.1:$2/api/health" | grep -q openmausbot && return 0
+              curl -sf --max-time 2 "http://127.0.0.1:$2/api/health" | grep -q mausclaw && return 0
               if [ "$(docker inspect -f '{{.State.Running}}' "$1")" != true ]; then docker logs "$1" 2>&1 | tail -20; echo "$1 exited"; return 1; fi
               sleep 2
             done
@@ -300,7 +300,7 @@ jobs:
             ts=$(date +%s); nonce=$(rand43)
             bh=$(printf '{}' | openssl dgst -sha256 -binary | b64url)
             sig=$(printf 'v1\n%s\n%s\nPOST\n/api/cloud/pairing\n%s' "$ts" "$nonce" "$bh" | openssl dgst -sha256 -hmac "$(rand43)" -binary | b64url)
-            printf '%s\n' -H "Host: $host" -H 'content-type: application/json' -H "x-omb-cloud-timestamp: $ts" -H "x-omb-cloud-nonce: $nonce" -H "x-omb-cloud-signature: v1=$sig"
+            printf '%s\n' -H "Host: $host" -H 'content-type: application/json' -H "x-mausclaw-cloud-timestamp: $ts" -H "x-mausclaw-cloud-nonce: $nonce" -H "x-mausclaw-cloud-signature: v1=$sig"
           }
           bad_pair() { # port [curl options...]: through the published port, from the host
             local port=$1; shift; local signed; mapfile -t signed < <(bad_pair_headers)
@@ -312,7 +312,7 @@ jobs:
           }
 
           # Own server: every request through the port counts against the port's one peer, whatever address it forges.
-          run_home own omb-own-ci 18081
+          run_home own mausclaw-own-ci 18081
           healthy own 18081
           for i in $(seq 1 10); do
             test "$(bad_pair 18081 -H "Cf-Connecting-IP: 198.51.100.$i" -H "Fly-Client-IP: 203.0.113.$i" -H "X-Forwarded-For: 192.0.2.$i")" = 401
@@ -326,31 +326,31 @@ jobs:
           test "$(bad_pair_from_tunnel own -H 'Fly-Client-IP: 203.0.113.202')" = 429
 
           # Fly: the proxy's private address names the client in Fly-Client-IP, exactly as before.
-          run_home fly omb-fly-ci 18082 -e FLY_APP_NAME=omb-t-ci
+          run_home fly mausclaw-fly-ci 18082 -e FLY_APP_NAME=mausclaw-t-ci
           healthy fly 18082
           for i in $(seq 1 10); do test "$(bad_pair 18082 -H 'Fly-Client-IP: 203.0.113.7' -H "Cf-Connecting-IP: 198.51.100.$i")" = 401; done
           test "$(bad_pair 18082 -H 'Fly-Client-IP: 203.0.113.7')" = 429
           test "$(bad_pair 18082 -H 'Fly-Client-IP: 203.0.113.8')" = 401
           docker rm -f fly >/dev/null
-          docker volume rm omb-fly-ci >/dev/null
+          docker volume rm mausclaw-fly-ci >/dev/null
 
           # A SIGKILL leaves the server's lease behind; the same container starts again, and so does a new one.
           docker kill -s KILL own >/dev/null
-          docker run --rm -v omb-own-ci:/data:ro --entrypoint test omb-cloud-home:ci -s /data/.openmausbot/openmausbot-server.lease
+          docker run --rm -v mausclaw-own-ci:/data:ro --entrypoint test mausclaw-cloud-home:ci -s /data/.mausclaw/mausclaw-server.lease
           docker start own >/dev/null
           healthy own 18081
           docker kill -s KILL own >/dev/null
           docker rm -f own >/dev/null
-          run_home own2 omb-own-ci 18081
+          run_home own2 mausclaw-own-ci 18081
           healthy own2 18081
-          grep -q 7d1e2f3a-4b5c-4d6e-8f70-8192a3b4c5d6 <<<"$(docker run --rm -v omb-own-ci:/data:ro --entrypoint cat omb-cloud-home:ci /data/.omb-cloud-home.json)"
+          grep -q 7d1e2f3a-4b5c-4d6e-8f70-8192a3b4c5d6 <<<"$(docker run --rm -v mausclaw-own-ci:/data:ro --entrypoint cat mausclaw-cloud-home:ci /data/.mausclaw-cloud-home.json)"
           # A second home on the volume the live one holds refuses to start, and the live one carries on.
-          if timeout 90 docker run --name own3 -v omb-own-ci:/data "${contract[@]}" omb-cloud-home:ci; then echo "a second home started on a held volume"; exit 1; fi
+          if timeout 90 docker run --name own3 -v mausclaw-own-ci:/data "${contract[@]}" mausclaw-cloud-home:ci; then echo "a second home started on a held volume"; exit 1; fi
           grep -qF "Another MausBot home is already running on this volume. No data was changed." <<<"$(docker logs own3 2>&1)"
           docker rm -f own3 >/dev/null
           healthy own2 18081
           docker rm -f own2 >/dev/null
-          docker volume rm omb-own-ci >/dev/null
+          docker volume rm mausclaw-own-ci >/dev/null
       - name: Prove each image ships its files once, no build cache, and a Caddy without capabilities
         # A pull downloads every layer, so a file written twice or a cache left
         # in a layer costs every machine that pulls the image. The Cloud home's
@@ -360,11 +360,11 @@ jobs:
         # throwaway home left in the image.
         run: |
           set -euo pipefail
-          docker save openmausbot:ci -o "$RUNNER_TEMP/server.tar"
-          docker save omb-cloud-home:ci -o "$RUNNER_TEMP/home.tar"
+          docker save mausclaw:ci -o "$RUNNER_TEMP/server.tar"
+          docker save mausclaw-cloud-home:ci -o "$RUNNER_TEMP/home.tar"
           python3 - "$RUNNER_TEMP/server.tar" "$RUNNER_TEMP/home.tar" <<'PY'
           import json, re, sys, tarfile
-          cache = re.compile(r"^(root/\.npm|tmp/(npm-cache|omb-build-home|node-compile-cache|grok-install))/")
+          cache = re.compile(r"^(root/\.npm|tmp/(npm-cache|mausclaw-build-home|node-compile-cache|grok-install))/")
           for path in sys.argv[1:]:
               files = {}
               with tarfile.open(path) as image:
@@ -450,7 +450,7 @@ jobs:
       # The Cloud Pro home machine (the Dockerfile's cloud-home target), on the
       # same runtime layers as the server image just pushed, with Claude Code,
       # Codex and Grok baked in. The Admin pins it by digest
-      # (OMB_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:...).
+      # (MAUSCLAW_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/mausclaw-cloud-home@sha256:...).
       - id: repo
         # Image references must be lowercase; the repository name is not.
         run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
@@ -484,4 +484,4 @@ jobs:
         env:
           DIGEST: ${{ steps.home.outputs.digest }}
           IMAGE: ghcr.io/${{ steps.repo.outputs.name }}-cloud-home
-        run: echo "OMB_CLOUD_HOME_IMAGE=${IMAGE}@${DIGEST}" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: echo "MAUSCLAW_CLOUD_HOME_IMAGE=${IMAGE}@${DIGEST}" | tee -a "$GITHUB_STEP_SUMMARY"

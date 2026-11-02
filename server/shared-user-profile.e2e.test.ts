@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireBot } from "../shared/wire.ts";
 
 it("persists shared user context and includes it in preview, direct and group turns", async () => {
   const fixture = await launchVerificationServer();
-  const control = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
   const api = async <T = { profile: { name: string; email: string; aboutMe: string } }>(path: string, method = "GET", body?: unknown, status = 200): Promise<T> => {
     const response = await fetch(fixture.info.url + path, {
       method, headers: { "content-type": "application/json" },

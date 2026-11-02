@@ -11,7 +11,7 @@ import type { Routine } from "../routines.ts";
 import type { BotRecord } from "../store.ts";
 import type { TurnOwner } from "../turn-resources.ts";
 
-export const CLOUD_COMPUTER_IDLE_MS = Math.max(1_000, Number(process.env.OMB_CLOUD_COMPUTER_IDLE_MS) || 10 * 60_000);
+export const CLOUD_COMPUTER_IDLE_MS = Math.max(1_000, Number(process.env.MAUSCLAW_CLOUD_COMPUTER_IDLE_MS) || 10 * 60_000);
 /** A computer stays on while a routine that uses it is due this soon. Longer than the idle window, so a routine every 30
  * minutes or more often never waits on a wake: each wake spends one start from the Boat account's pool, shared by every customer. */
 export const ROUTINE_DUE_SOON_MS = 30 * 60_000;

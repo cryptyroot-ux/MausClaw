@@ -117,7 +117,7 @@ test("a switch while the dialog is open refuses the waiting request", async () =
 });
 
 test("the Cloud opened as the active server waits for its sign-in to restore instead of asking (the review's repro)", async () => {
-  const CLOUD = "https://omb-u-0123456789ab.fly.dev";
+  const CLOUD = "https://mausclaw-u-0123456789ab.fly.dev";
   const cloudActive = () => environments.withActive(environments.withEnvironment(state, { origin: CLOUD, name: "My Cloud" }, () => "cloud"), "cloud");
   const restoreTo = (h, origin) => { h.ctx.restoring = Promise.resolve().then(() => { h.ctx.cloud = origin; h.ctx.restoring = null; }); };
   for (const answer of ["allow", "deny"]) {
@@ -135,7 +135,7 @@ test("the Cloud opened as the active server waits for its sign-in to restore ins
   assert.deepEqual(h.ctx.asked, [CLOUD]);
   const v = harness(viewing("vps"));
   v.ctx.answer = "deny";
-  restoreTo(v, "https://omb-u-0123456789ab.fly.dev");
+  restoreTo(v, "https://mausclaw-u-0123456789ab.fly.dev");
   assert.equal(await v.request(`${VPS}/chat`), false);
   assert.deepEqual(v.ctx.asked, [VPS]);
 });

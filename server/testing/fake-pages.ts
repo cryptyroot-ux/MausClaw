@@ -5,7 +5,7 @@ import { pagesHomeSignature } from "../pages/access.ts";
 export const FAKE_ADMIN = "https://cloud.example.test";
 export const FAKE_TOKEN_URL = `${FAKE_ADMIN}/api/cloud/pages/token`;
 export const FAKE_UPLOAD = "https://upload.pages.test";
-export const FAKE_DESKTOP_TOKEN = `omb_pd_${"d".repeat(43)}`;
+export const FAKE_DESKTOP_TOKEN = `mausclaw_pd_${"d".repeat(43)}`;
 export const FAKE_HOME = { adminOrigin: FAKE_ADMIN, machineId: "cm-fake-home", bootstrapSecret: "b".repeat(43) };
 
 /** `admin` and `upload`: the token route's and the Worker's origins (one loopback server can be both). */
@@ -21,9 +21,9 @@ export function fakePagesService(options: { quota?: number; plan?: string; admin
 
   const caller = (request: Request, body: string): "desktop" | "home" | null => {
     if (request.headers.get("authorization") === `Bearer ${FAKE_DESKTOP_TOKEN}`) return "desktop";
-    const machine = request.headers.get("x-omb-cloud-machine"), timestamp = request.headers.get("x-omb-cloud-timestamp") ?? "", nonce = request.headers.get("x-omb-cloud-nonce") ?? "";
+    const machine = request.headers.get("x-mausclaw-cloud-machine"), timestamp = request.headers.get("x-mausclaw-cloud-timestamp") ?? "", nonce = request.headers.get("x-mausclaw-cloud-nonce") ?? "";
     const expected = `v1=${pagesHomeSignature(FAKE_HOME.bootstrapSecret, FAKE_HOME.machineId, timestamp, nonce, body)}`;
-    return machine === FAKE_HOME.machineId && request.headers.get("x-omb-cloud-signature") === expected ? "home" : null;
+    return machine === FAKE_HOME.machineId && request.headers.get("x-mausclaw-cloud-signature") === expected ? "home" : null;
   };
 
   const fetch: typeof globalThis.fetch = async (input, init) => {

@@ -67,7 +67,7 @@ export function createSyncClient({ origin, fetch: fetchImpl, power = null, chunk
       const response = await call("GET", `/api/sync/folders/${id(folderId)}/staged/${id(changeId)}`);
       if (!response.ok) throw new SyncHttpError(response.status, await response.json().catch(() => null));
       await pipeline(Readable.fromWeb(response.body), createWriteStream(temporary, { flags: "w", mode: 0o600 }));
-      return { sha256: response.headers.get("x-omb-sha256") };
+      return { sha256: response.headers.get("x-mausclaw-sha256") };
     },
     async upload({ folderId, path, file, size, sha256, baseSha256 }) {
       let begun;
@@ -116,7 +116,7 @@ export function createSyncClient({ origin, fetch: fetchImpl, power = null, chunk
         const response = await call("GET", `/api/sync/folders/${id(folderId)}/file?path=${encodeURIComponent(path)}`, { headers: have ? { range: `bytes=${have}-` } : {}, timeoutMs: 60_000 + Math.ceil(Math.max(0, size - have) / SLOWEST) });
         if (!response.ok) throw new SyncHttpError(response.status, await response.json().catch(() => null));
         await pipeline(Readable.fromWeb(response.body), createWriteStream(temporary, { flags: response.status === 206 ? "a" : "w", mode: 0o600 }));
-        return { sha256: response.headers.get("x-omb-sha256") };
+        return { sha256: response.headers.get("x-mausclaw-sha256") };
       } catch (error) {
         if (error?.name === "TimeoutError") throw tooSlow();
         throw error;

@@ -45,8 +45,8 @@ export interface TraceTool {
   endedAt?: number;
   status: TraceStatus;
   error?: string;
-  /** Who measured it: OMB's own tools are timed by the server on every engine. */
-  timedBy: "engine" | "omb";
+  /** Who measured it: MausClaw's own tools are timed by the server on every engine. */
+  timedBy: "engine" | "mausclaw";
   running?: boolean;
 }
 

@@ -10,7 +10,7 @@ const licensed = (feature: string) => feature === "whitelabel";
 const unlicensed = () => false;
 
 function brandFile(content: string): string {
-  const dir = mkdtempSync(join(tmpdir(), "omb-brand-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-brand-"));
   dirs.push(dir);
   const file = join(dir, "brand.json");
   writeFileSync(file, content);
@@ -23,7 +23,7 @@ afterEach(() => {
 
 describe("brand.json", () => {
   it("is the default brand when no file exists, pointing at where one would go", () => {
-    const file = join(tmpdir(), "omb-brand-missing", "brand.json");
+    const file = join(tmpdir(), "mausclaw-brand-missing", "brand.json");
     expect(loadBrand({ file, isEntitled: licensed })).toEqual({ brand: DEFAULT_BRAND, source: "default", file });
     expect(describeBrand(loadBrand({ file, isEntitled: licensed }))).toBe("brand: default");
   });

@@ -28,7 +28,7 @@ Run these disposable fixtures:
 ```sh
 pnpm exec vitest run server/hosted-slack.test.ts server/routes/hosted-slack.test.ts server/request-auth.test.ts server/hosted-access.test.ts
 pnpm exec vitest run src/components/bot-settings/SlackSection.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/slack-management-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/slack-management-ui.e2e.test.ts
 pnpm typecheck
 pnpm lint
 ```
@@ -44,7 +44,7 @@ member's write and an unauthenticated read, and withholds the link in local
 membership mode. The helper tests cover incomplete or invalid configuration
 and URL parameter boundaries.
 
-The UI test launches `control-omb ui` with the real renderer and a disposable
+The UI test launches `control-mausclaw ui` with the real renderer and a disposable
 fake-engine workspace. It checks that the real API answers `{available:false}`
 and that the settings rail has no Slack row, then supplies synthetic Admin
 responses only inside that browser page. It checks the row, its copy and the
@@ -52,7 +52,7 @@ agent-specific link (new tab, `noopener noreferrer`, one link and no other
 control), that an unavailable, denied or failed read removes the row, and that
 an old response cannot surface after switching agents. It writes a settings
 screenshot beside the fixture's retained server log and prints both paths.
-The owned launcher removes its temporary workspace on exit. Set `OMB_UI_E2E=1`
+The owned launcher removes its temporary workspace on exit. Set `MAUSCLAW_UI_E2E=1`
 to install the harness's pinned browser when it is not already available;
 without a browser the test skips itself, as it does in the sharded CI run.
 

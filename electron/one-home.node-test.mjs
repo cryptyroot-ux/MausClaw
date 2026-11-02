@@ -4,7 +4,7 @@ import test from "node:test";
 import { arrivedCounts, CHECK_PASSES, COPY_RETRY_MS, createOneHome, FAILING_LINE_MS, FROZEN_RETRY_MS, KEPT_MS, missingOf, QUIET_MS, switchOn } from "./one-home.mjs";
 import { oneHomeCloud } from "./one-home-main.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 
 /**
@@ -396,7 +396,7 @@ test("one home reads the Admin's word: a ready Cloud the account may move to, an
   assert.equal(oneHomeCloud(state({ status: "stopped" })).ended, false, "stopped alone is not ended");
   assert.equal(oneHomeCloud(state({ status: "ready", origin: CLOUD }, { trial: { state: "active" } })).paid, false);
   assert.equal(oneHomeCloud({ ...state({ status: "ready", origin: CLOUD, moves: true }), status: "unavailable" }).ready, false);
-  const team = [{ id: "team-acme", name: "Acme", role: "owner", machine: { status: "ready", origin: "https://omb-t-2.fly.dev", moves: true } }];
+  const team = [{ id: "team-acme", name: "Acme", role: "owner", machine: { status: "ready", origin: "https://mausclaw-t-2.fly.dev", moves: true } }];
   assert.deepEqual(oneHomeCloud(state(undefined, { entitlement: { plan: "pro", tier: "team", status: "active" }, teams: team })),
     { origin: null, account: "acct-1", machine: null, ready: false, moves: false, ended: false, paid: false }, "a Team plan has no My Cloud: nothing moves, and nothing here counts as paid for");
 });

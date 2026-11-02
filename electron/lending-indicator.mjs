@@ -26,7 +26,7 @@ export function createLendingIndicator({ Tray, Menu, nativeImage, iconPath, onSt
         tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 }));
         tray.on("click", () => tray?.popUpContextMenu?.());
       }
-      tray.setToolTip(next.busy ? "OpenMausBot: in use by your bots" : `OpenMausBot: your bots can use ${lent(next.internetOnly)}`);
+      tray.setToolTip(next.busy ? "MausClaw: in use by your bots" : `MausClaw: your bots can use ${lent(next.internetOnly)}`);
       // macOS shows the title beside the icon: visible while in use.
       tray.setTitle?.(next.busy ? "In use" : "");
       redraw();

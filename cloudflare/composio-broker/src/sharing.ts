@@ -15,7 +15,7 @@ const adoptSchema = z.object({ code: z.string().regex(CODE) }).strict();
 
 /** Equal on two installations exactly when they reach the same connected accounts; never the user id itself. */
 export async function userDigest(installation: Pick<InstallationRow, "composio_user_id" | "shared_user_id">) {
-  return (await sha256(`omb-composio-user:${actingUser(installation)}`)).slice(0, 24);
+  return (await sha256(`mausclaw-composio-user:${actingUser(installation)}`)).slice(0, 24);
 }
 
 /** GET /v1/me */

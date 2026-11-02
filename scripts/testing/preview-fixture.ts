@@ -61,7 +61,7 @@ export async function mountPreview(
     ...(logLevel ? { logLevel } : {}),
     server: { host: "127.0.0.1", port: 0, proxy: {
       "/api": { target: fixture.info.url, ...(proxyHeaders ? { headers: proxyHeaders } : {}) },
-      "/.well-known/openmausbot/environment": { target: fixture.info.url, ...(proxyHeaders ? { headers: proxyHeaders } : {}) },
+      "/.well-known/mausclaw/environment": { target: fixture.info.url, ...(proxyHeaders ? { headers: proxyHeaders } : {}) },
     } },
     plugins: [{
       name: "isolated-preview",

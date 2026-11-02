@@ -1,11 +1,11 @@
-# Edge for one OMB Cloud Pro home machine (docs/cloud-pro.md). Fly's proxy
+# Edge for one MausClaw Cloud Pro home machine (docs/cloud-pro.md). Fly's proxy
 # terminates TLS for <app>.fly.dev and reaches this machine on :8080 (on an own
 # server, the Cloudflare tunnel does, in this home's network namespace). The
-# OpenMausBot server listens only on 127.0.0.1, and every request forwarded
+# MausClaw server listens only on 127.0.0.1, and every request forwarded
 # to it carries X-Forwarded-*, so it is never the loopback owner
 # (server/request-auth.ts): a remote client needs a paired session.
 #
-# OMB_CLOUD_EDGE_HOLD (a duration, unset: 0s, as before): how long a request
+# MAUSCLAW_CLOUD_EDGE_HOLD (a duration, unset: 0s, as before): how long a request
 # waits for the server while it starts, instead of a 502. The Admin sets it
 # only for a plan whose home sleeps, so the first request after a cold wake
 # is answered (docs/cloud-pro.md, "Sleeping homes"). Caddy retries the dial
@@ -22,9 +22,9 @@
 		# launcher sets both: server/cloud-home-start.ts). Any other peer's
 		# header is ignored, and unset, no peer may name one. The address feeds
 		# the pairing lockout, never authorization.
-		trusted_proxies static {$OMB_CLOUD_EDGE_TRUSTED_PROXIES}
+		trusted_proxies static {$MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES}
 		trusted_proxies_strict
-		client_ip_headers {$OMB_CLOUD_EDGE_CLIENT_IP_HEADER}
+		client_ip_headers {$MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER}
 	}
 }
 
@@ -34,7 +34,7 @@
 	# Fly's health check reaches the machine by address, not by name.
 	handle /api/health {
 		reverse_proxy 127.0.0.1:8799 {
-			lb_try_duration {$OMB_CLOUD_EDGE_HOLD:0s}
+			lb_try_duration {$MAUSCLAW_CLOUD_EDGE_HOLD:0s}
 			lb_try_interval 50ms
 			header_up X-Forwarded-Proto https
 			header_up X-Forwarded-For {client_ip}
@@ -42,12 +42,12 @@
 	}
 
 	# Everything else answers only for this machine's own public name.
-	@home host {$OMB_CLOUD_PUBLIC_HOST}
+	@home host {$MAUSCLAW_CLOUD_PUBLIC_HOST}
 	handle @home {
 		# Webhook ingress has its own per-hook secrets.
 		handle /hooks/* {
 			reverse_proxy 127.0.0.1:8800 {
-				lb_try_duration {$OMB_CLOUD_EDGE_HOLD:0s}
+				lb_try_duration {$MAUSCLAW_CLOUD_EDGE_HOLD:0s}
 				lb_try_interval 50ms
 				header_up X-Forwarded-Proto https
 				header_up X-Forwarded-For {client_ip}
@@ -55,7 +55,7 @@
 		}
 		handle {
 			reverse_proxy 127.0.0.1:8799 {
-				lb_try_duration {$OMB_CLOUD_EDGE_HOLD:0s}
+				lb_try_duration {$MAUSCLAW_CLOUD_EDGE_HOLD:0s}
 				lb_try_interval 50ms
 				header_up X-Forwarded-Proto https
 				header_up X-Forwarded-For {client_ip}

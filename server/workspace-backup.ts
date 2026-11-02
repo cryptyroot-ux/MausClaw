@@ -22,15 +22,15 @@ export const MAX_WORKSPACE_BACKUP_BYTES = 10 * 1024 ** 3;
 export const MAX_WORKSPACE_BACKUP_FILES = 100_000;
 export const MAX_WORKSPACE_BACKUP_UPLOAD_BYTES = MAX_WORKSPACE_BACKUP_BYTES + 256 * 1024 ** 2;
 const MAX_METADATA_BYTES = 16 * 1024 ** 2;
-const MAGIC = Buffer.from("OMB-WORKSPACE-1\n");
+const MAGIC = Buffer.from("MausClaw-WORKSPACE-1\n");
 const HEADER_BYTES = MAGIC.length + 16 + 12;
 const TAG_BYTES = 16;
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const EXCLUDED = new Set([
   ".backups", "tools", "browser", "agent-browser-profiles", "cache", ".cache", "tmp", ".tmp", "dist-native", "tunnel-runtime", "evidence",
-  ".openmausbot-server-child", "environment-id", "sessions.json", "tunnel-account.json",
+  ".mausclaw-server-child", "environment-id", "sessions.json", "tunnel-account.json",
   "team-computers.json",
-  "openmausbot-server.lease", "box-create-requests.lock", "messages.db-wal", "messages.db-shm",
+  "mausclaw-server.lease", "box-create-requests.lock", "messages.db-wal", "messages.db-shm",
   "runtime.db-wal", "runtime.db-shm",
   "decider-log",
   "cloud-owner.json",
@@ -83,7 +83,7 @@ export interface WorkspaceRestoreResult {
 export type LastWorkspaceRestore = WorkspaceRestoreResult & { restored: true; id: string; pathsRewritten?: true };
 
 function excluded(name: string): boolean {
-  return EXCLUDED.has(name) || excludedWorkspaceAuthPath(name) || name.startsWith("openmausbot-server.lease.") || name.startsWith("box-create-requests.lock.") || /^perm-[A-Za-z0-9_-]+\.sock$/.test(name);
+  return EXCLUDED.has(name) || excludedWorkspaceAuthPath(name) || name.startsWith("mausclaw-server.lease.") || name.startsWith("box-create-requests.lock.") || /^perm-[A-Za-z0-9_-]+\.sock$/.test(name);
 }
 function forbiddenArchivePath(path: string): boolean {
   const folded = path.toLowerCase();
@@ -411,7 +411,7 @@ export async function createWorkspaceBackupSnapshot(dataDir: string, options: Cr
     };
     writeJson(join(snapshot, "manifest.json"), manifest);
     validateManifest(privateJson(join(snapshot, "manifest.json")));
-    const path = join(job.directory, "workspace.ombbackup");
+    const path = join(job.directory, "workspace.mausclawbackup");
     const iv = randomBytes(12);
     const header = Buffer.concat([MAGIC, salt, iv]);
     const cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -591,7 +591,7 @@ export async function stageWorkspaceBackup(dataDir: string, archivePath: string,
     const versions = [manifest.summary.appVersion, options.currentAppVersion ?? ""].map((version) => /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(version)?.slice(1).map(Number));
     if (versions[0] && versions[1]) {
       for (let i = 0; i < 3; i++) {
-        if (versions[0][i] > versions[1][i]) throw new Error("This backup was made by a newer OpenMausBot version. Update the app before restoring it.");
+        if (versions[0][i] > versions[1][i]) throw new Error("This backup was made by a newer MausClaw version. Update the app before restoring it.");
         if (versions[0][i] < versions[1][i]) break;
       }
     }
@@ -851,13 +851,13 @@ export function readLastWorkspaceRestore(dataDir: string): LastWorkspaceRestore 
 function finishRestore(dataDir: string, id: string, consumePending = true): LastWorkspaceRestore {
   const root = backupRoot(dataDir);
   const { summary, clientState } = readStagedWorkspaceBackup(dataDir, id);
-  const draftAttachments = clientState["omb-draft-attachments"];
+  const draftAttachments = clientState["mausclaw-draft-attachments"];
   if (draftAttachments) {
     try {
       const value: unknown = JSON.parse(draftAttachments);
       const manifest = validateManifest(privateJson(join(jobPath(dataDir, id), "staged", "manifest.json")));
       restorePaths(manifest.sourceDataDir, resolve(dataDir)).fields(value);
-      clientState["omb-draft-attachments"] = JSON.stringify(value);
+      clientState["mausclaw-draft-attachments"] = JSON.stringify(value);
     } catch {}
   }
   const leftBehind = join(jobPath(dataDir, id), "left-behind.json");

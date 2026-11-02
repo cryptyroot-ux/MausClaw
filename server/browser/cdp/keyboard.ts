@@ -3,7 +3,7 @@
 // 24.37.5), Copyright 2017 Google Inc., licensed under the Apache License,
 // Version 2.0 (third_party/puppeteer/LICENSE). The key description rules in
 // keyDescription() follow Puppeteer's CdpKeyboard (src/cdp/Input.ts) under the
-// same license. Modified: compacted to one line per key and typed for OMB.
+// same license. Modified: compacted to one line per key and typed for MausClaw.
 
 import type { CdpSession } from "./connection.ts";
 import { DriverError } from "./errors.ts";

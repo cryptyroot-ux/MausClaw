@@ -1,24 +1,24 @@
-# OMB Cloud: the home machine
+# MausClaw Cloud: the home machine
 
-OMB Cloud (the Starter, Pro and Max plans) gives one person an always-on
-OpenMausBot server of their own (a plan may instead sleep when idle: see
+MausClaw Cloud (the Starter, Pro and Max plans) gives one person an always-on
+MausClaw server of their own (a plan may instead sleep when idle: see
 [Sleeping homes](#sleeping-homes-the-power-read-and-the-sleep-handshake)). The plans differ in machine size, disk and
 included allowances; everything on this page applies to all of them. Each
 customer gets one Fly app with one `home` machine that is always on, a volume
 at `/data`, and TLS at `https://<app>.fly.dev`. The desktop app, the phone and
 the web are windows onto it. Local use of the app is unchanged and free.
 Customers read its name as **MausBot Cloud** wherever they meet it (the
-app, the Admin's pages, emails); "OMB Cloud" is this page's shorthand, and
-the app itself is still OpenMausBot.
+app, the Admin's pages, emails); "MausClaw Cloud" is this page's shorthand, and
+the app itself is still MausClaw.
 
-OMB Cloud includes no AI usage. The person signs in on their machine with their
+MausClaw Cloud includes no AI usage. The person signs in on their machine with their
 own Claude or ChatGPT subscription, or an API key, through the same sign-in
-flows as any OpenMausBot server. Nothing on a Cloud home is routed to a
+flows as any MausClaw server. Nothing on a Cloud home is routed to a
 platform model gateway. The one exception is a free trial's Claude credit, a
 small one-time amount the Admin meters on its own relay, used only until the
 person connects their own AI ([Trial Claude credit](#trial-claude-credit)).
 
-This page is the OpenMausBot half of a contract with three parties:
+This page is the MausClaw half of a contract with three parties:
 
 - **the home machine**: this repository's `cloud-home` image (`Dockerfile`, `deploy/fly/`);
 - **the Admin** (openmaus-cloud, `docs/consumer-cloud.md` there): provisions
@@ -79,7 +79,7 @@ Contract version: `1` (`cloudContractVersion` on the wire).
    good at its last step or with **Skip setup** (`cloud-welcome-done`), and
    with Hide setup. A save the Cloud refuses (a 409 while provider settings
    are being changed, say) is tried once more; an end that still cannot be
-   saved is kept on this device (`omb.cloudWelcome.done`), so the welcome does
+   saved is kept on this device (`mausclaw.cloudWelcome.done`), so the welcome does
    not come back on the next launch, and a small keeper beside the setup card
    (`WelcomeKeeper.tsx`) sends it again when the Cloud answers.
    The main pane and the setup card read the record the same way, with the
@@ -100,7 +100,7 @@ Contract version: `1` (`cloudContractVersion` on the wire).
    itself up for the job in the chat. With an engine already able to run, it
    is sent at once; the box becomes the composer on the way (a named View
    Transition) and the request is the chat's first message. Otherwise the job
-   waits on this device (`omb.cloudIntent.pending` in browser storage) and
+   waits on this device (`mausclaw.cloudIntent.pending` in browser storage) and
    the engine sign-in shows it at the top, with **Edit**. The Cloud keeps
    that the question was answered (`cloud-intent-asked`) and that a job was
    given (`cloud-intent-given`) in its onboarding record.
@@ -320,7 +320,7 @@ welcome flow. The step to do now leads the card, with its explanation and
 action, under a segment per step that fills as each finishes. Every other step
 sits below it on one line; one not done becomes the lead with a click. The
 chevron minimizes the card to its segments on this device only
-(`omb.cloudSetup.collapsed` in browser storage), which is not hiding it. When
+(`mausclaw.cloudSetup.collapsed` in browser storage), which is not hiding it. When
 the last required step finishes in the session that is open,
 the card gives way once to **Your Cloud is ready**, with the guide mascot;
 a Cloud that opens already done shows nothing. Each step's state comes from
@@ -354,7 +354,7 @@ bot has finished a turn there) keeps the first-job checklist:
 4. **Approve its plan**: listed once a first job is given. The bot asks its
    questions in the chat and proposes a routine; done once that routine
    exists, the job's bot's and made after the job was sent (this device
-   remembers which bot got it, `omb.cloudIntent.sent`; another device counts
+   remembers which bot got it, `mausclaw.cloudIntent.sent`; another device counts
    any routine). **Open the chat** goes to that bot.
 
 A job counts as given the moment it is sent, before the Cloud's record
@@ -457,12 +457,12 @@ the Cloud's address.
   the call with one bot is a Live call, and a room has no call
   (`effectiveCallMode` in `src/lib/call-mode.ts`, `GroupCallButton`).
 
-### Open in the app: `openmausbot://cloud`
+### Open in the app: `mausclaw://cloud`
 
-The Cloud page (`https://cloud.openmausbot.com/cloud`) can offer **Open in the
-app** as a link to exactly `openmausbot://cloud`. The app accepts that string
+The Cloud page (`https://cloud.mausclaw.com/cloud`) can offer **Open in the
+app** as a link to exactly `mausclaw://cloud`. The app accepts that string
 and nothing else: no path, query, fragment or trailing slash, and it ignores
-any other form. Like `openmausbot://organization`, it is an action, not a
+any other form. Like `mausclaw://organization`, it is an action, not a
 router. It never carries an address, a pairing code or a credential; the app
 decides everything from its own verified state (`electron/cloud-entry.mjs`).
 
@@ -493,7 +493,7 @@ to **Settings → MausBot Cloud** never signs in or connects by itself.
 
 The link does nothing in development builds, and in companion client mode it
 explains that the app must be disconnected from the other computer first.
-The `openmausbot` scheme belongs to the installed app: on macOS through the
+The `mausclaw` scheme belongs to the installed app: on macOS through the
 app bundle, on Linux through the `.deb`'s desktop entry, and on Windows (and
 for an AppImage) once the installed app has started at least once, since it
 registers itself at startup. Before that, or if the app is not installed, the
@@ -514,7 +514,7 @@ a new tab, signed in after one **Continue**, with nothing to copy.
    scopes, at most two minutes, redeemable only by its 256-bit credential
    through a browser sign-in, and recording its owner. The answer has no
    typeable code and says `"purpose":"browser"` back.
-3. The tab goes to `https://<app>.fly.dev/pair#signin=omb_pair_…`. The
+3. The tab goes to `https://<app>.fly.dev/pair#signin=mausclaw_pair_…`. The
    credential is only in the fragment, which never reaches a server, a proxy
    log or a `Referer`.
 4. Before anything renders, the web UI takes the fragment off the address bar
@@ -734,7 +734,7 @@ the person's own My Cloud is asked once per Cloud (and once per computer), in a
 popup of main's own: **Let your bots use this Mac?** (this PC, this computer),
 one plain sentence (**Your bots on My Cloud can then read your Desktop,
 Documents and Downloads and use your apps and screen, while this Mac is awake
-and OpenMausBot is open.**), **Use my Mac** (**Use my PC**) and **Not now**, in
+and MausClaw is open.**), **Use my Mac** (**Use my PC**) and **Not now**, in
 the language the app shows (the words are in `src/locales`, and main keeps its own
 copy in `electron/use-my-computer-words.mjs`, held equal by a test).
 
@@ -764,7 +764,7 @@ copy in `electron/use-my-computer-words.mjs`, held equal by a test).
   starts computer control again, which asks macOS for what it never asked, one
   permission after another (Accessibility, then Screen Recording) as the person
   allows each: nothing here opens System Settings. A permission macOS won't ask
-  for again, or Screen Recording that works only after OpenMausBot restarts,
+  for again, or Screen Recording that works only after MausClaw restarts,
   waits: the choice is kept (`screenWanted`), and apps and screen go on by
   themselves once computer control works.
 - **Not now** is never asked again for that Cloud. Lending can still be turned on
@@ -774,7 +774,7 @@ The move to My Cloud still offers it once, as before: when the move leaves the
 computer not fully lent and computer control already works here, it lends every
 part silently instead (the bots that moved could use them here already). When a
 bot needs the computer, it gives the person
-`[Use my Mac](openmausbot://use-my-computer)`; in the desktop app that opens the
+`[Use my Mac](mausclaw://use-my-computer)`; in the desktop app that opens the
 same popup whatever was answered before (on My Cloud's page only from a click),
 and anywhere else it is plain text.
 
@@ -883,7 +883,7 @@ On the Mac (the authority; `electron/computer-sharing.mjs`,
 - **Bound to the account and the machine.** The grant records the Cloud
   account id and the machine's origin from the verified Cloud session
   (`cloud-account.mjs`), and the Cloud home's environment id on first contact.
-  Signing out of OMB Cloud, another account signing in, the Cloud moving to
+  Signing out of MausClaw Cloud, another account signing in, the Cloud moving to
   another machine, or another server answering at that address ends lending
   and switches it off (turning it back on is the person's choice). A Cloud
   sign-in that must be renewed pauses lending; a minute's re-verification or an
@@ -1028,7 +1028,7 @@ On the Cloud home (`server/shared-computers.ts`, `server/index.ts`):
   conversations someone else's. A guest never carries it.
 - On a Cloud home a request from the machine itself without a session (a
   bot's shell, any local process) is only a service, whatever
-  `OMB_LOOPBACK_TRUST` says: it may reach the health check, the Slack
+  `MAUSCLAW_LOOPBACK_TRUST` says: it may reach the health check, the Slack
   worker's guarded routes and a turn's own capability routes, decline a card
   and nothing else. It cannot open a pairing window, change a setting or a
   bot, answer a card or review memory.
@@ -1115,7 +1115,7 @@ layers (Node, Chrome's libraries, agent-browser and its Chrome) and adds:
   any file under `/app`, or Caddy, is not root's or is writable by others.
 
 ```sh
-docker build --target cloud-home -t omb-cloud-home .
+docker build --target cloud-home -t mausclaw-cloud-home .
 ```
 
 The app files are the last layers, so an image built from a later commit
@@ -1126,7 +1126,7 @@ At boot the launcher, running as root, hands the volume's mount point to the
 `maus` user, locks the volume for as long as it runs (`flock` on the volume's
 root: a second home on a volume a live home holds refuses to start, which
 Docker on your own server does not prevent by itself), binds the volume to
-this machine as `maus` (`/data/.omb-cloud-home.json`; another machine's
+this machine as `maus` (`/data/.mausclaw-cloud-home.json`; another machine's
 volume, or an unmarked volume with data on it, is refused), clears the
 data-directory lease records another machine or container left on it (a home
 killed uncleanly leaves one, and on one Docker host every container shares the
@@ -1138,13 +1138,13 @@ and Fly restarts the machine. The one exception: after a restore commits
 (a backup restored in Settings), the server exits with code 75
 (`server/restart.ts`) and the launcher starts only the server again.
 
-The machine's secrets (`OMB_CLOUD_BOOTSTRAP_SECRET` and the relay tokens
-`OMB_CLOUD_BOAT_TOKEN`, `OMB_CLOUD_VOICE_TOKEN`, `OMB_CLOUD_DECIDER_TOKEN`, `OMB_CLOUD_X_TOKEN`)
+The machine's secrets (`MAUSCLAW_CLOUD_BOOTSTRAP_SECRET` and the relay tokens
+`MAUSCLAW_CLOUD_BOAT_TOKEN`, `MAUSCLAW_CLOUD_VOICE_TOKEN`, `MAUSCLAW_CLOUD_DECIDER_TOKEN`, `MAUSCLAW_CLOUD_X_TOKEN`)
 arrive as the launcher's environment, from the Fly app secrets the Admin
 sets. The launcher never puts them in a child's environment, because
 `/proc/<pid>/environ` keeps a process's starting environment for anything
 running as the same user to read. It writes them to the server over an
-inherited pipe (`OMB_CLOUD_SECRETS_FD`). The server reads it and closes it
+inherited pipe (`MAUSCLAW_CLOUD_SECRETS_FD`). The server reads it and closes it
 as its very first step (`server/cloud-secrets-boot.ts`, its first import),
 before any other module loads, so no process it starts inherits the pipe.
 The server's environment is built from an allow-list: the process basics,
@@ -1161,8 +1161,8 @@ refuses to start if Node, itself, the server's entry point, Caddy or its
 config (or any folder above them) is not root's, is writable by others, or
 is on the volume. Only the `/data` volume is `maus`'s.
 
-`HOME=/data`, so `~/.claude`, `~/.codex`, `~/.grok` and OpenMausBot's own
-data (`/data/.openmausbot`) persist on the volume.
+`HOME=/data`, so `~/.claude`, `~/.codex`, `~/.grok` and MausClaw's own
+data (`/data/.mausclaw`) persist on the volume.
 
 ### Memory
 
@@ -1210,7 +1210,7 @@ provider outage. So on a Cloud home (`server/engine-memory.ts`):
   start, are born with `oom_score_adj` 1000; Chrome scores its tabs 200 and
   up; the server is -800 and Caddy -900, so the health check is the last to
   go.
-- **OpenCode reaches OpenMausBot's own tools over HTTP.** The agents,
+- **OpenCode reaches MausClaw's own tools over HTTP.** The agents,
   browser, computer, Data and HighLevel servers are endpoints of this server
   (`/api/internal/mcp-http/<name>`, `server/routes/own-mcp-http.ts`) with the
   turn's capability in the Authorization header, instead of a Node proxy
@@ -1239,15 +1239,15 @@ server, where any local process can reach the published port, it trusts
 tunnel connects from, and ignores a client-address header from any other peer
 (the launcher sets both: `edgeClientAddress`). That address feeds the pairing
 lockout, never authorization. Apart from `/api/health`, Caddy answers only for
-the machine's own name (`OMB_PUBLIC_URL`) and refuses any other `Host`.
+the machine's own name (`MAUSCLAW_PUBLIC_URL`) and refuses any other `Host`.
 
 ### Fly
 
 The Admin creates the machine through the Machines API; `deploy/fly/fly.toml`
 is the same shape for a manual deploy: `internal_port = 8080`, `force_https`,
-no auto-stop, one machine always running, a volume `omb_home` at `/data`,
+no auto-stop, one machine always running, a volume `mausclaw_home` at `/data`,
 restart policy `always`, and an HTTP check on `GET /api/health` (it answers
-`{"app":"openmausbot"}` with no session). Each customer's app lives in its
+`{"app":"mausclaw"}` with no session). Each customer's app lives in its
 own Fly private network, so no machine can reach another's over 6PN.
 
 ## Boot contract
@@ -1260,24 +1260,24 @@ never echoes a secret.
 
 | Variable | Fly | Value |
 | --- | --- | --- |
-| `OMB_CLOUD_ROLE` | env | `home`. (`desktop` belongs to the Cloud desktop image and is refused here.) |
-| `OMB_CLOUD_MACHINE_ID` | env | The Admin's machine id (a UUID). Binds the volume. |
-| `OMB_CLOUD_ADMIN_URL` | secret | The Cloud origin, exact `https://`, e.g. `https://cloud.openmausbot.com`. |
-| `OMB_CLOUD_BOOTSTRAP_SECRET` | secret | 43 base64url characters (256 bits): the key the Admin signs pairing requests with. |
-| `OMB_PUBLIC_URL` | env | The machine's exact `https://` origin, `https://<app>.fly.dev`. |
+| `MAUSCLAW_CLOUD_ROLE` | env | `home`. (`desktop` belongs to the Cloud desktop image and is refused here.) |
+| `MAUSCLAW_CLOUD_MACHINE_ID` | env | The Admin's machine id (a UUID). Binds the volume. |
+| `MAUSCLAW_CLOUD_ADMIN_URL` | secret | The Cloud origin, exact `https://`, e.g. `https://cloud.mausclaw.com`. |
+| `MAUSCLAW_CLOUD_BOOTSTRAP_SECRET` | secret | 43 base64url characters (256 bits): the key the Admin signs pairing requests with. |
+| `MAUSCLAW_PUBLIC_URL` | env | The machine's exact `https://` origin, `https://<app>.fly.dev`. |
 
-- The machine must not also carry `OMB_ADMIN_URL`, `OMB_ADMIN_WORKSPACE` or
-  `OMB_ADMIN_MEMBERSHIP`: a Cloud home is a personal server with pairing codes
+- The machine must not also carry `MAUSCLAW_ADMIN_URL`, `MAUSCLAW_ADMIN_WORKSPACE` or
+  `MAUSCLAW_ADMIN_MEMBERSHIP`: a Cloud home is a personal server with pairing codes
   on, not a hosted team workspace with portal membership.
-- `HOME=/data` and `OMB_DATA_DIR=/data/.openmausbot` are set by the image.
+- `HOME=/data` and `MAUSCLAW_DATA_DIR=/data/.mausclaw` are set by the image.
 - The server keeps the secret in memory and removes it from its environment at
   startup; no engine or tool it starts ever inherits it.
 
 ### No model gateway
 
-OMB Cloud includes no AI, so the contract has no model gateway. If a Cloud
-home is ever given `OMB_HOSTED_MODEL_URL`, `OMB_HOSTED_MODEL_TOKEN` or
-`OMB_HOSTED_MODELS` (an Admin from before this decision set all three), it
+MausClaw Cloud includes no AI, so the contract has no model gateway. If a Cloud
+home is ever given `MAUSCLAW_HOSTED_MODEL_URL`, `MAUSCLAW_HOSTED_MODEL_TOKEN` or
+`MAUSCLAW_HOSTED_MODELS` (an Admin from before this decision set all three), it
 still boots, logs one warning naming the variables (never their values), and
 ignores them:
 
@@ -1297,15 +1297,15 @@ For each service the Admin has configured, it also sets:
 
 | Variable | Fly | Value |
 | --- | --- | --- |
-| `OMB_CLOUD_BOAT_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/boat/api/box/v1`, the Admin's Boat relay. The app speaks Boat's public API v1 (`/sandboxes`, `sandbox` envelopes); this relay still serves Boat's retired box API (`/boxes`, `box` envelopes), so for a base ending in `/api/box/v1` the app translates paths and answers in one place, `server/boat-relay.ts`. A base ending in `/api/v1` gets v1 as it is. Bots use it only for cloud computers, as a tool on their own engine; no turn runs on Boat's own agent, so nothing calls its `/prompt`, `/events`, `/prompts/{id}` or `/interrupt` routes. |
-| `OMB_CLOUD_BOAT_TOKEN` | secret | This machine's Boat relay token (`box_omb_…`). It is not a Boat key and works only through the relay. |
-| `OMB_CLOUD_VOICE_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/voice/v1`, the Admin's voice relay. |
-| `OMB_CLOUD_VOICE_TOKEN` | secret | This machine's voice relay token (`omb_voice_…`). |
-| `OMB_TTS_DEFAULT_VOICE` | env | An ElevenLabs voice id, used until the person picks a voice or another speech provider in Settings. |
-| `OMB_CLOUD_DECIDER_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/decider`, the Admin's Jev relay. It is a Jev base URL, used as it is: the decider adds `/v1/systemone`, the relay's only route, so every included decision goes to exactly `<OMB_CLOUD_DECIDER_URL>/v1/systemone`. |
-| `OMB_CLOUD_DECIDER_TOKEN` | secret | This machine's decision relay token (`omb_decide_…`). It is not a Jev key and works only through the relay. |
-| `OMB_CLOUD_X_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/x`, the Admin's treg relay; the client calls `<OMB_CLOUD_X_URL>/call/<endpoint>` for the X tools' eight endpoints, `/research/search`, `/research/endpoints/<id>` and `/research/call/<id>` for the research tools, and `GET /usage` for the month's calls on the Apps page's X card (`GET /api/x/status`). A person's own treg key (Settings → API keys) wins over it and goes straight to treg. |
-| `OMB_CLOUD_X_TOKEN` | secret | This machine's X research relay token (`omb_x_…`). Not a treg key; it works only through the relay, within the plan's monthly X research calls. A signed-in desktop gets its own (`omb_xd_…`) from `POST /api/cloud/desktop/services/x` and hands it to its server in memory. |
+| `MAUSCLAW_CLOUD_BOAT_URL` | env | `https://cloud.mausclaw.com/api/cloud/services/boat/api/box/v1`, the Admin's Boat relay. The app speaks Boat's public API v1 (`/sandboxes`, `sandbox` envelopes); this relay still serves Boat's retired box API (`/boxes`, `box` envelopes), so for a base ending in `/api/box/v1` the app translates paths and answers in one place, `server/boat-relay.ts`. A base ending in `/api/v1` gets v1 as it is. Bots use it only for cloud computers, as a tool on their own engine; no turn runs on Boat's own agent, so nothing calls its `/prompt`, `/events`, `/prompts/{id}` or `/interrupt` routes. |
+| `MAUSCLAW_CLOUD_BOAT_TOKEN` | secret | This machine's Boat relay token (`box_mausclaw_…`). It is not a Boat key and works only through the relay. |
+| `MAUSCLAW_CLOUD_VOICE_URL` | env | `https://cloud.mausclaw.com/api/cloud/services/voice/v1`, the Admin's voice relay. |
+| `MAUSCLAW_CLOUD_VOICE_TOKEN` | secret | This machine's voice relay token (`mausclaw_voice_…`). |
+| `MAUSCLAW_TTS_DEFAULT_VOICE` | env | An ElevenLabs voice id, used until the person picks a voice or another speech provider in Settings. |
+| `MAUSCLAW_CLOUD_DECIDER_URL` | env | `https://cloud.mausclaw.com/api/cloud/services/decider`, the Admin's Jev relay. It is a Jev base URL, used as it is: the decider adds `/v1/systemone`, the relay's only route, so every included decision goes to exactly `<MAUSCLAW_CLOUD_DECIDER_URL>/v1/systemone`. |
+| `MAUSCLAW_CLOUD_DECIDER_TOKEN` | secret | This machine's decision relay token (`mausclaw_decide_…`). It is not a Jev key and works only through the relay. |
+| `MAUSCLAW_CLOUD_X_URL` | env | `https://cloud.mausclaw.com/api/cloud/services/x`, the Admin's treg relay; the client calls `<MAUSCLAW_CLOUD_X_URL>/call/<endpoint>` for the X tools' eight endpoints, `/research/search`, `/research/endpoints/<id>` and `/research/call/<id>` for the research tools, and `GET /usage` for the month's calls on the Apps page's X card (`GET /api/x/status`). A person's own treg key (Settings → API keys) wins over it and goes straight to treg. |
+| `MAUSCLAW_CLOUD_X_TOKEN` | secret | This machine's X research relay token (`mausclaw_x_…`). Not a treg key; it works only through the relay, within the plan's monthly X research calls. A signed-in desktop gets its own (`mausclaw_xd_…`) from `POST /api/cloud/desktop/services/x` and hands it to its server in memory. |
 
 A service is included only when both its URL and its token are set
 (`server/included-services.ts`). The real Boat, ElevenLabs and Jev keys stay
@@ -1314,14 +1314,14 @@ computers belong to this machine on every request.
 
 - **The person's own key always wins.** An included token is a fallback, used
   only while the person has no key of their own: none saved in Settings
-  (`box.token`, `tts.key`, `decider.key`) and no `BOX_TOKEN`, `OMB_TTS_KEY`
-  or `OMB_JEV_API_KEY` in the environment. Adding a key switches to it at
+  (`box.token`, `tts.key`, `decider.key`) and no `BOX_TOKEN`, `MAUSCLAW_TTS_KEY`
+  or `MAUSCLAW_JEV_API_KEY` in the environment. Adding a key switches to it at
   once; removing it falls back to the included service again (for Boat, once
   that key's cloud computers are deleted: removing a Boat key that still has
   computers is refused). The choice is made on every request.
 - **Each credential goes to one place.** The relays know only the Admin's
-  accounts, so an own key goes only to the provider (`OMB_BOAT_API`,
-  `OMB_ELEVENLABS_API` or `decider.baseUrl` when set, for development and
+  accounts, so an own key goes only to the provider (`MAUSCLAW_BOAT_API`,
+  `MAUSCLAW_ELEVENLABS_API` or `decider.baseUrl` when set, for development and
   tests, else Boat's, ElevenLabs' and Jev's own APIs) and an included token
   only to its relay, whatever those settings say.
 - **The decision relay takes two requests, and the app sends it nothing
@@ -1364,7 +1364,7 @@ computers belong to this machine on every request.
   engine, so a process running as the same user that may trace it (the
   kernel's ptrace policy, `kernel.yama.ptrace_scope`, decides) could read
   them there. That is why a guest's turn gets no shell (above); the complete
-  fix is engines under a user of their own. A relay token is only this customer's own OMB Cloud
+  fix is engines under a user of their own. A relay token is only this customer's own MausClaw Cloud
   allowance: it works only through the Admin, only on this machine's cloud
   computers, voice and decisions, and only up to the monthly caps.
 - A refusal from the Boat or voice relay (for example, the month's cloud
@@ -1384,17 +1384,17 @@ computers belong to this machine on every request.
 ### Included connected apps
 
 Connected apps (Gmail, Outlook, Slack, LinkedIn, Calendly and the rest of the
-catalog) come with the plan through OpenMausBot's managed connection service,
+catalog) come with the plan through MausClaw's managed connection service,
 the same one the packaged desktop app uses. The Admin sets nothing for it: at
 every start the server registers the Cloud's own installation if it has none,
-keeps the token owner-only in `/data/.openmausbot/connected-apps-installation.json`
+keeps the token owner-only in `/data/.mausclaw/connected-apps-installation.json`
 (never in a backup, a move or `config.json`), checks it with the service, and
 retries with backoff while the service is down, without holding up the start.
 An owner's own Composio project key still wins. The details are in
-[composio.md](composio.md#mausbot-cloud). `OMB_COMPOSIO_BROKER_URL` (env, not
+[composio.md](composio.md#mausbot-cloud). `MAUSCLAW_COMPOSIO_BROKER_URL` (env, not
 secret, optional) points a Cloud at another service, such as a staging one.
 
-For a paid plan the Admin also sets `OMB_CLOUD_CONNECTED_APPS_GRANT` (secret):
+For a paid plan the Admin also sets `MAUSCLAW_CLOUD_CONNECTED_APPS_GRANT` (secret):
 a grant it signs for the machine id, which the server presents to the service
 once it holds its token. The service then gives this installation a paid
 Cloud's app-event limit (2,000 a day instead of a desktop's 500). Without it a
@@ -1404,17 +1404,17 @@ Cloud gets the desktop limit. The grant's format is in
 ### Trial Claude credit
 
 A free trial may come with a one-time Claude credit (the Admin's
-`OMB_CLOUD_TRIAL_CREDIT_USD`). While it lasts, and only while the person has
+`MAUSCLAW_CLOUD_TRIAL_CREDIT_USD`). While it lasts, and only while the person has
 no AI of their own on My Cloud, bots run on Claude through the Admin's relay,
 which holds the provider key and meters the credit. For an account with a
 credit, the Admin also sets:
 
 | Variable | Fly | Value |
 | --- | --- | --- |
-| `OMB_CLOUD_AI_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/ai/v1`, an OpenAI-compatible base URL with its `/v1` (as the Admin sends it): `POST {url}/chat/completions` and `GET {url}/models` only. Nothing Anthropic-shaped (no `/v1/messages`) answers a credit token. |
-| `OMB_CLOUD_AI_TOKEN` | secret | This machine's credit token (`omb_ai_…`), sent as `Authorization: Bearer`. It works only through the relay, only for this account's credit, and not at all once it is spent or the Cloud is deleted. |
+| `MAUSCLAW_CLOUD_AI_URL` | env | `https://cloud.mausclaw.com/api/cloud/services/ai/v1`, an OpenAI-compatible base URL with its `/v1` (as the Admin sends it): `POST {url}/chat/completions` and `GET {url}/models` only. Nothing Anthropic-shaped (no `/v1/messages`) answers a credit token. |
+| `MAUSCLAW_CLOUD_AI_TOKEN` | secret | This machine's credit token (`mausclaw_ai_…`), sent as `Authorization: Bearer`. It works only through the relay, only for this account's credit, and not at all once it is spent or the Cloud is deleted. |
 
-- **OpenMausBot's own chat engine, nothing else.** `server/cloud-credit-provider.ts`
+- **MausClaw's own chat engine, nothing else.** `server/cloud-credit-provider.ts`
   adds one read-only **Trial credit · Claude** engine: the OpenAI-compatible
   driver (`openai-compat`, the same chat engine and tools as any API key) with
   the relay as its address and the token as its own key, on the models the
@@ -1476,11 +1476,11 @@ credit, the Admin also sets:
 ```http
 POST /api/cloud/pairing
 Content-Type: application/json
-x-omb-cloud-timestamp: 1790000000
-x-omb-cloud-nonce: <base64url, 16–128 characters>
-x-omb-cloud-signature: v1=<base64url HMAC-SHA256(OMB_CLOUD_BOOTSTRAP_SECRET, canonical)>
+x-mausclaw-cloud-timestamp: 1790000000
+x-mausclaw-cloud-nonce: <base64url, 16–128 characters>
+x-mausclaw-cloud-signature: v1=<base64url HMAC-SHA256(MAUSCLAW_CLOUD_BOOTSTRAP_SECRET, canonical)>
 
-{"label":"OpenMausBot app (Cloud)","ttlSeconds":300}
+{"label":"MausClaw app (Cloud)","ttlSeconds":300}
 ```
 
 where `canonical` is
@@ -1492,7 +1492,7 @@ v1\n<timestamp>\n<nonce>\nPOST\n/api/cloud/pairing\n<base64url SHA-256 of the ra
 `200`:
 
 ```json
-{ "code": "ABCD-EFGH-JKLM", "credential": "omb_pair_…", "expiresAt": 1790000300000 }
+{ "code": "ABCD-EFGH-JKLM", "credential": "mausclaw_pair_…", "expiresAt": 1790000300000 }
 ```
 
 `code` and `credential` are two encodings of **one ordinary pairing window**
@@ -1504,7 +1504,7 @@ With `"purpose":"browser"` and `"owner":"<the account's email>"` in the body
 sign-in window for that owner instead and answers
 
 ```json
-{ "credential": "omb_pair_…", "expiresAt": 1790000120000, "purpose": "browser" }
+{ "credential": "mausclaw_pair_…", "expiresAt": 1790000120000, "purpose": "browser" }
 ```
 
 `ttlSeconds` then defaults to and is capped at 120. Only
@@ -1636,7 +1636,7 @@ calls these routes, and nothing below changes how a home behaves.
 - nobody used the home for 10 minutes (the Admin may ask for another window).
   A use is an authenticated request, except the event stream, `/api/health`,
   `/api/sync/…`, `/api/shared-computers/…` and requests the page marks
-  `x-omb-background: 1` (its own polls). A request with no mark counts, so an
+  `x-mausclaw-background: 1` (its own polls). A request with no mark counts, so an
   older client can only keep a home awake, never let it sleep under someone;
 - work ended 2 minutes ago, the home has been awake 2 minutes, and the next
   scheduled run is at least 5 minutes away.
@@ -1683,7 +1683,7 @@ resume, someone's use, or 120 s (a sleep the Admin never carried out):
   hidden tab whose stream dropped (the laptop slept) can't wake a sleeping home
   every minute;
 - held `GET /api/sync/changes` and `POST /api/shared-computers/<id>/poll`
-  answer `503 {"error":"asleep"}` with `x-omb-cloud-power: asleep`, and new
+  answer `503 {"error":"asleep"}` with `x-mausclaw-cloud-power: asleep`, and new
   ones get the same, so the desktop's Files sync and lending pause instead of
   waking it;
 - `cloud-sleep.json` in the data folder marks the sleep. A boot that finds it
@@ -1691,7 +1691,7 @@ resume, someone's use, or 120 s (a sleep the Admin never carried out):
   startup" routines don't fire. Any other boot removes nothing and runs them as
   before.
 
-**The edge on a cold wake.** `OMB_CLOUD_EDGE_HOLD` (whole seconds, at most
+**The edge on a cold wake.** `MAUSCLAW_CLOUD_EDGE_HOLD` (whole seconds, at most
 120, such as `30s`; unset: `0s`, today's edge) makes Caddy hold a request while
 the server starts instead of answering 502, so a webhook or the app's first
 request after a stop is answered late rather than refused; Caddy dials the
@@ -1704,7 +1704,7 @@ The desktop polls `GET /api/cloud/desktop/session` with its personal device
 token (`Authorization: Bearer omc_…`). Contract version 1 adds:
 
 ```json
-"cloud": { "state": "ready", "origin": "https://omb-u-1a2b3c4d5e6f.fly.dev", "pairingAvailable": true }
+"cloud": { "state": "ready", "origin": "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", "pairingAvailable": true }
 ```
 
 - `null` or absent when the account has no machine; the app then shows nothing new.
@@ -1957,7 +1957,7 @@ descriptor's `capabilities.cloudHome`).
 On the person's own Cloud, open in the app's window, **Settings → MausBot Cloud**
 shows the plan read only (`cloud-plan:*`: its name and whether it is active,
 **Manage in your browser** and **Switch to this computer**). It is listed only
-on an OMB Cloud home (`config.cloudHome`), never on another server open in the
+on an MausClaw Cloud home (`config.cloudHome`), never on another server open in the
 window. Main answers it for the Cloud this account verified, or last verified
 while a check is failing or the sign-in has ended (`myCloudOrigin`, the rule
 the Cloud's microphone uses too), so that page says
@@ -1982,7 +1982,7 @@ its proxy). The session's `cloud.power` (additive, only for such a plan) says `{
 sleeps: true}`; `cloud.state` stays `ready`. Without `cloud.power`, nothing below happens (`electron/cloud-power.mjs`).
 
 - **Files sync and lending pause** while the session says `asleep`, and also at once when My Cloud answers a held poll
-  `503` with `x-omb-cloud-power: asleep` (it does just before it sleeps). They make no request to My Cloud then, not even
+  `503` with `x-mausclaw-cloud-power: asleep` (it does just before it sleeps). They make no request to My Cloud then, not even
   a retry, and the session is read every 15 s instead of 60 s while they wait. They resume when it says awake. Files and
   lending show "My Cloud is asleep" meanwhile.
 - **Opening My Cloud while it sleeps** asks the Admin to wake it first (`POST /api/cloud/desktop/wake`), shows "Waking
@@ -2000,7 +2000,7 @@ ready: the plan (`tier`), when the monthly allowances start over (`resetsAt`, th
 during a free trial), each included allowance as `{kind, used, max, usedUp?}` (`computerHours` in hours, `voice` in
 characters, `decisions`, `x` in calls, `research` in dollars, `storage` in GB of the most the disk grows to), and the bigger
 plans the app can move to itself (`upgrades: [{tier, amount}]`, US cents a month; empty on Max, a team's plan, or while
-the Admin's `OMB_CLOUD_APP_UPGRADES` is off). `electron/cloud-home.mjs` `parseCloudUsage` drops anything malformed (an
+the Admin's `MAUSCLAW_CLOUD_APP_UPGRADES` is off). `electron/cloud-home.mjs` `parseCloudUsage` drops anything malformed (an
 unknown kind, an allowance of nothing, a plan it doesn't know); it is display only and never grants or limits anything.
 Main keeps it on the account's state, and `cloudPlanSnapshot` hands it to this computer's page and the person's own Cloud
 page alike (`ogb.cloudPlan`), so the meter reads the same on both (`src/components/CloudUsageMeter.tsx`,
@@ -2102,7 +2102,7 @@ screen's note.
   with `&next=checkout&plan=<plan>&src=<source>` added (older Admins ignore it).
   The app follows its own session, never the return page: every 15 seconds
   for 30 minutes after it opened a checkout, and at once when the window comes
-  back or `openmausbot://cloud` arrives (which then opens the dialog).
+  back or `mausclaw://cloud` arrives (which then opens the dialog).
 - **Ready.** When My Cloud is ready after a checkout this app opened and the
   window is elsewhere, one system notification says so.
 
@@ -2134,7 +2134,7 @@ screen's note.
   `app_routines`, `update_popup` (main refuses any other, and any plan the
   offer doesn't sell).
 - **Interest** `POST /api/cloud/desktop/interest` `{kind: "another_cloud"}` → `{ok: true}`.
-- Every signed-in request carries this app's version in `x-openmausbot-version`.
+- Every signed-in request carries this app's version in `x-mausclaw-version`.
 
 Nothing in the app is a price: with the Admin's trial switch off, no card is
 shown, and the dialog offers today's plans at the Admin's prices, charged
@@ -2152,7 +2152,7 @@ itself, and from then on opens the Cloud as its only home
 thing by id over one owner session (`electron/cloud-send.mjs`), checks that it
 all arrived, and freezes this computer's copy so nothing runs in two places
 (`server/move-freeze.ts`). An older desktop's Copy this computer here gets
-`410` with "Update OpenMausBot to bring your bots here by itself."
+`410` with "Update MausClaw to bring your bots here by itself."
 (`server/cloud-move-http.ts`); a backup file still restores from Settings →
 Backups. [docs/verification/cloud-send.md](verification/cloud-send.md) has the
 tests.
@@ -2173,7 +2173,7 @@ tests.
   characters.
 - The signing secret is removed from the server's environment at startup and
   is never passed to engines or to Caddy.
-- There is no platform model gateway: stray `OMB_HOSTED_*` settings are
+- There is no platform model gateway: stray `MAUSCLAW_HOSTED_*` settings are
   ignored with one warning and never reach the server's environment or an
   engine. Every model call uses the person's own sign-in or key.
 - A volume binds to one machine and is never adopted by another.
@@ -2185,8 +2185,8 @@ tests.
 ## Published image
 
 Every push to `main` and every release tag publishes the home machine image as
-`ghcr.io/milind-soni/openmausbot-cloud-home`, tagged `latest` (main only), `sha-<commit>` and the release tag.
+`ghcr.io/milind-soni/mausclaw-cloud-home`, tagged `latest` (main only), `sha-<commit>` and the release tag.
 It is the `Dockerfile`'s `cloud-home` target for the same commit, with Grok and the current Claude Code and
 Codex installed. The Docker workflow's summary prints the digest. Set it in the Admin as
-`OMB_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:…`; changing it rolls the new image
+`MAUSCLAW_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/mausclaw-cloud-home@sha256:…`; changing it rolls the new image
 out to existing machines one at a time, reverting automatically on a failed health check.

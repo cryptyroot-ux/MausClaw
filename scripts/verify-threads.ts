@@ -2,14 +2,14 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const fixture = await launchVerificationServer();
 let ui: MountedPreview | undefined;
 try {
   const api = fixtureApi(fixture.info.url);
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
   await control(["new-bot", "--name", "Pepper"]);
   await control(["new-bot", "--name", "Miso"]);
   const { bots } = await api("GET", "/api/bots?messages=0");

@@ -28,7 +28,7 @@ const THREAD = "thread-apps";
 const BOT = { id: "bot-scout", name: "Scout" };
 
 export function buildAppFixtures(): AppFixtures {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-app-fixtures-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-app-fixtures-"));
   try {
     const docs = new AppDocs(join(scratch, "app-docs"));
     const messages: Message[] = [];

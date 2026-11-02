@@ -22,7 +22,7 @@ export function validateBotCwd(input: unknown): CwdValidation {
   return { ok: true, cwd };
 }
 
-/** A conversation's folder a teammate may be sent to: one that still exists, outside OpenMausBot's own data (a bot's private workspace). */
+/** A conversation's folder a teammate may be sent to: one that still exists, outside MausClaw's own data (a bot's private workspace). */
 export function sharedProjectFolder(cwd: string | null | undefined, dataDir: string): string | undefined {
   const checked = cwd ? validateBotCwd(cwd) : undefined;
   if (!checked?.ok || !checked.cwd) return undefined;

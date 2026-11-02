@@ -22,7 +22,7 @@ const BROWSER_RESTART_TOOL_SPEC = {
 };
 export const BROWSER_UPLOAD_TOOL = "agent_browser_upload";
 export const BROWSER_HOVER_TOOL = "agent_browser_hover";
-/** agent-browser 0.37.0 offers upload and hover only in its 156-tool "all" profile, so OMB runs these two through the daemon's relay. */
+/** agent-browser 0.37.0 offers upload and hover only in its 156-tool "all" profile, so MausClaw runs these two through the daemon's relay. */
 const RELAYED_TOOL_SPECS = [
   {
     name: BROWSER_UPLOAD_TOOL,
@@ -79,7 +79,7 @@ export function ownsBrowserViewport(env: NodeJS.ProcessEnv): boolean {
 
 export class TransportError extends Error {}
 
-/** One timed browser action (ms), logged with OMB_BROWSER_TIMING=1; `inFlight` is this session's work already running. */
+/** One timed browser action (ms), logged with MAUSCLAW_BROWSER_TIMING=1; `inFlight` is this session's work already running. */
 export interface BrowserTiming {
   session: string;
   tool: string;
@@ -162,7 +162,7 @@ class BrowserClient {
     this.child.on("close", () => { void this.stop(new TransportError("Browser connection closed.")); });
     this.ready = this.rpc("initialize", {
       protocolVersion: "2024-11-05", capabilities: {},
-      clientInfo: { name: "openmausbot-browser", version: "1" },
+      clientInfo: { name: "mausclaw-browser", version: "1" },
     }, Math.max(this.requestTimeoutMs, HANDSHAKE_TIMEOUT_MS)).then((result) => {
       if (!result || typeof result !== "object" || !("protocolVersion" in result)) {
         throw new TransportError("Browser engine returned an invalid handshake.");
@@ -286,7 +286,7 @@ class BrowserClient {
 export type ApplyViewport = (spec: BrowserSpawnSpec, size: PageSize) => Promise<unknown>;
 
 type LaunchSpec = { command: string; env?: Record<string, string | undefined> };
-/** The browser the engine starts, prepared by OMB. */
+/** The browser the engine starts, prepared by MausClaw. */
 export interface BrowserLaunch {
   /** Before the engine may start the browser; rejects with a message for the bot while it cannot start yet. */
   ready(spec: LaunchSpec): Promise<void>;
@@ -496,7 +496,7 @@ export class BrowserRuntime {
     const toolName = toolNameOf(params);
     const gate = this.gate(session);
     if (gate.uncertain) {
-      if (method === "tools/list") return withOmbTools(this.toolLists.get(session) ?? { tools: [] });
+      if (method === "tools/list") return withMausclawTools(this.toolLists.get(session) ?? { tools: [] });
       if (gate.owner !== null) throw new Error(BROWSER_CONTROL_REFUSAL);
       const lostCall = gate.lostCall;
       if (lostCall === null) return stuckBrowserToolError();
@@ -530,7 +530,7 @@ export class BrowserRuntime {
         const pageUrl = () => entry.client.rpc("tools/call", { name: "agent_browser_get_url", arguments: {} }, Math.max(1, Math.min(followUpMs(), 5_000)))
           .then((result) => firstText(result).trim(), (error: unknown) => { if (error instanceof TransportError) throw error; return ""; });
         if (toolName === "agent_browser_eval" && await this.holds.refuses(session, pageUrl)) return { isError: true, content: [{ type: "text", text: SECRET_ON_PAGE }] };
-        // Launch and session parameters OMB owns never reach the engine from a call.
+        // Launch and session parameters MausClaw owns never reach the engine from a call.
         const request = method === "tools/call" ? this.pageSizes.callArguments(session, stripHarnessOwnedArguments(params)) : params;
         const args = (request as { arguments?: unknown } | null)?.arguments;
         const call: StepCall | null = this.steps && method === "tools/call" && toolName !== undefined ? {
@@ -573,7 +573,7 @@ export class BrowserRuntime {
         phases.engineMs = performance.now() - engineStarted;
         beforeDispatch?.();
         if (method === "tools/list") {
-          const tools = withOmbTools(slimBrowserToolList(result));
+          const tools = withMausclawTools(slimBrowserToolList(result));
           this.toolLists.set(session, tools);
           return tools;
         }
@@ -912,7 +912,7 @@ export class BrowserRuntime {
     gate.closing = true;
     this.changed(gate);
     try {
-      if (!await closeBrowser()) throw new Error("The browser could not be closed. Ask the person to press Restart in the Browser panel of OpenMausBot on their computer, or to restart OpenMausBot.");
+      if (!await closeBrowser()) throw new Error("The browser could not be closed. Ask the person to press Restart in the Browser panel of MausClaw on their computer, or to restart MausClaw.");
       this.steps?.forget(session);
       this.launch?.stopped(session);
       await this.clients.get(session)?.client.stop();
@@ -979,7 +979,7 @@ function firstText(result: unknown): string {
   return part ? (part as { text: string }).text : "";
 }
 
-function withOmbTools(result: unknown): unknown {
+function withMausclawTools(result: unknown): unknown {
   if (!result || typeof result !== "object" || !Array.isArray((result as { tools?: unknown }).tools)) return result;
   const own = [...RELAYED_TOOL_SPECS, BROWSER_RESTART_TOOL_SPEC];
   const tools = ((result as { tools: unknown[] }).tools).filter((tool) => !own.some((spec) => spec.name === (tool as { name?: unknown } | null)?.name));

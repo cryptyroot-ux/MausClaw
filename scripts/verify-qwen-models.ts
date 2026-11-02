@@ -1,14 +1,14 @@
-// Offline end-to-end Qwen selection, using the standard isolated OMB launcher.
+// Offline end-to-end Qwen selection, using the standard isolated MausClaw launcher.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { readQwenModelCatalog } from "../server/drivers/acp/qwen.ts";
 
 const fixture = await launchVerificationServer();
 const { url, dataDir } = fixture.info;
-const control = (args: string[]) => runControlOmb([...args, "--url", url]);
+const control = (args: string[]) => runControlMausclaw([...args, "--url", url]);
 const evidence: unknown[] = [];
 try {
   mkdirSync(join(dataDir, ".qwen"));
@@ -63,7 +63,7 @@ await import(${JSON.stringify(fake)});
     evidence.push({ name, model, wait, messages, calls, rpc });
   }
   // Qwen acknowledges a live load without replacing its MCP configuration, so
-  // a changed bearer would need a fresh child. OMB keeps the agents bearer
+  // a changed bearer would need a fresh child. MausClaw keeps the agents bearer
   // while the grants are unchanged, so one child and its live session serve
   // every turn. Real proxy calls prove authentication on each turn, and the
   // bearer is refused once each turn settles.
@@ -103,7 +103,7 @@ await import(${JSON.stringify(fake)});
     const calls = JSON.parse(readFileSync(`${dump}.config.json`, "utf8")) as Array<{ params: { value?: string } }>;
     assert(calls.some((call) => call.params.value === expected.options[1].id), "the session must run on the chosen endpoint");
     const servers = JSON.parse(readFileSync(`${dump}.mcp.json`, "utf8")) as Array<{ name: string; env: Array<{ name: string; value: string }> }>;
-    const token = servers.find((server) => server.name === "agents")?.env.find((entry) => entry.name === "OMB_COMMS_TOKEN")?.value;
+    const token = servers.find((server) => server.name === "agents")?.env.find((entry) => entry.name === "MAUSCLAW_COMMS_TOKEN")?.value;
     assert(token, "the agents proxy must receive turn credentials");
     tokens.add(token);
     assert.equal(tokens.size, 1, "every turn keeps the same agents bearer");

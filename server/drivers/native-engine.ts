@@ -20,7 +20,7 @@ import { createSqliteAgentRunStore } from "../agent-runtime/run-store.ts";
 import { appendCompaction } from "./compaction-journal.ts";
 
 /** Chat-completions drivers share one native engine shape: an OpenAI-compatible adapter over the same catalog the
- * driver shows in Settings, and the OMB-owned run journal. Provider quirks stay in the adapter options, never in the
+ * driver shows in Settings, and the MausClaw-owned run journal. Provider quirks stay in the adapter options, never in the
  * loop. */
 export interface NativeChatEngineOptions {
   readonly providerId: string;

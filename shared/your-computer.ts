@@ -25,7 +25,7 @@ export type YourComputerKey = keyof typeof YOUR_COMPUTER_WORDS;
 export const YOUR_COMPUTER_TOOL = "use_your_computer";
 
 /** A failed turn's line starts with this when the desktop app's own driver is not ready; the app adds the permission fix. */
-export const THIS_COMPUTER_NOT_READY = "OpenMausBot can't use this computer yet — ";
+export const THIS_COMPUTER_NOT_READY = "MausClaw can't use this computer yet — ";
 
 const BROWSERS: Record<string, string> = {
   chrome: "Chrome", "google chrome": "Chrome", chromium: "Chromium", safari: "Safari", firefox: "Firefox",

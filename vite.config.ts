@@ -17,7 +17,7 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 // Upstream's HTTP harness suite drives the Claude/Codex CLI fixtures and asserts their prompts on every turn. This
 // native-only build removes those engines, so the suite is legacy coverage: run it only when a checkout deliberately
 // re-enables them, never as part of the native default.
-const legacyEngineTests = process.env.OMB_LEGACY_ENGINE_TESTS === "1" ? [] : ["server/index.test.ts"];
+const legacyEngineTests = process.env.MAUSCLAW_LEGACY_ENGINE_TESTS === "1" ? [] : ["server/index.test.ts"];
 const include = [
   "evals/**/*.test.ts",
   "server/**/*.test.ts",
@@ -39,7 +39,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include,
-    // OMB_VITEST_E2E=host (CI's Windows and macOS shards) leaves the e2e files that run on Linux only.
+    // MAUSCLAW_VITEST_E2E=host (CI's Windows and macOS shards) leaves the e2e files that run on Linux only.
     exclude: [...configDefaults.exclude, ...legacyEngineTests, ...(hostE2eOnly() ? portableE2eFiles(root, include) : [])],
     setupFiles: ["server/testing/setup.ts"],
     // the suite spawns fake provider CLIs and a real harness server;
@@ -63,7 +63,7 @@ export default defineConfig({
     // IPv4 explicitly — a bare ::1 bind makes localhost a coin-flip for
     // clients that resolve IPv4 first
     host: "127.0.0.1",
-    port: Number(process.env.OMB_UI_PORT) || 5199,
+    port: Number(process.env.MAUSCLAW_UI_PORT) || 5199,
     // packager output lands inside the repo — its HTML files must never
     // trigger dev full-page reloads
     watch: {
@@ -74,10 +74,10 @@ export default defineConfig({
     proxy: {
       "/api": {
         ws: true,
-        target: `http://127.0.0.1:${process.env.OMB_PORT || process.env.OGB_PORT || 8799}`,
+        target: `http://127.0.0.1:${process.env.MAUSCLAW_PORT || process.env.OGB_PORT || 8799}`,
       },
-      "/.well-known/openmausbot/environment": {
-        target: `http://127.0.0.1:${process.env.OMB_PORT || process.env.OGB_PORT || 8799}`,
+      "/.well-known/mausclaw/environment": {
+        target: `http://127.0.0.1:${process.env.MAUSCLAW_PORT || process.env.OGB_PORT || 8799}`,
       },
     },
   },

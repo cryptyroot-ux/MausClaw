@@ -23,7 +23,7 @@ const FAKE_DOCKER = `#!/bin/sh
 PATH="/usr/bin:/bin:$PATH"
 printf '%s\\n' "$*" >> "$FAKE_DOCKER_LOG"
 case "$*" in
-  *" image inspect "*) echo "Error response from daemon: No such image: openmausbot" >&2; exit 1 ;;
+  *" image inspect "*) echo "Error response from daemon: No such image: mausclaw" >&2; exit 1 ;;
   *" container ls "*) ;;
   "-H ssh://old-vps inspect "*) for arg in "$@"; do name="$arg"; done; sed "s|__NAME__|$name|g" "$FAKE_DOCKER_DIR/vps-container.json" ;;
   *" inspect "*) for arg in "$@"; do name="$arg"; done; echo "Error: No such object: $name" >&2; exit 1 ;;
@@ -32,7 +32,7 @@ esac
 `;
 const OLD_VPS_CONTAINER = JSON.stringify([{
   Id: "c".repeat(64), Name: "/__NAME__", Image: `sha256:${"d".repeat(64)}`,
-  Config: { Image: "localhost/openmausbot/cua-local-vm:driver-0.20.0-v5", Env: ["VNC_PW=fixture"],
+  Config: { Image: "localhost/mausclaw/cua-local-vm:driver-0.20.0-v5", Env: ["VNC_PW=fixture"],
     Labels: { [VPS_MANAGED_LABEL]: "1", [VPS_CONTAINER_LABEL]: "__NAME__" } },
   State: { Running: true }, NetworkSettings: { Networks: { bridge: { IPAddress: "172.17.0.9" } } }, Mounts: [], HostConfig: {},
 }]);
@@ -103,12 +103,12 @@ describe.skipIf(process.platform === "win32")("a bot's old desktop after an app 
       "--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
         TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: join(home, "static"), OMB_TEST_VM_STATE: stateFile,
-        OMB_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"), OMB_EXTRA_PATH: fakeBin,
-        FAKE_DOCKER_DIR: fakeBin, FAKE_DOCKER_LOG: join(fakeBin, "docker.log"), OMB_TEST_SEALED_PATH: "1",
+        MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: join(home, "static"), MAUSCLAW_TEST_VM_STATE: stateFile,
+        MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"), MAUSCLAW_EXTRA_PATH: fakeBin,
+        FAKE_DOCKER_DIR: fakeBin, FAKE_DOCKER_LOG: join(fakeBin, "docker.log"), MAUSCLAW_TEST_SEALED_PATH: "1",
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;
@@ -134,7 +134,7 @@ describe.skipIf(process.platform === "win32")("a bot's old desktop after an app 
   }
 
   beforeAll(() => {
-    home = mkdtempSync(join(tmpdir(), "omb-desktop-updates-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-desktop-updates-"));
     data = join(home, "data");
     stateFile = join(home, "vm.json");
     dumpFile = join(home, "dump.json");
@@ -178,7 +178,7 @@ describe.skipIf(process.platform === "win32")("a bot's old desktop after an app 
     expect(sent.systemPrompt).toContain("This bot's Local VM desktop is being updated to the new version");
     expect(sent.systemPrompt).toContain("do not use another computer");
     expect((await api("GET", "/api/local-computer")).body.problem).toBe(LOCAL_VM_UPDATING_PROBLEM);
-    const token = sent.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN as string;
+    const token = sent.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN as string;
     const offered = await fetch(`${base}/api/internal/computer/select`, { headers: { authorization: `Bearer ${token}` } }).then(r => r.json() as any);
     expect(offered.options.find((option: any) => option.surface === "local")).toMatchObject({ available: false, reason: HOST_WHILE_UPDATING });
     expect(offered.options.find((option: any) => option.surface === "vm")).toMatchObject({ available: false, reason: LOCAL_VM_UPDATING_PROBLEM });
@@ -285,7 +285,7 @@ describe.skipIf(process.platform === "win32")("a bot's old desktop after an app 
     expect(sent.mcpConfig?.mcpServers?.computer, "this computer must not stand in for the VPS").toBeUndefined();
     expect(readFileSync(join(fakeBin, "docker.log"), "utf8")).toContain(`-H ssh://old-vps inspect ${vpsContainerName(bot.id)}`);
     // Nor can the bot pick it: select_computer offers this computer to no bot whose own desktop awaits its update.
-    const token = sent.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN as string;
+    const token = sent.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN as string;
     const select = (method: "GET" | "POST") => fetch(`${base}/api/internal/computer/select`, {
       method, headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       ...(method === "POST" ? { body: JSON.stringify({ surface: "auto" }) } : {}),

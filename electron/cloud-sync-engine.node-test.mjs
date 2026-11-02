@@ -10,7 +10,7 @@ import { fakeCloud } from "./fixtures/cloud-sync-fake-cloud.mjs";
 const AT = new Date(2026, 9, 15, 12).getTime();
 const GB = 1024 ** 3;
 function setup(t, options = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-files-engine-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-files-engine-"));
   const state = openSyncState(join(dir, "state.db"));
   t.after(() => { state.close(); rmSync(dir, { recursive: true, force: true }); });
   const local = join(dir, "Clients");

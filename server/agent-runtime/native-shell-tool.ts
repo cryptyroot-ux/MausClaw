@@ -1,4 +1,4 @@
-// Native shell (Bash) tool for the OMB agent engine. Runs a command in the
+// Native shell (Bash) tool for the MausClaw agent engine. Runs a command in the
 // workspace root with a timeout and captured output. No MCP server needed.
 import { spawn } from "node:child_process";
 

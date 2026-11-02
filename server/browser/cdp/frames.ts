@@ -2,7 +2,7 @@ import type { CdpSession, Params } from "./connection.ts";
 import { isMissingContext } from "./errors.ts";
 
 /** The isolated world every frame gets: it sees the DOM, never the page's globals, and the page cannot see it. */
-export const WORLD_NAME = "omb";
+export const WORLD_NAME = "mausclaw";
 
 export interface FrameRecord {
   id: string;

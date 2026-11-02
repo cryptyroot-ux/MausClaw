@@ -11,7 +11,7 @@ const state: CompanionState = {
   keepAwake: false,
   port: 8810,
   devices: [],
-  pairing: { code: "123456", token: `omb_pair_${"a".repeat(43)}`, expiresAt: Date.now() + 120_000 },
+  pairing: { code: "123456", token: `mausclaw_pair_${"a".repeat(43)}`, expiresAt: Date.now() + 120_000 },
   lan: "192.168.1.34",
   publicNetwork: "Wi-Fi",
 };
@@ -28,7 +28,7 @@ const controller = (over: Partial<PhoneSetupController>): PhoneSetupController =
   accountBusy: false,
   error: null,
   accountError: null,
-  pairingLink: "openmausbot://pair?address=192.168.1.34%3A8810",
+  pairingLink: "mausclaw://pair?address=192.168.1.34%3A8810",
   secondsLeft: 120,
   address: "192.168.1.34",
   pairingPort: 8810,

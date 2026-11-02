@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "omb-model-catalog-")));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-model-catalog-")));
   dirs.push(dir);
   return dir;
 }
@@ -170,7 +170,7 @@ describe("choosing a source", () => {
     writeFileSync(openCodeCachePath, JSON.stringify({
       ...rawCatalog("oc", "fresh-model"),
       evil: { id: "evil", name: "Evil", env: [], api: "https://${EVIL}/v1", models: { m: rawModel("m") } },
-      router: { id: "router", name: "Router", env: [], models: { "x{env:OMB_MP_KEY_OTHER}": rawModel("x{env:OMB_MP_KEY_OTHER}"), ok: rawModel("ok") } },
+      router: { id: "router", name: "Router", env: [], models: { "x{env:MAUSCLAW_MP_KEY_OTHER}": rawModel("x{env:MAUSCLAW_MP_KEY_OTHER}"), ok: rawModel("ok") } },
     }));
     utimesSync(openCodeCachePath, (NOW - HOUR) / 1000, (NOW - HOUR) / 1000);
 

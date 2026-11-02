@@ -1,7 +1,7 @@
 # Cline engine
 
 Install the standalone Cline CLI (`npm install -g cline`) and run `cline auth`
-in a terminal to choose its provider, model and account. OpenMausBot's **Cline**
+in a terminal to choose its provider, model and account. MausClaw's **Cline**
 model provider uses **Cline default (configured)**; provider/model selection
 stays in Cline. A missing CLI or unconfigured account remains unavailable.
 Use **Set CLI** for a wrapper with `--config` or `--data-dir` when needed.
@@ -12,7 +12,7 @@ the selected API key in `CLINE_API_KEY` for saved API providers; OAuth login
 and refresh remain Cline's responsibility. A saved custom model is pinned
 over ACP before the prompt so it cannot silently become a catalog fallback.
 
-Permissions always go through OpenMausBot's ACP approval broker, including
+Permissions always go through MausClaw's ACP approval broker, including
 Full Access. Cline's terminal auto-approval default is explicitly disabled.
 MCP tools use the existing scoped integration gate. Native tool selection is
 not advertised: removing native tools from a bot's allowlist is refused.
@@ -36,7 +36,7 @@ Full-to-Ask transitions, cancellation and a missing executable.
 To qualify the actual installed CLI without a paid provider or real account:
 
 ```sh
-OMB_CLINE_NATIVE_PATH=/path/to/cline pnpm exec vitest run scripts/testing/cline-native.e2e.test.ts
+MAUSCLAW_CLINE_NATIVE_PATH=/path/to/cline pnpm exec vitest run scripts/testing/cline-native.e2e.test.ts
 ```
 
 This creates a disposable Cline home, configures a loopback API provider,
@@ -46,7 +46,7 @@ and unchanged provider settings. A second recipe requests harmless shell marker
 writes in Ask, Full and Ask again: only the explicitly approved Full turn may
 write its marker, and all three must emit canonical approval requests.
 Unexpected execution requests are denied. Metadata-only evidence is written
-under `.omb-scratch/verify-evidence/`; temporary homes are removed.
+under `.mausclaw-scratch/verify-evidence/`; temporary homes are removed.
 
 The product workflow is also covered by `server/cline-engine.e2e.test.ts`: a
 Chief discovers Cline through `list_team_setup`, a Cline specialist is created,
@@ -54,7 +54,7 @@ and its turn settles through the normal harness. That workflow uses fake
 provider CLIs; only the optional native recipe above executes Cline itself.
 
 ```sh
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/cline-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/cline-ui.e2e.test.ts
 ```
 
 This recipe mounts the real chat renderer against a disposable server and fake

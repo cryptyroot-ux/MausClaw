@@ -14,7 +14,7 @@ describe("PhoneRegistry", () => {
   let file: string;
   let at: number;
   const now = () => at;
-  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "omb-phones-")); file = join(dir, "phones.json"); at = 1_000_000; });
+  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "mausclaw-phones-")); file = join(dir, "phones.json"); at = 1_000_000; });
   afterEach(async () => { vi.restoreAllMocks(); await removeTempDir(dir); });
 
   it("registers, lists online, and persists across a reload", () => {

@@ -12,7 +12,7 @@ let memory: TeamMemory;
 const source = { botId: "b1", botName: "Scout", threadId: "t1", at: 1_757_000_000_000 };
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "omb-team-memory-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-team-memory-"));
   memory = new TeamMemory(join(dir, "team-memory.json"));
 });
 
@@ -33,7 +33,7 @@ describe("propose", () => {
 
   it.each(["constructor", "__proto__"])("keeps prototype-like section names through updates, rollback and restart: %s", (section) => {
     expect(memory.list(section)).toEqual([]);
-    const first = memory.propose(section, { kind: "term", name: "OMB", detail: "original" }, source);
+    const first = memory.propose(section, { kind: "term", name: "MausClaw", detail: "original" }, source);
     const file = join(dir, "team-memory.json");
     memory = new TeamMemory(file);
     expect(memory.list(section)[0].detail).toBe("original");
@@ -68,12 +68,12 @@ describe("propose", () => {
   });
 
   it("rejects aliases that would make persisted entries unreadable", () => {
-    expect(() => memory.propose("", { kind: "term", name: "OMB", detail: "app", aliases: ["x".repeat(121)] }, source)).toThrow(/aliases/);
+    expect(() => memory.propose("", { kind: "term", name: "MausClaw", detail: "app", aliases: ["x".repeat(121)] }, source)).toThrow(/aliases/);
     expect(memory.list("")).toEqual([]);
   });
 
   it("rolls memory back when a mutation cannot be saved", () => {
-    const first = memory.propose("", { kind: "term", name: "OMB", detail: "original" }, source);
+    const first = memory.propose("", { kind: "term", name: "MausClaw", detail: "original" }, source);
     const file = join(dir, "team-memory.json");
     renameSync(file, file + ".saved");
     mkdirSync(file);
@@ -145,7 +145,7 @@ describe("undoAccept", () => {
   });
 
   it("changes nothing once the entry was edited since", () => {
-    const added = memory.propose("", { kind: "term", name: "OMB", detail: "first" }, source).entry;
+    const added = memory.propose("", { kind: "term", name: "MausClaw", detail: "first" }, source).entry;
     memory.resolve("", added.id, "accept");
     const revision = memory.list("")[0]!.revision!;
     memory.update("", added.id, { detail: "a person's edit" });
@@ -174,9 +174,9 @@ describe("resolve, update, remove", () => {
   });
 
   it("lets the person edit and delete, and keeps the file private", () => {
-    const { entry } = memory.propose("", { kind: "term", name: "OMB", detail: "OpenMausBot" }, source);
-    const edited = memory.update("", entry.id, { detail: "OpenMausBot, the app", aliases: ["OpenMaus"] });
-    expect(edited?.detail).toBe("OpenMausBot, the app");
+    const { entry } = memory.propose("", { kind: "term", name: "MausClaw", detail: "MausClaw" }, source);
+    const edited = memory.update("", entry.id, { detail: "MausClaw, the app", aliases: ["OpenMaus"] });
+    expect(edited?.detail).toBe("MausClaw, the app");
     expect(edited?.aliases).toEqual(["OpenMaus"]);
     expect(memory.remove("", entry.id)).toBe(true);
     expect(memory.remove("", entry.id)).toBe(false);
@@ -184,7 +184,7 @@ describe("resolve, update, remove", () => {
   });
 
   it("survives a restart", () => {
-    memory.propose("", { kind: "term", name: "OMB", detail: "OpenMausBot" }, source);
+    memory.propose("", { kind: "term", name: "MausClaw", detail: "MausClaw" }, source);
     const reopened = new TeamMemory(join(dir, "team-memory.json"));
     expect(reopened.list("")).toHaveLength(1);
     expect(JSON.parse(readFileSync(join(dir, "team-memory.json"), "utf8")).version).toBe(2);

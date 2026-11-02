@@ -8,7 +8,7 @@ import { WEBHOOK_KEY_FILE, WebhookManager, type WebhookManagerOptions } from "./
 const dirs: string[] = [];
 
 function harness() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-webhooks-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-webhooks-"));
   dirs.push(dir);
   const file = join(dir, "webhooks.json");
   let now = new Date("2026-08-16T10:00:00.000Z").getTime();
@@ -260,7 +260,7 @@ describe("WebhookManager", () => {
     expect(h.posted).toHaveLength(0);
   });
 
-  it("gives a delivery:\"post\" webhook one stable dedicated thread, independent of the bot's live selection, and it survives a restart (OpenMausBot#2071)", () => {
+  it("gives a delivery:\"post\" webhook one stable dedicated thread, independent of the bot's live selection, and it survives a restart (MausClaw#2071)", () => {
     const h = harness();
     const { webhook, secret } = h.manager.create({ name: "Brief", prompt: "", botId: "maus-1", delivery: "post" });
 

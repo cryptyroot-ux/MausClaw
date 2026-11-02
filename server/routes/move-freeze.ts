@@ -25,7 +25,7 @@ const thawBody = z.object({ automations: z.literal("off").optional() });
 export function createMoveFreezeRoutes({ freeze, busy, restart, automationsOff }: MoveFreezeRouteDeps): RouteHandler {
   return async ({ req, res, path, method, auth, json, readBody }) => {
     if (path === "/api/move/forget") {
-      if (auth.kind !== "loopback") return json(res, 403, { error: "Only OpenMausBot on this computer can do this." });
+      if (auth.kind !== "loopback") return json(res, 403, { error: "Only MausClaw on this computer can do this." });
       if (method !== "POST") return json(res, 405, { error: "method not allowed" });
       if (!freeze.forget()) return json(res, 409, { error: "Only a computer whose bots moved to My Cloud deletes its copy." });
       json(res, 200, { forgot: true });
@@ -33,7 +33,7 @@ export function createMoveFreezeRoutes({ freeze, busy, restart, automationsOff }
       return;
     }
     if (path === "/api/move/freeze") {
-      if (auth.kind !== "loopback") return json(res, 403, { error: "Only OpenMausBot on this computer can do this." });
+      if (auth.kind !== "loopback") return json(res, 403, { error: "Only MausClaw on this computer can do this." });
       if (method === "GET") {
         const who = busy();
         const cloud = freeze.cloud();

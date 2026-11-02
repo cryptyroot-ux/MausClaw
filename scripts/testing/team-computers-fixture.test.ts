@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, type VerificationServer } from "../control-omb.ts";
+import { launchVerificationServer, type VerificationServer } from "../control-mausclaw.ts";
 
 it.each([
   "https://127.0.0.1:12345", "http://localhost:12345", "http://192.0.2.1:12345",

@@ -4,12 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { WIDGET_SAMPLES } from "../shared/widget-samples.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("shows, replaces and answers a widget on a bot's own conversation, once per press", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-chat-widgets-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-chat-widgets-"));
   const gate = join(gates, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate, FAKE_CLAUDE_VERSION: "2.1.270" });
   const evidence: unknown[] = [];
@@ -25,7 +25,7 @@ it("shows, replaces and answers a widget on a bot's own conversation, once per p
     return result;
   };
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", fixture.info.url]) as any;
+    const result = await runControlMausclaw([...args, "--url", fixture.info.url]) as any;
     evidence.push({ command: args, result });
     return result;
   };
@@ -44,7 +44,7 @@ it("shows, replaces and answers a widget on a bot's own conversation, once per p
     await control("send", "--bot", bot.id, "--task", bot.threadId, "--text", "What is open?");
     let token = "";
     await expect.poll(() => {
-      try { token = dump().mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN; }
+      try { token = dump().mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN; }
       catch { return false; }
       return Boolean(token);
     }, { timeout: 15_000 }).toBe(true);
@@ -123,7 +123,7 @@ it("shows, replaces and answers a widget on a bot's own conversation, once per p
       expect(await api("POST", `/api/bots/${bot.id}/messages`, { threadId: bot.threadId, sendId: "widget-press-another-01", widgetAction }, 409))
         .toEqual({ error: "This was already answered." });
     }
-    token = dump().mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN;
+    token = dump().mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN;
     expect(await card({ tool: "update_widget", widget_id: draft.messageId, widget: WIDGET_SAMPLES.buildStatus }, 409, token))
       .toEqual({ error: "The person already answered that widget. Show a new one." });
     const next = await card({ tool: "show_widget", widget: WIDGET_SAMPLES.buildStatus, fallback_text: "  Build 25 is uploading.  " }, 201, token);

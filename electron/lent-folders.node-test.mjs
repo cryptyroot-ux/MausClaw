@@ -55,7 +55,7 @@ test("Files' list follows lending: a folder shared from the Files page becomes t
 });
 
 test("lending for Files lends a folder read only on top of what is lent, and stops lending when it was all", async () => {
-  const env = { id: "cloud", origin: "https://omb-u-aaaaaaaaaaaa.fly.dev" };
+  const env = { id: "cloud", origin: "https://mausclaw-u-aaaaaaaaaaaa.fly.dev" };
   let state = { enabled: true, folders: [folder("Documents")], screen: true, internet: true, chrome: false, terminal: false };
   const saved = [], revoked = [];
   const sharing = { cloudState: () => state, saveCloud: async (_env, input) => { saved.push(input); state = { ...state, ...input, enabled: true }; }, revoke: () => { revoked.push(true); state = { ...state, enabled: false }; }, lentToCloud: () => ({ off: true }) };
@@ -79,7 +79,7 @@ test("lending for Files lends a folder read only on top of what is lent, and sto
 
 function setup(t) {
   // The native real path, as lending stores a lent folder's (see lent-staged.node-test.mjs).
-  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "omb-lent-folders-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "mausclaw-lent-folders-")));
   const home = join(dir, "home");
   const notes = join(home, "Notes");
   mkdirSync(notes, { recursive: true });
@@ -92,8 +92,8 @@ function setup(t) {
   const clock = { now: AT + 60_000 };
   const service = createCloudFilesService({
     settingsFile: join(dir, "user", "settings.json"), stateFile: join(dir, "user", "state.db"),
-    documentsDir: join(home, "Documents"), localDataDir: join(home, ".openmausbot"), homeDir: home,
-    platform: process.platform, hostname: "Ash-MBP", cloudOrigin: () => "https://omb-u-aaaaaaaaaaaa.fly.dev", fetch: async () => { throw new Error("no network in tests"); },
+    documentsDir: join(home, "Documents"), localDataDir: join(home, ".mausclaw"), homeDir: home,
+    platform: process.platform, hostname: "Ash-MBP", cloudOrigin: () => "https://mausclaw-u-aaaaaaaaaaaa.fly.dev", fetch: async () => { throw new Error("no network in tests"); },
     trashItem: async (file) => { trashed.push(readFileSync(file, "utf8")); rmSync(file); }, markDownloaded: async () => {},
     createClient: () => cloud.client, watch: () => () => {}, freeBytes: () => 100 * GB, now: () => clock.now, lending, planDisk: () => ({ maxBytes: 20 * GB }),
   });
@@ -178,7 +178,7 @@ test("a Cloud from before lent copies gets none: lending stays live only there, 
 });
 
 test("a lent folder deleted from disk never stops lending or unlending the rest", async () => {
-  const env = { id: "cloud", origin: "https://omb-u-aaaaaaaaaaaa.fly.dev" };
+  const env = { id: "cloud", origin: "https://mausclaw-u-aaaaaaaaaaaa.fly.dev" };
   const gone = folder("Gone"), kept = folder("Kept");
   let state = { enabled: true, folders: [gone, kept], screen: false, internet: true, chrome: false, terminal: false };
   const saved = [];

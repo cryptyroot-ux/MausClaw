@@ -237,7 +237,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
   async function localJson(route) {
     if (!allowed(route)) throw new CloudSendError("invalid", "Unsupported local request.");
     const response = await local(route);
-    if (!response.ok) throw new CloudSendError("local", "OpenMausBot on this computer did not answer. Try again in a moment.");
+    if (!response.ok) throw new CloudSendError("local", "MausClaw on this computer did not answer. Try again in a moment.");
     return response.json();
   }
   async function localBytes(route) {
@@ -342,7 +342,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
   async function sendTo(origin, job, { keys, force, reason }) {
     const result = { ...emptyResult(), ...(reason === "move" ? movedResult() : {}) };
     const mine = parseSendSummary(await localJson(reason === "move" ? scoped("/api/cloud-send?move=1") : "/api/cloud-send"));
-    if (!mine) throw new CloudSendError("local", "OpenMausBot on this computer did not answer. Try again in a moment.");
+    if (!mine) throw new CloudSendError("local", "MausClaw on this computer did not answer. Try again in a moment.");
     const withChats = !keys && CHAT_REASONS.has(reason);
     const latest = await sendItems(origin, mine, result, { keys, force, job, withChats });
     const outcome = { at: now(), reason, result };
@@ -357,7 +357,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
 
   /** A move goes only to a Cloud that says it takes one: an older one would lose the owner's lines and the checks. */
   async function assertTakesMove(session) {
-    const described = await session.call("GET", "/.well-known/openmausbot/environment");
+    const described = await session.call("GET", "/.well-known/mausclaw/environment");
     if (!(Number(described.body?.capabilities?.move) >= 1)) throw new CloudSendError("outdated", OUTDATED_FOR_MOVE);
   }
 

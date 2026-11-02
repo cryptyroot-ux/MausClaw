@@ -47,7 +47,7 @@ describe("the quiet rule", () => {
   it("adds scripts to new documents only in a named world", () => {
     expect(methodRefusal("page", "Page.addScriptToEvaluateOnNewDocument", { source: "1" })).toMatch(/worldName/);
     expect(methodRefusal("page", "Page.addScriptToEvaluateOnNewDocument", { source: "1", worldName: "" })).toMatch(/worldName/);
-    expect(methodRefusal("frame", "Page.addScriptToEvaluateOnNewDocument", { source: "1", worldName: "omb" })).toBeNull();
+    expect(methodRefusal("frame", "Page.addScriptToEvaluateOnNewDocument", { source: "1", worldName: "mausclaw" })).toBeNull();
   });
 
   it("gives workers the identity and nothing else", () => {

@@ -10,9 +10,9 @@ import type { BotRecord, Message, Store } from "./store.ts";
 
 export const DEFAULT_FIRST_REPLY_NOTICE_MS = 20_000;
 
-/** OMB_FIRST_REPLY_NOTICE_MS, else 20 s; 0 turns the rescue off. */
+/** MAUSCLAW_FIRST_REPLY_NOTICE_MS, else 20 s; 0 turns the rescue off. */
 export function firstReplyNoticeMs(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env.OMB_FIRST_REPLY_NOTICE_MS?.trim();
+  const raw = env.MAUSCLAW_FIRST_REPLY_NOTICE_MS?.trim();
   if (!raw) return DEFAULT_FIRST_REPLY_NOTICE_MS;
   const ms = Number(raw);
   return Number.isFinite(ms) && ms >= 0 ? ms : DEFAULT_FIRST_REPLY_NOTICE_MS;

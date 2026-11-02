@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({
-  app: { name: "OpenMausBot" },
+  app: { name: "MausClaw" },
   Menu: { buildFromTemplate: (template) => template },
 }));
 
@@ -34,11 +34,11 @@ describe("buildApplicationMenu", () => {
 
   it.each(["darwin", "linux", "win32"])("lists a saved local environment by its folder, so switching servers never fails on %s", platform => {
     const onSwitch = vi.fn();
-    const local = { id: "e1", kind: "local", name: "Work", dataDir: "/Users/me/.openmausbot-work" };
+    const local = { id: "e1", kind: "local", name: "Work", dataDir: "/Users/me/.mausclaw-work" };
     const tailnet = { id: "t1", name: "Mac mini", origin: "https://mac-mini.tail1f3f14.ts.net" };
     const template = build(platform, { environments: [local, tailnet], activeId: "t1", onSwitch });
     const items = template.find(entry => entry.label === "Server").submenu;
-    expect(items.find(entry => entry.label === "Work — /Users/me/.openmausbot-work")).toMatchObject({ checked: false });
+    expect(items.find(entry => entry.label === "Work — /Users/me/.mausclaw-work")).toMatchObject({ checked: false });
     expect(items.find(entry => entry.label === "Mac mini — mac-mini.tail1f3f14.ts.net")).toMatchObject({ checked: true });
     items.find(entry => entry.label.startsWith("Work")).click();
     expect(onSwitch).toHaveBeenCalledWith("e1");
@@ -48,7 +48,7 @@ describe("buildApplicationMenu", () => {
     const onToggle = vi.fn();
     const template = build(platform, { openAtLogin: { checked: false, onToggle } });
     const item = template[0].submenu.find((entry) => entry.id === "open-at-login");
-    expect(template[0].label).toBe(platform === "darwin" ? "OpenMausBot" : "File");
+    expect(template[0].label).toBe(platform === "darwin" ? "MausClaw" : "File");
     expect(item).toMatchObject({ label: "Open at Login", type: "checkbox", checked: false });
     item.click();
     expect(onToggle).toHaveBeenCalledWith(true);
@@ -70,7 +70,7 @@ describe("buildApplicationMenu", () => {
     const template = build(platform);
     expect(template[0].role).toBe("fileMenu");
     for (const item of template) {
-      expect(item.label).not.toBe("OpenMausBot");
+      expect(item.label).not.toBe("MausClaw");
     }
   });
 
@@ -84,10 +84,10 @@ describe("buildApplicationMenu", () => {
   });
 
   it("mirrors Add a Cloud… under the saved servers only when main offers it, and names My Cloud's line", () => {
-    const servers = [{ id: "cloud", name: "My Cloud", origin: "https://omb-u-1.fly.dev" }];
+    const servers = [{ id: "cloud", name: "My Cloud", origin: "https://mausclaw-u-1.fly.dev" }];
     const without = build("darwin", { environments: servers }).find(entry => entry.label === "Server").submenu;
     expect(without.some(entry => entry.id === "add-cloud")).toBe(false);
-    expect(without.find(entry => entry.type === "radio" && entry.label.startsWith("My Cloud")).label).toBe("My Cloud — omb-u-1.fly.dev");
+    expect(without.find(entry => entry.type === "radio" && entry.label.startsWith("My Cloud")).label).toBe("My Cloud — mausclaw-u-1.fly.dev");
     const onAddCloud = vi.fn();
     const submenu = build("darwin", { environments: servers, onAddCloud, sublabels: { cloud: "Always on" } }).find(entry => entry.label === "Server").submenu;
     expect(submenu.map(entry => entry.id ?? entry.label ?? entry.type).slice(0, 4)).toEqual(["This computer", "My Cloud — Always on", "add-cloud", "separator"]);
@@ -97,7 +97,7 @@ describe("buildApplicationMenu", () => {
   });
 
   it("once My Cloud is home, lists only the other saved servers with Back to My Cloud, and has no Server menu without any", () => {
-    const home = { origin: "https://omb-t-1.fly.dev", onBack: vi.fn() };
+    const home = { origin: "https://mausclaw-t-1.fly.dev", onBack: vi.fn() };
     const cloud = { id: "c", name: "My Cloud", origin: home.origin };
     const office = { id: "o", name: "Office", origin: "https://office.example.test" };
     const alone = build("darwin", { environments: [cloud], activeId: "c", home });

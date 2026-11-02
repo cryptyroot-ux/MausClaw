@@ -7,7 +7,7 @@ import { CLOUD_COLORS, CLOUD_COLOR_HEX, cleanCloudColor, cleanCloudName, cloudLi
   installCloudBuy, lookFile } from "./cloud-buy.mjs";
 import environments from "./environments.cjs";
 
-const origin = "https://omb-u-1a2b3c4d5e6f.fly.dev";
+const origin = "https://mausclaw-u-1a2b3c4d5e6f.fly.dev";
 
 test("a Cloud's name is up to 28 characters of plain text, and its colour one of six names", () => {
   assert.equal(cleanCloudName("  Studio   cloud "), "Studio cloud");
@@ -112,7 +112,7 @@ test("{name} is ready once per checkout from here: not while the sheet is open i
   assert.equal(watched(paid({ status: "ready", origin })), false, "once");
 });
 
-test("openmausbot://cloud shows the sheet while a purchase from here is under way, whether or not its checkout is still watched", () => {
+test("mausclaw://cloud shows the sheet while a purchase from here is under way, whether or not its checkout is still watched", () => {
   assert.equal(cloudLinkOpensSheet({ status: "connected", checkout: { plan: "pro", startedAt: 1 } }), true);
   assert.equal(cloudLinkOpensSheet({ status: "connected", purchase: { state: "confirming" } }), true);
   assert.equal(cloudLinkOpensSheet({ status: "connected", machine: { status: "provisioning" } }), true);
@@ -177,7 +177,7 @@ test("the page's bridge sends the sheet's words as text only, and exists only on
   const load = ({ remote = false } = {}) => {
     let bridge; const invoked = [];
     vm.runInNewContext(readFileSync(new URL("./preload.cjs", import.meta.url), "utf8"), {
-      process: { platform: "fixture", argv: [`--omb-local-origin=${local}`, "--omb-company-desktop=1"] },
+      process: { platform: "fixture", argv: [`--mausclaw-local-origin=${local}`, "--mausclaw-company-desktop=1"] },
       location: { origin: remote ? "https://remote.example.test" : local }, TextEncoder, localStorage: { getItem: () => null },
       require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name, value) => { bridge = value; } },
         ipcRenderer: { on() {}, removeListener() {}, send() {}, invoke: (...args) => { invoked.push(args); return Promise.resolve(null); } } }),

@@ -3,7 +3,7 @@ import { closeSync, openSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
 
@@ -25,7 +25,7 @@ it("preserves peer approval outcomes through real HTTP responses and sends no wo
     else expect(response.ok, `${method} ${path}: ${JSON.stringify(result)}`).toBe(true);
     return result as any;
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const messages = async (threadId: string) => (await api("GET", `/api/threads/${threadId}/messages?limit=100`)).messages as any[];
   const card = async (threadId: string) => {
     let found: any;
@@ -68,7 +68,7 @@ it("preserves peer approval outcomes through real HTTP responses and sends no wo
     }, { timeout: 15_000 }).toBe(true);
     let token = "";
     await expect.poll(() => {
-      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN; }
+      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN; }
       catch { return false; }
       return Boolean(token);
     }, { timeout: 15_000 }).toBe(true);
@@ -123,7 +123,7 @@ it("preserves peer approval outcomes through real HTTP responses and sends no wo
     const other = (await cli("new-bot", "--name", "Second approval target")).bot;
     await cli("send", "--bot", from.id, "--task", from.threadId, "--text", "Check the completed handoff and request two teammates.");
     await expect.poll(() => {
-      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN; }
+      try { token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN; }
       catch { return false; }
       return Boolean(token);
     }, { timeout: 15_000 }).toBe(true);

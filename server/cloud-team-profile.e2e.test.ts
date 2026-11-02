@@ -1,4 +1,4 @@
-// A real Team Cloud (OMB_CLOUD_ROLE=team) with two people: who "you" is. Each person's profile (name, picture, About you)
+// A real Team Cloud (MAUSCLAW_CLOUD_ROLE=team) with two people: who "you" is. Each person's profile (name, picture, About you)
 // is their own, keyed by their verified claim; the server's one profile from config.json is nobody's there: it moves to
 // the person whose address it names. Bots name the person a conversation is for, and each group chat line its speaker.
 // The engine is the synthetic Claude CLI, so this proves the plumbing, not a model's judgement.
@@ -23,7 +23,7 @@ let ada = "", bob = "";
 let bot: { id: string; mainThreadId: string };
 
 type Profile = { name: string; email: string; aboutMe?: string; avatarUrl?: string };
-const configFile = () => join(team.home, ".openmausbot", "config.json");
+const configFile = () => join(team.home, ".mausclaw", "config.json");
 const serverProfile = () => (JSON.parse(readFileSync(configFile(), "utf8")) as { profile?: Record<string, string> }).profile ?? {};
 const you = async (token: string) => {
   const config = await team.as(token, "GET", "/api/config");

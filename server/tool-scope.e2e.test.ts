@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 
 async function withFixture(mode: "happy" | "hang", run: (helpers: {
   api(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<{ status: number; body: any }>;
@@ -22,7 +22,7 @@ async function withFixture(mode: "happy" | "hang", run: (helpers: {
         const response = await fetch(`${fixture.info.url}${path}`, { method, headers: { "content-type": "application/json", ...headers }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
         return { status: response.status, body: await response.json() };
       },
-      control: (args) => runControlOmb([...args, "--url", fixture.info.url]),
+      control: (args) => runControlMausclaw([...args, "--url", fixture.info.url]),
       dump: async () => {
         await expect.poll(() => existsSync(fixture.fixtureDumpPath), { timeout: 15_000 }).toBe(true);
         const value = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8"));
@@ -86,7 +86,7 @@ it.each(["direct", "preview", "room", "goal"] as const)("keeps a corrupt persist
   let restarted: ReturnType<typeof spawn> | undefined;
   const log = openSync(fixture.info.logPath, "a", 0o600);
   try {
-    const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+    const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
     const { bot } = await control(["new-bot", "--name", "Corrupt scope fixture"]) as any;
     const { channel } = await control(["new-channel", "--name", "Corrupt scope room", "--members", bot.id]) as any;
     const stopped = once(fixture.child, "close"); fixture.child.kill(); await stopped;
@@ -175,7 +175,7 @@ it("carries the latest original tool selection into fresh direct and room MCP co
     expect((await api("PATCH", `/api/bots/${bot.id}`, { toolScope: direct })).status).toBe(200);
     await control(["send", "--bot", bot.id, "--text", "Reply once."]);
     const first = await dump();
-    expect(JSON.parse(first.mcpConfig.mcpServers.notes.env.OMB_GATE_TOOL_SCOPE)).toEqual(direct);
+    expect(JSON.parse(first.mcpConfig.mcpServers.notes.env.MAUSCLAW_GATE_TOOL_SCOPE)).toEqual(direct);
     await control(["wait", "--bot", bot.id, "--timeout", "30"]);
     const roomScope = { deny: ["mcp:notes:write_notes"] };
     expect((await api("PATCH", `/api/bots/${bot.id}`, { toolScope: roomScope })).status).toBe(200);
@@ -183,7 +183,7 @@ it("carries the latest original tool selection into fresh direct and room MCP co
     await control(["send-channel", "--channel", channel.id, "--text", "Reply once in this room."]);
     const second = await dump();
     expect(second.pid).not.toBe(first.pid);
-    expect(JSON.parse(second.mcpConfig.mcpServers.notes.env.OMB_GATE_TOOL_SCOPE)).toEqual(roomScope);
+    expect(JSON.parse(second.mcpConfig.mcpServers.notes.env.MAUSCLAW_GATE_TOOL_SCOPE)).toEqual(roomScope);
     await control(["wait", "--channel", channel.id, "--timeout", "30"]);
   });
 }, 60_000);

@@ -14,7 +14,7 @@ const { values, positionals } = parseArgs({
   options: { version: { type: "string", default: CHROME_FOR_TESTING_VERSION }, keep: { type: "string" } },
 });
 if (!positionals.length || positionals.some((platform) => !NODE_TARGETS[platform])) throw new Error(`name one or more Chrome for Testing platforms: ${Object.keys(NODE_TARGETS).join(", ")}`);
-const folder = values.keep ? resolve(values.keep) : mkdtempSync(join(tmpdir(), "omb-cft-pin-"));
+const folder = values.keep ? resolve(values.keep) : mkdtempSync(join(tmpdir(), "mausclaw-cft-pin-"));
 mkdirSync(folder, { recursive: true });
 try {
   for (const platform of positionals) {

@@ -1,4 +1,4 @@
-// "Move to Acme" end to end: the person's My Cloud (OMB_CLOUD_ROLE=home) and their team's Cloud (OMB_CLOUD_ROLE=team)
+// "Move to Acme" end to end: the person's My Cloud (MAUSCLAW_CLOUD_ROLE=home) and their team's Cloud (MAUSCLAW_CLOUD_ROLE=team)
 // as real servers (scripts/testing/cloud-send-fixture.ts), the Admin's signed team pairing faked as the fixture fakes it,
 // and main's own wiring (team-move-main.mjs through one-home-main.mjs) moving one bot between them. The engine is the
 // synthetic Claude CLI, so this proves the plumbing, not a model's judgement.
@@ -50,8 +50,8 @@ async function say(bot: { id: string }, threadId: string, text: string) {
 const onTeam = (who: string) => (method: string, path: string, body?: unknown) => team.as(tokens[who]!, method, path, body);
 const teamBots = async (who: string) => (await onTeam(who)("GET", "/api/bots")).body.bots as Bot[];
 const cloudBots = async () => (await fx.onCloud("GET", "/api/bots")).body.bots as Bot[];
-const cloudHome = (...rest: string[]) => join(fx.root, "cloud", ".openmausbot", ...rest);
-const teamHome = (...rest: string[]) => join(team.home, ".openmausbot", ...rest);
+const cloudHome = (...rest: string[]) => join(fx.root, "cloud", ".mausclaw", ...rest);
+const teamHome = (...rest: string[]) => join(team.home, ".mausclaw", ...rest);
 
 /** A bot on My Cloud with two chats, a routine that is on, two files and notes about Ada. */
 async function botWithEverything(name: string) {

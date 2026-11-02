@@ -16,8 +16,8 @@ function usableMilliseconds(raw: string | undefined): number | null {
   return Number.isFinite(value) && value > 0 && value <= MAX_TIMER_MS ? value : null;
 }
 
-/** Per-harness names (OMB_CLAUDE_SESSION_IDLE_*, OMB_ACP_SESSION_IDLE_*) win over OMB_SESSION_IDLE_MS /
- *  OMB_SESSION_IDLE_MIN_MS; the floor is the greater of ten seconds and any configured minimum. */
+/** Per-harness names (MAUSCLAW_CLAUDE_SESSION_IDLE_*, MAUSCLAW_ACP_SESSION_IDLE_*) win over MAUSCLAW_SESSION_IDLE_MS /
+ *  MAUSCLAW_SESSION_IDLE_MIN_MS; the floor is the greater of ten seconds and any configured minimum. */
 export function sessionIdlePolicy(
   driverPrefix: string,
   env: Record<string, string | undefined> = process.env,
@@ -25,12 +25,12 @@ export function sessionIdlePolicy(
   const minimumMs = Math.max(
     MINIMUM_IDLE_MS,
     usableMilliseconds(
-      env[`OMB_${driverPrefix}_SESSION_IDLE_MIN_MS`] ?? env.OMB_SESSION_IDLE_MIN_MS,
+      env[`MAUSCLAW_${driverPrefix}_SESSION_IDLE_MIN_MS`] ?? env.MAUSCLAW_SESSION_IDLE_MIN_MS,
     ) ?? 0,
   );
   const configured =
     usableMilliseconds(
-      env[`OMB_${driverPrefix}_SESSION_IDLE_MS`] ?? env.OMB_SESSION_IDLE_MS,
+      env[`MAUSCLAW_${driverPrefix}_SESSION_IDLE_MS`] ?? env.MAUSCLAW_SESSION_IDLE_MS,
     ) ?? DEFAULT_IDLE_MS;
   return { idleMs: Math.max(minimumMs, configured), minimumMs };
 }

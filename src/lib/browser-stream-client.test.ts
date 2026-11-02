@@ -1,5 +1,5 @@
 // Ported from pingdotgg/t3code@00cdceb1 packages/client-runtime/src/preview/serverBrowserStream.test.ts (MIT License,
-// Copyright (c) 2026 T3 Tools Inc.), with OpenMausBot's routes, its watching viewer's resize and its own messages.
+// Copyright (c) 2026 T3 Tools Inc.), with MausClaw's routes, its watching viewer's resize and its own messages.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { browserStreamAccess, createPreviewStreamClient, type PreviewStreamControl, type PreviewStreamEvents } from "./browser-stream-client";
@@ -34,7 +34,7 @@ class FakeSocket extends EventTarget {
   }
 }
 
-const access = browserStreamAccess("pepper", { protocol: "http:", host: "omb.test" });
+const access = browserStreamAccess("pepper", { protocol: "http:", host: "mausclaw.test" });
 const target = { access, maxWidth: 800, maxHeight: 600 };
 const events = (more: Partial<PreviewStreamEvents> = {}): PreviewStreamEvents => ({
   onFrame: vi.fn(),
@@ -58,7 +58,7 @@ describe("preview stream control", () => {
 
   it("opens the bot's stream with its frame cap and panel size, and marks passive viewers", () => {
     const { client, socket } = connect();
-    expect(socket.url).toBe("ws://omb.test/api/bots/pepper/browser/stream?maxWidth=800&maxHeight=600");
+    expect(socket.url).toBe("ws://mausclaw.test/api/bots/pepper/browser/stream?maxWidth=800&maxHeight=600");
     client.stop();
     createPreviewStreamClient({ ...target, width: 1600, height: 1000 }, events()).stop();
     expect(new URL(FakeSocket.current.url).searchParams.get("width")).toBe("1600");
@@ -158,14 +158,14 @@ describe("preview stream downloads, uploads and messages", () => {
     const onDownload = vi.fn();
     createPreviewStreamClient(target, events({ onDownload }));
     FakeSocket.current.message(JSON.stringify({ type: "download", id: "d1", fileName: "a b.csv", sizeBytes: 3 }));
-    expect(onDownload).toHaveBeenCalledExactlyOnceWith({ fileName: "a b.csv", sizeBytes: 3, url: "http://omb.test/api/bots/pepper/browser/download/d1" });
+    expect(onDownload).toHaveBeenCalledExactlyOnceWith({ fileName: "a b.csv", sizeBytes: 3, url: "http://mausclaw.test/api/bots/pepper/browser/download/d1" });
   });
 
   it("offers the page's file picker with the upload route that answers it, until it closes", () => {
     const onFileChooser = vi.fn();
     createPreviewStreamClient(target, events({ onFileChooser }));
     FakeSocket.current.message(JSON.stringify({ type: "fileChooser", id: "c1", multiple: true, accept: ".txt" }));
-    expect(onFileChooser).toHaveBeenLastCalledWith({ multiple: true, accept: ".txt", uploadUrl: "http://omb.test/api/bots/pepper/browser/upload?chooser=c1", credentials: true });
+    expect(onFileChooser).toHaveBeenLastCalledWith({ multiple: true, accept: ".txt", uploadUrl: "http://mausclaw.test/api/bots/pepper/browser/upload?chooser=c1", credentials: true });
     FakeSocket.current.message(JSON.stringify({ type: "fileChooserClosed", id: "other" }));
     expect(onFileChooser).toHaveBeenCalledOnce();
     FakeSocket.current.message(JSON.stringify({ type: "fileChooserClosed", id: "c1" }));
@@ -201,8 +201,8 @@ describe("preview stream downloads, uploads and messages", () => {
     FakeSocket.current.closeWith(4404, "gone");
     expect(onGone).toHaveBeenCalledOnce();
     createPreviewStreamClient(target, events({ onHostSetup }));
-    FakeSocket.current.closeWith(4503, JSON.stringify({ need: "libraries", command: "sudo openmausbot browser setup" }));
-    expect(onHostSetup).toHaveBeenCalledWith({ need: "libraries", command: "sudo openmausbot browser setup" });
+    FakeSocket.current.closeWith(4503, JSON.stringify({ need: "libraries", command: "sudo mausclaw browser setup" }));
+    expect(onHostSetup).toHaveBeenCalledWith({ need: "libraries", command: "sudo mausclaw browser setup" });
     createPreviewStreamClient(target, events({ onUnauthorized }));
     FakeSocket.current.closeWith(1006, "", false);
     expect(onUnauthorized).toHaveBeenCalledOnce();

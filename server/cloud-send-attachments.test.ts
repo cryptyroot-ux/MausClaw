@@ -2,9 +2,9 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-process.env.OMB_ATTACHMENTS_MAX_BYTES = String(8 * 1024);
+process.env.MAUSCLAW_ATTACHMENTS_MAX_BYTES = String(8 * 1024);
 const { ATTACHMENTS_DIR, CLOUD_HOME_ATTACHMENTS_MAX_BYTES, DEFAULT_ATTACHMENTS_MAX_BYTES, attachmentsMaxBytes, saveNamedAttachment } = await import("./attachments.ts");
-delete process.env.OMB_ATTACHMENTS_MAX_BYTES;
+delete process.env.MAUSCLAW_ATTACHMENTS_MAX_BYTES;
 
 const partials = () => existsSync(ATTACHMENTS_DIR) ? readdirSync(ATTACHMENTS_DIR).filter((name) => name.endsWith(".partial")) : [];
 async function* chunks(...parts: Buffer[]) { for (const part of parts) yield part; }
@@ -12,9 +12,9 @@ async function* chunks(...parts: Buffer[]) { for (const part of parts) yield par
 describe("the attachment store a move fills", () => {
   it("is larger on a person's own Cloud, unless the server says otherwise", () => {
     expect(attachmentsMaxBytes({})).toBe(DEFAULT_ATTACHMENTS_MAX_BYTES);
-    expect(attachmentsMaxBytes({ OMB_CLOUD_ROLE: "home" })).toBe(CLOUD_HOME_ATTACHMENTS_MAX_BYTES);
+    expect(attachmentsMaxBytes({ MAUSCLAW_CLOUD_ROLE: "home" })).toBe(CLOUD_HOME_ATTACHMENTS_MAX_BYTES);
     expect(CLOUD_HOME_ATTACHMENTS_MAX_BYTES).toBeGreaterThan(DEFAULT_ATTACHMENTS_MAX_BYTES);
-    expect(attachmentsMaxBytes({ OMB_CLOUD_ROLE: "home", OMB_ATTACHMENTS_MAX_BYTES: "1000" })).toBe(1000);
+    expect(attachmentsMaxBytes({ MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_ATTACHMENTS_MAX_BYTES: "1000" })).toBe(1000);
   });
 
   it("keeps an arriving attachment under its own name, once, counted against the store's limit, never leaving a partial file", async () => {

@@ -24,7 +24,7 @@ export const NEAR_LIMIT_PERCENT = 90;
 
 export type LimitWindowName = "5-hour" | "weekly" | "other";
 
-/** One engine's usage limit as OpenMausBot knows it now. */
+/** One engine's usage limit as MausClaw knows it now. */
 export interface EngineLimit {
   /** Engine instance id. */
   engine: string;

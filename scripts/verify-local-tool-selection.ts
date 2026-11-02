@@ -20,12 +20,12 @@ const cli = resolve(cliArgument);
 const upstream = new URL(providerArgument);
 assert(upstream.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(upstream.hostname)
   && !upstream.username && !upstream.password && !upstream.search && !upstream.hash, "Only an unauthenticated loopback model is supported");
-const home = mkdtempSync(join(tmpdir(), "omb-local-selection-"));
+const home = mkdtempSync(join(tmpdir(), "mausclaw-local-selection-"));
 // Do not inherit cloud accounts or the user's native-agent configuration.
 for (const name of Object.keys(process.env)) {
   if (!["PATH", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "LANG", "LC_ALL", "TZ", "TMPDIR"].includes(name)) delete process.env[name];
 }
-process.env.HOME = home; process.env.USERPROFILE = home; process.env.OMB_DATA_DIR = join(home, "data");
+process.env.HOME = home; process.env.USERPROFILE = home; process.env.MAUSCLAW_DATA_DIR = join(home, "data");
 const { ensureDirs } = await import("../server/config.ts"); ensureDirs();
 const artifact = join(home, "draft.txt"), blocked = join(home, "blocked.txt"), receipt = join(home, "mail-calls.txt");
 type Payload = { tools?: Array<{ function: { name: string } }>; stream?: boolean; max_tokens?: number; messages: unknown[] };

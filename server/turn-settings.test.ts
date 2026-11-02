@@ -7,7 +7,7 @@ import { claudeUserSkillsDir, settingsTurnFields } from "./turn-settings.ts";
 
 const dirs: string[] = [];
 const temp = () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-turn-settings-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-turn-settings-"));
   dirs.push(dir);
   return dir;
 };

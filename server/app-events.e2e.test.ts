@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { startBrokerFake, type BrokerFake } from "./testing/broker-fake.ts";
 
 // App events end to end on a real server (temporary home, scripted engine) against the connected-apps service's own
@@ -19,7 +19,7 @@ beforeAll(async () => {
   broker = await startBrokerFake();
   owner = await broker.install();
   gmail = broker.account(owner.userId, "gmail", "sales");
-  fixture = await launchVerificationServer({ ...process.env, OMB_COMPOSIO_BROKER_URL: broker.url, OMB_COMPOSIO_BROKER_TOKEN: owner.token }, undefined, undefined, undefined, undefined, { scripted: true });
+  fixture = await launchVerificationServer({ ...process.env, MAUSCLAW_COMPOSIO_BROKER_URL: broker.url, MAUSCLAW_COMPOSIO_BROKER_TOKEN: owner.token }, undefined, undefined, undefined, undefined, { scripted: true });
   evidence.push({ fixture: fixture.info, broker: broker.url });
 }, 60_000);
 
@@ -45,7 +45,7 @@ it("sets up an app-event automation from chat, runs on a Composio event, and sho
     expect(response.status, `${method} ${path}: ${JSON.stringify(value)}`).toBe(status);
     return value;
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const { bot } = await cli("new-bot", "--name", "Scout");
   await api("PATCH", `/api/bots/${bot.id}`, { approvalMode: "ask" });
   const threadId = bot.activeTaskId as string;

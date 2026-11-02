@@ -77,7 +77,7 @@ async function main(): Promise<void> {
       completeMs,
       firstByteBeforeCompletion: streamed,
       baseCommit: BASE_COMMIT,
-      measuredBuildCommit: process.env.OMB_MEASURED_COMMIT ?? "(unset: worktree HEAD)",
+      measuredBuildCommit: process.env.MAUSCLAW_MEASURED_COMMIT ?? "(unset: worktree HEAD)",
       date: new Date().toISOString(),
       machine: { platform: process.platform, arch: process.arch, cpuModel: cpus()[0]?.model ?? null },
       configSummary: { provider: "elevenlabs (record stub)", model: STUB_MODEL, voice: STUB_VOICE },

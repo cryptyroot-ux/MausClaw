@@ -65,8 +65,8 @@ role creation, optional setup, connected-app settings and failure recovery:
 pnpm exec vitest run scripts/testing/bot-tools-ui.e2e.test.ts src/state/store.test.ts
 ```
 
-It uses the disposable `control-omb ui` launcher, not the running app. Set
-`OMB_UI_E2E=1` to install the pinned browser if unavailable.
+It uses the disposable `control-mausclaw ui` launcher, not the running app. Set
+`MAUSCLAW_UI_E2E=1` to install the pinned browser if unavailable.
 
 This browser fixture verifies renderer interaction and persistence, not
 packaged Electron privileges, actual operating-system access, or the
@@ -155,12 +155,12 @@ tabbed panel instead, and that one is driven through
 [Chat UI, driven headlessly](chat-ui.md):
 
 ```sh
-node --experimental-strip-types scripts/control-omb.ts ui launch
-H=/tmp/openmausbot-verify-data-XXXXXX/ui.json
+node --experimental-strip-types scripts/control-mausclaw.ts ui launch
+H=/tmp/mausclaw-verify-data-XXXXXX/ui.json
 # The preview reads as an existing install, so it starts in Advanced mode.
-pnpm control:omb ui eval --ui $H --js "localStorage.setItem('omb-advanced-mode','0'); location.reload(); 'simple'"
-pnpm control:omb ui click --ui $H --name "Open Pepper's profile"
-pnpm control:omb ui snapshot --ui $H --interactive
+pnpm control:mausclaw ui eval --ui $H --js "localStorage.setItem('mausclaw-advanced-mode','0'); location.reload(); 'simple'"
+pnpm control:mausclaw ui click --ui $H --name "Open Pepper's profile"
+pnpm control:mausclaw ui snapshot --ui $H --interactive
 ```
 
 Expected: six tabs (Details, Memory, Library, Skills, Routines, Vault), and on

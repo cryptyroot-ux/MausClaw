@@ -1,7 +1,7 @@
 import { compile as toVega, type TopLevelSpec } from "vega-lite";
 import { describe, expect, it } from "vitest";
 
-import { DATA_LIMITS, type DataColumn, type OmbChartSpec } from "../../shared/data-surface.ts";
+import { DATA_LIMITS, type DataColumn, type MausclawChartSpec } from "../../shared/data-surface.ts";
 import { CHART_SQL_LIMIT, columnClass, compileChart, quoteIdentifier } from "./chart-compiler.ts";
 import { DataFailure } from "./types.ts";
 
@@ -19,7 +19,7 @@ const columns: DataColumn[] = [
 ];
 
 const norm = (sql: string): string => sql.replace(/\s+/g, " ").trim();
-const compile = (spec: OmbChartSpec, from = "sales") => compileChart(spec, columns, from);
+const compile = (spec: MausclawChartSpec, from = "sales") => compileChart(spec, columns, from);
 const enc = (vl: Record<string, unknown>): Record<string, Record<string, unknown>> => vl.encoding as Record<string, Record<string, unknown>>;
 const mark = (vl: Record<string, unknown>): string => (vl.mark as { type: string }).type;
 
@@ -61,7 +61,7 @@ describe("columnClass", () => {
 });
 
 describe("compileChart: reductions per chart type and column class", () => {
-  const cases: Array<{ name: string; spec: OmbChartSpec; method: string; sql: string[]; notSql?: string[]; check: (vl: Record<string, unknown>) => void }> = [
+  const cases: Array<{ name: string; spec: MausclawChartSpec; method: string; sql: string[]; notSql?: string[]; check: (vl: Record<string, unknown>) => void }> = [
     {
       name: "bar over a category folds to the top N",
       spec: { type: "bar", x: "region", y: "amount" },
@@ -399,7 +399,7 @@ describe("compileChart: identifiers and the source", () => {
   });
 
   it("reads from a table, a qualified table, a quoted table or a subquery", () => {
-    expect(compile({ type: "bar", x: "region" }, "omb_results.q_3").sql).toContain("src AS (SELECT * FROM omb_results.q_3)");
+    expect(compile({ type: "bar", x: "region" }, "mausclaw_results.q_3").sql).toContain("src AS (SELECT * FROM mausclaw_results.q_3)");
     expect(compile({ type: "bar", x: "region" }, '"my table"').sql).toContain('src AS (SELECT * FROM "my table")');
     expect(compile({ type: "bar", x: "region" }, "(SELECT * FROM sales WHERE qty > 1)").sql).toContain("src AS (SELECT * FROM (SELECT * FROM sales WHERE qty > 1))");
   });
@@ -422,7 +422,7 @@ describe("compileChart: spec_invalid", () => {
     expect(failure(() => compile({ type: "bar", x: "region", color: "chan" })).error.message).toContain("(color)");
   });
 
-  it.each<[string, OmbChartSpec]>([
+  it.each<[string, MausclawChartSpec]>([
     ["an unknown type", { type: "radar" as never, x: "region" }],
     ["an unknown agg", { type: "bar", x: "region", y: "amount", agg: "mode" as never }],
     ["an unknown sort", { type: "bar", x: "region", sort: "up" as never }],

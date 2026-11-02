@@ -1,4 +1,4 @@
-// One person's connected apps on this computer and on their own Cloud. With OpenMausBot's connected-apps service, this
+// One person's connected apps on this computer and on their own Cloud. With MausClaw's connected-apps service, this
 // computer's installation mints a code for the Cloud's installation, which then acts as the same Composio user. With the
 // person's own Composio project, the Cloud saves the same key and user. A Cloud whose own apps are already connected
 // keeps them: each app connected here is then connected there once.
@@ -25,7 +25,7 @@ export interface ComposioIdentity {
 const meSchema = z.object({ installationId: z.string().min(1), user: z.string().regex(/^[0-9a-f]{24}$/u).optional(), shared: z.boolean().optional() });
 const IDENTITY_TTL_MS = 10 * 60_000;
 const APPS_TTL_MS = 10 * 60_000;
-const ownDigest = (userId: string) => createHash("sha256").update(`omb-composio-own:${userId}`).digest("hex").slice(0, 24);
+const ownDigest = (userId: string) => createHash("sha256").update(`mausclaw-composio-own:${userId}`).digest("hex").slice(0, 24);
 
 let identity: { token: string; at: number; value: { installationId: string; user?: string; shared: boolean } } | null = null;
 let apps: { key: string; at: number; slugs: string[] } | null = null;

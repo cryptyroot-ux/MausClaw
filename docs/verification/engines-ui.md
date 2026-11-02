@@ -18,7 +18,7 @@ synthetic instances for the lifetime of the preview process.
 **Toggle sample ChatGPT plan** changes only the synthetic account state; it
 does not sign in or contact OpenAI.
 Vite's generated source cache stays in the checkout's ignored
-`.omb-scratch/engine-preview-vite` directory; fixture accounts, home, and app data
+`.mausclaw-scratch/engine-preview-vite` directory; fixture accounts, home, and app data
 remain disposable. Keeping these separate prevents late cache writes from
 recreating a removed fixture directory.
 
@@ -80,7 +80,7 @@ CLI through refresh failure, installation, sign-in required, and ready on focus,
 without reopening the app. It uses synthetic provider responses and verifies the
 isolated server reports its own installer platform; it never installs or signs
 in to a real provider. Evidence and a 390px screenshot are written under
-`.omb-scratch/provider-setup`:
+`.mausclaw-scratch/provider-setup`:
 
 ```sh
 node --experimental-strip-types scripts/verify-provider-setup.ts

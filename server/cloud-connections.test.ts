@@ -12,7 +12,7 @@ import { removeTempDir } from "./testing/cleanup.ts";
 
 const dirs: string[] = [];
 afterEach(async () => { for (const dir of dirs.splice(0)) await removeTempDir(dir); });
-const temp = () => { const dir = mkdtempSync(join(tmpdir(), "omb-connections-")); dirs.push(dir); return dir; };
+const temp = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-connections-")); dirs.push(dir); return dir; };
 
 const stdio = (command: string, args: string[] = [], env: Record<string, string> = {}): StoredMcpServer => ({ command, args, env, enabled: true });
 const remote = (url: string, extra: Partial<StoredMcpServer> = {}): StoredMcpServer => ({ type: "http", url, headers: {}, enabled: true, ...extra } as StoredMcpServer);

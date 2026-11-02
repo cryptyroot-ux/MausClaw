@@ -35,7 +35,7 @@ export interface ConnectionListing {
   /** A sign-in that refreshes itself (an MCP server's own account, HighLevel's): it moves, and this computer then
    * forgets it. */
   signIn?: true;
-  /** Connected apps: OpenMausBot's service or the person's own Composio project, the account in a digest equal on two
+  /** Connected apps: MausClaw's service or the person's own Composio project, the account in a digest equal on two
    * servers exactly when they reach the same apps, and the service's installation a code is minted for. */
   mode?: ComposioIdentity["mode"];
   account?: string;
@@ -207,7 +207,7 @@ export function answerConnection(id: string, sources: HandoffSources):
   }
   if (id === "composio") {
     const apiKey = cfg.composio?.apiKey?.trim(), userId = cfg.composio?.userId;
-    return apiKey && userId ? { ok: true, connection: { composio: { apiKey, userId } } } : { ok: false, error: "Connected apps here use OpenMausBot's service." };
+    return apiKey && userId ? { ok: true, connection: { composio: { apiKey, userId } } } : { ok: false, error: "Connected apps here use MausClaw's service." };
   }
   if (id === "highlevel") {
     const connection = sources.highlevel();

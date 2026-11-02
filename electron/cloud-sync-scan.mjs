@@ -24,7 +24,7 @@ function* walkPc(root, wire = "", real = []) {
   const names = entries.map((entry) => entry.name);
   for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const file = join(root, ...real, entry.name);
-    if (/\.omb-sync-[0-9a-f]+$/.test(entry.name)) {
+    if (/\.mausclaw-sync-[0-9a-f]+$/.test(entry.name)) {
       const stat = lstatSync(file, { throwIfNoEntry: false });
       if (stat?.isFile()) yield { temp: true, file, mtimeMs: stat.mtimeMs };
       continue;

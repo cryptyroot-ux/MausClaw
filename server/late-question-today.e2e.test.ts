@@ -4,10 +4,10 @@ import { connect, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 it("keeps a question nobody answered on Today after its turn ends, and a late answer wakes the bot and clears it", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-late-question-today-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-late-question-today-"));
   const release = join(gates, "release");
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_RELEASE: release });
   const api = async (method: string, path: string, body?: unknown): Promise<{ status: number; body: any }> => {
@@ -18,7 +18,7 @@ it("keeps a question nobody answered on Today after its turn ends, and a late an
     });
     return { status: response.status, body: await response.json() };
   };
-  const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: fixture.info.url } }) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw(args, { env: { MAUSCLAW_URL: fixture.info.url } }) as Promise<any>;
   let socket: Socket | undefined;
   console.log(`late-question Today fixture: ${fixture.info.logPath}`);
   try {

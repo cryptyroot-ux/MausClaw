@@ -8,7 +8,7 @@ import { resolveAgentBrowserReleaseAsset } from "../server/browser-engine-releas
 import { BROWSER_LICENSE_FILES, browserExtractionCommand, bundleInventory, parsePrepareBrowserArgs, releaseBytes, stageBrowserTarget, targetsForPreparation, verifyAssetBytes, verifyBrowserBundle, verifyBundleInventory } from "./prepare-browser.mjs";
 
 const fixtures = [];
-function fixture() { const root = mkdtempSync(join(tmpdir(), "omb-browser-prepare-test-")); fixtures.push(root); return root; }
+function fixture() { const root = mkdtempSync(join(tmpdir(), "mausclaw-browser-prepare-test-")); fixtures.push(root); return root; }
 afterEach(() => { vi.unstubAllGlobals(); for (const root of fixtures.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
 describe("pinned desktop browser preparation", () => {

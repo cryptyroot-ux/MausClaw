@@ -7,7 +7,7 @@ import { expect, it } from "vitest";
 import { removeTempDir, waitForExit } from "./cleanup.ts";
 
 it.each([true, false])("Codex dump isolates account probes when turns-only is %s", async (turnsOnly) => {
-  const home = mkdtempSync(join(tmpdir(), "omb-codex-dump-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-codex-dump-"));
   const dump = join(home, "calls.json");
   const children: ChildProcess[] = [];
   const start = () => {

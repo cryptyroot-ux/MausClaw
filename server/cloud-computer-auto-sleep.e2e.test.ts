@@ -13,7 +13,7 @@ import { freePortBlock } from "./testing/ports.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const FAKE_CLAUDE = join(ROOT, "server/testing/fake-claude-cli.ts");
-const INCLUDED = `box_omb_${randomUUID()}`;
+const INCLUDED = `box_mausclaw_${randomUUID()}`;
 const IDLE_MS = 1_500;
 const FRAME = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==", "base64");
 // A logged, always-failing docker stands in for a VPS; the fixture is a POSIX shell script.
@@ -81,13 +81,13 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
       cwd: ROOT,
       env: {
         PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-        OMB_BOAT_API: `${relayBase}/own-key-must-not-be-used`,
-        OMB_CLOUD_BOAT_URL: `${relayBase}/relay/api/box/v1`,
-        OMB_CLOUD_BOAT_TOKEN: INCLUDED,
-        OMB_CLOUD_COMPUTER_IDLE_MS: String(IDLE_MS),
-        ...(process.platform === "win32" ? {} : { OMB_EXTRA_PATH: join(home, "bin"), FAKE_DOCKER_LOG: dockerLog }),
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data, TEMP: home, TMP: home, TMPDIR: home,
+        MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+        MAUSCLAW_BOAT_API: `${relayBase}/own-key-must-not-be-used`,
+        MAUSCLAW_CLOUD_BOAT_URL: `${relayBase}/relay/api/box/v1`,
+        MAUSCLAW_CLOUD_BOAT_TOKEN: INCLUDED,
+        MAUSCLAW_CLOUD_COMPUTER_IDLE_MS: String(IDLE_MS),
+        ...(process.platform === "win32" ? {} : { MAUSCLAW_EXTRA_PATH: join(home, "bin"), FAKE_DOCKER_LOG: dockerLog }),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -152,7 +152,7 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
     });
     await new Promise<void>(resolve => relay.listen(0, "127.0.0.1", resolve));
 
-    home = mkdtempSync(join(tmpdir(), "omb-cloud-sleep-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-cloud-sleep-"));
     data = join(home, "data");
     gate = join(home, "finish");
     usesGate = join(home, "finish-uses");

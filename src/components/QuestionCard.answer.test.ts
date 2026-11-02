@@ -112,12 +112,12 @@ describe("QuestionCard answered in one step", () => {
     expect(host.querySelector('[role="radiogroup"]')).toBeNull();
     const field = host.querySelector("textarea")!;
     expect(field.getAttribute("dir")).toBe("auto");
-    type(field, "omb-preview");
+    type(field, "mausclaw-preview");
     press(field, { key: "Enter", shiftKey: true });
     expect(dispatch).not.toHaveBeenCalled();
     press(field, { key: "Enter" });
     expect(dispatch).toHaveBeenCalledTimes(1);
-    expect(dispatch.mock.calls[0]![0].message).toContain("A: omb-preview");
+    expect(dispatch.mock.calls[0]![0].message).toContain("A: mausclaw-preview");
   });
 
   it("sends nothing from an empty open question", () => {

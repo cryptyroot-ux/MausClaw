@@ -269,7 +269,7 @@ export async function executePlan(steps: FleetStep[], deps: FleetDeps, io: Fleet
         break;
       }
       case "health":
-        if (!(await deps.health(step.url, HEALTH_TIMEOUT_MS))) return failed(io, step.why, `${step.url} did not answer within ${HEALTH_TIMEOUT_MS / 1000}s; check journalctl -u openmausbot@<slug>`);
+        if (!(await deps.health(step.url, HEALTH_TIMEOUT_MS))) return failed(io, step.why, `${step.url} did not answer within ${HEALTH_TIMEOUT_MS / 1000}s; check journalctl -u mausclaw@<slug>`);
         break;
       case "note":
         io.log(step.text);
@@ -288,7 +288,7 @@ function failed(io: FleetIo, what: string, output: string): number {
 
 export function loadRegistry(layout: FleetLayout, deps: FleetDeps): FleetRegistry {
   const text = deps.readText(layout.registryFile);
-  if (text === null) throw new Error(`no fleet on this server yet: run \`openmausbot fleet init --domain your.domain\` first`);
+  if (text === null) throw new Error(`no fleet on this server yet: run \`mausclaw fleet init --domain your.domain\` first`);
   return parseRegistry(text);
 }
 
@@ -310,7 +310,7 @@ export function planFleetAction(input: FleetInput, deps: FleetDeps): FleetStep[]
         return plan.steps.flatMap((step): FleetStep[] => {
           if (step.kind === "write" && step.path === layout.registryFile) return [{ ...step, content: `${JSON.stringify(registry, null, 2)}\n` }];
           if (step.kind === "write" && step.path === layout.fenceFile) return [{ ...step, content: fenceRules(Object.values(registry.workspaces)) }];
-          if (step.kind === "run" && step.argv.join(" ") === "systemctl enable --now openmausbot-fence.service") return [step, { kind: "run", argv: ["nft", "-f", layout.fenceFile], why: "reapply the preserved workspace fence" }];
+          if (step.kind === "run" && step.argv.join(" ") === "systemctl enable --now mausclaw-fence.service") return [step, { kind: "run", argv: ["nft", "-f", layout.fenceFile], why: "reapply the preserved workspace fence" }];
           return [step];
         });
       }
@@ -321,7 +321,7 @@ export function planFleetAction(input: FleetInput, deps: FleetDeps): FleetStep[]
       assertSlug(input.slug);
       const registry = loadRegistry(layout, deps);
       if (registry.workspaces[input.slug]) throw new Error(`workspace "${input.slug}" already exists`);
-      for (const path of [workspaceHome(layout, input.slug), posix.join(layout.instancesDir, `${input.slug}.env`), posix.join(layout.caddyDir, `${input.slug}.caddy`), posix.join(posix.dirname(layout.unitFile), `openmausbot@${input.slug}.service.d`)]) {
+      for (const path of [workspaceHome(layout, input.slug), posix.join(layout.instancesDir, `${input.slug}.env`), posix.join(layout.caddyDir, `${input.slug}.caddy`), posix.join(posix.dirname(layout.unitFile), `mausclaw@${input.slug}.service.d`)]) {
         if (deps.pathExists(path)) throw new Error(`workspace path already exists: ${path}; recover or remove it explicitly before provisioning a fresh workspace`);
       }
       const brandJson = input.brandJson ?? (input.brandFile ? deps.readText(input.brandFile) : undefined);
@@ -346,8 +346,8 @@ export function planFleetAction(input: FleetInput, deps: FleetDeps): FleetStep[]
       assertManagedWorkspace(workspace);
       const models = managedOpenRouterModels(input.openrouterModels);
       const env = deps.readText(posix.join(layout.instancesDir, `${input.slug}.env`)) ?? "";
-      const portal = /^OMB_ADMIN_URL=(.+)$/m.exec(env)?.[1];
-      if (!portal || !env.split("\n").includes(`OMB_ADMIN_WORKSPACE=${input.slug}`)) throw new Error("workspace has no trusted portal configuration; operator recovery is required");
+      const portal = /^MAUSCLAW_ADMIN_URL=(.+)$/m.exec(env)?.[1];
+      if (!portal || !env.split("\n").includes(`MAUSCLAW_ADMIN_WORKSPACE=${input.slug}`)) throw new Error("workspace has no trusted portal configuration; operator recovery is required");
       try { const url = new URL(portal); if (url.protocol !== "https:" || url.origin !== portal) throw new Error(); }
       catch { throw new Error("workspace portal configuration is invalid; operator recovery is required"); }
       const file = posix.join(workspaceHome(layout, input.slug), ".config", "opencode", "opencode.json");
@@ -426,11 +426,11 @@ export async function runFleetCommand(input: FleetInput, io: FleetIo, deps: Flee
       const registry = loadRegistry(layout, deps);
       const rows = Object.values(registry.workspaces).sort((a, b) => a.slug.localeCompare(b.slug));
       if (!rows.length) {
-        io.log(`no workspaces yet on ${registry.domain}; create one with: openmausbot fleet create NAME --admin you@example.com`);
+        io.log(`no workspaces yet on ${registry.domain}; create one with: mausclaw fleet create NAME --admin you@example.com`);
         return 0;
       }
       for (const workspace of rows) {
-        const live = asRoot && (workspace.status === "running" || workspace.status === "suspended") ? (await deps.run(["systemctl", "is-active", `openmausbot@${workspace.slug}.service`])).output.trim() : workspace.status;
+        const live = asRoot && (workspace.status === "running" || workspace.status === "suspended") ? (await deps.run(["systemctl", "is-active", `mausclaw@${workspace.slug}.service`])).output.trim() : workspace.status;
         io.log(`${workspace.slug.padEnd(24)} https://${workspace.host.padEnd(40)} :${String(workspace.port).padEnd(6)} ${live}`);
       }
       return 0;

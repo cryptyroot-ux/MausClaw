@@ -32,6 +32,6 @@ export function holdsMausBotTools<T extends NonNullable<RoleBot>>(bot: T | null 
 }
 
 /** The role switches a bot's agents tools are listed under: the Chief-only tools, and MausBot's notification pair. */
-export function roleToolEnv(bot: RoleBot): { OMB_CHIEF_OF_STAFF: "1" | "0"; OMB_MAUSBOT: "1" | "0" } {
-  return { OMB_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", OMB_MAUSBOT: holdsMausBotTools(bot) ? "1" : "0" };
+export function roleToolEnv(bot: RoleBot): { MAUSCLAW_CHIEF_OF_STAFF: "1" | "0"; MAUSCLAW_MAUSBOT: "1" | "0" } {
+  return { MAUSCLAW_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", MAUSCLAW_MAUSBOT: holdsMausBotTools(bot) ? "1" : "0" };
 }

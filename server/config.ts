@@ -1,4 +1,4 @@
-// ~/.openmausbot/config.json, with env vars overriding its credentials.
+// ~/.mausclaw/config.json, with env vars overriding its credentials.
 import { readFileSync, mkdirSync, existsSync, renameSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -435,7 +435,7 @@ const appConfigSchema = z.object({
     tidyHour: z.number().int().min(0).max(23).optional(),
   }).strict().optional(),
   threads: threadsConfigSchema.optional(),
-  /** Minimum days of decision-log month files kept; OMB_DECISION_RETENTION_DAYS wins. */
+  /** Minimum days of decision-log month files kept; MAUSCLAW_DECISION_RETENTION_DAYS wins. */
   decisions: z.object({ retentionDays: z.number().int().min(1).max(3650).optional() }).strict().optional(),
   loopGuard: loopGuardConfigSchema.optional(),
   safetyFloor: z.object({ enabled: z.boolean().optional() }).strict().optional(), // off by default: safetyFloorEnabled in server/safety-floor-gate.ts
@@ -722,7 +722,7 @@ export function changedInstanceIds(before: Record<string, unknown>, after: Recor
     .filter((id) => !isDeepStrictEqual(before[id], after[id]));
 }
 
-export const DATA_DIR = process.env.OMB_DATA_DIR ?? join(homedir(), ".openmausbot");
+export const DATA_DIR = process.env.MAUSCLAW_DATA_DIR ?? join(homedir(), ".mausclaw");
 const LEGACY_DATA_DIR = join(homedir(), ".opengrokbot");
 export const EVENTS_DIR = join(DATA_DIR, "events");
 export const NATIVE_DIR = join(DATA_DIR, "native");
@@ -762,26 +762,26 @@ export function loadConfig(): AppConfig {
   if (process.env.MISTRAL_API_KEY !== undefined) cfg.mistral.key = process.env.MISTRAL_API_KEY;
   cfg.cerebras = { ...cfg.cerebras };
   if (process.env.CEREBRAS_API_KEY !== undefined) cfg.cerebras.key = process.env.CEREBRAS_API_KEY;
-  if (process.env.OMB_TREG_KEY !== undefined) cfg.treg = { ...cfg.treg, key: process.env.OMB_TREG_KEY };
+  if (process.env.MAUSCLAW_TREG_KEY !== undefined) cfg.treg = { ...cfg.treg, key: process.env.MAUSCLAW_TREG_KEY };
   cfg.groq = { ...cfg.groq };
-  if (process.env.OMB_GROQ_API_KEY !== undefined) cfg.groq.key = process.env.OMB_GROQ_API_KEY;
+  if (process.env.MAUSCLAW_GROQ_API_KEY !== undefined) cfg.groq.key = process.env.MAUSCLAW_GROQ_API_KEY;
   cfg.meta = { ...cfg.meta };
-  if (process.env.OMB_META_API_KEY !== undefined) cfg.meta.key = process.env.OMB_META_API_KEY;
+  if (process.env.MAUSCLAW_META_API_KEY !== undefined) cfg.meta.key = process.env.MAUSCLAW_META_API_KEY;
   cfg.deepseek = { ...cfg.deepseek };
-  if (process.env.OMB_DEEPSEEK_API_KEY !== undefined) cfg.deepseek.key = process.env.OMB_DEEPSEEK_API_KEY;
+  if (process.env.MAUSCLAW_DEEPSEEK_API_KEY !== undefined) cfg.deepseek.key = process.env.MAUSCLAW_DEEPSEEK_API_KEY;
   cfg.ollamaCloud = { ...cfg.ollamaCloud };
-  if (process.env.OMB_OLLAMA_CLOUD_API_KEY !== undefined) cfg.ollamaCloud.key = process.env.OMB_OLLAMA_CLOUD_API_KEY;
-  if (process.env.OMB_OLLAMA_CLOUD_URL !== undefined) cfg.ollamaCloud.url = process.env.OMB_OLLAMA_CLOUD_URL;
+  if (process.env.MAUSCLAW_OLLAMA_CLOUD_API_KEY !== undefined) cfg.ollamaCloud.key = process.env.MAUSCLAW_OLLAMA_CLOUD_API_KEY;
+  if (process.env.MAUSCLAW_OLLAMA_CLOUD_URL !== undefined) cfg.ollamaCloud.url = process.env.MAUSCLAW_OLLAMA_CLOUD_URL;
   cfg.xai = { ...cfg.xai };
   if (process.env.XAI_API_KEY !== undefined) cfg.xai.key = process.env.XAI_API_KEY;
   // Never ANTHROPIC_API_KEY: an operator's stray variable must not move every Claude bot onto API billing.
   cfg.anthropic = { ...cfg.anthropic };
-  if (process.env.OMB_ANTHROPIC_API_KEY !== undefined) cfg.anthropic.key = process.env.OMB_ANTHROPIC_API_KEY;
-  if (process.env.OMB_ANTHROPIC_API_URL !== undefined) cfg.anthropic.url = process.env.OMB_ANTHROPIC_API_URL;
+  if (process.env.MAUSCLAW_ANTHROPIC_API_KEY !== undefined) cfg.anthropic.key = process.env.MAUSCLAW_ANTHROPIC_API_KEY;
+  if (process.env.MAUSCLAW_ANTHROPIC_API_URL !== undefined) cfg.anthropic.url = process.env.MAUSCLAW_ANTHROPIC_API_URL;
   cfg.openai = { ...cfg.openai };
-  if (process.env.OMB_OPENAI_API_KEY !== undefined) cfg.openai.key = process.env.OMB_OPENAI_API_KEY;
+  if (process.env.MAUSCLAW_OPENAI_API_KEY !== undefined) cfg.openai.key = process.env.MAUSCLAW_OPENAI_API_KEY;
   cfg.openrouter = { ...cfg.openrouter };
-  if (process.env.OMB_OPENROUTER_API_KEY !== undefined) cfg.openrouter.key = process.env.OMB_OPENROUTER_API_KEY;
+  if (process.env.MAUSCLAW_OPENROUTER_API_KEY !== undefined) cfg.openrouter.key = process.env.MAUSCLAW_OPENROUTER_API_KEY;
   cfg.openaiCompat = { ...cfg.openaiCompat };
   if (process.env.OPENAI_COMPAT_API_KEY !== undefined) cfg.openaiCompat.key = process.env.OPENAI_COMPAT_API_KEY;
   if (process.env.OPENAI_COMPAT_URL !== undefined) cfg.openaiCompat.url = process.env.OPENAI_COMPAT_URL;
@@ -792,23 +792,23 @@ export function loadConfig(): AppConfig {
   cfg.box = { ...cfg.box };
   if (process.env.BOX_TOKEN !== undefined) cfg.box.token = process.env.BOX_TOKEN;
   cfg.tts = { ...cfg.tts };
-  if (process.env.OMB_TTS_KEY !== undefined) cfg.tts.key = process.env.OMB_TTS_KEY;
-  const presetVoice = process.env.OMB_TTS_DEFAULT_VOICE?.trim();
+  if (process.env.MAUSCLAW_TTS_KEY !== undefined) cfg.tts.key = process.env.MAUSCLAW_TTS_KEY;
+  const presetVoice = process.env.MAUSCLAW_TTS_DEFAULT_VOICE?.trim();
   if (presetVoice && !cfg.tts.voice?.trim() && (cfg.tts.provider ?? "elevenlabs") === "elevenlabs") cfg.tts.voice = presetVoice;
-  if (process.env.OMB_FISH_AUDIO_API_KEY !== undefined) cfg.tts.fishKey = process.env.OMB_FISH_AUDIO_API_KEY;
+  if (process.env.MAUSCLAW_FISH_AUDIO_API_KEY !== undefined) cfg.tts.fishKey = process.env.MAUSCLAW_FISH_AUDIO_API_KEY;
   cfg.decider = { ...cfg.decider };
-  if (process.env.OMB_JEV_API_KEY !== undefined) cfg.decider.key = process.env.OMB_JEV_API_KEY;
-  if (process.env.OMB_OPENROUTER_DECIDER_KEY !== undefined) cfg.decider.openrouterKey = process.env.OMB_OPENROUTER_DECIDER_KEY; if (process.env.OMB_WORKERS_AI_TOKEN !== undefined) cfg.decider.workersAiToken = process.env.OMB_WORKERS_AI_TOKEN;
+  if (process.env.MAUSCLAW_JEV_API_KEY !== undefined) cfg.decider.key = process.env.MAUSCLAW_JEV_API_KEY;
+  if (process.env.MAUSCLAW_OPENROUTER_DECIDER_KEY !== undefined) cfg.decider.openrouterKey = process.env.MAUSCLAW_OPENROUTER_DECIDER_KEY; if (process.env.MAUSCLAW_WORKERS_AI_TOKEN !== undefined) cfg.decider.workersAiToken = process.env.MAUSCLAW_WORKERS_AI_TOKEN;
   cfg.live = { ...cfg.live };
-  if (process.env.OMB_OPENAI_LIVE_KEY !== undefined) cfg.live.key = process.env.OMB_OPENAI_LIVE_KEY;
+  if (process.env.MAUSCLAW_OPENAI_LIVE_KEY !== undefined) cfg.live.key = process.env.MAUSCLAW_OPENAI_LIVE_KEY;
   cfg.imageGen = { ...cfg.imageGen };
-  if (process.env.OMB_OPENAI_IMAGE_KEY !== undefined) cfg.imageGen.key = process.env.OMB_OPENAI_IMAGE_KEY;
-  if (process.env.OMB_CUSTOM_IMAGE_KEY !== undefined) cfg.imageGen.customApiKey = process.env.OMB_CUSTOM_IMAGE_KEY;
+  if (process.env.MAUSCLAW_OPENAI_IMAGE_KEY !== undefined) cfg.imageGen.key = process.env.MAUSCLAW_OPENAI_IMAGE_KEY;
+  if (process.env.MAUSCLAW_CUSTOM_IMAGE_KEY !== undefined) cfg.imageGen.customApiKey = process.env.MAUSCLAW_CUSTOM_IMAGE_KEY;
   const splitEmails = (value: string) => value.split(/[,\s]+/).map((entry) => entry.trim().toLowerCase()).filter(Boolean);
-  if (process.env.OMB_SIGNIN_EMAILS !== undefined || process.env.OMB_SIGNIN_MEMBER_EMAILS !== undefined) {
+  if (process.env.MAUSCLAW_SIGNIN_EMAILS !== undefined || process.env.MAUSCLAW_SIGNIN_MEMBER_EMAILS !== undefined) {
     cfg.signIn = { ...cfg.signIn };
-    if (process.env.OMB_SIGNIN_EMAILS !== undefined) cfg.signIn.admins = splitEmails(process.env.OMB_SIGNIN_EMAILS);
-    if (process.env.OMB_SIGNIN_MEMBER_EMAILS !== undefined) cfg.signIn.members = splitEmails(process.env.OMB_SIGNIN_MEMBER_EMAILS);
+    if (process.env.MAUSCLAW_SIGNIN_EMAILS !== undefined) cfg.signIn.admins = splitEmails(process.env.MAUSCLAW_SIGNIN_EMAILS);
+    if (process.env.MAUSCLAW_SIGNIN_MEMBER_EMAILS !== undefined) cfg.signIn.members = splitEmails(process.env.MAUSCLAW_SIGNIN_MEMBER_EMAILS);
   }
   return cfg;
 }
@@ -835,24 +835,24 @@ export function syncCredentialEnv(patch: Partial<Omit<AppConfig, "threads" | "ne
   const secrets: Array<[value: string | undefined, name: string]> = [
     [patch.xai?.key, "XAI_API_KEY"],
     [patch.mistral?.key, "MISTRAL_API_KEY"],
-    [patch.cerebras?.key, "CEREBRAS_API_KEY"], [patch.treg?.key, "OMB_TREG_KEY"],
-    [patch.groq?.key, "OMB_GROQ_API_KEY"],
-    [patch.meta?.key, "OMB_META_API_KEY"],
-    [patch.deepseek?.key, "OMB_DEEPSEEK_API_KEY"],
-    [patch.ollamaCloud?.key, "OMB_OLLAMA_CLOUD_API_KEY"],
-    [patch.anthropic?.key, "OMB_ANTHROPIC_API_KEY"],
+    [patch.cerebras?.key, "CEREBRAS_API_KEY"], [patch.treg?.key, "MAUSCLAW_TREG_KEY"],
+    [patch.groq?.key, "MAUSCLAW_GROQ_API_KEY"],
+    [patch.meta?.key, "MAUSCLAW_META_API_KEY"],
+    [patch.deepseek?.key, "MAUSCLAW_DEEPSEEK_API_KEY"],
+    [patch.ollamaCloud?.key, "MAUSCLAW_OLLAMA_CLOUD_API_KEY"],
+    [patch.anthropic?.key, "MAUSCLAW_ANTHROPIC_API_KEY"],
     [patch.openaiCompat?.key, "OPENAI_COMPAT_API_KEY"],
-    [patch.openai?.key, "OMB_OPENAI_API_KEY"],
-    [patch.openrouter?.key, "OMB_OPENROUTER_API_KEY"],
+    [patch.openai?.key, "MAUSCLAW_OPENAI_API_KEY"],
+    [patch.openrouter?.key, "MAUSCLAW_OPENROUTER_API_KEY"],
     [patch.composio?.apiKey, "COMPOSIO_API_KEY"],
     [patch.box?.token, "BOX_TOKEN"],
-    [patch.tts?.key, "OMB_TTS_KEY"],
-    [patch.tts?.fishKey, "OMB_FISH_AUDIO_API_KEY"],
-    [patch.decider?.key, "OMB_JEV_API_KEY"],
-    [patch.decider?.openrouterKey, "OMB_OPENROUTER_DECIDER_KEY"], [patch.decider?.workersAiToken, "OMB_WORKERS_AI_TOKEN"],
-    [patch.imageGen?.key, "OMB_OPENAI_IMAGE_KEY"],
-    [patch.imageGen?.customApiKey, "OMB_CUSTOM_IMAGE_KEY"],
-    [patch.live?.key, "OMB_OPENAI_LIVE_KEY"],
+    [patch.tts?.key, "MAUSCLAW_TTS_KEY"],
+    [patch.tts?.fishKey, "MAUSCLAW_FISH_AUDIO_API_KEY"],
+    [patch.decider?.key, "MAUSCLAW_JEV_API_KEY"],
+    [patch.decider?.openrouterKey, "MAUSCLAW_OPENROUTER_DECIDER_KEY"], [patch.decider?.workersAiToken, "MAUSCLAW_WORKERS_AI_TOKEN"],
+    [patch.imageGen?.key, "MAUSCLAW_OPENAI_IMAGE_KEY"],
+    [patch.imageGen?.customApiKey, "MAUSCLAW_CUSTOM_IMAGE_KEY"],
+    [patch.live?.key, "MAUSCLAW_OPENAI_LIVE_KEY"],
   ];
   for (const [value, name] of secrets) {
     if (value === undefined) continue;
@@ -861,7 +861,7 @@ export function syncCredentialEnv(patch: Partial<Omit<AppConfig, "threads" | "ne
   }
   const settings: Array<[value: string | undefined, name: string]> = [
     [patch.openaiCompat?.url, "OPENAI_COMPAT_URL"],
-    [patch.anthropic?.url, "OMB_ANTHROPIC_API_URL"],
+    [patch.anthropic?.url, "MAUSCLAW_ANTHROPIC_API_URL"],
     [patch.openaiCompat?.model, "OPENAI_COMPAT_MODEL"],
     [patch.openaiCompat?.provider, "OPENAI_COMPAT_PROVIDER"],
   ];
@@ -1098,12 +1098,12 @@ function injectedEnvironment(cfg: AppConfig, instanceId: string, driver: string)
   if (driver === "meta" && cfg.meta?.key) environment.set("META_API_KEY", cfg.meta.key);
   if (driver === "grok" && cfg.xai?.key) environment.set("XAI_API_KEY", cfg.xai.key);
   if (driver === "openai-compat" && instanceId === OPENAI_API_INSTANCE) {
-    if (cfg.openai?.key) environment.set("OMB_OPENAI_API_KEY", cfg.openai.key);
+    if (cfg.openai?.key) environment.set("MAUSCLAW_OPENAI_API_KEY", cfg.openai.key);
   } else if (driver === "openai-compat" && instanceId === OPENROUTER_API_INSTANCE) {
-    if (cfg.openrouter?.key) environment.set("OMB_OPENROUTER_API_KEY", cfg.openrouter.key);
+    if (cfg.openrouter?.key) environment.set("MAUSCLAW_OPENROUTER_API_KEY", cfg.openrouter.key);
   } else if (driver === "openai-compat" && instanceId === "ollamaCloud") {
-    if (cfg.ollamaCloud?.key) environment.set("OMB_OLLAMA_CLOUD_API_KEY", cfg.ollamaCloud.key);
-    if (cfg.ollamaCloud?.url) environment.set("OMB_OLLAMA_CLOUD_URL", cfg.ollamaCloud.url);
+    if (cfg.ollamaCloud?.key) environment.set("MAUSCLAW_OLLAMA_CLOUD_API_KEY", cfg.ollamaCloud.key);
+    if (cfg.ollamaCloud?.url) environment.set("MAUSCLAW_OLLAMA_CLOUD_URL", cfg.ollamaCloud.url);
   } else {
     if (driver === "openai-compat" && cfg.openaiCompat?.key)
       environment.set("OPENAI_COMPAT_API_KEY", cfg.openaiCompat.key);

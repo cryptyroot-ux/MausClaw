@@ -7,7 +7,7 @@ import { createUpdaterCoordinator } from "./updater-coordinator.mjs";
 import { AWAY_MS, awayNow, createQuietInstall, installFailed, launchAfter, OUT_OF_SIGHT_MS, QUIET_TRIES, REOPEN_MS, updateSeen } from "./update-when-quiet.mjs";
 import { quietSignals } from "./update-when-quiet-main.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 
 /** A file the record lives in, kept across "relaunches". */
 function file(initial = null) {
@@ -126,7 +126,7 @@ test("never while a Live call runs here or on the Cloud the window shows, and My
     window: () => null, lastInput: () => 0, busy: () => null,
     local: (route) => { asked.push(route); return route === "/api/move/freeze" ? reply({ frozen: false }) : reply({ call: here }); },
     place: () => CLOUD, asleep: () => asleep,
-    cloudFetch: (url, init) => { asked.push(url); assert.equal(init.headers["x-omb-background"], "1"); return reply({ call: there }); },
+    cloudFetch: (url, init) => { asked.push(url); assert.equal(init.headers["x-mausclaw-background"], "1"); return reply({ call: there }); },
   });
   assert.equal(await signals.work(), null);
   here = { id: "call-1", botId: "b1" };
@@ -215,7 +215,7 @@ function coordinated(options) {
   updater.checkForUpdates = async () => { updater.emit("checking-for-update"); updater.emit("update-available", { version: "0.1.130" }); };
   updater.downloadUpdate = async () => {
     updater.emit("update-downloaded", { version: "0.1.130" });
-    return ["/tmp/OpenMausBot-0.1.130.zip"];
+    return ["/tmp/MausClaw-0.1.130.zip"];
   };
   const states = [];
   const coordinator = createUpdaterCoordinator(updater, (patch) => states.push(patch), options);
@@ -254,7 +254,7 @@ test("macOS installs by itself only once Squirrel.Mac has staged the update", as
   let finish;
   updater.downloadUpdate = () => new Promise((resolve) => {
     updater.emit("update-downloaded", { version: "0.1.130" });
-    finish = () => resolve(["/tmp/OpenMausBot-0.1.130-arm64-mac.zip"]);
+    finish = () => resolve(["/tmp/MausClaw-0.1.130-arm64-mac.zip"]);
   });
   await coordinator.check();
   assert.equal(coordinator.installable(), null, "preparing");

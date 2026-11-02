@@ -7,12 +7,12 @@ export const roomContextSettings = {
   roomSessions: z.boolean().optional(),
 };
 
-/** OMB_ROOM_SESSIONS "1" or "0" overrides `context.roomSessions`; any other value leaves the file to decide. */
+/** MAUSCLAW_ROOM_SESSIONS "1" or "0" overrides `context.roomSessions`; any other value leaves the file to decide. */
 export function roomSessionsEnabled(
   settings: { roomSessions?: boolean } | undefined,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  const override = env.OMB_ROOM_SESSIONS?.trim();
+  const override = env.MAUSCLAW_ROOM_SESSIONS?.trim();
   if (override === "1") return true;
   if (override === "0") return false;
   return settings?.roomSessions === true;

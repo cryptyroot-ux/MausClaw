@@ -268,7 +268,7 @@ it("a server of the person's own that signed in: a small server mark, the offlin
   expect(workspaces.open.mock.calls).toHaveLength(1);
   const connect = document.querySelector('[data-place-add="connect-server"]')!;
   expect(connect.textContent).toContain("Connect Render VPS");
-  expect(connect.textContent, "it runs OpenMausBot already: only its pairing link is left").not.toContain("npx");
+  expect(connect.textContent, "it runs MausClaw already: only its pairing link is left").not.toContain("npx");
   await type(connect.querySelector("[data-own-server-link]"), "https://render.example.test/#pair=xyz");
   await submit(connect);
   expect(workspaces.add.mock.calls).toEqual([["link", "https://render.example.test/#pair=xyz"]]);

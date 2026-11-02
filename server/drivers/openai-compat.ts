@@ -40,7 +40,7 @@ const DEFAULT_MODELS: ModelCatalog = {
 const DEFAULT_KEY_ENV = "OPENAI_COMPAT_API_KEY";
 /** A provider's own key: such an instance never falls back to the workspace OpenAI-compatible key, URL,
  * model or routing. */
-const OWN_KEY_ENVS = new Set(["OMB_OPENAI_API_KEY", "OMB_OPENROUTER_API_KEY", "OMB_OLLAMA_CLOUD_API_KEY"]);
+const OWN_KEY_ENVS = new Set(["MAUSCLAW_OPENAI_API_KEY", "MAUSCLAW_OPENROUTER_API_KEY", "MAUSCLAW_OLLAMA_CLOUD_API_KEY"]);
 
 const OPENAI_MODELS: ModelCatalog = {
   default: "gpt-5",

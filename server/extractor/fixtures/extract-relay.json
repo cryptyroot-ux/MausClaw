@@ -1,14 +1,14 @@
 {
   "about": [
-    "Shared contract between OpenMausBot (server/extractor/contract.ts) and the openmaus-cloud Admin's relay.",
-    "OMB sends POST <OMB_CLOUD_DECIDER_URL>/v1/extract with Authorization: Bearer <OMB_CLOUD_DECIDER_TOKEN>, the x-omb-seam header naming the seam, and `body` as JSON: { seam, fields, input } (the seam in both).",
-    "The relay answers { values: { [field]: value | null }, model }, refuses any request whose `accepts` would be false, and answers 413 for one over the caps; OMB never sends one, and never retries a 413.",
+    "Shared contract between MausClaw (server/extractor/contract.ts) and the openmaus-cloud Admin's relay.",
+    "MausClaw sends POST <MAUSCLAW_CLOUD_DECIDER_URL>/v1/extract with Authorization: Bearer <MAUSCLAW_CLOUD_DECIDER_TOKEN>, the x-mausclaw-seam header naming the seam, and `body` as JSON: { seam, fields, input } (the seam in both).",
+    "The relay answers { values: { [field]: value | null }, model }, refuses any request whose `accepts` would be false, and answers 413 for one over the caps; MausClaw never sends one, and never retries a 413.",
     "Body cap: 256 KB counting each image's data as empty; then at most 4 images of at most 1 MB decoded each (so a raw body can reach about 6 MB).",
-    "Clairic handles string, number and date fields only: on the person's own key OMB sends boolean fields to Clef-flash as yes/no questions (true at p >= 0.6, false at p <= 0.4, else null) and enum fields as choice questions over the same input, and sends Clairic a reference_date of today (workers-ai-clairic.json). The relay does the same on its side.",
+    "Clairic handles string, number and date fields only: on the person's own key MausClaw sends boolean fields to Clef-flash as yes/no questions (true at p >= 0.6, false at p <= 0.4, else null) and enum fields as choice questions over the same input, and sends Clairic a reference_date of today (workers-ai-clairic.json). The relay does the same on its side.",
     "Regenerate from the real contract code when it changes, and copy this file to the Admin."
   ],
   "endpoint": "/v1/extract",
-  "header": "x-omb-seam",
+  "header": "x-mausclaw-seam",
   "limits": {
     "bodyBytesWithoutImages": 262144,
     "images": 4,
@@ -35,7 +35,7 @@
         }
       },
       "input": {
-        "text": "OpenMausBot is checking that an extraction-model key works."
+        "text": "MausClaw is checking that an extraction-model key works."
       }
     },
     "inboxTriage": {
@@ -95,7 +95,7 @@
           }
         },
         "input": {
-          "text": "OpenMausBot is checking that an extraction-model key works."
+          "text": "MausClaw is checking that an extraction-model key works."
         }
       }
     },

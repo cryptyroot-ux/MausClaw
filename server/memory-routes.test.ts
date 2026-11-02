@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { hashMemoryText } from "./memory-store.ts";
 
 interface Reply {
@@ -195,7 +195,7 @@ describe("memory routes through an isolated HTTP fixture", () => {
     writeFileSync(target, join(fixture.info.dataDir, "scratch.txt"));
 
     expect((await api("POST", `/api/bots/${botId}/messages`, { threadId, text: "Memory is off in this fixture." })).status).toBe(202);
-    await runControlOmb(["wait", "--bot", botId, "--timeout", "30"], { env: { OPENMAUSBOT_URL: fixture.info.url } });
+    await runControlMausclaw(["wait", "--bot", botId, "--timeout", "30"], { env: { MAUSCLAW_URL: fixture.info.url } });
     const dump = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")) as { systemPrompt?: string };
     expect(dump.systemPrompt).not.toContain("Your memory (MEMORY.md)");
     expect(dump.systemPrompt).not.toContain("Use memory_update");

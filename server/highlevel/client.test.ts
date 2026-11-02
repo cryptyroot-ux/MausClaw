@@ -29,7 +29,7 @@ beforeEach(() => { hl.calls.length = 0; hl.overrides.length = 0; hl.pathOverride
 afterEach(async () => { for (const dir of dirs.splice(0)) await removeTempDir(dir); });
 
 function harness(connection: Partial<Parameters<HighLevelStore["put"]>[0]> & { kind?: "oauth" | "token" } = {}, options: Partial<HighLevelClientOptions> = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-client-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-client-"));
   dirs.push(dir);
   const store = new HighLevelStore({ dataDir: dir, now: () => clock });
   const accessToken = connection.accessToken ?? "hl_access_seed";
@@ -717,7 +717,7 @@ describe("lookupLocation", () => {
 
   it("says which case a refusal is, in plain words, with HighLevel's own reason when it gave one", async () => {
     expect(await check(401, MISSING_SCOPE)).toMatchObject({ status: 401, message:
-      "This token is missing the View Locations permission (401), which OpenMausBot needs to check it. In HighLevel, open Settings → Private Integrations, " +
+      "This token is missing the View Locations permission (401), which MausClaw needs to check it. In HighLevel, open Settings → Private Integrations, " +
       "edit this integration, turn on View Locations and save, then connect again: the token stays the same. HighLevel said: The token is not authorized for this scope." });
     expect(await check(401, INVALID_TOKEN)).toMatchObject({ status: 401, message:
       "HighLevel did not accept this token (401). Check that it was copied whole and has not been rotated or deleted, " +

@@ -233,10 +233,10 @@ test("the person's own Off is never undone: the move's default leaves lending of
 });
 
 test("lending's Cloud comes from the verified sign-in, and survives a brief disconnect of the same account only", () => {
-  let state = { status: "connected", account: { id: "acct_1" }, machine: { origin: "https://omb-u-1.fly.dev" } };
-  const cloud = { id: "cloud", origin: "https://omb-u-1.fly.dev" };
+  let state = { status: "connected", account: { id: "acct_1" }, machine: { origin: "https://mausclaw-u-1.fly.dev" } };
+  const cloud = { id: "cloud", origin: "https://mausclaw-u-1.fly.dev" };
   const target = createLendingTarget({ account: () => ({ state: () => state }), environments: () => [{ id: "other", origin: "https://other.example" }, cloud] });
-  assert.deepEqual(target.cloud(), { status: "connected", accountId: "acct_1", origin: "https://omb-u-1.fly.dev" });
+  assert.deepEqual(target.cloud(), { status: "connected", accountId: "acct_1", origin: "https://mausclaw-u-1.fly.dev" });
   assert.equal(target.environment(), cloud);
   state = { status: "unavailable", account: { id: "acct_1" }, machine: null };
   assert.equal(target.environment(), cloud, "the same account, briefly unreachable");
@@ -316,7 +316,7 @@ test("with the real folder checks and a home folder with Documents only, the usu
   const { homedir, tmpdir } = await import("node:os");
   const { validateSharedFolders } = await import("./computer-sharing.mjs");
   // The folder checks' own spelling (fsp.realpath is the native one): on Windows the long name, never 8.3 (RUNNER~1).
-  const home = realpathSync.native(mkdtempSync(path.join(tmpdir(), "omb-lend-home-")));
+  const home = realpathSync.native(mkdtempSync(path.join(tmpdir(), "mausclaw-lend-home-")));
   // The home folder the checks guard is os.homedir(): HOME on macOS and Linux, USERPROFILE on Windows.
   const saved = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };
   try {
@@ -362,7 +362,7 @@ test("My Cloud's page asks main to lend Apps and screen only from the person's c
   const page = (activation) => {
     let bridge; const invoked = [];
     vm.runInNewContext(readFileSync(new URL("./preload.cjs", import.meta.url), "utf8"), {
-      process: { platform: "darwin", argv: ["--omb-local-origin=http://127.0.0.1:5173", "--omb-company-desktop=1"] },
+      process: { platform: "darwin", argv: ["--mausclaw-local-origin=http://127.0.0.1:5173", "--mausclaw-company-desktop=1"] },
       location: { origin: "https://my.mausbot.example" }, navigator: { userActivation: { isActive: activation } },
       TextEncoder, localStorage: { getItem: () => null },
       require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name, value) => { bridge = value; } },

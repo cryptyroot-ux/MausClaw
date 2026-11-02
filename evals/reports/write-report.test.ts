@@ -32,7 +32,7 @@ describe("writeReport", () => {
   });
 
   it("writes a JSON and a markdown artifact per run", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-evals-report-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-evals-report-"));
     try {
       const written = writeReport(dir, [result], "run-1");
       expect(existsSync(written.json)).toBe(true);

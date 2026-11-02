@@ -23,7 +23,7 @@ export interface CloudListEntry {
   setup?: { step?: import("./cloud-home.mjs").CloudSetupStep; progress?: number };
   /** When the Admin last heard from it (ms). */
   lastSeenAt?: number;
-  /** The OpenMausBot version it runs, for an update reminder. */
+  /** The MausClaw version it runs, for an update reminder. */
   version?: string;
 }
 export declare const MAX_CLOUDS: number;

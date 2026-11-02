@@ -10,7 +10,7 @@ const AT = new Date(2026, 9, 27, 12).getTime();
 function setup(t, write = true) {
   // A lent folder's path is the native real path lending's own check stores (validateSharedFolders): on Windows the JS
   // realpathSync keeps a short name such as RUNNER~1 that the native one expands, and the two would never match.
-  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "omb-lent-staged-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "mausclaw-lent-staged-")));
   const root = join(dir, "Notes");
   mkdirSync(root);
   writeFileSync(join(root, "plan.md"), "the plan");
@@ -124,7 +124,7 @@ test("a read-only file the bot changed stays read-only, and nothing read-only is
   assert.equal((await s.apply()).applied, 1);
   assert.equal(readFileSync(join(s.root, "plan.md"), "utf8"), "v2");
   assert.equal(statSync(join(s.root, "plan.md")).mode & 0o222, 0, "still read-only");
-  assert.deepEqual(readdirSync(s.root).filter((name) => name.includes(".omb-sync-")), []);
+  assert.deepEqual(readdirSync(s.root).filter((name) => name.includes(".mausclaw-sync-")), []);
 });
 
 test("a rename Windows refuses for a moment is tried again; any other refusal is not", () => {

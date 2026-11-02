@@ -14,7 +14,7 @@ const KEY = "sk-or-v1-fakeverify0000";
 const NONCE = "x".repeat(43);
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
-const store = () => { const dir = mkdtempSync(join(tmpdir(), "omb-verify-")); dirs.push(dir); return new LoginStore({ dataDir: dir }); };
+const store = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-verify-")); dirs.push(dir); return new LoginStore({ dataDir: dir }); };
 
 describe("credential fingerprints a move checks by", () => {
   it("are equal for the same login and token saved on two servers, and change with the secret or the nonce", () => {

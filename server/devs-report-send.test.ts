@@ -5,7 +5,7 @@ import { bugReportEndpoint, sendDevsReport } from "./devs-report-send.ts";
 
 const PAYLOAD: DevsReportPayload = {
   installId: "4b7c1f2e-0a9d-4c2b-9f1e-6d5a4b3c2d1e", source: "bot", description: "it broke", appVersion: "0.1.128", platform: "darwin arm64, desktop app",
-  diagnostics: "OpenMausBot @devs report", contactEmail: "ada@example.com", contact: "ada@example.com",
+  diagnostics: "MausClaw @devs report", contactEmail: "ada@example.com", contact: "ada@example.com",
 };
 
 function endpoint(...answers: Array<Response | Error>) {
@@ -59,11 +59,11 @@ describe("sending a @devs report", () => {
 
 describe("where reports go", () => {
   it("is a fixture's loopback or https address, else a Cloud home's own origin, else the staging or production Cloud", () => {
-    expect(bugReportEndpoint({ OMB_BUG_REPORT_URL: "http://127.0.0.1:4400/api/bug-reports" })).toBe("http://127.0.0.1:4400/api/bug-reports");
-    expect(bugReportEndpoint({ OMB_BUG_REPORT_URL: "http://192.0.2.1/api/bug-reports" })).toBe("https://cloud.openmausbot.com/api/bug-reports");
-    expect(bugReportEndpoint({ OMB_BUG_REPORT_URL: "https://user:pw@evil.example/x" })).toBe("https://cloud.openmausbot.com/api/bug-reports");
-    expect(bugReportEndpoint({}, "https://cloud.openmausbot.com")).toBe("https://cloud.openmausbot.com/api/bug-reports");
-    expect(bugReportEndpoint({ OMB_CLOUD_STAGING: "1" })).toBe("https://omb-cloud-staging.fly.dev/api/bug-reports");
-    expect(bugReportEndpoint({})).toBe("https://cloud.openmausbot.com/api/bug-reports");
+    expect(bugReportEndpoint({ MAUSCLAW_BUG_REPORT_URL: "http://127.0.0.1:4400/api/bug-reports" })).toBe("http://127.0.0.1:4400/api/bug-reports");
+    expect(bugReportEndpoint({ MAUSCLAW_BUG_REPORT_URL: "http://192.0.2.1/api/bug-reports" })).toBe("https://cloud.mausclaw.com/api/bug-reports");
+    expect(bugReportEndpoint({ MAUSCLAW_BUG_REPORT_URL: "https://user:pw@evil.example/x" })).toBe("https://cloud.mausclaw.com/api/bug-reports");
+    expect(bugReportEndpoint({}, "https://cloud.mausclaw.com")).toBe("https://cloud.mausclaw.com/api/bug-reports");
+    expect(bugReportEndpoint({ MAUSCLAW_CLOUD_STAGING: "1" })).toBe("https://mausclaw-cloud-staging.fly.dev/api/bug-reports");
+    expect(bugReportEndpoint({})).toBe("https://cloud.mausclaw.com/api/bug-reports");
   });
 });

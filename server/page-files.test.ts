@@ -9,7 +9,7 @@ import { createPageFiles, pageFilePath, PAGE_FILES_PREFIX } from "./page-files.t
 const PARQUET = Buffer.from("PAR1\u0000\u0001\u0002\u0003 rows and columns PAR1", "latin1");
 
 function setup() {
-  const docs = new AppDocs(join(mkdtempSync(join(tmpdir(), "omb-page-files-")), "app-docs"));
+  const docs = new AppDocs(join(mkdtempSync(join(tmpdir(), "mausclaw-page-files-")), "app-docs"));
   const stored = docs.put({ source: "html", html: "<h1>Sales</h1><script src=\"app.js\"></script>", data: { folder: "/work/dash" },
     files: [{ path: "app.js", data: Buffer.from("draw()") }, { path: "data/sales.parquet", data: PARQUET }, { path: "notes.html", data: Buffer.from("<p>n</p>") }] });
   if (!stored.ok) throw new Error("not stored");

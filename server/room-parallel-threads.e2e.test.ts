@@ -3,14 +3,14 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireGroup } from "../shared/wire.ts";
 
 type Message = { role: string; kind: string; text?: string; tool?: { name?: string; ok?: boolean }; from?: { botId: string } };
 
 describe.skipIf(process.platform === "win32")("parallel room threads", () => {
   it("runs threads side by side, stops one thread alone, and queues a shared bot thread by thread", async () => {
-    const gateDir = mkdtempSync(join(tmpdir(), "omb-parallel-threads-"));
+    const gateDir = mkdtempSync(join(tmpdir(), "mausclaw-parallel-threads-"));
     const gate = join(gateDir, "finish.gate");
     const fixture = await launchVerificationServer({
       ...process.env,
@@ -18,7 +18,7 @@ describe.skipIf(process.platform === "win32")("parallel room threads", () => {
       FAKE_CLAUDE_SLOW_FINISH_GATE: gate,
     });
     const { url } = fixture.info;
-    const control = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+    const control = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
     const api = async (method: string, path: string, body?: unknown) => {
       const response = await fetch(url + path, {
         method,

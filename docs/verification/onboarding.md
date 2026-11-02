@@ -1,6 +1,6 @@
 # Welcome flow and guided tour
 
-The first run is two screens, then the chat (Oct 27 2026): "Meet OpenMausBot"
+The first run is two screens, then the chat (Oct 27 2026): "Meet MausClaw"
 (a composer typing one sentence and Next; with no AI working, the same pill
 signs one in, with "Other ways to connect · Set up later" under it), then
 "Introducing your Chief of Staff" over an empty app (Create Chief of Staff, and
@@ -13,13 +13,13 @@ still missing. The app tour starts only from Settings → Replay app tour.
 Launch the isolated full-app fixture following [Chat UI](chat-ui.md):
 
 ```sh
-node --experimental-strip-types scripts/control-omb.ts ui launch
+node --experimental-strip-types scripts/control-mausclaw.ts ui launch
 ```
 
 In a second terminal, pass its exact printed handle:
 
 ```sh
-node --experimental-strip-types scripts/verify-onboarding-ui.ts /tmp/openmausbot-verify-data-XXXXXX/ui.json
+node --experimental-strip-types scripts/verify-onboarding-ui.ts /tmp/mausclaw-verify-data-XXXXXX/ui.json
 ```
 
 Use a fresh fixture. The recipe clears only its browser storage, then enables
@@ -37,7 +37,7 @@ starter-model selection and a successful first composer message without opening
 the model picker; every app tour step from Settings, persistence after reload,
 Settings replay, skipping while Next is saving, closing a welcome replay while
 its save is pending, and replay on legacy installs with a failed-save retry.
-Screenshots are retained in `.omb-scratch/verify-evidence/onboarding/` with a
+Screenshots are retained in `.mausclaw-scratch/verify-evidence/onboarding/` with a
 PASS line for each workflow. Actual provider authentication and native Electron
 permissions remain covered by their separate platform recipes, not this browser
 fixture.
@@ -81,7 +81,7 @@ What each first-run surface depends on, and how it was checked:
 |---|---|---|
 | Desktop app, own server (full bridge, `remoteClient` present) | The two-screen first run, decided without a new request | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/WelcomeFlow.test.ts` |
 | Hosted workspace opened inside the desktop app (reduced bridge, no `remoteClient`) | Treated like a browser: the server is asked | `src/components/onboarding/WelcomeGate.test.ts` |
-| Packaged desktop with the organization bridge | An optional "Using OpenMausBot at work?" row under Other ways in Connect an AI; a signed-in Company engine counts as ready | `src/components/onboarding/beats/OrganisationRow.test.ts`, `src/components/onboarding/ConnectAi.test.ts` (fake bridge) |
+| Packaged desktop with the organization bridge | An optional "Using MausClaw at work?" row under Other ways in Connect an AI; a signed-in Company engine counts as ready | `src/components/onboarding/beats/OrganisationRow.test.ts`, `src/components/onboarding/ConnectAi.test.ts` (fake bridge) |
 | Browser, admin of a hosted workspace | The first screen only, with the shared-workspace line, then the chat | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/WelcomeFlow.test.ts`, `src/lib/onboarding.test.ts` |
 | Browser, hosted member (no admin scope) | No welcome flow; one dismissible note kept in browser storage; no first-conversation spotlights | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/FirstConversationTour.test.ts` |
 | Browser, client-scope session on a server that is not hosted | Nothing new: the flow does not open itself (it could not be saved); Settings replay and spotlights as before | `src/components/onboarding/WelcomeGate.test.ts`, `src/lib/onboarding.test.ts` |
@@ -99,7 +99,7 @@ tests above, not by a rerun. In that run, "Got it" made no `/api/config`
 write, and the note stayed away after a reload. Connect an AI was mounted from the Vite preview with a fake
 `window.ogb.organization` injected before mount; it showed the row signed out,
 then connecting with the code, then connected. `begin` ran once, with the
-default Admin. Screenshots are in `.omb-scratch/verify-evidence/onboarding/`.
+default Admin. Screenshots are in `.mausclaw-scratch/verify-evidence/onboarding/`.
 
 Not covered here: the real Electron preload bridge and a real Admin enrolment
 (see [organization connection](organization-settings.md), not rerun for this
@@ -155,8 +155,8 @@ touches, and checks that none of them was listed or opened and that the
 sentinel reaches no answer, saved server or copied skill. The route test
 refuses a paired device, a service loopback and a hosted or Cloud server; the
 end-to-end test runs the real server from `launchVerificationServer` against a
-planted home, as the desktop app runs it (`OMB_TEST_DESKTOP_OWNER_TOKEN`), checks
-that a headless server (`openmausbot serve`) refuses the step, and checks that the starter bot and a bot made afterwards both
+planted home, as the desktop app runs it (`MAUSCLAW_TEST_DESKTOP_OWNER_TOKEN`), checks
+that a headless server (`mausclaw serve`) refuses the step, and checks that the starter bot and a bot made afterwards both
 get the skills in their turn's index, task folder links and `/name`, that a
 Claude turn with "Also use my Claude Code skills" on sees a Claude Code skill
 once, and that a bot can switch one off for itself. The rows, working, failed

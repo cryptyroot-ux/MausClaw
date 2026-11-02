@@ -9,7 +9,7 @@ export const CLAUDE_API_INSTANCE = "claudeApi";
 export const API_KEY_FLEET: InstanceConfigMap = {
   [OPENAI_API_INSTANCE]: {
     driver: "openai-compat", displayName: "OpenAI", access: "api", icon: { kind: "preset", preset: "openai" },
-    config: { url: "https://api.openai.com/v1", apiKeyEnv: "OMB_OPENAI_API_KEY", catalog: "openai" },
+    config: { url: "https://api.openai.com/v1", apiKeyEnv: "MAUSCLAW_OPENAI_API_KEY", catalog: "openai" },
   },
   [CLAUDE_API_INSTANCE]: {
     driver: "anthropic", displayName: "Claude (API key)", access: "api", icon: { kind: "preset", preset: "anthropic" },
@@ -18,13 +18,13 @@ export const API_KEY_FLEET: InstanceConfigMap = {
   [XAI_API_INSTANCE]: { driver: "grok", displayName: "xAI", access: "api", icon: { kind: "preset", preset: "xai" } },
   [OPENROUTER_API_INSTANCE]: {
     driver: "openai-compat", displayName: "OpenRouter", access: "api", icon: { kind: "preset", preset: "openrouter" },
-    config: { url: "https://openrouter.ai/api/v1", apiKeyEnv: "OMB_OPENROUTER_API_KEY" },
+    config: { url: "https://openrouter.ai/api/v1", apiKeyEnv: "MAUSCLAW_OPENROUTER_API_KEY" },
   },
 };
 
 export const DEFAULT_FLEET: InstanceConfigMap = {
   openaiCompat: { driver: "openai-compat" },
-  ollamaCloud: { driver: "openai-compat", displayName: "Ollama Cloud", config: { url: "https://ollama.com/v1", apiKeyEnv: "OMB_OLLAMA_CLOUD_API_KEY" } },
+  ollamaCloud: { driver: "openai-compat", displayName: "Ollama Cloud", config: { url: "https://ollama.com/v1", apiKeyEnv: "MAUSCLAW_OLLAMA_CLOUD_API_KEY" } },
   mistral: { driver: "mistral" },
   cerebras: { driver: "cerebras" },
   groq: { driver: "groq" },

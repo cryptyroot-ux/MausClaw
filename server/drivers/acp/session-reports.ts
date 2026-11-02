@@ -75,10 +75,10 @@ export function planLine(entries: unknown): string | null {
 
 const planLinesInConfig = cacheUntilConfigChanges((config) => config.features?.acpPlanLines === true);
 
-/** Off unless `features.acpPlanLines`; OMB_ACP_PLAN_LINES=1 or 0 overrides. Each line counts as a tool call wherever those are counted. */
+/** Off unless `features.acpPlanLines`; MAUSCLAW_ACP_PLAN_LINES=1 or 0 overrides. Each line counts as a tool call wherever those are counted. */
 export function acpPlanLinesEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (env.OMB_ACP_PLAN_LINES === "1") return true;
-  if (env.OMB_ACP_PLAN_LINES === "0") return false;
+  if (env.MAUSCLAW_ACP_PLAN_LINES === "1") return true;
+  if (env.MAUSCLAW_ACP_PLAN_LINES === "0") return false;
   return planLinesInConfig();
 }
 

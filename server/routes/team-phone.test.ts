@@ -23,7 +23,7 @@ function call(team: typeof TEAM | null, auth: RequestAuth, path = TEAM_PHONE_PAI
     team,
     sessions: {
       isLive: () => live,
-      openPairing: (input) => { opened.push(input as Record<string, unknown>); return { id: "p-1", code: "ABCDEFGHJKLM", credential: `omb_pair_${"a".repeat(43)}`, expiresAt: 5_000 }; },
+      openPairing: (input) => { opened.push(input as Record<string, unknown>); return { id: "p-1", code: "ABCDEFGHJKLM", credential: `mausclaw_pair_${"a".repeat(43)}`, expiresAt: 5_000 }; },
       memberPhones: () => PHONES.filter((entry) => !revoked.includes(entry.id)),
       revoke: (id) => { revoked.push(id); return true; },
     },

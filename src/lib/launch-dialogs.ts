@@ -3,7 +3,7 @@
  * Kept for the window's session, so a reload counts as the same launch (like welcomeFinishedThisLaunch). */
 export type LaunchDialog = "mausbot" | "notices";
 
-const KEY = "omb.launch.dialog";
+const KEY = "mausclaw.launch.dialog";
 // Where browser storage is blocked, this page's memory stands in for it, so a claim still holds for the session.
 let remembered: LaunchDialog | null = null;
 

@@ -1,4 +1,4 @@
-// `openmausbot serve --tunnel`: every public request arrives over an IPC listener, so request-auth always demands a paired session.
+// `mausclaw serve --tunnel`: every public request arrives over an IPC listener, so request-auth always demands a paired session.
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
@@ -124,7 +124,7 @@ export interface TunnelRecovery {
 
 const STOPPED_TUNNEL: ManagedTunnelState = { status: "stopped", ready: false };
 
-/** A server's operator owns its environment, so OMB_CONTROL_PLANE_URL is always honoured here (the desktop: dev builds only). */
+/** A server's operator owns its environment, so MAUSCLAW_CONTROL_PLANE_URL is always honoured here (the desktop: dev builds only). */
 export function createTunnelAccount(options: {
   dataDir: string;
   version: string;
@@ -169,7 +169,7 @@ export function createTunnelAccount(options: {
   return { service, credentials, controlPlane };
 }
 
-export const FLEET_CREDENTIAL_ENV = "OMB_INSTALLATION_CREDENTIAL";
+export const FLEET_CREDENTIAL_ENV = "MAUSCLAW_INSTALLATION_CREDENTIAL";
 
 /** A fleet container's installation credential comes from the environment; nothing is written to disk. */
 export function fleetCredential(env: NodeJS.ProcessEnv = process.env): string | null {
@@ -180,7 +180,7 @@ export function fleetCredential(env: NodeJS.ProcessEnv = process.env): string | 
 export async function fleetAccess(options: { credential: string; version?: string; env?: NodeJS.ProcessEnv; fetchImpl?: typeof fetch }): Promise<ManagedTunnelAccess> {
   const env = options.env ?? process.env;
   const controlPlane = resolveCompanionControlPlaneURL({ isPackaged: true, environment: env });
-  if (!controlPlane) throw new Error("OMB_CONTROL_PLANE_URL is set but is not an https address");
+  if (!controlPlane) throw new Error("MAUSCLAW_CONTROL_PLANE_URL is set but is not an https address");
   const client = createControlPlaneClient({ baseURL: controlPlane, fetchImpl: options.fetchImpl });
   try {
     const { endpoint, connectorToken } = await client.ensureEndpoint(options.credential, { appVersion: options.version });
@@ -194,7 +194,7 @@ export async function fleetAccess(options: { credential: string; version?: strin
   }
 }
 
-/** OMB_CLOUDFLARED_PATH, then the copy this command downloaded into the data
+/** MAUSCLAW_CLOUDFLARED_PATH, then the copy this command downloaded into the data
  * dir, then PATH. */
 export function cloudflaredPath(dataDir: string, env: NodeJS.ProcessEnv = process.env): string | null {
   return resolveCloudflaredBinary({ isPackaged: false, appPath: dataDir, environment: env });
@@ -251,7 +251,7 @@ export interface RunningTunnel {
   stop(): Promise<void>;
 }
 
-/** The control plane points the tunnel at 127.0.0.1:8812 (OMB_TUNNEL_ORIGIN_PORT for tests); the gateway forwards to the IPC socket. */
+/** The control plane points the tunnel at 127.0.0.1:8812 (MAUSCLAW_TUNNEL_ORIGIN_PORT for tests); the gateway forwards to the IPC socket. */
 export function startTunnel(options: {
   dataDir: string;
   access: ManagedTunnelAccess;
@@ -263,7 +263,7 @@ export function startTunnel(options: {
   onState?: (state: ManagedTunnelState) => void;
 }): RunningTunnel {
   const env = options.env ?? process.env;
-  const originPort = Number(env.OMB_TUNNEL_ORIGIN_PORT || MANAGED_COMPANION_ORIGIN_PORT);
+  const originPort = Number(env.MAUSCLAW_TUNNEL_ORIGIN_PORT || MANAGED_COMPANION_ORIGIN_PORT);
   let current: ManagedTunnelState = { status: "stopped", ready: false };
   const tunnel = createManagedCompanionTunnel({
     binaryPath: options.binaryPath,

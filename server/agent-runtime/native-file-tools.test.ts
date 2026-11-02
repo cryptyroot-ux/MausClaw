@@ -27,10 +27,10 @@ describe("native file tools", () => {
 
   it("edit replaces exact text", () => {
     writeFileSync(join(root, "a.txt"), "hello world", "utf8");
-    const r = runFileTool(ctx, "edit", { file_path: "a.txt", old_string: "world", new_string: "OMB" });
+    const r = runFileTool(ctx, "edit", { file_path: "a.txt", old_string: "world", new_string: "MausClaw" });
     expect(r.ok).toBe(true);
     const read = runFileTool(ctx, "read", { file_path: "a.txt" });
-    expect(read.content).toContain("hello OMB");
+    expect(read.content).toContain("hello MausClaw");
   });
 
   it("edit fails on ambiguous match without replace_all", () => {

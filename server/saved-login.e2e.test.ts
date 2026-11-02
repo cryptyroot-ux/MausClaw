@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 import { FakeLoginPage, LOGIN_FORM } from "./testing/fake-login-page.ts";
 import { freePortBlock } from "./testing/ports.ts";
@@ -53,7 +53,7 @@ async function browserFixture(url: string, cuaRecord?: string) {
   });
   await new Promise<void>((ready) => bridge.listen(port, "127.0.0.1", ready));
 
-  const tools = mkdtempSync(join(tmpdir(), "omb-saved-login-e2e-"));
+  const tools = mkdtempSync(join(tmpdir(), "mausclaw-saved-login-e2e-"));
   const binaryPath = join(tools, "agent-browser");
   // The stand-in agent-browser: always running, `close` and `set` do nothing, `mcp` answers get_url and eval from the
   // page, and every other command goes to the bridge.
@@ -77,7 +77,7 @@ else if (args[0] === "mcp") {
 else bridge("/engine", { args, proxy: process.env.AGENT_BROWSER_PROXY }).then((text) => { process.stdout.write(text); process.exit(0); }, () => process.exit(1));
 `, { mode: 0o755 });
 
-  const fixture = await launchVerificationServer(cuaRecord ? { OMB_TEST_DESKTOP_CUA_CONNECTION: cuaRecord } : {}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(cuaRecord ? { MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION: cuaRecord } : {}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, undefined, { scripted: true });
   const base = fixture.info.url;
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)
@@ -118,7 +118,7 @@ it.skipIf(process.platform === "win32")("saves a login from the sign-in card wit
       { steps: [{ tool: "fill_login", arguments: {} }], reply: `Signed in. The password was ${PASSWORD}.` },
     ] } }));
 
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Download this month's invoices.", "--url", browser.base]);
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Download this month's invoices.", "--url", browser.base]);
     await expect.poll(() => evidence().length, { timeout: 20_000 }).toBe(1);
     const messages = async () => (await api("GET", `/api/threads/${bot.threadId}/messages`)).body.messages as any[];
     await expect.poll(async () => (await messages()).some((message) => message.kind === "signin"), { timeout: 15_000 }).toBe(true);
@@ -173,9 +173,9 @@ it.skipIf(process.platform === "win32")("fills a login saved for example.com on 
       { steps: [{ tool: "fill_login", arguments: {}, expectError: true }], reply: "The site refused it." },
     ] } }));
     const turn = async (text: string, count: number) => {
-      await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", browser.base]);
+      await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", browser.base]);
       await expect.poll(() => evidence().length, { timeout: 20_000 }).toBe(count);
-      expect(await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "20", "--url", browser.base])).toMatchObject({ status: "settled" });
+      expect(await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "20", "--url", browser.base])).toMatchObject({ status: "settled" });
     };
 
     await turn("Sign in to example.com.", 1);
@@ -206,7 +206,7 @@ it.skipIf(process.platform === "win32")("fills a login saved for example.com on 
 // Auto mounts this computer only on macOS and Windows, and the stand-in browser is a shebang script.
 it.runIf(process.platform === "darwin")("on Auto, signs in in the bot's own browser beside this computer, never on the person's screen", async () => {
   // What the desktop app hands its own server once computer control is ready; the driver itself never runs here.
-  const record = join(mkdtempSync(join(tmpdir(), "omb-saved-login-cua-")), "cua-connection.json");
+  const record = join(mkdtempSync(join(tmpdir(), "mausclaw-saved-login-cua-")), "cua-connection.json");
   writeFileSync(record, JSON.stringify({
     mode: "embedded", status: "ready", socketPath: join(dirname(record), "cua.sock"), mcpCommand: "/fixture/cua-driver", mcpArgs: ["mcp"], mcpEnv: {},
   }), { mode: 0o600 });
@@ -222,7 +222,7 @@ it.runIf(process.platform === "darwin")("on Auto, signs in in the bot's own brow
       { steps: [{ tool: "fill_login", arguments: {} }], reply: "Signed in." },
     ] } }));
 
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Sign in to example.com and get the invoices.", "--url", browser.base]);
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Sign in to example.com and get the invoices.", "--url", browser.base]);
     await expect.poll(() => evidence().length, { timeout: 20_000 }).toBe(1);
     const [turn] = evidence();
     expect(turn.system).toContain("Two surfaces are mounted");

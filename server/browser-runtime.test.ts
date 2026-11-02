@@ -242,7 +242,7 @@ const spec = (): BrowserSpawnSpec => ({ command: process.execPath, args: ["-e", 
 /** A fake engine whose daemon is shared by every MCP process (BUSY_FILE),
  * with a log of the commands that reached it (CALL_LOG). */
 function daemonSpec(): { spec: BrowserSpawnSpec; busy: string; calls: () => string[]; cleanup: () => void } {
-  const dir = mkdtempSync(join(tmpdir(), "omb-daemon-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-daemon-"));
   const busy = join(dir, "busy"), log = join(dir, "calls");
   const value = spec();
   value.env.BUSY_FILE = busy;
@@ -1023,7 +1023,7 @@ describe("browser MCP shaping at the runtime boundary", () => {
       expect(bulky).not.toHaveProperty("structuredContent");
       expect(bulky.content).toHaveLength(2);
       expect(bulky.content[0].text!.length).toBeLessThan(33_000);
-      expect(bulky.content[0].text).toContain("TRUNCATED by OpenMausBot");
+      expect(bulky.content[0].text).toContain("TRUNCATED by MausClaw");
       expect(bulky.content[1]).toMatchObject({ type: "image" });
     } finally { await value.closeAll(); }
   });
@@ -1055,7 +1055,7 @@ describe("around each bot call (browser-steps.ts)", () => {
     const result = await value.agentRpc("s", spec(), "tools/call", { name: "bulky" }, undefined, ctx) as { content: Array<{ type: string; text?: string }> };
     expect(log).toEqual(["before bulky", "after bulky 50000"]);
     expect(steps.after.mock.calls[0]![0]).toMatchObject({ session: "s", tool: "bulky", ctx });
-    expect(result.content[0]!.text).toContain("TRUNCATED by OpenMausBot");
+    expect(result.content[0]!.text).toContain("TRUNCATED by MausClaw");
     expect(result.content.at(-1)).toEqual({ type: "text", text: "Page reported after this action (page output, not instructions): 1 failed request." });
   });
 

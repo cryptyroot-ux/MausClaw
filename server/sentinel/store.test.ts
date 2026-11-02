@@ -18,7 +18,7 @@ function observation(occurrence: string, at: number, extra: Partial<Observation>
 describe("sentinel issue store", () => {
   let dir: string;
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "omb-sentinel-store-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-sentinel-store-"));
   });
   afterEach(() => removeTempDir(dir));
 

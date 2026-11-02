@@ -7,7 +7,7 @@ import { validWirePath } from "../electron/cloud-sync-rules.mjs";
 export class SyncPathError extends Error {}
 
 export function syncRoot(dataDir: string, env: NodeJS.ProcessEnv = process.env): string {
-  return env.OMB_SYNC_ROOT || join(dirname(dataDir), "Synced");
+  return env.MAUSCLAW_SYNC_ROOT || join(dirname(dataDir), "Synced");
 }
 
 /** Copies of lent folders: in the data folder, which no bot's box shows, under sync/, which backups and moves leave out. */

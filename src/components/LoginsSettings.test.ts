@@ -132,7 +132,7 @@ describe("Settings → Logins", () => {
   });
 
   it("connects 1Password with a masked token it then forgets, lists its logins read-only, and disconnects", async () => {
-    const on = { connected: true, vaults: [{ id: "v1", title: "Shared with OMB", items: 1, bots: "all" }], items: 1 };
+    const on = { connected: true, vaults: [{ id: "v1", title: "Shared with MausClaw", items: 1, bots: "all" }], items: 1 };
     fixture.api
       .mockResolvedValueOnce({ logins: [], onePassword: OFF })
       .mockResolvedValueOnce({ onePassword: on })
@@ -147,7 +147,7 @@ describe("Settings → Logins", () => {
     await click("Connect 1Password");
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
     expect(fixture.api).toHaveBeenNthCalledWith(2, "/api/logins/1password", { method: "POST", body: JSON.stringify({ token: "ops_fake-typed-token" }) });
-    expect(host.querySelector("[data-onepassword]")!.textContent).toContain("Connected to Shared with OMB · 1 logins with a website");
+    expect(host.querySelector("[data-onepassword]")!.textContent).toContain("Connected to Shared with MausClaw · 1 logins with a website");
     expect(host.innerHTML).not.toContain("ops_fake-typed-token");
     const row = host.querySelector('[data-login-row="example.com"]')!;
     expect(row.textContent).toContain("From 1Password · All bots");
@@ -159,7 +159,7 @@ describe("Settings → Logins", () => {
   });
 
   it("keeps a 1Password vault to the bots chosen for it, on the same screen", async () => {
-    const vault = { id: "v1", title: "Shared with OMB", items: 2, bots: "all" };
+    const vault = { id: "v1", title: "Shared with MausClaw", items: 2, bots: "all" };
     const on = { connected: true, vaults: [vault], items: 2 };
     const narrowed = { ...on, vaults: [{ ...vault, bots: ["quill"] }] };
     fixture.api
@@ -167,9 +167,9 @@ describe("Settings → Logins", () => {
       .mockResolvedValueOnce({ onePassword: narrowed })
       .mockResolvedValueOnce({ logins: [{ ...VAULT_LOGIN, bots: ["quill"] }], onePassword: narrowed });
     await render();
-    const row = () => host.querySelector('[data-vault="Shared with OMB"]')!;
+    const row = () => host.querySelector('[data-vault="Shared with MausClaw"]')!;
     expect(row().textContent).toContain("2 logins · All bots");
-    await click("Change who can use Shared with OMB");
+    await click("Change who can use Shared with MausClaw");
     await act(async () => { [...row().querySelectorAll<HTMLInputElement>('input[type="radio"]')][1]!.click(); });
     await act(async () => { [...row().querySelectorAll<HTMLInputElement>('input[type="checkbox"]')][1]!.click(); });
     await click("Save changes");

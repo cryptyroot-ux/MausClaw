@@ -1,6 +1,6 @@
 // Model router: maps a task type to a concrete model within a budget,
 // with quality ranking and fallback ordering. Additive port of
-// OpenMausBot-Pivot's server/routing/model-router.ts.
+// MausClaw-Pivot's server/routing/model-router.ts.
 import type { ModelCost, ModelAssignment, RoutingRule, Budget } from "./types.ts";
 import type { TaskType } from "../intelligence/task-classifier.ts";
 

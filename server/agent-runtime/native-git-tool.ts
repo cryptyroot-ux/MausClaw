@@ -1,4 +1,4 @@
-// Native git operations for the OMB agent engine. Uses execFile (no shell) for safety.
+// Native git operations for the MausClaw agent engine. Uses execFile (no shell) for safety.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync } from "node:fs";
@@ -23,10 +23,10 @@ function gitEnv(): NodeJS.ProcessEnv {
   for (const name of Object.keys(env)) if (name.startsWith("GIT_")) delete env[name];
   env.GIT_CONFIG_GLOBAL = "/dev/null";
   env.GIT_CONFIG_SYSTEM = "/dev/null";
-  env.GIT_AUTHOR_NAME = "OpenMausBot";
-  env.GIT_AUTHOR_EMAIL = "omb@local";
-  env.GIT_COMMITTER_NAME = "OpenMausBot";
-  env.GIT_COMMITTER_EMAIL = "omb@local";
+  env.GIT_AUTHOR_NAME = "MausClaw";
+  env.GIT_AUTHOR_EMAIL = "mausclaw@local";
+  env.GIT_COMMITTER_NAME = "MausClaw";
+  env.GIT_COMMITTER_EMAIL = "mausclaw@local";
   return env;
 }
 

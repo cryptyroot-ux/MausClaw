@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { executableTarget } from "./prepare-cloudflared.mjs";
 import { bundleInventory, releaseBytes } from "./prepare-browser.mjs";
 
-export const WINDOWS_VENDOR_VERSION = "0.36.0-omb.2";
+export const WINDOWS_VENDOR_VERSION = "0.36.0-mausclaw.2";
 export const WINDOWS_VENDOR_TARGET = "x86_64-pc-windows-gnu";
 export const WINDOWS_VENDOR_SOURCE = {
   commit: "eb05921bad874cd2a1b4fa5d1149f1ed26576cae",
@@ -73,7 +73,7 @@ export async function buildWindowsBrowserVendor(output) {
   const linker = command("x86_64-w64-mingw32-ld", ["--version"], repository, { capture: true }).split("\n")[0];
   assert(rust.startsWith(`rustc ${WINDOWS_VENDOR_RUST} `), `Expected Rust ${WINDOWS_VENDOR_RUST}, got ${rust}`);
   assert(cargo.startsWith(`cargo ${WINDOWS_VENDOR_RUST} `), `Expected Cargo ${WINDOWS_VENDOR_RUST}, got ${cargo}`);
-  const scratch = mkdtempSync(join(tmpdir(), "omb-browser-vendor-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-browser-vendor-"));
   try {
     const source = join(scratch, "source");
     mkdirSync(source);

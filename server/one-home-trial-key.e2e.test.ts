@@ -12,7 +12,7 @@ import { hostTimeout } from "./testing/host-timeout.ts";
 import { TRIAL_CREDIT_OWN_AI, TRIAL_KEY_HELD } from "./trial-credit.ts";
 
 const RELAY_PATH = "/api/cloud/services/ai";
-const CREDIT_TOKEN = `omb_ai_${randomBytes(32).toString("base64url")}`;
+const CREDIT_TOKEN = `mausclaw_ai_${randomBytes(32).toString("base64url")}`;
 const OPENROUTER_KEY = `sk-or-v1-fake${randomBytes(16).toString("hex")}`;
 const USED_UP = { error: { code: "trial_credit_used_up", type: "insufficient_quota", message: "Your Claude credit is used up.", param: null } };
 const completions: string[] = [];
@@ -41,7 +41,7 @@ beforeAll(async () => {
   const url = `http://127.0.0.1:${(relay.address() as AddressInfo).port}${RELAY_PATH}/v1`;
   // A new Cloud on its trial: its own Claude is signed out, and the credit is all it has.
   fx = await launchCloudSendFixture({ onePasswordToken: `ops_fake-trial-${randomBytes(8).toString("hex")}`, cloudSignedIn: false,
-    cloudEnv: { OMB_CLOUD_AI_URL: url, OMB_CLOUD_AI_TOKEN: CREDIT_TOKEN } });
+    cloudEnv: { MAUSCLAW_CLOUD_AI_URL: url, MAUSCLAW_CLOUD_AI_TOKEN: CREDIT_TOKEN } });
 }, hostTimeout(90_000));
 afterAll(async () => {
   await fx?.close();

@@ -12,7 +12,7 @@ Scope: session tree, legacy loop retirement, external benchmarks, policy approva
 - Compaction adds an entry, leaves original entries intact. Branch summarization preserves context when switching branches.
 - `firstKeptEntryId` records compaction cut. Resume/fork from any point.
 
-### What OMB has
+### What MausClaw has
 - `thread_state` table: `thread_id PK, active_leaf_id`.
 - `messages` table: per thread_id, linear. No parent pointer, no branching.
 - `readThread(threadId, legacyFile)` returns messages + activeLeafId.
@@ -38,11 +38,11 @@ Scope: session tree, legacy loop retirement, external benchmarks, policy approva
 ### What exists
 - `native-turn-runtime.ts` has the legacy loop in a `void (async () => {...})()` block after the native branch.
 - The native branch returns early (`return { turnId }`), so the legacy block is unreachable in production.
-- 40+ tests in `openai-chat.test.ts` call `sendTurn` without `agentEngine: "omb-native"`, exercising the legacy path.
+- 40+ tests in `openai-chat.test.ts` call `sendTurn` without `agentEngine: "mausclaw-native"`, exercising the legacy path.
 - Key-rejection (`noteKeyRejected`) has been moved to all 4 model adapters. ✅
 
 ### Why retirement failed before
-- Migrated tests to `agentEngine: "omb-native"`. Native path: adapter.generate() throws on 401. Engine should fail run → run.failed → turn.completed. But turn.completed was never emitted (test timed out "turn still running").
+- Migrated tests to `agentEngine: "mausclaw-native"`. Native path: adapter.generate() throws on 401. Engine should fail run → run.failed → turn.completed. But turn.completed was never emitted (test timed out "turn still running").
 - Root cause: likely the native path's error handling doesn't emit turn.completed for some error types, or the run hangs.
 
 ### Investigation needed
@@ -53,7 +53,7 @@ Scope: session tree, legacy loop retirement, external benchmarks, policy approva
 ### Plan
 1. Debug one test case with native path. Add logging to turn-runtime.ts finish/run.failed.
 2. Fix the native path's error emission.
-3. Migrate tests (add `agentEngine: "omb-native"`).
+3. Migrate tests (add `agentEngine: "mausclaw-native"`).
 4. Remove legacy block.
 5. Run full suite.
 
@@ -85,7 +85,7 @@ Scope: session tree, legacy loop retirement, external benchmarks, policy approva
 4. Document results honestly (no vendor claims).
 
 ### Effort: large. Needs: network, disk, Docker, time.
-### Dependencies: native file tools (done), shell (done), git (done) — OMB can now do coding tasks natively.
+### Dependencies: native file tools (done), shell (done), git (done) — MausClaw can now do coding tasks natively.
 
 ## 4. Policy approval/scope/safety floor centralization
 

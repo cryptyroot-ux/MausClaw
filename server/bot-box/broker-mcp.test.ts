@@ -24,7 +24,7 @@ describe("remote MCP servers through the broker", () => {
   // (detect.ts says "not-linux" anywhere else), so Windows gets "off" below.
   const withBroker = it.skipIf(process.platform === "win32");
   const broker = async (): Promise<BoxBroker> => {
-    dir = mkdtempSync(join(tmpdir(), "omb-bmcp-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-bmcp-"));
     credentials = await openCredentialBroker({ socketPath: join(dir, "b.sock") });
     return { port: BOX_BROKER_PORT, mintForThread: credentials.mintForThread, touchThread: credentials.touchThread, revokeThread: credentials.revokeThread, lookup: credentials.lookup };
   };
@@ -35,7 +35,7 @@ describe("remote MCP servers through the broker", () => {
     const notion = out.notion as { type: string; url: string; headers: Record<string, string> };
     expect(notion.type).toBe("http");
     expect(notion.headers).toEqual({});
-    const match = /^http:\/\/127\.0\.0\.1:18080\/b\/(omb_t0_[a-f0-9]{48})\/mcp-notion$/.exec(notion.url);
+    const match = /^http:\/\/127\.0\.0\.1:18080\/b\/(mausclaw_t0_[a-f0-9]{48})\/mcp-notion$/.exec(notion.url);
     expect(match).not.toBeNull();
     expect(JSON.stringify(out)).not.toContain("notion-secret");
     expect(credentials.lookup(match![1]!, "mcp-notion")).toMatchObject({ ok: true, botId: "b1", threadId: "t1", grant: { upstream: "https://mcp.notion.example/mcp", headers: { authorization: "Bearer notion-secret" } } });

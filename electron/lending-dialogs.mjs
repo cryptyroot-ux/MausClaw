@@ -70,7 +70,7 @@ export function createLendingDialogs({ dialog, window, validate, isHome = async 
       if (!parent || parent.isDestroyed()) return false;
       const { response } = await dialog.showMessageBox(parent, {
         type: "warning", message: "Let your bots on My Cloud use your apps and screen?",
-        detail: "In your own conversations and routines, they can see your screen, click and type in your apps as you, while this computer is awake with OpenMausBot open. That reaches anything those apps can reach. You can turn it off at any time on My Cloud's page or in Settings → MausBot Cloud.",
+        detail: "In your own conversations and routines, they can see your screen, click and type in your apps as you, while this computer is awake with MausClaw open. That reaches anything those apps can reach. You can turn it off at any time on My Cloud's page or in Settings → MausBot Cloud.",
         buttons: ["Lend apps and screen", "Cancel"], defaultId: 1, cancelId: 1,
       });
       return response === 0;

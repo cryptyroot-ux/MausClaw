@@ -1,4 +1,4 @@
-// The desktop bundle served from OMB_STATIC_DIR: content types, cache rules and the SPA fallback.
+// The desktop bundle served from MAUSCLAW_STATIC_DIR: content types, cache rules and the SPA fallback.
 import { readFileSync } from "node:fs";
 import type { ServerResponse } from "node:http";
 import { extname, join } from "node:path";

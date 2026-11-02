@@ -67,12 +67,12 @@ export function companyInstanceConfigs(connection: ManagedDesktopConnection, _ru
       environment: { ANTHROPIC_API_KEY: connection.token, ANTHROPIC_AUTH_TOKEN: connection.token, ANTHROPIC_BASE_URL: base, ANTHROPIC_MODEL: provider.models[0] },
     };
     if (provider.id === "openai") entries[id] = {
-      driver: "openai-compat", displayName, config: { url: `${base}/v1`, apiKeyEnv: "OPENMAUSBOT_COMPANY_API_KEY", model: provider.models[0] },
-      environment: { OPENMAUSBOT_COMPANY_API_KEY: connection.token },
+      driver: "openai-compat", displayName, config: { url: `${base}/v1`, apiKeyEnv: "MAUSCLAW_COMPANY_API_KEY", model: provider.models[0] },
+      environment: { MAUSCLAW_COMPANY_API_KEY: connection.token },
     };
     if (provider.id === "openrouter") entries[id] = {
-      driver: "openai-compat", displayName, config: { url: `${base}/v1`, apiKeyEnv: "OPENMAUSBOT_COMPANY_API_KEY", model: provider.models[0], provider: "" },
-      environment: { OPENMAUSBOT_COMPANY_API_KEY: connection.token },
+      driver: "openai-compat", displayName, config: { url: `${base}/v1`, apiKeyEnv: "MAUSCLAW_COMPANY_API_KEY", model: provider.models[0], provider: "" },
+      environment: { MAUSCLAW_COMPANY_API_KEY: connection.token },
     };
   }
   return entries;

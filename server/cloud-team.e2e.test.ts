@@ -1,4 +1,4 @@
-// A real Team Cloud (OMB_CLOUD_ROLE=team) beside the cloud fixture's two servers: three people paired with the Admin's
+// A real Team Cloud (MAUSCLAW_CLOUD_ROLE=team) beside the cloud fixture's two servers: three people paired with the Admin's
 // signed member claims, the audience rule on chats, memory, recall and files, the team's connected apps, and a My Cloud
 // that refuses a team claim. The engine is the synthetic Claude CLI, so this proves the plumbing, not a model's judgement.
 import { randomBytes } from "node:crypto";
@@ -48,7 +48,7 @@ const scriptToolCalls = (calls: unknown[] | null) => {
   const file = join(team.home, "tool-calls.json");
   if (calls) writeFileSync(file, JSON.stringify(calls)); else rmSync(file, { force: true });
 };
-const ws = (id: string, ...rest: string[]) => join(team.home, ".openmausbot", "workspaces", id, ...rest);
+const ws = (id: string, ...rest: string[]) => join(team.home, ".mausclaw", "workspaces", id, ...rest);
 const layerOf = (audience: string) => `${bot.id}--${audience}`;
 const messages = async (token: string, threadId: string) => team.as(token, "GET", `/api/threads/${threadId}/messages?limit=200`);
 const idle = async (token: string) => ((await team.as(token, "GET", "/api/bots")).body.bots as Array<{ id: string; activity?: string; busy?: boolean }>)

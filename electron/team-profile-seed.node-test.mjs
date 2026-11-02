@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { SEED_PICTURE_MAX_BYTES, seedTeamProfile } from "./team-profile-seed.mjs";
 
-const TEAM = "https://omb-t-1.fly.dev";
+const TEAM = "https://mausclaw-t-1.fly.dev";
 
 /** A team whose `/api/me` answers `me` (or each status in `statuses` first), and a computer whose profile is `local`. */
 function world({ me = { name: "", email: "ada@acme.test", seeded: [] }, statuses = [], local = {}, picture = { type: "image/png", bytes: 68 } } = {}) {

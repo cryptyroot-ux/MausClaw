@@ -7,19 +7,19 @@ import { CREDENTIAL_TARGETS } from "../../../shared/credential-request";
 import { KEY_CATALOG, KEY_SECTIONS, keyEntry, keyForInstance, keyMatches, looksLikeOtherKey, savedState, type KeyId } from "./key-catalog";
 
 const NOT_A_PERSONS_KEY: Record<string, string> = {
-  OMB_ANTHROPIC_API_URL: "the address the Anthropic key goes to, set by a hosted install",
-  OMB_HOSTED_MODEL_TOKEN: "a hosted install's model token",
-  OMB_HOSTED_MODELS: "a hosted install's model list",
-  OMB_COMPOSIO_BROKER_TOKEN: "MausBot Cloud's connected-apps broker",
-  OMB_CLOUD_BOAT_TOKEN: "MausBot Cloud's included computers",
-  OMB_CLOUD_VOICE_TOKEN: "MausBot Cloud's included voice",
-  OMB_CLOUD_DECIDER_TOKEN: "MausBot Cloud's included decisions",
-  OMB_CLOUD_AI_TOKEN: "MausBot Cloud's included AI",
-  OMB_CLOUD_X_TOKEN: "MausBot Cloud's included X research",
-  OMB_CLOUD_CONNECTED_APPS_GRANT: "MausBot Cloud's connected apps",
-  OMB_BROWSER_CONNECTION: "the app's own browser, not a credential",
-  OMB_USER_DATA: "the app's own data folder, not a credential",
-  OMB_BOAT_API: "the Boat address, not a credential",
+  MAUSCLAW_ANTHROPIC_API_URL: "the address the Anthropic key goes to, set by a hosted install",
+  MAUSCLAW_HOSTED_MODEL_TOKEN: "a hosted install's model token",
+  MAUSCLAW_HOSTED_MODELS: "a hosted install's model list",
+  MAUSCLAW_COMPOSIO_BROKER_TOKEN: "MausBot Cloud's connected-apps broker",
+  MAUSCLAW_CLOUD_BOAT_TOKEN: "MausBot Cloud's included computers",
+  MAUSCLAW_CLOUD_VOICE_TOKEN: "MausBot Cloud's included voice",
+  MAUSCLAW_CLOUD_DECIDER_TOKEN: "MausBot Cloud's included decisions",
+  MAUSCLAW_CLOUD_AI_TOKEN: "MausBot Cloud's included AI",
+  MAUSCLAW_CLOUD_X_TOKEN: "MausBot Cloud's included X research",
+  MAUSCLAW_CLOUD_CONNECTED_APPS_GRANT: "MausBot Cloud's connected apps",
+  MAUSCLAW_BROWSER_CONNECTION: "the app's own browser, not a credential",
+  MAUSCLAW_USER_DATA: "the app's own data folder, not a credential",
+  MAUSCLAW_BOAT_API: "the Boat address, not a credential",
 };
 
 const electron = (file: string) => readFileSync(new URL(`../../../electron/${file}`, import.meta.url), "utf8");

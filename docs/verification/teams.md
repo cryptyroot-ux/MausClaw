@@ -12,9 +12,9 @@ Run the isolated lifecycle checks:
 
 ```sh
 pnpm exec vitest run server/team-lifecycle.e2e.test.ts server/section-context.test.ts server/store.test.ts src/lib/team-map.test.ts --maxWorkers=2
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-lifecycle-ui.e2e.test.ts scripts/testing/team-template-ui.e2e.test.ts --maxWorkers=1
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-canvas-ui.e2e.test.ts --maxWorkers=1
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-computers-ui.e2e.test.ts --maxWorkers=1
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/team-lifecycle-ui.e2e.test.ts scripts/testing/team-template-ui.e2e.test.ts --maxWorkers=1
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/team-canvas-ui.e2e.test.ts --maxWorkers=1
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/team-computers-ui.e2e.test.ts --maxWorkers=1
 pnpm exec vitest run scripts/testing/team-computers-fixture.test.ts
 pnpm exec vitest run server/index.test.ts -t "creates team computers|shares one team computer" --maxWorkers=1
 ```
@@ -25,7 +25,7 @@ renames the populated team, adds and removes members, then empties and renames
 it again. It imports a legacy template with a colliding name and restarts the
 exact disposable server. It checks retained instructions and conversation
 messages, archived bots moving to General when their team is deleted, and
-explicit empty-team deletion. API requests and `control-omb` wait/messages
+explicit empty-team deletion. API requests and `control-mausclaw` wait/messages
 results are kept beside the fixture log in `*.team-lifecycle.json`.
 
 A second real process restart uses legacy bot and group records needing
@@ -34,7 +34,7 @@ conversations readable and persists their task migrations, logs a diagnostic,
 and leaves the malformed file byte-for-byte unchanged. Later team and shared
 instruction writes still fail closed until that file is repaired.
 
-The renderer test uses `control-omb ui launch`, opens **Create department**, and checks
+The renderer test uses `control-mausclaw ui launch`, opens **Create department**, and checks
 that renaming preserves the sidebar's collapsed state and ordering. It moves
 two bots through Team map, edits membership, and creates a bot directly in the
 team. Dismissing that pending creation must retain unsaved membership edits and
@@ -44,7 +44,7 @@ empty team. Rename preserves instructions; delete confirms that the team's
 instructions will be removed. A delayed, failed deletion cannot be submitted
 twice and remains retryable; confirmation focus stays contained and returns to
 its trigger when dismissed. It captures
-`.omb-scratch/verify-evidence/team-lifecycle.png` before deletion.
+`.mausclaw-scratch/verify-evidence/team-lifecycle.png` before deletion.
 New lifecycle labels use the existing string catalog; untranslated packs fall
 back to the English labels without changing or regenerating other translations.
 
@@ -90,7 +90,7 @@ machine causes a clear failure, never an automatic paid replacement. These
 checks prove server routing and ownership, not actual Boat provisioning or
 remote desktop operation.
 
-The separate `team-computers-ui` test uses a real OMB server and renderer with
+The separate `team-computers-ui` test uses a real MausClaw server and renderer with
 an owned loopback HTTP Boat provider. It creates a named machine through **Add →
 Boat computer**, verifies opening the shelf never provisions a machine, cancels
 and confirms a pointer drop, explicitly unassigns before moving to another team,

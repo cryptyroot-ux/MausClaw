@@ -224,7 +224,7 @@ describe("failures come back as reasons", () => {
 
 describe("the decision log", () => {
   it("writes one 0600 row per call with no message text and no key", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-decider-log-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-decider-log-"));
     const logs: string[] = [];
     for (const method of ["log", "warn", "error", "info", "debug"] as const) {
       vi.spyOn(console, method).mockImplementation((...args: unknown[]) => { logs.push(args.map(String).join(" ")); });
@@ -298,12 +298,12 @@ describe("settings rules", () => {
 });
 
 describe("Cloud Pro's included decisions", () => {
-  // A Jev base URL whose one relay route is <OMB_CLOUD_DECIDER_URL>/v1/systemone.
+  // A Jev base URL whose one relay route is <MAUSCLAW_CLOUD_DECIDER_URL>/v1/systemone.
   const RELAY = "https://cloud.example.test/api/cloud/services/decider";
-  const INCLUDED = "omb_decide_unit_included_token_0123456789";
+  const INCLUDED = "mausclaw_decide_unit_included_token_0123456789";
   const cloudPro = () => {
-    vi.stubEnv("OMB_CLOUD_DECIDER_URL", RELAY);
-    vi.stubEnv("OMB_CLOUD_DECIDER_TOKEN", INCLUDED);
+    vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_URL", RELAY);
+    vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_TOKEN", INCLUDED);
   };
   // The app's real room request: the only one the relay takes besides the key check.
   const ROOM = roomRoutingRequest({
@@ -321,7 +321,7 @@ describe("Cloud Pro's included decisions", () => {
   };
   afterEach(() => vi.unstubAllEnvs());
 
-  it("with no own key, decides through exactly <OMB_CLOUD_DECIDER_URL>/v1/systemone, on by default", async () => {
+  it("with no own key, decides through exactly <MAUSCLAW_CLOUD_DECIDER_URL>/v1/systemone, on by default", async () => {
     cloudPro();
     const fetchImpl = theo();
     for (const config of [{}, { decider: { baseUrl: "http://127.0.0.1:9" } }] as AppConfig[]) {
@@ -368,7 +368,7 @@ describe("Cloud Pro's included decisions", () => {
 
   it("is on by default only while included: without the relay's URL and token nothing changes", async () => {
     const fetchImpl = theo();
-    for (const env of [{}, { OMB_CLOUD_DECIDER_TOKEN: INCLUDED }, { OMB_CLOUD_DECIDER_URL: RELAY }]) {
+    for (const env of [{}, { MAUSCLAW_CLOUD_DECIDER_TOKEN: INCLUDED }, { MAUSCLAW_CLOUD_DECIDER_URL: RELAY }]) {
       vi.unstubAllEnvs();
       for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
       expect(describeDecider({})).toEqual({ provider: "jev", configured: false, enabled: false, jobs: { roomRouting: true } });
@@ -468,7 +468,7 @@ describe("Cloud Pro's included decisions", () => {
 
   it("the decision log never holds the token", async () => {
     cloudPro();
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-decider-included-log-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-decider-included-log-"));
     await route(decider({}, theo(), dataDir));
     await flushDeciderLog(dataDir);
     const dir = join(dataDir, DECIDER_LOG_DIR);
@@ -530,7 +530,7 @@ describe("OpenRouter as the provider", () => {
   });
 
   it("logs the provider and model, with no message text and no key", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-decider-or-log-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-decider-or-log-"));
     const fetchImpl = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(answer("theo", { theo: 0.9, maya: 0.1 }))
       .mockResolvedValueOnce(new Response(`echo ${OR_KEY}`, { status: 402 }));
@@ -547,7 +547,7 @@ describe("OpenRouter as the provider", () => {
   });
 
   it("a Jev log row stays without a model", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-decider-jev-log-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-decider-jev-log-"));
     await decider(ON, vi.fn<typeof fetch>(async () => jsonResponse(choiceBody("theo", { theo: 0.94, maya: 0.06 }))), dataDir).choose("roomRouting", STATE, QUESTION);
     await flushDeciderLog(dataDir);
     const dir = join(dataDir, DECIDER_LOG_DIR);
@@ -558,8 +558,8 @@ describe("OpenRouter as the provider", () => {
 
   it("Cloud's included relay comes before OpenRouter, and its token never goes to OpenRouter", async () => {
     const relay = "https://cloud.example.test/api/cloud/services/decider";
-    vi.stubEnv("OMB_CLOUD_DECIDER_URL", relay);
-    vi.stubEnv("OMB_CLOUD_DECIDER_TOKEN", "omb_decide_unit_included_token_0123456789");
+    vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_URL", relay);
+    vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_TOKEN", "mausclaw_decide_unit_included_token_0123456789");
     const fetchImpl = yes();
     const chose: AppConfig = { decider: { ...OR.decider } };
     expect(describeDecider(chose)).toEqual({ provider: "jev", configured: true, included: true, enabled: true, jobs: { roomRouting: true } });

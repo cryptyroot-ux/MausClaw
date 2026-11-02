@@ -21,7 +21,7 @@ afterEach(async () => {
 });
 
 async function serve(statuses = new Map<string, OrgInstallStatus>()) {
-  const folder = mkdtempSync(join(tmpdir(), "omb-preset-routes-"));
+  const folder = mkdtempSync(join(tmpdir(), "mausclaw-preset-routes-"));
   folders.push(folder);
   const presets = createPresetStore(join(folder, "presets.json"));
   const routes = [createBotPresetRoutes({ presets, orgStatuses: () => statuses })];

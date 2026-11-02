@@ -43,11 +43,11 @@ const post = (kind: string, body: unknown, headers: Record<string, string> = { a
 const agentsHeaders = (settings: Record<string, string>) => ({ authorization: "Bearer turn-capability",
   [AGENTS_ENV_HEADER]: Buffer.from(JSON.stringify(settings)).toString("base64url") });
 
-describe("OpenMausBot's own MCP servers over HTTP", () => {
+describe("MausClaw's own MCP servers over HTTP", () => {
   it("answers a browser session the way its stdio proxy does, with the turn's capability on every call", async () => {
     const init = await post("browser", { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {} } });
     expect(init.status).toBe(200);
-    expect(await init.json()).toMatchObject({ id: 1, result: { protocolVersion: "2025-06-18", serverInfo: { name: "openmausbot-browser" } } });
+    expect(await init.json()).toMatchObject({ id: 1, result: { protocolVersion: "2025-06-18", serverInfo: { name: "mausclaw-browser" } } });
     const notice = await post("browser", { jsonrpc: "2.0", method: "notifications/initialized" });
     expect([notice.status, await notice.text()]).toEqual([202, ""]);
     expect(await (await post("browser", { jsonrpc: "2.0", id: 2, method: "tools/list" })).json())
@@ -71,13 +71,13 @@ describe("OpenMausBot's own MCP servers over HTTP", () => {
     const list = async (settings: Record<string, string>) =>
       ((await (await post("agents", { jsonrpc: "2.0", id: 1, method: "tools/list" }, agentsHeaders(settings))).json()) as { result: { tools: Array<{ name: string }> } })
         .result.tools.map((tool) => tool.name);
-    const worker = await list({ OMB_BOT_ID: "w2", OMB_THREAD_ID: "t2" });
-    const chief = await list({ OMB_BOT_ID: "chief", OMB_THREAD_ID: "t1", OMB_CHIEF_OF_STAFF: "1" });
+    const worker = await list({ MAUSCLAW_BOT_ID: "w2", MAUSCLAW_THREAD_ID: "t2" });
+    const chief = await list({ MAUSCLAW_BOT_ID: "chief", MAUSCLAW_THREAD_ID: "t1", MAUSCLAW_CHIEF_OF_STAFF: "1" });
     expect(worker).toContain("coordinate_bots");
     expect(chief.length).toBeGreaterThan(worker.length);
     internalCalls.length = 0;
     const call = await (await post("agents", { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "list_bots", arguments: {} } },
-      agentsHeaders({ OMB_BOT_ID: "chief", OMB_THREAD_ID: "t1", OMB_HARNESS_URL: "http://203.0.113.9:1" }))).json();
+      agentsHeaders({ MAUSCLAW_BOT_ID: "chief", MAUSCLAW_THREAD_ID: "t1", MAUSCLAW_HARNESS_URL: "http://203.0.113.9:1" }))).json();
     expect(call).toMatchObject({ id: 2, result: { content: [{ type: "text", text: expect.stringContaining("W1") }] } });
     expect(internalCalls).toEqual([
       expect.objectContaining({ path: "/api/internal/agents?self=chief", authorization: "Bearer turn-capability" }),
@@ -92,7 +92,7 @@ describe("OpenMausBot's own MCP servers over HTTP", () => {
     const agents = async (settings: Record<string, string>) =>
       ((await (await post("agents", { jsonrpc: "2.0", id: 6, method: "tools/list" }, agentsHeaders(settings))).json()) as { result: { tools: Array<{ name: string }> } })
         .result.tools.map((tool) => tool.name);
-    const whole = await agents({ OMB_BOT_ID: "w2", OMB_THREAD_ID: "t2" });
-    expect(await agents({ OMB_BOT_ID: "w2", OMB_THREAD_ID: "t2", [TOOL_LIMIT_ENV]: "3" })).toEqual(whole.slice(0, 3));
+    const whole = await agents({ MAUSCLAW_BOT_ID: "w2", MAUSCLAW_THREAD_ID: "t2" });
+    expect(await agents({ MAUSCLAW_BOT_ID: "w2", MAUSCLAW_THREAD_ID: "t2", [TOOL_LIMIT_ENV]: "3" })).toEqual(whole.slice(0, 3));
   });
 });

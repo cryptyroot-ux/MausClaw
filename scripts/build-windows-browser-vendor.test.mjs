@@ -11,7 +11,7 @@ describe("reviewed Windows browser dependency build", () => {
     expect(WINDOWS_VENDOR_SOURCE.commit).toBe("eb05921bad874cd2a1b4fa5d1149f1ed26576cae");
     expect(WINDOWS_VENDOR_SOURCE.url).toContain(WINDOWS_VENDOR_SOURCE.commit);
     expect(WINDOWS_VENDOR_TARGET).toBe("x86_64-pc-windows-gnu");
-    expect(WINDOWS_VENDOR_VERSION).toBe("0.36.0-omb.2");
+    expect(WINDOWS_VENDOR_VERSION).toBe("0.36.0-mausclaw.2");
     expect(WINDOWS_VENDOR_RUST).toBe("1.97.1");
     expect(WINDOWS_VENDOR_PNPM).toBe("11.1.3");
     expect(WINDOWS_VENDOR_PATCH_SHA256).toMatch(/^[0-9a-f]{64}$/);
@@ -44,7 +44,7 @@ describe("reviewed Windows browser dependency build", () => {
   });
 
   it("requires an explicit absolute output without accepting extra options", () => {
-    const output = join(tmpdir(), "omb-vendor-output");
+    const output = join(tmpdir(), "mausclaw-vendor-output");
     expect(parseVendorBuildArgs(["--output", output])).toBe(output);
     for (const args of [[], ["--output", "relative"], ["--output", output, "--skip-verify"], ["--source", output]]) {
       expect(() => parseVendorBuildArgs(args)).toThrow(/Usage/);

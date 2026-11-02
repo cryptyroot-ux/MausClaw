@@ -9,7 +9,7 @@ import { ProcessRegistry, staleSingletonLock, strays, sweep, userDataDirOf, type
 
 const dirs: string[] = [];
 const scratch = () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-chrome-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-chrome-test-"));
   dirs.push(dir);
   return dir;
 };
@@ -22,13 +22,13 @@ const chrome = (pid: number, dir: string, extra = ""): ListedProcess => ({ pid, 
 
 describe("the process sweep", () => {
   it("reads --user-data-dir with spaces, quotes or exact arguments", () => {
-    expect(userDataDirOf({ args: "/Apps/Chrome --user-data-dir=/Users/a/Library/Application Support/OMB/browser/profiles/x --no-first-run" })).toBe("/Users/a/Library/Application Support/OMB/browser/profiles/x");
+    expect(userDataDirOf({ args: "/Apps/Chrome --user-data-dir=/Users/a/Library/Application Support/MausClaw/browser/profiles/x --no-first-run" })).toBe("/Users/a/Library/Application Support/MausClaw/browser/profiles/x");
     expect(userDataDirOf({ args: '"C:\\Chrome\\chrome.exe" "--user-data-dir=C:\\Users\\a b\\browser\\p" --headless=new' })).toBe("C:\\Users\\a b\\browser\\p");
     expect(userDataDirOf({ args: "x", argv: ["chrome", "--user-data-dir=/a b/--c"] })).toBe("/a b/--c");
     expect(userDataDirOf({ args: "/usr/bin/node server.js" })).toBeNull();
   });
 
-  it("kills browsers on OMB's profiles that no live server registered, and nothing else", () => {
+  it("kills browsers on MausClaw's profiles that no live server registered, and nothing else", () => {
     const root = "/data/browser";
     const processes = [
       chrome(10, "/data/browser/profiles/a"),

@@ -1,4 +1,4 @@
-# Verifying OpenMausBot
+# Verifying MausClaw
 
 > Native-only build: the external CLI/ACP engines (Claude, Codex, OpenCode,
 > Hermes, Pi, Antigravity and the rest) are not registered here, so fixtures
@@ -6,8 +6,8 @@
 > chat-completions fixtures instead: [OpenAI-compatible structured
 > tools](openai-tools.md) and [Chat UI](chat-ui.md#native-provider).
 
-OpenMausBot has one development control surface: `pnpm control:omb`. It runs
-the published `openmausbot` verbs (docs/headless-cli.md), which call the MCP
+MausClaw has one development control surface: `pnpm control:mausclaw`. It runs
+the published `mausclaw` verbs (docs/headless-cli.md), which call the MCP
 tools in `scripts/mcp-server.ts`, so verification uses the same URL
 validation, task pinning, bounded transcripts, wait states, and redaction as
 external MCP clients and scripts.
@@ -17,7 +17,7 @@ external MCP clients and scripts.
 Start a fixture in one terminal:
 
 ```sh
-node --experimental-strip-types scripts/control-omb.ts launch
+node --experimental-strip-types scripts/control-mausclaw.ts launch
 ```
 
 Run the foreground launcher directly rather than through `pnpm`; this ensures
@@ -28,20 +28,20 @@ harness/webhook port pair, installs the repository's fake engine binaries, and
 prints the URL, PID, data directory, and persistent log path, then stays
 attached to that exact child. In this native-only build the registry does not
 expose those engines; a native loopback provider is the supported way to drive
-a turn. The parent shell and the user's OpenMausBot data are untouched. Only
+a turn. The parent shell and the user's MausClaw data are untouched. Only
 `FAKE_CLAUDE_*` variables cross from the launcher's environment into that
 child, so a legacy recipe can still script its fake engine's mode, replies and
 tool calls without writing a wrapper CLI. Live calls add one exception:
-`OMB_OPENAI_LIVE_URL` crosses when it is a loopback
+`MAUSCLAW_OPENAI_LIVE_URL` crosses when it is a loopback
 `http://127.0.0.1:PORT` (the fake GPT-Live that
 `node --experimental-strip-types server/testing/fake-openai-live.ts` prints),
-and `OMB_OPENAI_LIVE_KEY` crosses only with it, so that key can only ever
+and `MAUSCLAW_OPENAI_LIVE_KEY` crosses only with it, so that key can only ever
 reach the fake.
 
 Pass the printed URL explicitly from a second terminal:
 
 ```sh
-pnpm control:omb doctor --url http://127.0.0.1:PORT
+pnpm control:mausclaw doctor --url http://127.0.0.1:PORT
 ```
 
 Mutating commands refuse silent port discovery. This prevents a verification
@@ -107,7 +107,7 @@ Use only mapped, tested commands:
 - [Spend cap and sell prices](spend-cap.md)
 - [Enterprise layer loading and license expiry](enterprise-license.md)
 
-`control-omb ui` ([Chat UI, driven headlessly](chat-ui.md)) drives the real
+`control-mausclaw ui` ([Chat UI, driven headlessly](chat-ui.md)) drives the real
 renderer in a headless Chrome by accessible name, so composer sends, transcript
 rows, tool chips and server feature flags are provable from the command line.
 Other renderer-only behavior—Settings, sidebar drag-and-drop, the VM modal, the
@@ -219,7 +219,7 @@ in a disposable workspace with synthetic data.
 
 The [people invitation fixture](people.md) checks hosted workspace sign-in,
 roles and device revocation through the real HTTP API with a stubbed email
-service. It does not drive the People settings UI through `control-omb`.
+service. It does not drive the People settings UI through `control-mausclaw`.
 
 The [sidebar fixture](sidebar.md) checks archive and delete confirmations, their
 default focus, keyboard wrapping and focus return against two disposable bots.
@@ -254,7 +254,7 @@ interrupting a newer request.
 
 The [Live calls fixture](live-calls.md) checks the call id on spoken requests,
 the one "call" row a finished call leaves, its generated title and the desktop's
-record row, against the fake GPT-Live in a disposable workspace. `control-omb`
+record row, against the fake GPT-Live in a disposable workspace. `control-mausclaw`
 cannot start a call, so the recipe also calls the harness's own routes. It
 proves no real audio, OpenAI key or phone.
 

@@ -14,9 +14,9 @@ import { PASS } from "../routes/table.ts";
 const SITE = { "index.html": "<!doctype html><h1>Bake sale</h1>", "style.css": "h1{color:red}" };
 let dir: string;
 
-beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "omb-pages-")); });
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "mausclaw-pages-")); });
 afterEach(() => {
-  applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: null });
+  applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: null });
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -27,7 +27,7 @@ function writeSite(folder: string, files: Record<string, string> = SITE) {
   }
   return folder;
 }
-const signIn = () => applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: { url: FAKE_TOKEN_URL, token: FAKE_DESKTOP_TOKEN } });
+const signIn = () => applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: { url: FAKE_TOKEN_URL, token: FAKE_DESKTOP_TOKEN } });
 
 function setup(options: { home?: boolean; quota?: number } = {}) {
   const service = fakePagesService({ quota: options.quota });
@@ -56,13 +56,13 @@ describe("publishing a page", () => {
 
   it("says publishing isn't turned on yet, never \"sign in\", when this signed-in desktop's Admin offers no pages", async () => {
     const f = setup();
-    applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: null, offered: false });
+    applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: null, offered: false });
     writeSite(join(f.work, "site"));
     const outcome = await f.publish({ path: "site" });
     expect(outcome.text).toBe("Publishing pages isn't turned on for this account yet.");
     expect(f.service.minted).toEqual([]);
     expect(f.cards).toEqual([]);
-    applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: null });
+    applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: null });
     expect((await f.publish({ path: "site" })).text).toMatch(/^Publishing a page needs a MausBot account/u);
   });
 
@@ -383,10 +383,10 @@ describe("sharing a chat page from its card", () => {
 
 describe("pages access", () => {
   it("takes only a well-formed pages token for the Admin over https from the desktop", () => {
-    expect(applyIncludedPagesMessage({ type: "openmausbot:included-x", access: null })).toBe(false);
-    expect(() => applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: { url: "http://cloud.example.test/x", token: FAKE_DESKTOP_TOKEN } })).toThrow();
-    expect(() => applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: { url: FAKE_TOKEN_URL, token: "omb_xd_short" } })).toThrow();
-    expect(applyIncludedPagesMessage({ type: "openmausbot:included-pages", access: { url: FAKE_TOKEN_URL, token: FAKE_DESKTOP_TOKEN } })).toBe(true);
+    expect(applyIncludedPagesMessage({ type: "mausclaw:included-x", access: null })).toBe(false);
+    expect(() => applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: { url: "http://cloud.example.test/x", token: FAKE_DESKTOP_TOKEN } })).toThrow();
+    expect(() => applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: { url: FAKE_TOKEN_URL, token: "mausclaw_xd_short" } })).toThrow();
+    expect(applyIncludedPagesMessage({ type: "mausclaw:included-pages", access: { url: FAKE_TOKEN_URL, token: FAKE_DESKTOP_TOKEN } })).toBe(true);
   });
 
   it("signs a home's request exactly as the Admin checks it", () => {

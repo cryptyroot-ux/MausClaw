@@ -15,7 +15,7 @@
 - Driver kind `deepseekAgent`, default instance id `deepseek`, display name `DeepSeek Harness`, CLI `dsh`, spawn args `--profile acp`.
 - Picker id format `<provider>/<model>`, split on the FIRST `/`. Wire value `JSON.stringify([provider, model])` with no spaces (dsh's own encoding, verified: `["deepseek-official","deepseek-v4-flash"]`).
 - Static catalog, in this order: `deepseek-official/deepseek-v4-flash` "DeepSeek-V4-Flash" (default), `deepseek-official/deepseek-flash` "DeepSeek-V4.1-Flash", `deepseek-official/deepseek-v4-pro` "DeepSeek-V4-Pro".
-- Config section `deepseek: { key }`; env override `OMB_DEEPSEEK_API_KEY` (config layer) and `DEEPSEEK_API_KEY` (what the child reads). `DEEPSEEK_API_KEY` joins `PROVIDER_CREDENTIAL_ENV`.
+- Config section `deepseek: { key }`; env override `MAUSCLAW_DEEPSEEK_API_KEY` (config layer) and `DEEPSEEK_API_KEY` (what the child reads). `DEEPSEEK_API_KEY` joins `PROVIDER_CREDENTIAL_ENV`.
 - Install line on every platform: `npm install -g @deepseek-ai/dsh`, `needsNode: true`, docs `https://github.com/deepseek-ai/deepseek-harness`.
 - No catalog probe at startup (`resolveModelsOnCreate: false`). Probe timeout env `OPENMAUS_DEEPSEEK_MODELS_TIMEOUT_MS`, default 60 000 ms.
 - Nothing is pushed and no PR is opened (Omkar owns publishing). Commits stay local on `feat/deepseek-harness-engine`.
@@ -84,7 +84,7 @@ describe("DeepSeek model ids", () => {
 describe("DeepSeek key detection", () => {
   const dirs: string[] = [];
   afterEach(async () => { for (const d of dirs.splice(0)) await removeTempDir(d); });
-  const home = () => { const d = mkdtempSync(join(tmpdir(), "omb-dsh-")); dirs.push(d); return d; };
+  const home = () => { const d = mkdtempSync(join(tmpdir(), "mausclaw-dsh-")); dirs.push(d); return d; };
 
   it("honours DSH_HOME over the default ~/.dsh", () => {
     expect(dshHome({ DSH_HOME: "/x/dsh", HOME: "/h" })).toBe("/x/dsh");
@@ -232,7 +232,7 @@ describe("fetchDeepSeekCatalog", () => {
   const FAKE = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "testing", "fake-dsh-cli.ts");
   const env = () => ({ PATH: process.env.PATH, HOME: process.env.HOME, FAKE_DSH_SESSION: JSON.stringify(SESSION_NEW) });
   it("drives initialize → session/new → session/close and returns the catalog", async () => {
-    const dump = join(mkdtempSync(join(tmpdir(), "omb-dsh-")), "calls.json");
+    const dump = join(mkdtempSync(join(tmpdir(), "mausclaw-dsh-")), "calls.json");
     const catalog = await fetchDeepSeekCatalog(FAKE, { ...env(), FAKE_DSH_DUMP: dump }, tmpdir());
     expect(catalog.default).toBe("deepseek-official/deepseek-v4-flash");
     expect(catalog.options).toHaveLength(3);
@@ -283,7 +283,7 @@ git commit -m "feat(engines): DeepSeek Harness live catalog on Refresh"
 
 **Files:**
 - Modify: `server/drivers/builtIn.ts` (import + append `DeepSeekAgentDriver` after `MuseCodeDriver`)
-- Modify: `server/config.ts` — zod section near line 339 (`deepseek: z.object({ key: optionalText }).optional()`), `AppConfig` near line 487 (`deepseek?: { key?: string }`), `loadConfig` env override near line 787 (`OMB_DEEPSEEK_API_KEY` → `cfg.deepseek.key`), `syncCredentialEnv` near line 857 (`[patch.deepseek?.key, "OMB_DEEPSEEK_API_KEY"]`), merge-section list near line 1050 (add `"deepseek"` after `"meta"`), `PROVIDER_CREDENTIAL_ENV` (add `"DEEPSEEK_API_KEY"` after `"META_API_KEY"`), `injectedEnvironment` (`if (driver === "deepseekAgent" && cfg.deepseek?.key) environment.set("DEEPSEEK_API_KEY", cfg.deepseek.key);`), `DEFAULT_FLEET` and `PRODUCT_FLEET_ADDITIONS` (`deepseek: { driver: "deepseekAgent" }` after `museCode`).
+- Modify: `server/config.ts` — zod section near line 339 (`deepseek: z.object({ key: optionalText }).optional()`), `AppConfig` near line 487 (`deepseek?: { key?: string }`), `loadConfig` env override near line 787 (`MAUSCLAW_DEEPSEEK_API_KEY` → `cfg.deepseek.key`), `syncCredentialEnv` near line 857 (`[patch.deepseek?.key, "MAUSCLAW_DEEPSEEK_API_KEY"]`), merge-section list near line 1050 (add `"deepseek"` after `"meta"`), `PROVIDER_CREDENTIAL_ENV` (add `"DEEPSEEK_API_KEY"` after `"META_API_KEY"`), `injectedEnvironment` (`if (driver === "deepseekAgent" && cfg.deepseek?.key) environment.set("DEEPSEEK_API_KEY", cfg.deepseek.key);`), `DEFAULT_FLEET` and `PRODUCT_FLEET_ADDITIONS` (`deepseek: { driver: "deepseekAgent" }` after `museCode`).
 - Modify: `server/index.ts` config status near line 12795 (`deepseek: { configured: Boolean(cfg.deepseek?.key) }`); the Electron external-secret tombstone block (search `persisted.xai?.key !== undefined`) gets `if (persisted.deepseek?.key !== undefined) persisted.deepseek.key = "";`.
 - Test: `server/config.test.ts` (in `describe("default fleet")`), `server/index.test.ts` (next to the Groq/Meta config-status PUT test if one exists; otherwise next to the `opencodeGo` PUT test near line 11921).
 
@@ -312,7 +312,7 @@ it("adds DeepSeek Harness to product fleets and hands its key only to that engin
 
 it("accepts clearing a DeepSeek key and removes it from child environments", () => {
   expect(parseConfigPatch({ deepseek: { key: "" } })).toEqual({ deepseek: { key: "" } });
-  const env = { OMB_DEEPSEEK_API_KEY: "ds-fixture", DEEPSEEK_API_KEY: "ds-ambient", KEEP: "yes" };
+  const env = { MAUSCLAW_DEEPSEEK_API_KEY: "ds-fixture", DEEPSEEK_API_KEY: "ds-ambient", KEEP: "yes" };
   stripWorkspaceCredentialEnv(env);
   expect(env).toEqual({ DEEPSEEK_API_KEY: "ds-ambient", KEEP: "yes" });
 });
@@ -333,7 +333,7 @@ it("stores a DeepSeek key write-only and reports it configured", async () => {
 });
 ```
 
-Check `syncCredentialEnv` is covered the way Groq's is (search `OMB_GROQ_API_KEY` in `config.test.ts`); if a sync test exists, add the DeepSeek pair to it.
+Check `syncCredentialEnv` is covered the way Groq's is (search `MAUSCLAW_GROQ_API_KEY` in `config.test.ts`); if a sync test exists, add the DeepSeek pair to it.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -406,7 +406,7 @@ Expected: PASS.
 
 - [ ] **Step 2: Isolated instance with a throwaway home**
 
-Follow the isolated-instance recipe from memory `single-folder-per-pr-workflow` (throwaway `HOME`, `OMB_PORT=18899`, vite on 5299). Put the probe's `dsh` on PATH (`npx -y @deepseek-ai/dsh@0.2.1-rc.2` already cached under the scratchpad `dsh-home`; point `DSH_HOME` at it) and set `OMB_DEEPSEEK_API_KEY=<a real key only if Omkar has one in the environment; otherwise a placeholder>`.
+Follow the isolated-instance recipe from memory `single-folder-per-pr-workflow` (throwaway `HOME`, `MAUSCLAW_PORT=18899`, vite on 5299). Put the probe's `dsh` on PATH (`npx -y @deepseek-ai/dsh@0.2.1-rc.2` already cached under the scratchpad `dsh-home`; point `DSH_HOME` at it) and set `MAUSCLAW_DEEPSEEK_API_KEY=<a real key only if Omkar has one in the environment; otherwise a placeholder>`.
 Expected: `GET /api/instances` lists `deepseek` with `driverKind: "deepseekAgent"`, `snapshot.state: "available"`, `snapshot.version` matching `0.2.1`, `authenticated: true` with the placeholder key, and `capabilities.modelVariants: true`. Refresh (`POST /api/instances/deepseek/models/refresh` or the route the Engines page calls) returns the three official models.
 
 - [ ] **Step 3: Engines page screenshot**

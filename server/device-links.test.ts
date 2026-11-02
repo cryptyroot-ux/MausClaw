@@ -51,7 +51,7 @@ async function cloud(options: { sleeping?: () => boolean; sleep?: AbortControlle
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   cleanups.push(() => new Promise<void>((resolve) => { computers.close(); links.close(); upgrades.close(); server.closeAllConnections(); server.close(() => resolve()); }));
   const register = async (session = "owner", internet = true, id: string = randomUUID(), chrome = false) => {
-    const response = await fetch(`${base}/api/shared-computers/connect`, { method: "POST", headers: { authorization: `Bearer session-${session}`, "content-type": "application/json", "x-omb-computer-secret": secret },
+    const response = await fetch(`${base}/api/shared-computers/connect`, { method: "POST", headers: { authorization: `Bearer session-${session}`, "content-type": "application/json", "x-mausclaw-computer-secret": secret },
       body: JSON.stringify({ id, name: "Ash's MacBook", environmentId: "11111111-1111-4111-8111-111111111111", folders: [], terminal: false, computer: false, platform: "darwin", internet, ...(chrome ? { chrome } : {}) }) });
     expect(response.status, await response.clone().text()).toBe(200);
     return id;
@@ -75,7 +75,7 @@ function link(base: string, id: string, websitePort: number, options: { session?
   let opens = 0;
   const ended = runDeviceLink({
     url: `${base.replace("http", "ws")}${linkPath(id)}`, signal: stop.signal, onOpen: () => opens++,
-    headers: { authorization: `Bearer session-${options.session ?? "owner"}`, "x-omb-computer-secret": options.secret ?? secret },
+    headers: { authorization: `Bearer session-${options.session ?? "owner"}`, "x-mausclaw-computer-secret": options.secret ?? secret },
     egress: {
       interfaces: () => ({}),
       resolve: async (host: string) => (host.endsWith(".example") ? [{ address: "93.184.215.14", family: 4 }] : host === "router.example.net" ? [{ address: "192.168.1.1", family: 4 }] : []),
@@ -172,7 +172,7 @@ describe("the device link", () => {
     const second = link(home.base, id, site.port);
     expect((await first.ended).code, "the newer link replaces the older").toBe(1000);
     await until(() => second.opens() === 1 && home.links.route(PERSON) !== null, "the second link");
-    await fetch(`${home.base}/api/shared-computers/${id}/disconnect`, { method: "POST", headers: { authorization: "Bearer session-owner", "content-type": "application/json", "x-omb-computer-secret": secret }, body: "{}" });
+    await fetch(`${home.base}/api/shared-computers/${id}/disconnect`, { method: "POST", headers: { authorization: "Bearer session-owner", "content-type": "application/json", "x-mausclaw-computer-secret": secret }, body: "{}" });
     expect((await second.ended).code).toBe(LINK_ENDED);
     expect(home.links.route(PERSON)).toBeNull();
   });
@@ -244,7 +244,7 @@ describe("the device link", () => {
     const stop = new AbortController();
     const ended = runDeviceLink({
       url: `${home.base.replace("http", "ws")}${linkPath(id)}`, signal: stop.signal,
-      headers: { authorization: "Bearer session-owner", "x-omb-computer-secret": secret },
+      headers: { authorization: "Bearer session-owner", "x-mausclaw-computer-secret": secret },
       lends: () => ({ internet: false, chrome: true }),
       chrome: { open: async () => ({ socket: tcpConnect((echo.address() as AddressInfo).port, "127.0.0.1") }) },
     });
@@ -282,7 +282,7 @@ describe("the device link", () => {
     const socket = tcpConnect(Number(url.port), "127.0.0.1");
     socket.on("error", () => {});
     await new Promise((resolve) => socket.once("connect", resolve));
-    socket.write(`GET ${url.pathname} HTTP/1.1\r\nhost: ${url.host}\r\nupgrade: websocket\r\nconnection: Upgrade\r\nsec-websocket-version: 13\r\nsec-websocket-key: ${Buffer.from(randomUUID().slice(0, 16)).toString("base64")}\r\nauthorization: Bearer session-owner\r\nx-omb-computer-secret: ${secret}\r\n\r\n`);
+    socket.write(`GET ${url.pathname} HTTP/1.1\r\nhost: ${url.host}\r\nupgrade: websocket\r\nconnection: Upgrade\r\nsec-websocket-version: 13\r\nsec-websocket-key: ${Buffer.from(randomUUID().slice(0, 16)).toString("base64")}\r\nauthorization: Bearer session-owner\r\nx-mausclaw-computer-secret: ${secret}\r\n\r\n`);
     await until(() => home.links.route(PERSON) !== null, "the silent link to be accepted");
     socket.pause();
     await until(() => home.links.route(PERSON) === null, "the silent link to be dropped", 2_000);

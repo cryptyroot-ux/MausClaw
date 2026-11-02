@@ -1,6 +1,6 @@
 # Per-bot tool selection for local models
 
-Design for [#2047](https://github.com/milind-soni/OpenMausBot/issues/2047).
+Design for [#2047](https://github.com/milind-soni/MausClaw/issues/2047).
 
 ## Purpose and acceptance
 
@@ -217,7 +217,7 @@ paths, not completed support for the proposed setting:
 
 | Adapter(s) | Existing tool path | Required selection boundary |
 | --- | --- | --- |
-| Pi | RPC CLI plus the OMB MCP extension | Active native/package tools, native call hook, filtered custom and built-in MCP registration and execution |
+| Pi | RPC CLI plus the MausClaw MCP extension | Active native/package tools, native call hook, filtered custom and built-in MCP registration and execution |
 | Grok CLI | ACP core plus Grok session/model configuration | Verified ACP native filter, fresh/resumed session checks, scoped MCP descriptors and calls |
 | OpenAI compatible, Grok API, Mistral, MiniMax | Shared `openai-chat.ts` executor | Filter definitions before provider serialization, including the executor's question tool and leased cloud-computer tools; check calls before approval/execution |
 | Claude | Per-process CLI native `tools` / `disallowedTools`, MCP configuration and permission callbacks | Intersect owner, instance, guest, and bot restrictions; filter all mounted MCP transports; reject excluded native calls |

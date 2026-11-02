@@ -1,6 +1,6 @@
 // Runs inside a bot box when the image has no socat: listens on loopback ports and forwards each connection to a unix
 // socket bound into the box, then runs the engine with the box's stdio and exits with its status.
-//   node box-bridge.js --bridge=3128=/run/omb/egress.sock --bridge=8799=/run/omb/harness.sock -- claude -p ...
+//   node box-bridge.js --bridge=3128=/run/mausclaw/egress.sock --bridge=8799=/run/mausclaw/harness.sock -- claude -p ...
 import { spawn } from "node:child_process";
 import { connect, createServer, type Server } from "node:net";
 

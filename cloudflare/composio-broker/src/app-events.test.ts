@@ -202,7 +202,7 @@ describe("streamed request bodies", () => {
 describe("routing", () => {
   it("answers 200 for a trigger no installation binds, queues nothing and counts it", async () => {
     await withTrigger();
-    const response = await h.deliver(message("ti_unknown", "omb_someone"));
+    const response = await h.deliver(message("ti_unknown", "mausclaw_someone"));
     expect(response.status).toBe(200);
     expect(h.queued()).toEqual([]);
     expect(h.day("")).toMatchObject({ unrouted: 1 });
@@ -381,7 +381,7 @@ describe("long-poll", () => {
   it("needs a poller id, its own rate limit and the installation token", async () => {
     const { owner } = await withTrigger();
     expect((await h.call(owner, "/v1/events")).status).toBe(400);
-    expect((await h.fetch("/v1/events", { headers: { "x-omb-poller": "poller-main-0001" } })).status).toBe(401);
+    expect((await h.fetch("/v1/events", { headers: { "x-mausclaw-poller": "poller-main-0001" } })).status).toBe(401);
     h.limits.events = false;
     expect((await h.poll(owner)).status).toBe(429);
   });
@@ -408,7 +408,7 @@ describe("limits", () => {
     expect((await fill(cloud.owner, cloud.triggerId, 600)).every((result) => result.status === "queued")).toBe(true);
     const today = new Date().toISOString().slice(0, 10);
     h.d1.db.prepare("UPDATE app_event_days SET queued = 1998 WHERE day = ? AND installation_id = ?").run(today, cloud.owner.id);
-    await h.call(cloud.owner, `/v1/events?after=${Number.MAX_SAFE_INTEGER}`, { headers: { "x-omb-poller": "poller-main-0001" } });
+    await h.call(cloud.owner, `/v1/events?after=${Number.MAX_SAFE_INTEGER}`, { headers: { "x-mausclaw-poller": "poller-main-0001" } });
     for (let index = 0; index < 3; index += 1) await h.deliver(message(cloud.triggerId, cloud.owner.userId));
     expect(h.queued(cloud.owner.id)).toHaveLength(2);
     expect(h.drops(cloud.owner.id)).toEqual([{ composio_trigger_id: cloud.triggerId, reason: "daily_limit", dropped: 1 }]);
@@ -444,7 +444,7 @@ describe("limits", () => {
     const { owner, triggerId } = await withTrigger();
     await h.deliver(message(triggerId, owner.userId, { message_text: "y".repeat(100_000) }, "msg_big"));
     const [event] = (await pollBody(owner)).events;
-    expect(event.event.data).toEqual({ omb_truncated: true, original_bytes: 100_019, preview: expect.any(String) });
+    expect(event.event.data).toEqual({ mausclaw_truncated: true, original_bytes: 100_019, preview: expect.any(String) });
     expect(new TextEncoder().encode(event.event.data.preview).byteLength).toBe(64 * 1024);
     expect(event.event.data.preview.startsWith('{"message_text":"yyy')).toBe(true);
   });
@@ -462,7 +462,7 @@ describe("limits", () => {
     const sent = await h.call(owner, "/v1/events/test", { method: "POST", body: JSON.stringify({ triggerId, data: { subject: "TEST order" } }) });
     expect(sent.status).toBe(201);
     const [event] = (await pollBody(owner)).events;
-    expect(event).toMatchObject({ kind: "test", triggerId, event: { type: "omb.test", data: { subject: "TEST order" }, metadata: { trigger_slug: GMAIL_TYPE.slug } } });
+    expect(event).toMatchObject({ kind: "test", triggerId, event: { type: "mausclaw.test", data: { subject: "TEST order" }, metadata: { trigger_slug: GMAIL_TYPE.slug } } });
     h.d1.db.prepare("UPDATE app_event_days SET queued = 500 WHERE installation_id = ?").run(owner.id);
     const refused = await h.call(owner, "/v1/events/test", { method: "POST", body: JSON.stringify({ triggerId, data: {} }) });
     expect(refused.status).toBe(429);
@@ -737,17 +737,17 @@ describe("status events", () => {
 describe("paid Cloud", () => {
   it("marks an installation as a paid Cloud's from an Admin-signed grant", async () => {
     const { owner } = await withTrigger();
-    const response = await h.call(owner, "/v1/installation/cloud", { method: "PUT", body: JSON.stringify({ grant: cloudGrant("omb-machine-1") }) });
+    const response = await h.call(owner, "/v1/installation/cloud", { method: "PUT", body: JSON.stringify({ grant: cloudGrant("mausclaw-machine-1") }) });
     await expect(response.json()).resolves.toEqual({ plan: "cloud", eventsPerDay: 2000 });
     expect((await (await h.call(owner, "/v1/triggers")).json() as { limits: unknown }).limits).toMatchObject({ plan: "cloud", eventsPerDay: 2000 });
   });
 
   it("refuses a grant signed with another key or naming another machine", async () => {
     const { owner } = await withTrigger();
-    const forged = cloudGrant("omb-machine-1", "someone-elses-key");
-    const valid = cloudGrant("omb-machine-1");
-    const renamed = valid.replace("omb-machine-1", "omb-machine-2");
-    for (const grant of [forged, renamed, "v1.omb-machine-1.", "cloud", valid.slice(0, -1)]) {
+    const forged = cloudGrant("mausclaw-machine-1", "someone-elses-key");
+    const valid = cloudGrant("mausclaw-machine-1");
+    const renamed = valid.replace("mausclaw-machine-1", "mausclaw-machine-2");
+    for (const grant of [forged, renamed, "v1.mausclaw-machine-1.", "cloud", valid.slice(0, -1)]) {
       expect((await h.call(owner, "/v1/installation/cloud", { method: "PUT", body: JSON.stringify({ grant }) })).status).toBe(403);
     }
     expect(h.d1.rows("SELECT cloud_machine_id FROM installations")).toEqual([{ cloud_machine_id: null }]);
@@ -756,24 +756,24 @@ describe("paid Cloud", () => {
   it("moves the Cloud limit to the installation that last presented the grant", async () => {
     const first = await h.install();
     const second = await h.install();
-    await asCloud(first, "omb-machine-1");
-    await asCloud(second, "omb-machine-1");
+    await asCloud(first, "mausclaw-machine-1");
+    await asCloud(second, "mausclaw-machine-1");
     expect(h.d1.rows("SELECT id, cloud_machine_id FROM installations ORDER BY cloud_machine_id")).toEqual(expect.arrayContaining([
       { id: first.id, cloud_machine_id: null },
-      { id: second.id, cloud_machine_id: "omb-machine-1" },
+      { id: second.id, cloud_machine_id: "mausclaw-machine-1" },
     ]));
   });
 
   it("answers 503 until CLOUD_GRANT_SECRET is set", async () => {
     const owner = await h.install();
     h.env.CLOUD_GRANT_SECRET = undefined;
-    expect((await h.call(owner, "/v1/installation/cloud", { method: "PUT", body: JSON.stringify({ grant: cloudGrant("omb-machine-1") }) })).status).toBe(503);
+    expect((await h.call(owner, "/v1/installation/cloud", { method: "PUT", body: JSON.stringify({ grant: cloudGrant("mausclaw-machine-1") }) })).status).toBe(503);
   });
 });
 
 describe("waking a sleeping Cloud for its events", () => {
   const ADMIN = "https://cloud-admin.test";
-  const MACHINE = "omb-machine-1";
+  const MACHINE = "mausclaw-machine-1";
   let wakes: Array<{ url: string; method: string; headers: Headers; body: string }>;
   let answer: () => Promise<Response>;
   const at = (ms: number) => vi.setSystemTime(new Date(ms));
@@ -815,9 +815,9 @@ describe("waking a sleeping Cloud for its events", () => {
     expect(wake.method).toBe("POST");
     expect(wake.body).toBe(`{"machineId":"${MACHINE}"}`);
     expect(wake.headers.get("content-type")).toBe("application/json");
-    expect(wake.headers.get("x-omb-wake-timestamp")).toBe(timestamp);
-    const expected = createHmac("sha256", CLOUD_GRANT_SECRET).update(`omb-cloud-wake:v1\n${timestamp}\n${MACHINE}`).digest("base64url");
-    expect(wake.headers.get("x-omb-wake-signature")).toBe(`v1=${expected}`);
+    expect(wake.headers.get("x-mausclaw-wake-timestamp")).toBe(timestamp);
+    const expected = createHmac("sha256", CLOUD_GRANT_SECRET).update(`mausclaw-cloud-wake:v1\n${timestamp}\n${MACHINE}`).digest("base64url");
+    expect(wake.headers.get("x-mausclaw-wake-signature")).toBe(`v1=${expected}`);
     expect(h.d1.rows("SELECT wake_requested_at FROM installations WHERE id = ?", owner.id)).toEqual([{ wake_requested_at: T0 }]);
   });
 
@@ -933,7 +933,7 @@ describe("deploy order", () => {
       return h.composio.fetchImpl(input, init);
     });
     const { owner, triggerId } = await withTrigger();
-    await asCloud(owner, "omb-machine-1");
+    await asCloud(owner, "mausclaw-machine-1");
     expect((await h.deliver(message(triggerId, owner.userId))).status).toBe(200);
     await Promise.all(h.background);
     expect(h.queued(owner.id)).toHaveLength(1);

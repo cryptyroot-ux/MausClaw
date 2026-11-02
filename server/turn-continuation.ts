@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 export function handoffDir(): string {
-  return join(process.env.OMB_DATA_DIR || join(homedir(), ".openmausbot"), "handoffs");
+  return join(process.env.MAUSCLAW_DATA_DIR || join(homedir(), ".mausclaw"), "handoffs");
 }
 
 export interface HandoffInput {

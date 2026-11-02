@@ -65,11 +65,11 @@ const OWNER_ACTION: Record<Exclude<RoutineOwnerCause, "setup">, string> = {
 };
 const TRIAL_ACTION = "The trial Claude credit can't run this. Sign in with your own Claude or ChatGPT account, or add an API key.";
 const RETRY_WHY: Record<Exclude<RoutineRetryCause, "usage_limit">, string> = {
-  stalled: "the AI stalled", restarted: "OpenMausBot restarted while it ran", rate_limited: "a rate limit", provider: "a temporary error",
+  stalled: "the AI stalled", restarted: "MausClaw restarted while it ran", rate_limited: "a rate limit", provider: "a temporary error",
   failed: "a failure",
 };
 const FIRST_START: Record<RoutineRetryCause, string> = {
-  stalled: "stopped when its AI stalled", restarted: "was cut off when OpenMausBot restarted", rate_limited: "was stopped by a rate limit",
+  stalled: "stopped when its AI stalled", restarted: "was cut off when MausClaw restarted", rate_limited: "was stopped by a rate limit",
   provider: "failed on a temporary AI error", usage_limit: "was refused by the AI's usage limit", failed: "failed",
 };
 
@@ -105,7 +105,7 @@ export function dispatchRefusal(error: unknown): RoutineFailureFacts {
   return typeof code === "string" || (typeof status === "number" && status >= 400 && status < 500) ? { cause: "refused" } : {};
 }
 
-/** Whether OpenMausBot runs a failed teammate thread once more by itself before its Chief hears of it. */
+/** Whether MausClaw runs a failed teammate thread once more by itself before its Chief hears of it. */
 export function retriesTeammateThread(failure: string, facts: RoutineFailureFacts = {}): boolean {
   return classifyRoutineFailure(failure, facts).kind === "retry";
 }
@@ -140,7 +140,7 @@ export function requeueOnce(run: RoutineRun, cause: RoutineRetryCause, failure: 
 
 /** The second start's own line, so a run that already did part of its work does not do it twice. */
 export function retryNote(cause: RoutineRetryCause): string {
-  return `[OpenMausBot: this run's first start ${FIRST_START[cause]} before it finished. If it already did part of the work, ` +
+  return `[MausClaw: this run's first start ${FIRST_START[cause]} before it finished. If it already did part of the work, ` +
     "check what it did (files, messages sent, anything started) so nothing is done twice; then finish the routine.]";
 }
 

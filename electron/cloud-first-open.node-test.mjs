@@ -6,8 +6,8 @@ import test from "node:test";
 import { cloudSetupOf, myCloudOrigin, readyCloudOrigin, rememberedCloudHome } from "./cloud-home.mjs";
 import { createHomeWindow, createReadyClock, FRESH_MS, HOME_SCREEN_PATH, NAME_RETRY_MS, NAME_WAIT_MS, nameNotFound, RETRY_MS } from "./home-window.mjs";
 
-const CLOUD = "https://omb-u-new1.fly.dev";
-const TEAM = "https://omb-u-acme.fly.dev";
+const CLOUD = "https://mausclaw-u-new1.fly.dev";
+const TEAM = "https://mausclaw-u-acme.fly.dev";
 const LOCAL = "http://127.0.0.1:8799";
 const SCREEN = `${LOCAL}${HOME_SCREEN_PATH}`;
 const ACCOUNT = { id: "acct-1", email: "person@example.test" };
@@ -60,7 +60,7 @@ function world({ journal = null, state = settingUp(), found = true, url = `${LOC
       const route = String(url).replace(CLOUD, "");
       if (route === "/api/health") return new Response("", { status: 200 });
       if (route === "/api/auth/session") return w.server.signedIn ? json({ kind: "session" }) : json({ error: "sign in" }, 401);
-      if (route === "/.well-known/openmausbot/environment") return json({ version: "0.1.122" });
+      if (route === "/.well-known/mausclaw/environment") return json({ version: "0.1.122" });
       return json({}, 404);
     },
     power: { asleep: () => false, hold: () => {}, woke: () => {} },
@@ -187,7 +187,7 @@ test("a brand-new Cloud whose name isn't found yet keeps the setup screen and op
   await w.home.openCloud();
   assert.deepEqual(w.home.view(), { screen: "setup", step: "checking" }, "not the offline screen, not \"choose it again\"");
   assert.deepEqual(w.went, [[SCREEN, null]]);
-  assert.deepEqual(w.resolved, [["omb-u-new1.fly.dev", "disallowed"]], "Electron's own resolver, past its cache");
+  assert.deepEqual(w.resolved, [["mausclaw-u-new1.fly.dev", "disallowed"]], "Electron's own resolver, past its cache");
   w.url = SCREEN;
   assert.deepEqual(w.timers.map((timer) => timer.ms), [NAME_RETRY_MS[0]]);
   for (const ms of NAME_RETRY_MS.slice(0, 3)) {

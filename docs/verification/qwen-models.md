@@ -4,7 +4,7 @@ The Qwen picker reads configured chat routes from the server user's
 `.qwen/settings.json`. It preserves protocol and endpoint identity; no endpoint,
 credential, or environment-key name is exposed in the public model catalog.
 
-OMB uses Qwen's native ACP model selector and requires the CLI to confirm the
+MausClaw uses Qwen's native ACP model selector and requires the CLI to confirm the
 selected route before sending the prompt. It does not pass a bare `-m` argument,
 which would retain the saved provider. This requires a Qwen Code version that
 supports `session/set_config_option` for `model`. Unsupported versions fail before
@@ -25,7 +25,7 @@ but unchanged selection must not send a prompt.
 The synthetic CLI also reproduces Qwen's live-session cache: `session/load`
 acknowledges the request while retaining the original MCP credentials. The
 fixture calls the real agents proxy's `list_bots` and `session_search` tools on
-three turns on one conversation. OMB keeps the agents bearer across turns
+three turns on one conversation. MausClaw keeps the agents bearer across turns
 while the grants are unchanged, so Qwen keeps one child and its live session.
 The pid stays the same; the aggregate RPC log contains one `initialize`, one
 `session/new`, no `session/load`, and three `session/prompt` calls. The process
@@ -35,7 +35,7 @@ separately cover a fresh Qwen process when its MCP configuration changes,
 process reuse when it is unchanged, and same-process reloads for engines that
 support them. JSON includes resulting messages and the
 launcher's persistent log path. The server and temporary home are cleaned up
-on completion. This proves OMB's integration contract, not real provider auth
+on completion. This proves MausClaw's integration contract, not real provider auth
 or a paid model response.
 
 Last exercised: 2026-10-04, isolated macOS fixture. All three turns settled

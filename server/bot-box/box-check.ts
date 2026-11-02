@@ -11,12 +11,12 @@ import { detectBox } from "./detect.ts";
 import { BOX_MUTATIONS, type BoxMutation } from "./plan.ts";
 import { runBoxSelfCheck } from "./self-check.ts";
 
-export const CHECK_DENY_ENV: ReadonlySet<string> = new Set(["COMPOSIO_API_KEY", "OMB_COMPOSIO_BROKER_TOKEN", "OMB_HIGHLEVEL_TOKEN"]);
+export const CHECK_DENY_ENV: ReadonlySet<string> = new Set(["COMPOSIO_API_KEY", "MAUSCLAW_COMPOSIO_BROKER_TOKEN", "MAUSCLAW_HIGHLEVEL_TOKEN"]);
 
 export async function boxCheckMain(argv: readonly string[], env: Record<string, string | undefined> = process.env): Promise<number> {
   const mutate = new Set<BoxMutation>();
   let publicTarget: string | null | undefined;
-  let root = env.OMB_DATA_DIR ? join(env.OMB_DATA_DIR, "box") : join(tmpdir(), "omb-box-check");
+  let root = env.MAUSCLAW_DATA_DIR ? join(env.MAUSCLAW_DATA_DIR, "box") : join(tmpdir(), "mausclaw-box-check");
   for (const arg of argv) {
     const [name, value = ""] = arg.split("=", 2) as [string, string?];
     if (name === "--mutate") for (const item of value.split(",").filter(Boolean)) {
@@ -26,7 +26,7 @@ export async function boxCheckMain(argv: readonly string[], env: Record<string, 
     else if (name === "--root") root = value;
     else throw new Error(`unknown argument ${arg}`);
   }
-  const detection = detectBox({ env: { ...env, OMB_BOT_BOX: env.OMB_BOT_BOX ?? "1" } });
+  const detection = detectBox({ env: { ...env, MAUSCLAW_BOT_BOX: env.MAUSCLAW_BOT_BOX ?? "1" } });
   if (detection.box !== "bwrap" || !detection.tools) {
     process.stdout.write(`${JSON.stringify({ box: detection.box, reason: detection.reason })}\n`);
     return 2;

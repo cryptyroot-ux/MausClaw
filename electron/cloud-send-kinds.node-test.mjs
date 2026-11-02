@@ -93,7 +93,7 @@ function filesSides({ here, there = [], free = 1e12, volume = 1e12, disk = null,
     refusal: (answer, fallback) => answer.body?.error ?? fallback,
     ...(disk || grow ? { space: { disk: () => disk, grow } } : {}),
   });
-  const ctx = { origin: "https://omb-u-1.fly.dev", session, result: { failed } };
+  const ctx = { origin: "https://mausclaw-u-1.fly.dev", session, result: { failed } };
   return { kinds, ctx, stored, uploads, failed, state };
 }
 

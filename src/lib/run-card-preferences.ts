@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export const RUN_CARD_KEY = "omb-show-run-card";
+export const RUN_CARD_KEY = "mausclaw-show-run-card";
 
 let sessionChoice: boolean | undefined;
 const listeners = new Set<() => void>();

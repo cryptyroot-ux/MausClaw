@@ -11,7 +11,7 @@ describe("sentinel sources", () => {
   let dir: string;
   let fixture: FixtureDataDir;
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "omb-sentinel-src-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-sentinel-src-"));
     fixture = fixtureDataDir(dir, [{ id: "b1", name: "Probe", threadId: "t1", tasks: [{ threadId: "t2" }] }]);
   });
   afterEach(() => {
@@ -128,7 +128,7 @@ describe("sentinel sources", () => {
   });
 
   it("treats a missing or unreadable source as empty", () => {
-    const empty = mkdtempSync(join(tmpdir(), "omb-sentinel-empty-"));
+    const empty = mkdtempSync(join(tmpdir(), "mausclaw-sentinel-empty-"));
     try {
       const who = readThreadOwners(empty);
       expect(who.owners.size).toBe(0);

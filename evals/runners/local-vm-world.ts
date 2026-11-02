@@ -26,7 +26,7 @@ export class LocalVmWorld extends BaseWorld {
   private computers = new Map<string, { url: string; token: string }>();
 
   override async boot(scenario: Scenario): Promise<void> {
-    this.fixtureHome = mkdtempSync(join(tmpdir(), "omb-evals-vm-"));
+    this.fixtureHome = mkdtempSync(join(tmpdir(), "mausclaw-evals-vm-"));
     this.stateFile = join(this.fixtureHome, "vm.json");
     this.dumpFile = join(this.fixtureHome, "dump.json");
     const data = join(this.fixtureHome, "data");
@@ -52,16 +52,16 @@ export class LocalVmWorld extends BaseWorld {
       PATH: dirname(process.execPath),
       HOME: this.fixtureHome,
       USERPROFILE: this.fixtureHome,
-      OMB_DATA_DIR: data,
+      MAUSCLAW_DATA_DIR: data,
       APPDATA: join(this.fixtureHome, "appdata"),
       LOCALAPPDATA: join(this.fixtureHome, "localappdata"),
       TEMP: this.fixtureHome,
       TMP: this.fixtureHome,
       TMPDIR: this.fixtureHome,
-      OMB_PORT: String(port),
-      OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_STATIC_DIR: ui,
-      OMB_TEST_VM_STATE: this.stateFile,
+      MAUSCLAW_PORT: String(port),
+      MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+      MAUSCLAW_STATIC_DIR: ui,
+      MAUSCLAW_TEST_VM_STATE: this.stateFile,
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
     };
     const child = this.child = spawn(process.execPath, ["--import", hooks, join(ROOT, "server", "index.ts")], {
@@ -89,7 +89,7 @@ export class LocalVmWorld extends BaseWorld {
       (up) => up,
       20_000,
     );
-    // eval-gates lives under the server's OMB_DATA_DIR so installSkill's
+    // eval-gates lives under the server's MAUSCLAW_DATA_DIR so installSkill's
     // <dataRoot>/skills target is the directory index.ts hot-loads user
     // skills from; anywhere else and installed skills never reach the prompt.
     await this.initBase(base, this.planPath + ".evidence.jsonl", join(data, "eval-gates"));
@@ -147,8 +147,8 @@ export class LocalVmWorld extends BaseWorld {
       case "captureComputer": {
         const dump = await this.readDump(20_000);
         const computer = dump?.mcpConfig?.mcpServers?.computer;
-        if (!computer?.env?.OMB_CONTROL_URL) throw new Error("no computer mount in dump: " + JSON.stringify(dump?.mcpConfig ?? null));
-        this.computers.set(step.bot, { url: computer.env.OMB_CONTROL_URL, token: computer.env.OMB_CONTROL_TOKEN });
+        if (!computer?.env?.MAUSCLAW_CONTROL_URL) throw new Error("no computer mount in dump: " + JSON.stringify(dump?.mcpConfig ?? null));
+        this.computers.set(step.bot, { url: computer.env.MAUSCLAW_CONTROL_URL, token: computer.env.MAUSCLAW_CONTROL_TOKEN });
         return "computer gate captured for " + step.bot;
       }
       case "pollComputerGate": {

@@ -23,7 +23,7 @@ const GARBLED = "unreadable-fixture --flag";
 const bindWithBrokenReader = () => bindSafetyFloor(() => ON, (command, platform, home) =>
   command === GARBLED ? { read: false } : floorReading(command, platform, home), HOST);
 // A shell that already exports the switch must not turn the floor on here.
-beforeEach(() => { delete process.env.OMB_SAFETY_FLOOR; });
+beforeEach(() => { delete process.env.MAUSCLAW_SAFETY_FLOOR; });
 afterEach(() => bindSafetyFloor(() => ({})));
 
 type Decision = { behavior: "allow" | "deny" | "answer"; message?: string };
@@ -73,17 +73,17 @@ function request(command: string | undefined, overrides: { adapter?: ReturnType<
 }
 
 describe("the safetyFloor setting", () => {
-  it("is off until switched on, in config.json or with OMB_SAFETY_FLOOR=1", () => {
+  it("is off until switched on, in config.json or with MAUSCLAW_SAFETY_FLOOR=1", () => {
     expect(safetyFloorEnabled({}, {})).toBe(false);
     expect(safetyFloorEnabled({ safetyFloor: {} }, {})).toBe(false);
     expect(safetyFloorEnabled({ safetyFloor: { enabled: false } }, {})).toBe(false);
     expect(safetyFloorEnabled({ safetyFloor: { enabled: true } }, {})).toBe(true);
     // the environment switches it on over the file, and nothing else it says counts
-    expect(safetyFloorEnabled({}, { OMB_SAFETY_FLOOR: "1" })).toBe(true);
-    expect(safetyFloorEnabled({ safetyFloor: { enabled: false } }, { OMB_SAFETY_FLOOR: " 1 " })).toBe(true);
+    expect(safetyFloorEnabled({}, { MAUSCLAW_SAFETY_FLOOR: "1" })).toBe(true);
+    expect(safetyFloorEnabled({ safetyFloor: { enabled: false } }, { MAUSCLAW_SAFETY_FLOOR: " 1 " })).toBe(true);
     for (const value of ["", "0", "true", "yes", "on"]) {
-      expect(safetyFloorEnabled({}, { OMB_SAFETY_FLOOR: value }), value).toBe(false);
-      expect(safetyFloorEnabled(ON, { OMB_SAFETY_FLOOR: value }), value).toBe(true);
+      expect(safetyFloorEnabled({}, { MAUSCLAW_SAFETY_FLOOR: value }), value).toBe(false);
+      expect(safetyFloorEnabled(ON, { MAUSCLAW_SAFETY_FLOOR: value }), value).toBe(true);
     }
   });
 
@@ -131,14 +131,14 @@ describe("safetyFloorBlock", () => {
     expect(safetyFloorBlock("rm -rf ~")?.rule).toBe("delete-home");
   });
 
-  it("is switched on by OMB_SAFETY_FLOOR=1 alone, whatever the saved config says", () => {
+  it("is switched on by MAUSCLAW_SAFETY_FLOOR=1 alone, whatever the saved config says", () => {
     bindSafetyFloor(() => ({ safetyFloor: { enabled: false } }), undefined, HOST);
-    process.env.OMB_SAFETY_FLOOR = "1";
+    process.env.MAUSCLAW_SAFETY_FLOOR = "1";
     try {
       expect(safetyFloorOn()).toBe(true);
       expect(safetyFloorBlock("rm -rf /")?.rule).toBe("delete-root");
     } finally {
-      delete process.env.OMB_SAFETY_FLOOR;
+      delete process.env.MAUSCLAW_SAFETY_FLOOR;
     }
     expect(safetyFloorOn()).toBe(false);
   });
@@ -448,11 +448,11 @@ describe("on a Windows server", () => {
       // the environment switch counts as "on" too
       vi.resetModules();
       const viaEnv = await import("./safety-floor-gate.ts");
-      process.env.OMB_SAFETY_FLOOR = "1";
+      process.env.MAUSCLAW_SAFETY_FLOOR = "1";
       try {
         viaEnv.bindSafetyFloor(() => ({}), undefined, "win32");
       } finally {
-        delete process.env.OMB_SAFETY_FLOOR;
+        delete process.env.MAUSCLAW_SAFETY_FLOOR;
       }
       expect(warnings).toHaveBeenCalledTimes(2);
     } finally {

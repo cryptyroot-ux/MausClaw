@@ -21,7 +21,7 @@ failed-request cleanup/retry, cancellation after modal/card removal or card
 replacement, Reconnect for an app whose only account expired (the old account
 is removed and the link reuses its label), and the connector card asking for a
 label instead of repeating a refused request. Screenshots and `result.json` are written to
-`.omb-scratch/connected-apps-evidence` (override with `OMB_UI_EVIDENCE_DIR`).
+`.mausclaw-scratch/connected-apps-evidence` (override with `MAUSCLAW_UI_EVIDENCE_DIR`).
 
 The real HTTP route cases start their own isolated server and loopback Composio
 stub. They check abandoned-account retries from Settings and connector cards,

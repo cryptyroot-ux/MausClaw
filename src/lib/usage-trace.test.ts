@@ -19,12 +19,12 @@ const turn = (id: string, botName: string, start: number, end: number | undefine
 });
 const writer = turn("writer", "Writer", 2_000, 37_000, [
   { kind: "step", id: "w-s1", startedAt: T0 + 2_500, endedAt: T0 + 25_500, costUsd: 0.09, tokens: { input: 900, cachedInput: 500, output: 700 } },
-  { kind: "tool", id: "w-t1", name: "mcp__composio__NOTION_CREATE_PAGE", icon: "app", app: "notion", detail: "Pricing draft", startedAt: T0 + 26_000, endedAt: T0 + 29_600, status: "ok", timedBy: "omb" },
+  { kind: "tool", id: "w-t1", name: "mcp__composio__NOTION_CREATE_PAGE", icon: "app", app: "notion", detail: "Pricing draft", startedAt: T0 + 26_000, endedAt: T0 + 29_600, status: "ok", timedBy: "mausclaw" },
   { kind: "tool", id: "w-t2", name: "WebSearch", icon: "search", detail: "G2 reviews", startedAt: T0 + 30_000, endedAt: T0 + 31_000, status: "error", error: "Rate limited", timedBy: "engine" },
   { kind: "group", id: "w-g1", icon: "browser", name: "mcp__browser__agent_browser_click", count: 3, errors: 0, startedAt: T0 + 31_500, endedAt: T0 + 36_000, children: [
-    { kind: "tool", id: "w-b1", name: "mcp__browser__agent_browser_open", icon: "browser", startedAt: T0 + 31_500, endedAt: T0 + 32_000, status: "ok", timedBy: "omb" },
-    { kind: "tool", id: "w-b2", name: "mcp__browser__agent_browser_click", icon: "browser", startedAt: T0 + 33_000, endedAt: T0 + 33_500, status: "ok", timedBy: "omb" },
-    { kind: "tool", id: "w-b3", name: "mcp__browser__agent_browser_type", icon: "browser", startedAt: T0 + 35_000, endedAt: T0 + 36_000, status: "ok", timedBy: "omb" },
+    { kind: "tool", id: "w-b1", name: "mcp__browser__agent_browser_open", icon: "browser", startedAt: T0 + 31_500, endedAt: T0 + 32_000, status: "ok", timedBy: "mausclaw" },
+    { kind: "tool", id: "w-b2", name: "mcp__browser__agent_browser_click", icon: "browser", startedAt: T0 + 33_000, endedAt: T0 + 33_500, status: "ok", timedBy: "mausclaw" },
+    { kind: "tool", id: "w-b3", name: "mcp__browser__agent_browser_type", icon: "browser", startedAt: T0 + 35_000, endedAt: T0 + 36_000, status: "ok", timedBy: "mausclaw" },
   ] },
 ]);
 const chief = turn("chief", "Chief", 0, undefined, [

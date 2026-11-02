@@ -9,7 +9,7 @@ Only its structured synthetic `authentication_failed` API-error frame followed
 by an error result with no new cost qualifies. The driver waits for its process
 tree to stop before reporting that refusal. Recovery skips
 other models on the same engine instance, since they share the failed sign-in.
-OMB tries the backup in the same thread with the canonical conversation.
+MausClaw tries the backup in the same thread with the canonical conversation.
 The thread keeps the backup selection; bot defaults and sibling threads do not
 change. A visible activity line explains the switch.
 

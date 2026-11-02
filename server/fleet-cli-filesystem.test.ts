@@ -17,7 +17,7 @@ vi.mock("node:child_process", async (importOriginal) => {
       fixture.calls.push({ command, args, options });
       // Only account discovery is synthetic. The actual unprivileged Node helper
       // runs against a disposable home; no useradd, chown or system services run.
-      if (command === "/usr/bin/getent") return fixture.account || `omb-acme:x:${process.getuid!()}:${process.getgid!()}:fixture:${fixture.home}:/usr/sbin/nologin\n`;
+      if (command === "/usr/bin/getent") return fixture.account || `mausclaw-acme:x:${process.getuid!()}:${process.getgid!()}:fixture:${fixture.home}:/usr/sbin/nologin\n`;
       return actual.execFileSync(command, args, options);
     },
   };
@@ -30,23 +30,23 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
   const deps = defaultFleetDeps();
 
   beforeEach(() => {
-    root = realpathSync(mkdtempSync(join(tmpdir(), "omb-fleet-files-")));
+    root = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-fleet-files-")));
     fixture.home = join(root, "acme");
     fixture.account = "";
     fixture.calls = [];
     mkdirSync(fixture.home, { mode: 0o700 });
-    data = join(fixture.home, ".openmausbot");
+    data = join(fixture.home, ".mausclaw");
     file = join(data, "config.json");
   });
   afterEach(async () => { await removeTempDir(root); });
 
   it("creates private tenant files and replaces them atomically through the real bounded child", () => {
-    deps.mkdir(data, 0o700, "omb-acme");
-    expect(deps.readText(file, "omb-acme")).toBeNull();
-    deps.writeText(file, '{"signIn":{"admins":["a@example.test"]}}', 0o600, "omb-acme");
+    deps.mkdir(data, 0o700, "mausclaw-acme");
+    expect(deps.readText(file, "mausclaw-acme")).toBeNull();
+    deps.writeText(file, '{"signIn":{"admins":["a@example.test"]}}', 0o600, "mausclaw-acme");
     const oldInode = statSync(file).ino;
-    deps.writeText(file, '{"signIn":{"admins":["b@example.test"]}}', 0o600, "omb-acme");
-    expect(deps.readText(file, "omb-acme")).toContain("b@example.test");
+    deps.writeText(file, '{"signIn":{"admins":["b@example.test"]}}', 0o600, "mausclaw-acme");
+    expect(deps.readText(file, "mausclaw-acme")).toContain("b@example.test");
     expect(statSync(file).ino).not.toBe(oldInode);
     expect(statSync(data).mode & 0o777).toBe(0o700);
     expect(statSync(file).mode & 0o777).toBe(0o600);
@@ -68,8 +68,8 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
     const target = join(root, "outside-secret");
     writeFileSync(target, "fixture-secret");
     if (kind === "symbolic") symlinkSync(target, file); else linkSync(target, file);
-    expect(() => deps.readText(file, "omb-acme")).toThrow("could not read workspace file");
-    expect(() => deps.writeText(file, "replacement", 0o600, "omb-acme")).toThrow("could not write workspace file");
+    expect(() => deps.readText(file, "mausclaw-acme")).toThrow("could not read workspace file");
+    expect(() => deps.writeText(file, "replacement", 0o600, "mausclaw-acme")).toThrow("could not write workspace file");
     expect(readFileSync(target, "utf8")).toBe("fixture-secret");
   });
 
@@ -78,27 +78,27 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
     mkdirSync(outside);
     writeFileSync(join(outside, "config.json"), "untouched");
     symlinkSync(outside, data);
-    expect(() => deps.readText(file, "omb-acme")).toThrow("could not read workspace file");
-    expect(() => deps.writeText(file, "replacement", 0o600, "omb-acme")).toThrow("could not write workspace file");
-    expect(() => deps.mkdir(data, 0o700, "omb-acme")).toThrow("could not mkdir workspace file");
+    expect(() => deps.readText(file, "mausclaw-acme")).toThrow("could not read workspace file");
+    expect(() => deps.writeText(file, "replacement", 0o600, "mausclaw-acme")).toThrow("could not write workspace file");
+    expect(() => deps.mkdir(data, 0o700, "mausclaw-acme")).toThrow("could not mkdir workspace file");
     expect(readFileSync(join(outside, "config.json"), "utf8")).toBe("untouched");
   });
 
   it("rejects special file types and oversized reads without echoing content", () => {
     mkdirSync(data);
     mkdirSync(file);
-    expect(() => deps.readText(file, "omb-acme")).toThrow("could not read workspace file");
+    expect(() => deps.readText(file, "mausclaw-acme")).toThrow("could not read workspace file");
     const large = join(data, "large.json");
     writeFileSync(large, Buffer.alloc(4 * 1024 * 1024 + 1, "x"));
-    expect(() => deps.readText(large, "omb-acme")).toThrow("check ownership, links, file size and permissions");
+    expect(() => deps.readText(large, "mausclaw-acme")).toThrow("check ownership, links, file size and permissions");
   });
 
   it("rejects root identities and paths outside the account home before launching file I/O", () => {
-    fixture.account = `omb-acme:x:0:0:fixture:${fixture.home}:/bin/sh`;
-    expect(() => deps.writeText(file, "secret", 0o600, "omb-acme")).toThrow("unsafe filesystem identity or path");
+    fixture.account = `mausclaw-acme:x:0:0:fixture:${fixture.home}:/bin/sh`;
+    expect(() => deps.writeText(file, "secret", 0o600, "mausclaw-acme")).toThrow("unsafe filesystem identity or path");
     fixture.account = "";
-    expect(() => deps.writeText(join(root, "outside"), "secret", 0o600, "omb-acme")).toThrow("unsafe filesystem identity or path");
-    expect(() => deps.readText(join(data, "..", "..", "outside"), "omb-acme")).toThrow("unsafe filesystem identity or path");
+    expect(() => deps.writeText(join(root, "outside"), "secret", 0o600, "mausclaw-acme")).toThrow("unsafe filesystem identity or path");
+    expect(() => deps.readText(join(data, "..", "..", "outside"), "mausclaw-acme")).toThrow("unsafe filesystem identity or path");
     expect(fixture.calls.every((call) => call.command === "/usr/bin/getent")).toBe(true);
   });
 
@@ -117,7 +117,7 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
   });
 
   it("updates managed models through the real tenant helper and refuses a symlink without touching its target", async () => {
-    fixture.home = join(root, "var/lib/openmausbot/acme");
+    fixture.home = join(root, "var/lib/mausclaw/acme");
     mkdirSync(fixture.home, { recursive: true, mode: 0o700 });
     const directory = join(fixture.home, ".config", "opencode");
     mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -126,7 +126,7 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
     writeFileSync(path, JSON.stringify({ provider: { [MANAGED_OPENROUTER]: managed, other: { keep: true } }, model: "keep/default" }), { mode: 0o600 });
     const layout = fleetLayout(root);
     const registry = { ...emptyRegistry("example.test"), workspaces: { acme: { slug: "acme", host: "acme.example.test", port: 8810, webhookPort: 8811, status: "running", createdAt: "" } } };
-    const files = new Map([[layout.registryFile, JSON.stringify(registry)], [join(layout.instancesDir, "acme.env"), "OMB_ADMIN_URL=https://admin.example.test\nOMB_ADMIN_WORKSPACE=acme\n"]]);
+    const files = new Map([[layout.registryFile, JSON.stringify(registry)], [join(layout.instancesDir, "acme.env"), "MAUSCLAW_ADMIN_URL=https://admin.example.test\nMAUSCLAW_ADMIN_WORKSPACE=acme\n"]]);
     const fixtureDeps = { ...deps, isRoot: () => true, readText: (name: string, owner?: string) => owner ? deps.readText(name, owner) : files.get(name) ?? null };
     const input: FleetInput = { action: "providers", slug: "acme", openrouterModels: ["provider/model"], admins: [], members: [], dryRun: false, yes: true, keepData: false, node: process.execPath, script: "/fixture/cli.js", root };
     const messages: string[] = [];
@@ -166,7 +166,7 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
     ];
     writeFileSync(monthly, rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
     const reference = summarizeUsage(readUsage(data, { from: new Date("2026-09-01T00:00:00Z"), to: now }), "bot").total;
-    const result = deps.usage(data, "omb-acme", now);
+    const result = deps.usage(data, "mausclaw-acme", now);
     expect(result).toEqual({ turns: reference.turns, costUsd: reference.costUsd, billableUsd: reference.billableUsd });
     expect(result).toEqual({ turns: 4, costUsd: 1.75, billableUsd: null });
     expect(JSON.stringify(result)).not.toContain("fixture-private");
@@ -193,29 +193,29 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
     symlinkSync("/dev/zero", join(data, "usage", "2026-08.jsonl"));
     symlinkSync("/dev/zero", join(data, "usage", "2026-10.jsonl"));
     const reference = summarizeUsage(readUsage(data, { from: new Date("2026-09-01T00:00:00Z"), to: now }), "bot").total;
-    expect(deps.usage(data, "omb-acme", now)).toEqual({ turns: reference.turns, costUsd: reference.costUsd, billableUsd: null });
-    expect(deps.usage(data, "omb-acme", now)).toEqual({ turns: 2, costUsd: 0.75, billableUsd: null });
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual({ turns: reference.turns, costUsd: reference.costUsd, billableUsd: null });
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual({ turns: 2, costUsd: 0.75, billableUsd: null });
   });
 
   it("keeps turns without valid prices unpriced and rejects numeric overflow without exposing rows", () => {
     const monthly = usageFile();
     const rows = [usageRow({ costUsd: null }), usageRow({ costUsd: -5 }), { ...usageRow(), costUsd: "fixture-private-secret" }];
     writeFileSync(monthly, rows.map((row) => JSON.stringify(row)).join("\n"));
-    expect(deps.usage(data, "omb-acme", now)).toEqual({ turns: 3, costUsd: null, billableUsd: null });
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual({ turns: 3, costUsd: null, billableUsd: null });
     writeFileSync(monthly, [usageRow({ costUsd: Number.MAX_VALUE }), usageRow({ costUsd: Number.MAX_VALUE })].map((row) => JSON.stringify(row)).join("\n"));
-    expect(() => deps.usage(data, "omb-acme", now)).toThrow(/^could not usage workspace file as omb-acme: check ownership, links, file size and permissions$/);
+    expect(() => deps.usage(data, "mausclaw-acme", now)).toThrow(/^could not usage workspace file as mausclaw-acme: check ownership, links, file size and permissions$/);
   });
 
   it("returns empty totals for missing nested data, missing usage directory and missing month", () => {
     const empty = { turns: 0, costUsd: null, billableUsd: null };
-    expect(deps.usage(join(fixture.home, "absent", "nested", ".openmausbot"), "omb-acme", now)).toEqual(empty);
-    expect(deps.usage(data, "omb-acme", now)).toEqual(empty);
+    expect(deps.usage(join(fixture.home, "absent", "nested", ".mausclaw"), "mausclaw-acme", now)).toEqual(empty);
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual(empty);
     mkdirSync(data);
-    expect(deps.usage(data, "omb-acme", now)).toEqual(empty);
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual(empty);
     const monthly = usageFile();
-    expect(deps.usage(data, "omb-acme", now)).toEqual(empty);
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual(empty);
     writeFileSync(monthly, "");
-    expect(deps.usage(data, "omb-acme", now)).toEqual(empty);
+    expect(deps.usage(data, "mausclaw-acme", now)).toEqual(empty);
   });
 
   it.each(["symlink", "fifo", "directory", "hardlink", "ancestor", "oversized"])("refuses an unsafe %s usage ledger promptly without exposing raw content", (kind) => {
@@ -234,7 +234,7 @@ describe.skipIf(process.platform === "win32" || process.getuid?.() === 0)("fleet
       writeFileSync(monthly, secret);
     } else writeFileSync(monthly, Buffer.alloc(4 * 1024 * 1024 + 1, secret));
     const start = performance.now();
-    expect(() => deps.usage(targetData, "omb-acme", now)).toThrow(/^could not usage workspace file as omb-acme: check ownership, links, file size and permissions$/);
+    expect(() => deps.usage(targetData, "mausclaw-acme", now)).toThrow(/^could not usage workspace file as mausclaw-acme: check ownership, links, file size and permissions$/);
     // Special files must fail on descriptor checks, not wait for the 5s kill deadline.
     expect(performance.now() - start).toBeLessThan(2000);
     expect(readFileSync(outside, "utf8")).toBe(secret);

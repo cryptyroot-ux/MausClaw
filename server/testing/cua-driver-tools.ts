@@ -36,7 +36,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
 
 /** A stdio MCP server, as a turn's integrations take it, that lists exactly `names`. Remove `dir` when done. */
 export function catalogServer(names: readonly string[]): { dir: string; server: { command: string; args: string[]; env: Record<string, string> } } {
-  const dir = mkdtempSync(join(tmpdir(), "omb-catalog-mcp-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-catalog-mcp-"));
   const script = join(dir, "catalog.mjs");
   writeFileSync(script, CATALOG_SERVER);
   return { dir, server: { command: process.execPath, args: [script], env: { CATALOG_TOOLS: JSON.stringify(names) } } };

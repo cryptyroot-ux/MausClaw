@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { request } from "../scripts/mcp-server.ts";
 import type { TraceDetail, TraceList, TraceNode, TraceTool, TraceTurn } from "../shared/usage-trace.ts";
 
@@ -11,7 +11,7 @@ const toolsOf = (turn: TraceTurn): TraceTool[] => turn.children.flatMap((child) 
 
 it("traces a person's message to the Chief through the teammate it delegated to and the tools that teammate used", async () => {
   const session = await launchVerificationServer({ ...process.env }, undefined, undefined, undefined, undefined, { scripted: true });
-  const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw(args, { env: { MAUSCLAW_URL: session.info.url } }) as Promise<any>;
   const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   try {
     const chief = (await cli("new-bot", "--name", "Clive", "--section", "Leadership")).bot;
@@ -50,7 +50,7 @@ it("traces a person's message to the Chief through the teammate it delegated to 
     expect(research.threadId).not.toBe(researcher.activeTaskId);
     expect(toolsOf(research).map((tool) => tool.name)).toEqual(["list_room_targets", "list_bots", "list_rooms"]);
     for (const tool of toolsOf(research)) {
-      expect(tool).toMatchObject({ timedBy: "omb", status: "ok", icon: "bots" });
+      expect(tool).toMatchObject({ timedBy: "mausclaw", status: "ok", icon: "bots" });
       expect(tool.endedAt! - tool.startedAt).toBeGreaterThanOrEqual(0);
       expect(tool.startedAt).toBeGreaterThanOrEqual(research.startedAt);
       expect(tool.endedAt!).toBeLessThanOrEqual(research.endedAt!);

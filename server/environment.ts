@@ -1,4 +1,4 @@
-// Served without auth at /.well-known/openmausbot/environment, so a saved connection can check it still reaches the same server.
+// Served without auth at /.well-known/mausclaw/environment, so a saved connection can check it still reaches the same server.
 import { randomUUID } from "node:crypto";
 import {
   closeSync,
@@ -32,7 +32,7 @@ export interface EnvironmentDescriptor {
     myChromeLink?: true;
     /** A lent computer may say it takes run_command's timeout_seconds; only then does this server send it. */
     commandTimeouts?: true;
-    /** A person's own OMB Cloud home. */
+    /** A person's own MausClaw Cloud home. */
     cloudHome?: true;
     /** A Cloud home that takes the one-time move from the person's computer: by-row chats, the manifest, the chats and
      * credentials checks, and lines its owner wrote there stamped as the owner's. */
@@ -111,7 +111,7 @@ export function loadEnvironmentId(dataDir: string): string {
 
 /** The desktop's own version, else the bundle's package.json (scripts/bundle-server.mjs), else the checkout's. */
 export function serverVersion(root = SERVER_ROOT): string {
-  const fromEnv = process.env.OMB_APP_VERSION?.trim();
+  const fromEnv = process.env.MAUSCLAW_APP_VERSION?.trim();
   if (fromEnv) return fromEnv;
   for (const file of [join(root, "package.json"), join(root, "..", "package.json")]) {
     try {
@@ -126,7 +126,7 @@ export function serverVersion(root = SERVER_ROOT): string {
 export function environmentDescriptor(input: { environmentId: string; desktopManaged: boolean; emailSignIn?: boolean; sharedComputers?: boolean; cloudHome?: boolean; cloudTeam?: boolean; label?: string }): EnvironmentDescriptor {
   return {
     environmentId: input.environmentId,
-    label: input.label?.trim() || process.env.OMB_ENVIRONMENT_LABEL?.trim() || hostname(),
+    label: input.label?.trim() || process.env.MAUSCLAW_ENVIRONMENT_LABEL?.trim() || hostname(),
     platform: process.platform,
     version: serverVersion(),
     capabilities: {

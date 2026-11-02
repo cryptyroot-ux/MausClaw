@@ -1,6 +1,6 @@
 // Real avatar UI and server, with a loopback-only fake Images API. No paid calls.
 import { createServer as createHttpServer } from "node:http";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -32,7 +32,7 @@ let fixture: Awaited<ReturnType<typeof launchVerificationServer>> | undefined;
 let ui: MountedPreview | undefined;
 try {
   fixture = await launchVerificationServer();
-  await runControlOmb(["new-bot", "--name", "Avatar Scout", "--url", fixture.info.url]);
+  await runControlMausclaw(["new-bot", "--name", "Avatar Scout", "--url", fixture.info.url]);
   ui = await mountPreview(fixture, {
     entry: "/src/testing/avatar-providers.tsx", route: "/__avatar-providers.html", title: "Avatar providers — isolated fixture",
     extraRoutes: [{

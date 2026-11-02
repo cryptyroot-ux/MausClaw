@@ -58,7 +58,7 @@ const FILL_BUDGET_MS = 25_000;
 const POLL_MS = 250;
 const MAX_STEPS = 3;
 
-const MARK = "data-omb-login";
+const MARK = "data-mausclaw-login";
 
 // Shared by every page script: what a person could see, which fields this fill marked, a site's error line, a CAPTCHA.
 const PAGE_HELPERS = `

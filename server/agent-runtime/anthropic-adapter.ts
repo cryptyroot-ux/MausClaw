@@ -1,6 +1,6 @@
 // Anthropic Messages transport. This adapter owns the Anthropic wire format
 // only: no capability execution, no run state, and no credentials in logs.
-// Conforms to the protocol-neutral ModelAdapter contract so the OMB engine
+// Conforms to the protocol-neutral ModelAdapter contract so the MausClaw engine
 // loop is unchanged.
 import { rejectsKey, noteKeyRejected } from "../key-rejections.ts";
 import type {

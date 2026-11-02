@@ -164,8 +164,8 @@ beforeAll(async () => {
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const port = (server.address() as { port: number }).port;
   stubBase = `http://127.0.0.1:${port}`;
-  process.env.OMB_ELEVENLABS_API = `${stubBase}/v1`;
-  process.env.OMB_FISH_AUDIO_API = stubBase;
+  process.env.MAUSCLAW_ELEVENLABS_API = `${stubBase}/v1`;
+  process.env.MAUSCLAW_FISH_AUDIO_API = stubBase;
 });
 
 afterAll(() => new Promise<void>((r) => server.close(() => r())));
@@ -688,7 +688,7 @@ describe("Chatterbox (local server)", () => {
 });
 
 describe("included voice", () => {
-  const INCLUDED = "omb_voice_included-relay-token";
+  const INCLUDED = "mausclaw_voice_included-relay-token";
   const relayed = () => seen.filter((request) => request.url.startsWith("/relay/"));
   const direct = () => seen.filter((request) => !request.url.startsWith("/relay/"));
 
@@ -696,9 +696,9 @@ describe("included voice", () => {
   const include = () => {
     refuse = null;
     seen.length = 0;
-    vi.stubEnv("OMB_TTS_KEY", undefined);
-    vi.stubEnv("OMB_CLOUD_VOICE_URL", `${stubBase}/relay/v1`);
-    vi.stubEnv("OMB_CLOUD_VOICE_TOKEN", INCLUDED);
+    vi.stubEnv("MAUSCLAW_TTS_KEY", undefined);
+    vi.stubEnv("MAUSCLAW_CLOUD_VOICE_URL", `${stubBase}/relay/v1`);
+    vi.stubEnv("MAUSCLAW_CLOUD_VOICE_TOKEN", INCLUDED);
   };
 
   it("with no own key, lists voices and speaks with the included token, only through the relay", async () => {
@@ -727,9 +727,9 @@ describe("included voice", () => {
     expect(relayed().map((request) => request.headers["xi-api-key"])).toEqual([INCLUDED]);
   });
 
-  it("an own key from the environment (OMB_TTS_KEY) wins and goes only to ElevenLabs", async () => {
+  it("an own key from the environment (MAUSCLAW_TTS_KEY) wins and goes only to ElevenLabs", async () => {
     include();
-    vi.stubEnv("OMB_TTS_KEY", "sk-from-env");
+    vi.stubEnv("MAUSCLAW_TTS_KEY", "sk-from-env");
     const { loadConfig } = await import("../config.ts");
     const { speak } = await voice();
     await speak({ ...loadConfig(), tts: { ...loadConfig().tts, voice: "v-1" } }, "hello");
@@ -753,7 +753,7 @@ describe("included voice", () => {
     expect(describeVoice(cfg({ key: "sk-own", voice: "v-1" }))).not.toHaveProperty("included");
     expect(describeVoice(cfg({ provider: "fish", voice: "v-1" }))).toMatchObject({ configured: false });
     expect(describeVoice(cfg({ provider: "fish", voice: "v-1" }))).not.toHaveProperty("included");
-    vi.stubEnv("OMB_CLOUD_VOICE_TOKEN", undefined);
+    vi.stubEnv("MAUSCLAW_CLOUD_VOICE_TOKEN", undefined);
     expect(describeVoice(cfg({ voice: "v-1" }))).toMatchObject({ configured: false, ready: false });
   });
 });

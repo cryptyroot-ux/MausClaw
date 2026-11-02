@@ -33,7 +33,7 @@ function deferred() {
   return { promise, resolve };
 }
 function freshDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "omb-data-tools-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-data-tools-"));
   dirs.push(dir);
   return dir;
 }
@@ -310,11 +310,11 @@ describe("data_load", () => {
     const { ctx, database, sheet } = context();
     const out = await loadData(ctx, { source: "postgres://bob:hunter2@db/shop" });
     const sqls = database.calls.filter((call) => call.method === "run").map((call) => call.sql!);
-    expect(sqls[0]).toMatch(/^ATTACH 'postgres:\/\/bob:hunter2@db\/shop' AS "omb_src_\w+" \(TYPE postgres, READ_ONLY\)$/);
+    expect(sqls[0]).toMatch(/^ATTACH 'postgres:\/\/bob:hunter2@db\/shop' AS "mausclaw_src_\w+" \(TYPE postgres, READ_ONLY\)$/);
     expect(sqls[1]).toContain("duckdb_tables()");
-    expect(sqls[2]).toMatch(/^CREATE OR REPLACE TABLE "orders" AS SELECT \* FROM "omb_src_\w+"\."public"\."orders"$/);
+    expect(sqls[2]).toMatch(/^CREATE OR REPLACE TABLE "orders" AS SELECT \* FROM "mausclaw_src_\w+"\."public"\."orders"$/);
     expect(sqls[3]).toMatch(/^CREATE OR REPLACE TABLE "people" AS/);
-    expect(sqls[4]).toMatch(/^DETACH "omb_src_\w+"$/);
+    expect(sqls[4]).toMatch(/^DETACH "mausclaw_src_\w+"$/);
     expect(out.tables.map((table) => table.name)).toEqual(["orders", "people"]);
     expect(JSON.stringify(sheet.sheet().sources)).not.toContain("hunter2");
     expect(sheet.sheet().sources[0]).toMatchObject({ kind: "postgres", source: "postgres://bob@db/shop", options: { table: "public.orders" } });
@@ -325,7 +325,7 @@ describe("data_load", () => {
     expect(refused.code).toBe("sql_error");
     const after = database.calls.filter((call) => call.method === "run").map((call) => call.sql!);
     expect(after.map((sql) => sql.split(" ")[0])).toEqual(["ATTACH", "CREATE", "DETACH"]);
-    expect(after[1]).toMatch(/^CREATE OR REPLACE TABLE "n" AS SELECT \* FROM "omb_src_\w+"\."public"\."nope"$/);
+    expect(after[1]).toMatch(/^CREATE OR REPLACE TABLE "n" AS SELECT \* FROM "mausclaw_src_\w+"\."public"\."nope"$/);
   });
 });
 
@@ -398,15 +398,15 @@ describe("data_describe saved results", () => {
 });
 
 describe("data_sql", () => {
-  it("materialises a SELECT into omb_results.q_<n> and returns bounded rows", async () => {
+  it("materialises a SELECT into mausclaw_results.q_<n> and returns bounded rows", async () => {
     const { ctx, database } = context();
     database.next = { rows: [[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"]], rowCount: 5 };
     const out = await runSql(ctx, { sql: "SELECT * FROM t", limit: 2 });
     expect(database.calls.find((call) => call.method === "materialise")).toMatchObject({ sql: "SELECT * FROM t", name: "q_1", connection: "bot" });
-    expect(database.calls.at(-1)).toMatchObject({ method: "run", sql: "SELECT * FROM omb_results.q_1 LIMIT 3", maxRows: 3 });
-    expect(out).toMatchObject({ table: "omb_results.q_1", rowCount: 5, rows: [[1, "a"], [2, "b"]], truncated: true });
+    expect(database.calls.at(-1)).toMatchObject({ method: "run", sql: "SELECT * FROM mausclaw_results.q_1 LIMIT 3", maxRows: 3 });
+    expect(out).toMatchObject({ table: "mausclaw_results.q_1", rowCount: 5, rows: [[1, "a"], [2, "b"]], truncated: true });
     const named = await runSql(ctx, { sql: "SELECT 1", name: "My Totals" });
-    expect(named.table).toBe("omb_results.my_totals");
+    expect(named.table).toBe("mausclaw_results.my_totals");
   });
 
   it("bounds by bytes as well as rows", async () => {
@@ -665,7 +665,7 @@ describe("data_export", () => {
     const out = await exportData(ctx, { id: "c_1", format: "csv" });
     expect(out.path).toBe(join(dir, "work", "paid_orders.csv"));
     expect(out).toMatchObject({ bytes: readFileSync(out.path).length, rowCount: 2 });
-    expect(database.calls.at(-1)!.sql).toBe(`COPY (SELECT * FROM omb_results."c_1") TO '${out.path}' (FORMAT csv, HEADER true)`);
+    expect(database.calls.at(-1)!.sql).toBe(`COPY (SELECT * FROM mausclaw_results."c_1") TO '${out.path}' (FORMAT csv, HEADER true)`);
     const again = await exportData(ctx, { id: "c_1", format: "csv" });
     expect(again.path).toBe(join(dir, "work", "paid_orders-2.csv"));
     const parquet = await exportData(ctx, { sql: "SELECT 1 AS one", format: "parquet", path: "out/one" });

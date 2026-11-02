@@ -65,7 +65,7 @@ describe("custom MCP probe", () => {
   });
 
   it("lists a command's Whop-sized catalog and says how many tools it has", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-probe-big-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-probe-big-"));
     try {
       const file = join(dir, "tools.json");
       writeFileSync(file, JSON.stringify(whopSizedCatalog()));

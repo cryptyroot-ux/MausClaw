@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export const LANGUAGE_KEY = "omb-language";
+export const LANGUAGE_KEY = "mausclaw-language";
 
 let sessionChoice: string | null | undefined;
 let storedChoiceOffered = false;

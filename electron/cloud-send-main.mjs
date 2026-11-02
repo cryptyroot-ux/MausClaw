@@ -30,7 +30,7 @@ export async function openOwnerSession(target, fetchImpl, { label = SESSION_LABE
     method: "POST", redirect: "error", credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(30_000),
     headers: { accept: "application/json", "content-type": "application/json", ...quiet }, body: JSON.stringify({ code: grant.code, label }),
   }));
-  if (!paired.ok || typeof paired.body?.token !== "string" || !paired.body.token.startsWith("omb_sess_")) throw Object.assign(new Error("This app could not sign in to My Cloud. Try again."), { status: paired.status });
+  if (!paired.ok || typeof paired.body?.token !== "string" || !paired.body.token.startsWith("mausclaw_sess_")) throw Object.assign(new Error("This app could not sign in to My Cloud. Try again."), { status: paired.status });
   const token = paired.body.token;
   const request = (method, route, init) => fetchImpl(`${target.origin}${route}`, {
     method, redirect: "error", credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(120_000), ...init,

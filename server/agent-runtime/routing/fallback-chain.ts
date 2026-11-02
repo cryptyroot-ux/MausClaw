@@ -1,5 +1,5 @@
 // Fallback chain: try the primary model, then fallbacks in order, up to maxRetries attempts.
-// Additive port of OpenMausBot-Pivot's server/routing/fallback-chain.ts.
+// Additive port of MausClaw-Pivot's server/routing/fallback-chain.ts.
 
 import { failoverKind, failoverHold, type FailoverKind } from "../../drivers/failover.ts";
 

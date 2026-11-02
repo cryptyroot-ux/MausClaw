@@ -136,7 +136,7 @@ describe("container images", () => {
     const cache = new RegExp(/cache = re\.compile\(r"(.*)"\)/.exec(scan)![1]);
     const removed = shipped().flatMap(step => [...step.args.matchAll(/\brm -rf ([^;&|]+)/g)].flatMap(match => match[1].trim().split(/\s+/)));
     const throwaway = [...new Set(removed.filter(path => path.startsWith("/tmp/")))].sort();
-    expect(throwaway).toEqual(["/tmp/grok-install", "/tmp/node-compile-cache", "/tmp/npm-cache", "/tmp/omb-build-home"]);
+    expect(throwaway).toEqual(["/tmp/grok-install", "/tmp/node-compile-cache", "/tmp/npm-cache", "/tmp/mausclaw-build-home"]);
     for (const path of throwaway) expect(cache.test(`${path.slice(1)}/leftover`), path).toBe(true);
     expect(scan).toContain('grok = files["usr/local/bin/grok"]');
   });
@@ -154,23 +154,23 @@ describe("container images", () => {
     expect(last(home, "EXPOSE")).toBe("8080");
     expect(last(home, "CMD")).toBe('["node", "/app/dist-server/cloud-home-start.js"]');
     expect(last(home, "HEALTHCHECK")).toContain("http://127.0.0.1:8080/api/health");
-    expect(last(chain("runtime"), "ENV")).toMatch(/^AGENT_BROWSER_EXECUTABLE_PATH=\/opt\/openmausbot-browser\/chrome .*NODE_ENV=production$/);
+    expect(last(chain("runtime"), "ENV")).toMatch(/^AGENT_BROWSER_EXECUTABLE_PATH=\/opt\/mausclaw-browser\/chrome .*NODE_ENV=production$/);
   });
 
   it("hands the Cloud home's server every setting the image's ENV gives it", () => {
     // The root supervisor passes the server an allow-listed environment; a setting the image sets but the list drops is
-    // lost silently (OMB_DUCKDB_DIR was: the server then found neither the 1Password SDK nor DuckDB in /app/duckdb).
+    // lost silently (MAUSCLAW_DUCKDB_DIR was: the server then found neither the 1Password SDK nor DuckDB in /app/duckdb).
     const image: Record<string, string> = {};
     for (const step of chain("cloud-home").filter(step => step.op === "ENV")) {
       for (const [, name, value] of step.args.matchAll(/(?:^|\s)([A-Z][A-Z0-9_]*)=(\S*)/g)) image[name] = value;
     }
-    expect(image.OMB_DUCKDB_DIR).toBe("/app/duckdb");
-    const contract = { OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_PUBLIC_URL: "https://omb-u-1a2b3c4d5e6f.fly.dev", OMB_CLOUD_BOOTSTRAP_SECRET: "S".repeat(43) };
+    expect(image.MAUSCLAW_DUCKDB_DIR).toBe("/app/duckdb");
+    const contract = { MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_PUBLIC_URL: "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: "S".repeat(43) };
     const { server } = cloudHomeChildEnvironments(cloudHomeConfiguration(contract)!, { ...image, ...contract }, "/data");
     // The launcher sets HOME, the ports and the data folder itself; everything else must come through unchanged.
     for (const name of Object.keys(image)) expect(server, name).toHaveProperty(name);
-    expect(server.OMB_DUCKDB_DIR).toBe("/app/duckdb");
+    expect(server.MAUSCLAW_DUCKDB_DIR).toBe("/app/duckdb");
   });
 
   it("never runs a build step with HOME on the volume, so nothing lands in what a fresh volume starts with", () => {
@@ -190,7 +190,7 @@ describe("container images", () => {
     expect(end).toBeGreaterThan(start);
     const prune = args.slice(start, end);
     const run = (target: string, elf = true) => {
-      const root = mkdtempSync(join(tmpdir(), "omb-agent-browser-"));
+      const root = mkdtempSync(join(tmpdir(), "mausclaw-agent-browser-"));
       temporaryDirectories.push(root);
       const bin = join(root, "lib/node_modules/agent-browser/bin");
       mkdirSync(bin, { recursive: true });
@@ -213,7 +213,7 @@ describe("container images", () => {
 
   it("builds Cloud home from the same Dockerfile in CI, with its own layer cache", () => {
     const smoke = workflow.jobs["build-and-smoke"].steps.map((step: { run?: string }) => step.run ?? "").join("\n");
-    expect(smoke).toContain("docker build --target cloud-home --build-arg CLOUD_HOME_ENGINES= -t omb-cloud-home:ci .");
+    expect(smoke).toContain("docker build --target cloud-home --build-arg CLOUD_HOME_ENGINES= -t mausclaw-cloud-home:ci .");
     const steps = workflow.jobs.publish.steps as { id?: string; uses?: string; with?: Record<string, string> }[];
     const server = steps.find(step => step.uses?.startsWith("docker/build-push-action@") && step.id !== "home")!;
     const home = steps.find(step => step.id === "home")!;
@@ -247,7 +247,7 @@ describe("container images", () => {
   it.skipIf(!jq)("resolves the current Chrome and engine releases, and keys on the date when a lookup fails", () => {
     const keys = (workflow.jobs.publish.steps as { id?: string; run?: string; env?: Record<string, string> }[]).find(step => step.id === "keys")!;
     const resolve = (ok: boolean) => {
-      const root = mkdtempSync(join(tmpdir(), "omb-docker-keys-"));
+      const root = mkdtempSync(join(tmpdir(), "mausclaw-docker-keys-"));
       temporaryDirectories.push(root);
       const fake = (name: string, body: string) => writeFileSync(join(root, name), `#!/bin/sh\n${ok ? body : "exit 1"}\n`, { mode: 0o755 });
       fake("curl", `echo '{"channels":{"Stable":{"version":"154.0.8037.92","downloads":{}}}}'`);
@@ -270,10 +270,10 @@ describe("container images", () => {
   });
 
   // An init collects browser processes whose parents exit, and Chrome gets the
-  // shared memory OpenMausBot's desktop containers give it.
+  // shared memory MausClaw's desktop containers give it.
   it("runs every compose service of the server image with an init and Chrome's shared memory", () => {
     for (const file of ["../compose.yaml", "../deploy/docker-compose.yml", "../deploy/podman/compose.yaml"]) {
-      const service = parse(readFileSync(new URL(file, import.meta.url), "utf8")).services.omb;
+      const service = parse(readFileSync(new URL(file, import.meta.url), "utf8")).services.mausclaw;
       expect(service.init, file).toBe(true);
       expect(service.shm_size, file).toBe("512m");
     }

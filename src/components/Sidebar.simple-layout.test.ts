@@ -347,7 +347,7 @@ describe("Simple-mode sidebar layout", () => {
 
   it("opens the command palette instead when a side panel holds the sidebar collapsed", () => {
     const opened = vi.fn();
-    window.addEventListener("omb:open-command-palette", opened);
+    window.addEventListener("mausclaw:open-command-palette", opened);
     const search = railSearch(render(true).tree);
     expect(render(true).tree.some((node) => node.type === SidebarEdgeToggle)).toBe(false);
     search();

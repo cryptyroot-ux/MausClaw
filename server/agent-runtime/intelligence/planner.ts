@@ -1,6 +1,6 @@
 // Planner: decomposes a goal into structured steps via an LLM model caller,
 // validating the JSON output with a zod-free schema check.
-// Additive port of OpenMausBot-Pivot's server/intelligence/planner.ts.
+// Additive port of MausClaw-Pivot's server/intelligence/planner.ts.
 import { randomUUID } from "node:crypto";
 import { extractJson } from "../extract-json.ts";
 import type { TaskType } from "./task-classifier.ts";

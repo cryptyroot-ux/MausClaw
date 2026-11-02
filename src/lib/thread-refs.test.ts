@@ -123,14 +123,14 @@ describe("canonical thread links", () => {
 
   it("copies and parses one spelling, and rejects near-misses", () => {
     const link = threadRefUrl({ botId: "scout", threadId: uuid });
-    expect(link).toBe(`openmausbot://thread/${uuid}?bot=scout`);
+    expect(link).toBe(`mausclaw://thread/${uuid}?bot=scout`);
     expect(parseThreadRefUrl(link)).toEqual({ threadId: uuid, botId: "scout" });
-    expect(parseThreadRefUrl(`openmausbot://thread/${uuid}`)).toEqual({ threadId: uuid });
+    expect(parseThreadRefUrl(`mausclaw://thread/${uuid}`)).toEqual({ threadId: uuid });
     for (const miss of [
-      `openmausbot://thread/${uuid}/extra?bot=scout`,
-      `openmausbot://thread/${uuid}?bot=scout&x=1`,
-      `openmausbot://thread/${uuid}?bot=`,
-      `omb://thread/${uuid}?bot=scout`,
+      `mausclaw://thread/${uuid}/extra?bot=scout`,
+      `mausclaw://thread/${uuid}?bot=scout&x=1`,
+      `mausclaw://thread/${uuid}?bot=`,
+      `mausclaw://thread/${uuid}?bot=scout`,
       "https://thread/" + uuid,
     ]) {
       expect(parseThreadRefUrl(miss)).toBeNull();
@@ -142,7 +142,7 @@ describe("canonical thread links", () => {
     expect(threadTokenFromPaste(link, uuidThreads)).toEqual({ token: "#QA PR 245", ref: expect.objectContaining({ threadId: uuid, botId: "scout" }) });
     expect(threadTokenFromPaste(`[QA PR 245](${link})`, uuidThreads)?.token).toBe("#QA PR 245");
     expect(threadTokenFromPaste(uuid, uuidThreads)?.ref).toMatchObject({ threadId: uuid });
-    expect(threadTokenFromPaste("openmausbot://thread/" + crypto.randomUUID(), uuidThreads)).toBeNull();
+    expect(threadTokenFromPaste("mausclaw://thread/" + crypto.randomUUID(), uuidThreads)).toBeNull();
     expect(threadTokenFromPaste("not a uuid", uuidThreads)).toBeNull();
     expect(threadTokenFromPaste("see " + uuid, uuidThreads)).toBeNull();
   });
@@ -150,10 +150,10 @@ describe("canonical thread links", () => {
   it("sends resolvable titles as canonical markdown and passes everything else through", () => {
     const link = threadRefUrl({ botId: "ada", threadId: "release" });
     expect(serializeThreadRefs("Done in #Release notes today", threads)).toBe(`Done in [Release notes](${link}) today`);
-    const sent = `Already [Release notes](${link}) and [Gone](openmausbot://thread/dead?bot=ada)`;
+    const sent = `Already [Release notes](${link}) and [Gone](mausclaw://thread/dead?bot=ada)`;
     expect(serializeThreadRefs(sent + " plus #Nothing", threads)).toBe(sent + " plus #Nothing");
     const bracketed = [scout("b", "QA [PR] 245")];
-    expect(serializeThreadRefs("see #QA [PR] 245", bracketed)).toBe("see [QA \\[PR\\] 245](openmausbot://thread/b?bot=scout)");
+    expect(serializeThreadRefs("see #QA [PR] 245", bracketed)).toBe("see [QA \\[PR\\] 245](mausclaw://thread/b?bot=scout)");
   });
 
   it("displays canonical links as title chips and dead links as raw text", () => {
@@ -164,8 +164,8 @@ describe("canonical thread links", () => {
       { text: " and " },
       { text: "#QA PR 245", ref: expect.objectContaining({ threadId: "qa" }) },
     ]);
-    expect(splitThreadRefsForDisplay("[Gone](openmausbot://thread/dead?bot=ada)", threads))
-      .toEqual([{ text: "[Gone](openmausbot://thread/dead?bot=ada)" }]);
+    expect(splitThreadRefsForDisplay("[Gone](mausclaw://thread/dead?bot=ada)", threads))
+      .toEqual([{ text: "[Gone](mausclaw://thread/dead?bot=ada)" }]);
   });
 
   it("resolves an address by its own bot first, then the mention preferences", () => {

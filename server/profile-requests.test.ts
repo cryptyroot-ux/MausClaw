@@ -234,7 +234,7 @@ describe("ProfileRequestService", () => {
 
   it("describes a mixed folder-and-toggle card without the instruction line, and a text-plus-toggle card with it", () => {
     const { service, bot } = harness({ name: "Scout" });
-    const dir = mkdtempSync(join(tmpdir(), "omb-cwd-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-cwd-"));
     try {
       const mixed = service.propose({ botId: bot.id, threadId: bot.threadId, changes: { cwd: dir, notifications: false }, reason: "r" });
       expect(mixed.detail).toContain(`Working folder: its private workspace → ${dir}`);
@@ -459,7 +459,7 @@ describe("ProfileRequestService", () => {
 describe("propose_profile working folder (cwd)", () => {
   it("proposes an existing folder, says where the tools will work, and applies it on confirm", () => {
     const { service, store, bot } = harness({ name: "Scout" });
-    const dir = mkdtempSync(join(tmpdir(), "omb-cwd-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-cwd-"));
     try {
       const result = service.propose({ botId: bot.id, threadId: bot.threadId, changes: { cwd: dir }, reason: "You said the site lives there." });
       expect(result.detail).toContain(`Working folder: its private workspace → ${dir}`);
@@ -484,10 +484,10 @@ describe("propose_profile working folder (cwd)", () => {
     const { service, store, bot } = harness({ name: "Scout" });
     const attempt = (cwd: string) => () => service.propose({ botId: bot.id, threadId: bot.threadId, changes: { cwd }, reason: "r" });
     expect(attempt("relative/path")).toThrow("working folder must be an absolute path");
-    expect(attempt(join(tmpdir(), "omb-definitely-missing-" + Date.now()))).toThrow(/that folder doesn't exist/);
+    expect(attempt(join(tmpdir(), "mausclaw-definitely-missing-" + Date.now()))).toThrow(/that folder doesn't exist/);
     expect(attempt("")).toThrow("Nothing would change");
 
-    const dir = mkdtempSync(join(tmpdir(), "omb-cwd-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-cwd-"));
     const { requestId } = service.propose({ botId: bot.id, threadId: bot.threadId, changes: { cwd: dir }, reason: "r" });
     rmSync(dir, { recursive: true, force: true });
     const result = service.resolve({ botId: bot.id, threadId: bot.threadId, requestId, behavior: "allow" });
@@ -527,7 +527,7 @@ describe("a bot's profile changes below Full access", () => {
   it("applies its own working folder at Ask, and Undo puts the old one back", () => {
     const { store, bot } = harness({ name: "Scout" });
     const service = new ProfileRequestService({ store, autoApply: rule });
-    const dir = mkdtempSync(join(tmpdir(), "omb-cwd-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-cwd-"));
     try {
       const applied = service.submit({ botId: bot.id, threadId: bot.threadId, changes: { cwd: dir, title: "Builder" }, reason: "asked" });
       expect(applied).toMatchObject({ state: "applied", appliedBy: "level" });

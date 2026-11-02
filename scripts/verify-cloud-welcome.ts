@@ -3,7 +3,7 @@
 // Claude credit. POST /__fixture/engines?mode=credit|signed-in|signed-out picks the engines (credit by default).
 // Run: node --experimental-strip-types scripts/verify-cloud-welcome.ts
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { launchVerificationServer } from "./control-omb.ts";
+import { launchVerificationServer } from "./control-mausclaw.ts";
 import { mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 type Mode = "credit" | "signed-in" | "signed-out";

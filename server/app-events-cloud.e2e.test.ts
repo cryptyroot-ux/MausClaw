@@ -13,7 +13,7 @@ import { freePortBlock } from "./testing/ports.ts";
 import { startBrokerFake, type BrokerFake } from "./testing/broker-fake.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0a1b2c3d4e5f.fly.dev";
+const HOST = "mausclaw-t-0a1b2c3d4e5f.fly.dev";
 const MACHINE = "4b8d2c1e-9a7f-4e6d-8c5b-1a2b3c4d5e6f";
 const secret = randomBytes(32).toString("base64url");
 let home = "", base = "", log = "", token = "";
@@ -34,11 +34,11 @@ async function api(method: string, path: string, body?: unknown) {
 }
 
 async function ownerToken(): Promise<string> {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const response = await fetch(`${base}/api/cloud/pairing`, { method: "POST", headers: {
     host: HOST, "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https", "content-type": "application/json",
-    "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce, "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce, "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body });
   const granted = await response.json() as { code: string };
   return (await api("POST", "/api/auth/pair", { code: granted.code })).body.token;
@@ -48,8 +48,8 @@ beforeAll(async () => {
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
   broker = await startBrokerFake();
-  home = mkdtempSync(join(tmpdir(), "omb-app-events-cloud-"));
-  const dataDir = join(home, ".openmausbot");
+  home = mkdtempSync(join(tmpdir(), "mausclaw-app-events-cloud-"));
+  const dataDir = join(home, ".mausclaw");
   mkdirSync(dataDir, { recursive: true });
   writeFileSync(join(dataDir, "config.json"), JSON.stringify({
     instances: { claude: { driver: "claudeAgent", displayName: "Fixture", config: { cli: join(SERVER_DIR, "testing", "fake-claude-cli.ts") } } },
@@ -61,10 +61,10 @@ beforeAll(async () => {
   child = spawn(process.execPath, ["--import", offline, join(SERVER_DIR, "index.ts")], {
     cwd: join(SERVER_DIR, ".."),
     env: {
-      PATH: process.env.PATH, HOME: home, USERPROFILE: home, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: MACHINE, OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`, FAKE_CLAUDE_MODE: "happy",
-      OMB_COMPOSIO_BROKER_URL: broker.url, OMB_CLOUD_CONNECTED_APPS_GRANT: broker.cloudGrant(MACHINE),
+      PATH: process.env.PATH, HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+      MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: MACHINE, MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`, FAKE_CLAUDE_MODE: "happy",
+      MAUSCLAW_COMPOSIO_BROKER_URL: broker.url, MAUSCLAW_CLOUD_CONNECTED_APPS_GRANT: broker.cloudGrant(MACHINE),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

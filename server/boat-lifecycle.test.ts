@@ -34,7 +34,7 @@ describe("cloud computer lifecycle", () => {
     });
     await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));
     const port = (api.address() as any).port;
-    vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${port}/api/v1`);
+    vi.stubEnv("MAUSCLAW_BOAT_API", `http://127.0.0.1:${port}/api/v1`);
     vi.resetModules();
     ({ execOnBoat, sleepBoat } = await import("./boat.ts"));
   });

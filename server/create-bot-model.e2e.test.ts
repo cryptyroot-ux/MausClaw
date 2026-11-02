@@ -2,11 +2,11 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("Chief creation uses the workspace default or a validated explicit model without inheriting permissions", async () => {
-  const temp = mkdtempSync(join(tmpdir(), "omb-create-model-"));
+  const temp = mkdtempSync(join(tmpdir(), "mausclaw-create-model-"));
   const gate = join(temp, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate }, undefined, undefined, undefined, undefined, undefined, ["codex"]);
   const api = async (method: string, path: string, body?: unknown, expected = 200, token?: string) => {
@@ -26,12 +26,12 @@ it("Chief creation uses the workspace default or a validated explicit model with
     await api("PATCH", "/api/config", { defaultModelSelection: defaultModel });
     const chiefModel = { instanceId: "claude", model: claude.models.default };
     const chief = (await api("POST", "/api/bots", { name: "Chief", section: "Design", modelSelection: chiefModel }, 201)).bot;
-    // At Ask too, each creation applies at once: OpenMausBot adds no card of its own.
+    // At Ask too, each creation applies at once: MausClaw adds no card of its own.
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true, approvalMode: "ask", connectorScopes: { apps: { gmail: "read" } } });
     await api("POST", `/api/bots/${chief.id}/messages`, { text: "Prepare a specialist." }, 202);
     await expect.poll(() => existsSync(fixture.fixtureDumpPath), { timeout: 15_000 }).toBe(true);
     const dump = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8"));
-    let token = dump.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN;
+    let token = dump.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN;
     const create = (name: string, modelSelection?: unknown, expected = 201) => api("POST", "/api/internal/create-bot", {
       fromBotId: chief.id, fromThreadId: chief.threadId, name,
       role: "Specialist", instructions: "Complete assigned work.",
@@ -74,7 +74,7 @@ it("Chief creation uses the workspace default or a validated explicit model with
     unlinkSync(fixture.fixtureDumpPath);
     await api("POST", `/api/bots/${chief.id}/messages`, { text: "Prepare the next specialist." }, 202);
     await expect.poll(() => existsSync(fixture.fixtureDumpPath), { timeout: 15_000 }).toBe(true);
-    token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN;
+    token = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")).mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN;
     const updated = applied(await create("Updated default specialist"));
     writeFileSync(gate, "finish");
     await idle();

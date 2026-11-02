@@ -38,7 +38,7 @@ export function createSharedComputerRoutes(deps: {
       if (!pending) return json(res, 426, { error: "WebSocket upgrade required" });
       if (auth.kind !== "session") return json(res, 403, { error: "Pair this desktop first" });
       if (!deps.sessionLive(auth.session.id)) return json(res, 401, { error: "Session ended" });
-      const computer = deps.computers.linkable(link[1]!, auth.session.id, String(req.headers["x-omb-computer-secret"] ?? ""));
+      const computer = deps.computers.linkable(link[1]!, auth.session.id, String(req.headers["x-mausclaw-computer-secret"] ?? ""));
       if (pending.socket.destroyed) return;
       pending.release();
       deps.links.accept({ req, socket: pending.socket, head: pending.head }, { ...computer, seenAs: requestSource(req) }, deps.power());
@@ -51,7 +51,7 @@ export function createSharedComputerRoutes(deps: {
     const body = await readBody(req, 4_000_000);
     if (!deps.enabled()) return json(res, 404, { error: `no route: ${method} ${path}` });
     if (!deps.sessionLive(auth.session.id)) return json(res, 401, { error: "Session ended" });
-    const secret = String(req.headers["x-omb-computer-secret"] ?? "");
+    const secret = String(req.headers["x-mausclaw-computer-secret"] ?? "");
     if (path === "/api/shared-computers/connect") {
       const parsed = sharedComputerRegistration.safeParse(body);
       if (!parsed.success) return json(res, 400, { error: "Invalid computer registration" });

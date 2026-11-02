@@ -8,11 +8,11 @@ import { afterEach, describe, expect, it } from "vitest";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hook = path.join(root, "build", "linux-after-install.sh");
 const removeHook = path.join(root, "build", "linux-after-remove.sh");
-const browserPolicy = path.join(root, "build", "linux-openmausbot-browser.apparmor");
+const browserPolicy = path.join(root, "build", "linux-mausclaw-browser.apparmor");
 const temporaryDirectories = [];
 
 function fixture() {
-  const appRoot = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "omb-deb-upgrade-"));
+  const appRoot = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "mausclaw-deb-upgrade-"));
   temporaryDirectories.push(appRoot);
   const resources = path.join(appRoot, "resources");
   const cuaRoot = path.join(resources, "cua-linux-x64");
@@ -33,7 +33,7 @@ function fixture() {
   fs.writeFileSync(path.join(chromeRoot, "chrome-headless-shell"), "fixture", { mode: 0o664 });
   fs.writeFileSync(path.join(chromeRoot, "chrome_crashpad_handler"), "fixture", { mode: 0o775 });
   fs.writeFileSync(path.join(chromeRoot, "icudtl.dat"), "fixture", { mode: 0o664 });
-  fs.copyFileSync(browserPolicy, path.join(resources, "openmausbot-browser.apparmor"));
+  fs.copyFileSync(browserPolicy, path.join(resources, "mausclaw-browser.apparmor"));
   const systemRoot = path.join(appRoot, "test-system");
   const apparmorDir = path.join(systemRoot, "apparmor.d");
   // Model the primary target host: Ubuntu 24.04 with the AppArmor 4 ABI.
@@ -45,21 +45,21 @@ function fixture() {
   const apparmorStatus = path.join(systemRoot, "apparmor_status");
   fs.writeFileSync(apparmorStatus, "#!/bin/sh\nexit 0\n", { mode: 0o755 });
   fs.writeFileSync(path.join(systemRoot, "apparmor_restrict_unprivileged_userns"), "1\n");
-  fs.writeFileSync(path.join(systemRoot, "apparmor-profiles"), "openmausbot-browser (unconfined)\n");
+  fs.writeFileSync(path.join(systemRoot, "apparmor-profiles"), "mausclaw-browser (unconfined)\n");
   return { appRoot, resources, cuaRoot, chromiumSandbox, browserRoot, chromeRoot, systemRoot, apparmorDir, parser, apparmorStatus };
 }
 
 function runHook(appRoot) {
   return spawnSync("/bin/sh", [hook], {
     encoding: "utf8",
-    env: { ...process.env, OPENMAUSBOT_POSTINSTALL_TEST_ROOT: appRoot },
+    env: { ...process.env, MAUSCLAW_POSTINSTALL_TEST_ROOT: appRoot },
   });
 }
 
 function runRemoveHook(appRoot, operation = "remove") {
   return spawnSync("/bin/sh", [removeHook, operation], {
     encoding: "utf8",
-    env: { ...process.env, OPENMAUSBOT_POSTINSTALL_TEST_ROOT: appRoot },
+    env: { ...process.env, MAUSCLAW_POSTINSTALL_TEST_ROOT: appRoot },
   });
 }
 
@@ -72,7 +72,7 @@ afterEach(() => {
 describe("Linux DEB sandbox policy", () => {
   it("allows user namespaces only for the exact installed browser executable", () => {
     const policy = fs.readFileSync(browserPolicy, "utf8").replace(/^\s*#.*$/gm, "");
-    expect(policy).toContain("profile openmausbot-browser /opt/OpenMausBot/resources/browser-engine/chrome/chrome-headless-shell-linux64/chrome-headless-shell flags=(unconfined)");
+    expect(policy).toContain("profile mausclaw-browser /opt/MausClaw/resources/browser-engine/chrome/chrome-headless-shell-linux64/chrome-headless-shell flags=(unconfined)");
     expect(policy).toContain("userns,");
     expect(policy).not.toMatch(/\*|@\{HOME\}|\/home\/|\/tmp\//);
   });
@@ -93,7 +93,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     fs.writeFileSync(parser, "#!/bin/sh\nexit 42\n", { mode: 0o755 });
     const result = runHook(appRoot);
     expect(result.status).toBe(0);
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(false);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(false);
   });
   it("skips the optional policy on an unrestricted host without the AppArmor 4 ABI", () => {
     const { appRoot, systemRoot, parser, apparmorDir } = fixture();
@@ -105,7 +105,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runHook(appRoot);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).not.toContain("profile operation");
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(false);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(false);
   });
   it("repairs legacy directory and executable modes idempotently", () => {
     const { appRoot, resources, cuaRoot, chromiumSandbox, browserRoot, chromeRoot, apparmorDir } = fixture();
@@ -124,14 +124,14 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
         expect(fs.lstatSync(executable).mode & 0o7777).toBe(0o755);
       }
       expect(fs.lstatSync(path.join(chromeRoot, "icudtl.dat")).mode & 0o777).toBe(0o644);
-      expect(fs.readFileSync(path.join(apparmorDir, "openmausbot-browser"), "utf8")).toBe(fs.readFileSync(browserPolicy, "utf8"));
-      expect(result.stdout).toContain(`profile operation: -r ${apparmorDir}/openmausbot-browser`);
+      expect(fs.readFileSync(path.join(apparmorDir, "mausclaw-browser"), "utf8")).toBe(fs.readFileSync(browserPolicy, "utf8"));
+      expect(result.stdout).toContain(`profile operation: -r ${apparmorDir}/mausclaw-browser`);
     }
   });
 
   it("refuses to follow a replaced package directory symlink", () => {
     const { appRoot, resources } = fixture();
-    const external = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "omb-deb-external-"));
+    const external = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "mausclaw-deb-external-"));
     temporaryDirectories.push(external);
     fs.chmodSync(external, 0o777);
     fs.rmSync(resources, { recursive: true });
@@ -242,7 +242,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runHook(appRoot);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).not.toContain("profile operation");
-    expect(fs.readFileSync(path.join(apparmorDir, "openmausbot-browser"), "utf8")).toBe(fs.readFileSync(browserPolicy, "utf8"));
+    expect(fs.readFileSync(path.join(apparmorDir, "mausclaw-browser"), "utf8")).toBe(fs.readFileSync(browserPolicy, "utf8"));
   });
 
   it("does not claim sandbox setup when restriction is active but AppArmor is unavailable", () => {
@@ -258,7 +258,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const { appRoot, apparmorDir } = fixture();
     const external = path.join(appRoot, "external-policy");
     fs.writeFileSync(external, "outside");
-    fs.symlinkSync(external, path.join(apparmorDir, "openmausbot-browser"));
+    fs.symlinkSync(external, path.join(apparmorDir, "mausclaw-browser"));
     const result = runHook(appRoot);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("profile target is unsafe");
@@ -268,7 +268,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
   it("keeps the profile on upgrade and removes only its own policy on uninstall", () => {
     const { appRoot, apparmorDir } = fixture();
     expect(runHook(appRoot).status).toBe(0);
-    const profile = path.join(apparmorDir, "openmausbot-browser");
+    const profile = path.join(apparmorDir, "mausclaw-browser");
     const unrelated = path.join(apparmorDir, "another-app");
     fs.writeFileSync(unrelated, "unrelated policy");
     expect(runRemoveHook(appRoot, "upgrade").status).toBe(0);
@@ -288,7 +288,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runRemoveHook(appRoot);
     expect(result.status).toBe(0);
     expect(result.stdout).not.toContain("profile operation");
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(false);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(false);
   });
 
   it("removes staged policy without kernel operations when AppArmor is disabled", () => {
@@ -299,7 +299,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runRemoveHook(appRoot);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).not.toContain("profile operation");
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(false);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(false);
   });
 
   it("keeps the exact policy available for repair if the kernel refuses to unload it", () => {
@@ -309,7 +309,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runRemoveHook(appRoot);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("could not unload");
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(true);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(true);
   });
 
   it("does not delete a loaded policy when its AppArmor parser is missing", () => {
@@ -319,7 +319,7 @@ describe.skipIf(process.platform !== "linux")("Linux DEB upgrade hook", () => {
     const result = runRemoveHook(appRoot);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("needs apparmor_parser to unload");
-    expect(fs.existsSync(path.join(apparmorDir, "openmausbot-browser"))).toBe(true);
+    expect(fs.existsSync(path.join(apparmorDir, "mausclaw-browser"))).toBe(true);
   });
 
   it("rejects a test override outside the private temporary root", () => {

@@ -7,7 +7,7 @@ import { parseCloudList } from "./cloud-list.mjs";
 import { addCloudView, createAddedCloudNotice, hostedCloudOrigin, installCloudRail, railPlaces } from "./cloud-rail.mjs";
 import { otherCloudSnapshot } from "./cloud-plan-ipc.mjs";
 
-const HOME = "https://omb-u-1a2b3c4d5e6f.fly.dev", CLIENT_A = "https://omb-c-a.fly.dev", TEAM = "https://omb-t-acme.fly.dev", VPS = "https://bots.example.test", OWN = "https://mini.tail1234.ts.net";
+const HOME = "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", CLIENT_A = "https://mausclaw-c-a.fly.dev", TEAM = "https://mausclaw-t-acme.fly.dev", VPS = "https://bots.example.test", OWN = "https://mini.tail1234.ts.net";
 const LOCAL = "http://127.0.0.1:8799";
 const entry = (over = {}) => ({ id: "c-a", name: "Client A", color: "green", role: "owner", tier: "pro", runsOn: "cloud", status: "ready", origin: CLIENT_A,
   teamId: null, primary: false, ...over });
@@ -210,7 +210,7 @@ const PRELOAD = readFileSync(new URL("./preload.cjs", import.meta.url), "utf8");
 function preload(origin, { activation = false } = {}) {
   let bridge; const invoked = [];
   vm.runInNewContext(PRELOAD, {
-    process: { platform: "darwin", argv: [`--omb-local-origin=${LOCAL}`, "--omb-company-desktop=1"] },
+    process: { platform: "darwin", argv: [`--mausclaw-local-origin=${LOCAL}`, "--mausclaw-company-desktop=1"] },
     location: { origin }, navigator: { userActivation: { isActive: activation } }, TextEncoder, localStorage: { getItem: () => null }, queueMicrotask,
     require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name, value) => { bridge = value; } },
       ipcRenderer: { on() {}, removeListener() {}, send() {}, sendSync: () => null, invoke: (...args) => { invoked.push(args); return Promise.resolve(); } } }),

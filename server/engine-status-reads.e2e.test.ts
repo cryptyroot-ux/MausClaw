@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
-import { runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
@@ -21,7 +21,7 @@ afterEach(async () => {
 });
 
 function freshHome(): string {
-  const home = mkdtempSync(join(tmpdir(), "omb-engine-status-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-engine-status-"));
   homes.push(home);
   mkdirSync(join(home, "tmp"), { recursive: true });
   writeFileSync(join(home, "config.json"), JSON.stringify({
@@ -55,7 +55,7 @@ async function boot(home: string, knobs: Record<string, string> = {}) {
     return response.json() as Promise<any>;
   };
   const stop = () => waitForExit(child, { signal: "SIGTERM" });
-  return { call, control: (...args: string[]) => runControlOmb([...args, "--url", base]) as Promise<any>, stop };
+  return { call, control: (...args: string[]) => runControlMausclaw([...args, "--url", base]) as Promise<any>, stop };
 }
 
 const probeCount = (log: string, probe: "version" | "help" | "auth") =>

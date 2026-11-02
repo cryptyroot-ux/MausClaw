@@ -10,7 +10,7 @@ import { collisionFreeDownloadPath, defaultSaveName, openLogsFolder, resolveSava
 
 // Creating a symlink on Windows needs elevation or developer mode.
 const canSymlink = (() => {
-  const probe = fs.mkdtempSync(path.join(os.tmpdir(), "omb-symlink-probe-"));
+  const probe = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-symlink-probe-"));
   try {
     fs.symlinkSync(probe, path.join(probe, "link"));
     return true;
@@ -25,8 +25,8 @@ let home;
 let botHome;
 
 before(() => {
-  home = fs.mkdtempSync(path.join(os.tmpdir(), "omb-save-file-"));
-  botHome = path.join(home, ".openmausbot");
+  home = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-save-file-"));
+  botHome = path.join(home, ".mausclaw");
   fs.mkdirSync(path.join(botHome, "workspaces", "bot"), { recursive: true });
   fs.writeFileSync(path.join(botHome, "workspaces", "bot", "report.docx"), "docx");
   fs.writeFileSync(path.join(home, "secret.txt"), "private");
@@ -46,14 +46,14 @@ describe("save-file path validation", () => {
   });
 
   it("accepts a file under a symlinked bot home", { skip: !canSymlink }, async () => {
-    const realHome = fs.mkdtempSync(path.join(os.tmpdir(), "omb-real-home-"));
-    const linkedHome = fs.mkdtempSync(path.join(os.tmpdir(), "omb-linked-home-"));
+    const realHome = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-real-home-"));
+    const linkedHome = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-linked-home-"));
     const realBotHome = path.join(realHome, "bot-data");
     fs.mkdirSync(realBotHome, { recursive: true });
     fs.writeFileSync(path.join(realBotHome, "report.docx"), "docx");
-    fs.symlinkSync(realBotHome, path.join(linkedHome, ".openmausbot"));
+    fs.symlinkSync(realBotHome, path.join(linkedHome, ".mausclaw"));
 
-    const viaLink = path.join(linkedHome, ".openmausbot", "report.docx");
+    const viaLink = path.join(linkedHome, ".mausclaw", "report.docx");
     assert.equal(await resolveSavablePath(viaLink, { home: linkedHome }), await fs.promises.realpath(viaLink));
 
     fs.rmSync(realHome, { recursive: true, force: true });
@@ -85,7 +85,7 @@ describe("save-file path validation", () => {
 
 describe("save-file dialog default name", () => {
   it("suggests a name that does not overwrite an existing file", async () => {
-    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "omb-downloads-"));
+    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-downloads-"));
     const source = path.join(botHome, "workspaces", "bot", "report.docx");
 
     assert.equal(await defaultSaveName(downloads, source), path.join(downloads, "report.docx"));
@@ -98,7 +98,7 @@ describe("save-file dialog default name", () => {
   });
 
   it("keeps the extension on the suggestion", async () => {
-    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "omb-downloads-ext-"));
+    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-downloads-ext-"));
     const source = path.join(botHome, "workspaces", "bot", "report.docx");
     fs.writeFileSync(path.join(downloads, "report.docx"), "");
 
@@ -110,7 +110,7 @@ describe("save-file dialog default name", () => {
 
 describe("attachment download destination", () => {
   it("uses Chromium-style suffixes without replacing an existing download", () => {
-    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "omb-attachment-downloads-"));
+    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-attachment-downloads-"));
     try {
       assert.equal(
         collisionFreeDownloadPath(downloads, "report.tar.gz"),
@@ -132,7 +132,7 @@ describe("attachment download destination", () => {
   });
 
   it("keeps renderer-supplied directories outside the destination", () => {
-    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "omb-attachment-basename-"));
+    const downloads = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-attachment-basename-"));
     try {
       assert.equal(
         collisionFreeDownloadPath(downloads, "../../outside.txt"),
@@ -269,9 +269,9 @@ describe("Show in folder for a file outside the workspace", () => {
 
 describe("openLogsFolder", () => {
   it("opens exactly main's own logs folder, making it first, and says where it is when the system cannot open it", async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "omb-logs-folder-"));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-logs-folder-"));
     try {
-      const folder = path.join(root, "OpenMausBot", "logs");
+      const folder = path.join(root, "MausClaw", "logs");
       const opened = [];
       assert.deepEqual(await openLogsFolder(folder, { open: async (target) => { opened.push(target); return ""; } }), { folder, opened: true });
       assert.deepEqual(opened, [folder]);

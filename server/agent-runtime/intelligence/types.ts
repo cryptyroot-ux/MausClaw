@@ -1,5 +1,5 @@
 // Intelligence types shared by planner, executor, and verifier.
-// Additive port of OpenMausBot-Pivot's server/intelligence/types.ts.
+// Additive port of MausClaw-Pivot's server/intelligence/types.ts.
 import type { ModelAssignment } from "../routing/types.ts";
 
 export type PlanStatus = "pending" | "executing" | "verifying" | "completed" | "failed";

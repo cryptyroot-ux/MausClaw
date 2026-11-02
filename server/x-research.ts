@@ -399,7 +399,7 @@ export function tregAuthHeaders(credential: ServiceCredential): Record<string, s
   return credential.included ? { authorization: `Bearer ${credential.token}` } : { "x-treg-token": credential.token };
 }
 
-/** `url` and `token` are the relay's (OMB_CLOUD_X_URL, or a desktop's from its Cloud sign-in), or, with `own`, treg's
+/** `url` and `token` are the relay's (MAUSCLAW_CLOUD_X_URL, or a desktop's from its Cloud sign-in), or, with `own`, treg's
  * own base URL and the person's treg key. */
 export function createXRelayClient(options: { url: string; token: string; own?: boolean; fetcher?: typeof fetch; timeoutMs?: number }): XResearchClient {
   const resolveFetcher = () => options.fetcher ?? fetch;

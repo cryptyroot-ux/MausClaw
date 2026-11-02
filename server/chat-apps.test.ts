@@ -55,7 +55,7 @@ function fakeStore(rooms: string[] = []) {
 
 function setup(rooms: string[] = [], maxBytes?: number) {
   const fake = fakeStore(rooms);
-  const docs = new AppDocs(join(mkdtempSync(join(tmpdir(), "omb-chat-apps-")), "app-docs"), maxBytes ? { maxBytes } : {});
+  const docs = new AppDocs(join(mkdtempSync(join(tmpdir(), "mausclaw-chat-apps-")), "app-docs"), maxBytes ? { maxBytes } : {});
   const call = (input: Record<string, unknown>, thread = THREAD, authored?: (id: string) => void) =>
     createAppCard({ store: fake.store, docs, bot: SCOUT, threadId: thread, input, ...(authored ? { authored } : {}) });
   const row = (id: string, thread = THREAD) => fake.rows(thread).find((message) => message.id === id)!;
@@ -194,7 +194,7 @@ describe("a jsx page", () => {
 
 describe("a folder page", () => {
   function folders() {
-    const base = mkdtempSync(join(tmpdir(), "omb-folder-pages-"));
+    const base = mkdtempSync(join(tmpdir(), "mausclaw-folder-pages-"));
     const mine = join(base, "scout"), theirs = join(base, "other");
     for (const [dir, files] of [[join(mine, "dash"), { "index.html": "<h1>Dash</h1><script src=\"app.js\"></script>", "app.js": "draw()", "data.parquet": "PAR1 PAR1" }],
       [join(theirs, "secret"), { "index.html": "<h1>Theirs</h1>" }]] as const) {
@@ -260,7 +260,7 @@ describe("publish_page in the chat", () => {
   const LIVE = { state: "live" as const, title: "Dash", pageId: "page000000000000000000001", url: "https://page000000000000000000001.mausbot.page/", usage: { pages: 1, limit: 5 } };
 
   async function folder() {
-    const base = realpathSync(mkdtempSync(join(tmpdir(), "omb-published-")));
+    const base = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-published-")));
     mkdirSync(join(base, "dash"));
     writeFileSync(join(base, "dash", "index.html"), "<h1>Dash</h1>");
     writeFileSync(join(base, "dash", "data.csv"), "a\n1");
@@ -517,7 +517,7 @@ describe("createChatApps", () => {
     try {
       const fake = fakeStore();
       const refs = vi.fn((): string[] => []);
-      const apps = createChatApps({ store: fake.store, dataDir: mkdtempSync(join(tmpdir(), "omb-chat-apps-")), references: refs });
+      const apps = createChatApps({ store: fake.store, dataDir: mkdtempSync(join(tmpdir(), "mausclaw-chat-apps-")), references: refs });
       opened.push(apps);
       expect(apps.createAppCard({ bot: SCOUT, threadId: THREAD, input: { tool: "show_html", html: PAGE, title: "Sales" } })).toEqual({ ok: true, messageId: "m1" });
       expect(apps.appDocument(THREAD, "m1")?.csp).toBe(BOT_HTML_CSP);

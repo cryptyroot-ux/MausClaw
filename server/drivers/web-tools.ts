@@ -28,14 +28,14 @@ export function privateAddress(address: string): boolean {
 }
 
 export interface WebOptions {
-  /** Tests only: allow loopback/private targets (the operator can also set OMB_WEB_ALLOW_PRIVATE=1 for local evals). */
+  /** Tests only: allow loopback/private targets (the operator can also set MAUSCLAW_WEB_ALLOW_PRIVATE=1 for local evals). */
   allowPrivate?: boolean;
   searchUrl?: string;
 }
 
 async function guard(url: URL, options: WebOptions): Promise<void> {
   if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("only http and https URLs are allowed");
-  if (options.allowPrivate || process.env.OMB_WEB_ALLOW_PRIVATE === "1") return;
+  if (options.allowPrivate || process.env.MAUSCLAW_WEB_ALLOW_PRIVATE === "1") return;
   const host = url.hostname.replace(/^\[|\]$/g, "");
   const addresses = isIP(host) ? [host] : (await lookup(host, { all: true })).map((entry) => entry.address);
   if (!addresses.length || addresses.some(privateAddress)) throw new Error(`${url.hostname} is a private or local address`);
@@ -46,7 +46,7 @@ async function get(raw: string, signal: AbortSignal, options: WebOptions): Promi
   const timeout = AbortSignal.any([signal, AbortSignal.timeout(FETCH_TIMEOUT_MS)]);
   for (let hop = 0; ; hop++) {
     await guard(url, options);
-    const response = await fetch(url, { redirect: "manual", signal: timeout, headers: { "user-agent": "Mozilla/5.0 (compatible; OpenMausBot)", accept: "text/html,text/plain,application/json,*/*" } });
+    const response = await fetch(url, { redirect: "manual", signal: timeout, headers: { "user-agent": "Mozilla/5.0 (compatible; MausClaw)", accept: "text/html,text/plain,application/json,*/*" } });
     const location = response.headers.get("location");
     if (response.status >= 300 && response.status < 400 && location) {
       if (hop >= MAX_REDIRECTS) throw new Error("too many redirects");

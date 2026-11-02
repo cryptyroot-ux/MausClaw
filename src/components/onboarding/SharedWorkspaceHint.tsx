@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { MausAvatar } from "@/components/Avatar";
 import { t } from "@/lib/i18n";
 
-const DISMISSED_KEY = "omb.onboarding.sharedWorkspaceHint";
+const DISMISSED_KEY = "mausclaw.onboarding.sharedWorkspaceHint";
 
 export function sharedHintDismissed(): boolean {
   try {

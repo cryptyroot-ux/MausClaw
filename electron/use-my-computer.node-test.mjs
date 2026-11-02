@@ -9,9 +9,9 @@ import { askForMicrophone, openPrivacySettings } from "./privacy-settings.mjs";
 import { QUIET_MS, createUseMyComputer, fullyLent, installUseMyComputer, missingPermissions, popupDue, quietWindow } from "./use-my-computer.mjs";
 import { WORDS } from "./use-my-computer-words.mjs";
 
-const MISSING_BOTH = "embedded host failed: Accessibility and Screen Recording required; grant access in System Settings and restart OpenMausBot";
+const MISSING_BOTH = "embedded host failed: Accessibility and Screen Recording required; grant access in System Settings and restart MausClaw";
 
-const MY_CLOUD = "https://omb-u-1.fly.dev";
+const MY_CLOUD = "https://mausclaw-u-1.fly.dev";
 const USUAL = Object.freeze([{ name: "Desktop", write: false }, { name: "Documents", write: false }, { name: "Downloads", write: false }]);
 
 /**
@@ -101,7 +101,7 @@ test("who is asked without a bot's link: every computer signed in to its own My 
   assert.equal(due({ ...all, screen: false }, { screenPossible: false }), false, "every part this computer can lend");
   assert.equal(due({ on: false, internet: true, folders: [], screen: false, ownOff: true }), false, "the person turned lending off themselves");
   assert.equal(due(internetOnly, { kept: { v: 1, clouds: [MY_CLOUD] } }), false, "the popup was answered for this Cloud");
-  assert.equal(due(internetOnly, { kept: { v: 1, clouds: ["https://omb-u-old.fly.dev"] } }), true, "answered for another Cloud only");
+  assert.equal(due(internetOnly, { kept: { v: 1, clouds: ["https://mausclaw-u-old.fly.dev"] } }), true, "answered for another Cloud only");
   assert.equal(due(internetOnly, { kept: { v: 1, asked: true } }), false, "answered at a move before answers were kept per Cloud");
   assert.equal(due({ ...internetOnly, available: false }), false, "no own My Cloud to lend to (signed out, or only a Team Cloud)");
   assert.equal(due(internetOnly, { cloud: null }), false, "nor any Cloud named");
@@ -120,12 +120,12 @@ test("the page asks when the moment is right: the popup comes once, Use my Mac t
   await w.useMyComputer.offer();
   assert.equal(w.asked.length, 1, "shown once");
   assert.equal(await w.useMyComputer.due(), false);
-  w.cloud = "https://omb-u-2.fly.dev";
+  w.cloud = "https://mausclaw-u-2.fly.dev";
   w.lent = { on: true, internet: true, folders: [], screen: false };
   assert.equal(await w.useMyComputer.due(), true, "another Cloud of theirs asks once more");
   await w.useMyComputer.ask();
   assert.equal(w.asked.length, 2);
-  assert.deepEqual(w.kept.clouds, [MY_CLOUD, "https://omb-u-2.fly.dev"]);
+  assert.deepEqual(w.kept.clouds, [MY_CLOUD, "https://mausclaw-u-2.fly.dev"]);
 });
 
 test("who never gets it from the page: the person's own Off, Not now, every part lent, or a Team Cloud only", async () => {
@@ -181,12 +181,12 @@ test("macOS asks one permission at a time: each one allowed starts computer cont
   assert.equal(refused.lent.screen, true);
 });
 
-test("Screen Recording that works only after OpenMausBot restarts: apps and screen go on by themselves once computer control works", async () => {
+test("Screen Recording that works only after MausClaw restarts: apps and screen go on by themselves once computer control works", async () => {
   const w = world({ grants: { prompt: ["accessibility", "screen"], relaunch: true } });
   await w.useMyComputer.offer();
   assert.deepEqual(lentNow(w), { on: true, internet: true, folders: 3, screen: false }, "everything else is lent at once");
   assert.equal(w.kept.screenWanted, true);
-  // OpenMausBot started again: computer control works now.
+  // MausClaw started again: computer control works now.
   w.ready = true;
   w.available = false;
   await w.useMyComputer.changed();
@@ -267,14 +267,14 @@ test("what computer control lacks is read from its own start-up failure, never b
 test("the popup: one question, one plain line, Use my Mac and a quiet Not now, by the word the person knows the computer by, in the page's language", async () => {
   assert.deepEqual(useMyComputerText("darwin", { screen: true }), {
     message: "Let your bots use this Mac?",
-    detail: "Your bots on My Cloud can then read your Desktop, Documents and Downloads and use your apps and screen, while this Mac is awake and OpenMausBot is open.",
+    detail: "Your bots on My Cloud can then read your Desktop, Documents and Downloads and use your apps and screen, while this Mac is awake and MausClaw is open.",
     buttons: ["Use my Mac", "Not now"],
   });
   assert.deepEqual(useMyComputerText("win32", { screen: true }).buttons, ["Use my PC", "Not now"]);
   assert.equal(useMyComputerText("win32", { screen: true }).message, "Let your bots use this PC?");
   assert.deepEqual(useMyComputerText("linux", { screen: false }), {
     message: "Let your bots use this computer?",
-    detail: "Your bots on My Cloud can then read your Desktop, Documents and Downloads, while this computer is awake and OpenMausBot is open.",
+    detail: "Your bots on My Cloud can then read your Desktop, Documents and Downloads, while this computer is awake and MausClaw is open.",
     buttons: ["Use this computer", "Not now"],
   });
   assert.deepEqual(useMyComputerText("win32", { screen: true, locale: "de-DE" }).buttons, ["Meinen PC nutzen", "Jetzt nicht"]);
@@ -355,7 +355,7 @@ test("main's side: computer control's running state decides; the page asks only 
   handlers.get("cloud-lending:offer")({ page: "cloud" }, "<script>");
   await useMyComputer.again();
   assert.deepEqual(shown[1], [win, { screen: true, locale: "de" }], "a bot's link asks again, in the page's latest language; one that is no language changes nothing");
-  connection = { mode: "embedded", socketPath: "/tmp/cua.sock", mcpCommand: "/Applications/OpenMausBot.app/cua-driver", mcpArgs: ["mcp"], mcpEnv: {} };
+  connection = { mode: "embedded", socketPath: "/tmp/cua.sock", mcpCommand: "/Applications/MausClaw.app/cua-driver", mcpArgs: ["mcp"], mcpEnv: {} };
   await useMyComputer.again();
   assert.equal(lending.screen, true, "once computer control runs, apps and screen go on");
 });

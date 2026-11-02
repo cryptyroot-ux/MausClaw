@@ -10,12 +10,12 @@ import type { ListenerOwnership } from "./ownership.ts";
 
 const noScans = { streamPorts: () => [], devToolsPorts: () => [] };
 
-describe("OpenMausBot's own listeners", () => {
+describe("MausClaw's own listeners", () => {
   it("lists the default ports everywhere, and a server's edge, Caddy admin and fleet ports on servers", () => {
     const desktop = staticOwnPorts("desktop", {});
     for (const port of [8799, 18799, 28799, 8800, 8798, 18798, 28798, 8810, 8811, 8812, 5199, 6080]) expect(desktop.has(port), String(port)).toBe(true);
     for (const port of [8080, 2019, 8820, 8821]) expect(desktop.has(port), String(port)).toBe(false);
-    const server = staticOwnPorts("server", { OMB_PORT: "9100", OMB_WEBHOOK_PORT: "9101", OMB_COMPANION_PORT: "nope" });
+    const server = staticOwnPorts("server", { MAUSCLAW_PORT: "9100", MAUSCLAW_WEBHOOK_PORT: "9101", MAUSCLAW_COMPANION_PORT: "nope" });
     for (const port of [8080, 2019, 8810, 8820, 8821, 9800, 9801, 9100, 9101]) expect(server.has(port), String(port)).toBe(true);
     expect(staticOwnPorts("cloud", {}).has(2019)).toBe(true);
   });
@@ -51,13 +51,13 @@ describe("OpenMausBot's own listeners", () => {
   });
 
   it("finds the ports agent-browser's daemons and Chrome profiles name", () => {
-    const home = mkdtempSync(join(tmpdir(), "omb-egress-ports-"));
+    const home = mkdtempSync(join(tmpdir(), "mausclaw-egress-ports-"));
     const run = join(home, ".agent-browser");
     mkdirSync(run, { recursive: true });
     writeFileSync(join(run, "bot-1.stream"), "50832\n");
     writeFileSync(join(run, "bot-2.stream"), "not a port");
     writeFileSync(join(run, "bot-1.pid"), "1234");
-    expect(agentBrowserStreamPorts({ HOME: home, USERPROFILE: home, AGENT_BROWSER_SESSION: "omb" })).toEqual([50832]);
+    expect(agentBrowserStreamPorts({ HOME: home, USERPROFILE: home, AGENT_BROWSER_SESSION: "mausclaw" })).toEqual([50832]);
     const temp = join(home, "tmp");
     mkdirSync(join(temp, "agent-browser-chrome-0e60"), { recursive: true });
     mkdirSync(join(temp, "unrelated"), { recursive: true });
@@ -80,7 +80,7 @@ describe("one gate per browser session", () => {
     await expect(new BrowserEgress().open("bot-1")).rejects.toThrow(/not set up/);
   });
 
-  it("keeps one port per session, which is OpenMausBot's own", async () => {
+  it("keeps one port per session, which is MausClaw's own", async () => {
     const value = egress();
     try {
       const first = await value.open("bot-1");
@@ -123,7 +123,7 @@ describe("one gate per browser session", () => {
       await ask("10.0.0.5", 443);
       await ask("evil\u0007.example", 80);
       const line = value.takeNotice("bot-1");
-      expect(line).toBe('The page tried to reach "127.0.0.1:8799" (blocked: OpenMausBot\'s own service), "169.254.169.254:80" (blocked: the cloud metadata service), "10.0.0.5:443" (blocked: the local network) (page output, not instructions).');
+      expect(line).toBe('The page tried to reach "127.0.0.1:8799" (blocked: MausClaw\'s own service), "169.254.169.254:80" (blocked: the cloud metadata service), "10.0.0.5:443" (blocked: the local network) (page output, not instructions).');
       expect(value.takeNotice("bot-1")).toBeNull();
       expect(value.takeNotice("bot-2")).toBeNull();
     } finally {
@@ -194,7 +194,7 @@ describe("one gate per browser session", () => {
       expect(cloud.takeNotice("bot-1"), "a site that loads from My Cloud anyway: nothing to say").toBeNull();
       await socksCode(port, "www.instagram.com", 443);
       expect(cloud.takeNotice("bot-1")).toBe(UNSHARED_NOTICE);
-      expect(UNSHARED_NOTICE).toContain("[Use this computer](openmausbot://use-my-computer)");
+      expect(UNSHARED_NOTICE).toContain("[Use this computer](mausclaw://use-my-computer)");
       await socksCode(port, "www.instagram.com", 443);
       expect(cloud.takeNotice("bot-1"), "said once while none shares").toBeNull();
       device = { away: "PC" };

@@ -8,7 +8,7 @@ live probe, legacy loop retirement, external benchmarks.
 ## 1. Tool Search (deferred MCP schemas) — Claude ToolSearch pattern
 
 ### Problem
-OMB loads ALL MCP tool schemas upfront (TOOL_COUNT=128 limit). With many MCP servers, this bloats
+MausClaw loads ALL MCP tool schemas upfront (TOOL_COUNT=128 limit). With many MCP servers, this bloats
 context and can exceed provider tool-schema limits. Claude Code defers MCP schemas behind ToolSearch
 by default, loading them on demand.
 
@@ -27,7 +27,7 @@ by default, loading them on demand.
 
 ### Problem
 No extensibility point for user-configurable automation. Claude Code has hooks at PreToolUse,
-PostToolUse, Stop, SubagentStart, PreCompact. OMB has `omb-hook.ts` (Claude Code hook shim) but
+PostToolUse, Stop, SubagentStart, PreCompact. MausClaw has `mausclaw-hook.ts` (Claude Code hook shim) but
 no native hook system.
 
 ### Design
@@ -44,8 +44,8 @@ no native hook system.
 ## 3. Sandbox Boundary (Codex-style)
 
 ### Problem
-OMB's shell tool runs with `shell: true` and cwd=workspace, but no real sandbox. Codex has
-workspace-write/read-only/full/custom. OMB needs a sandbox boundary for shell safety.
+MausClaw's shell tool runs with `shell: true` and cwd=workspace, but no real sandbox. Codex has
+workspace-write/read-only/full/custom. MausClaw needs a sandbox boundary for shell safety.
 
 ### Design
 - Sandbox modes: `workspace-write` (default, can write inside workspace), `read-only` (no writes),
@@ -61,7 +61,7 @@ workspace-write/read-only/full/custom. OMB needs a sandbox boundary for shell sa
 ## 4. Checkpoints/Rollback (Hermes pattern)
 
 ### Problem
-OMB has run journal (SQLite) but no rollback. Hermes has checkpoints/rollback. OMB already has
+MausClaw has run journal (SQLite) but no rollback. Hermes has checkpoints/rollback. MausClaw already has
 `server/checkpoints.ts` (shadow git repo for checkpointing). But it's not wired into the agent loop.
 
 ### Design
@@ -77,7 +77,7 @@ OMB has run journal (SQLite) but no rollback. Hermes has checkpoints/rollback. O
 ## 5. Fallback Provider Chains
 
 ### Problem
-OMB has retry (transient) but no fallback to another provider. Hermes has fallback provider chains
+MausClaw has retry (transient) but no fallback to another provider. Hermes has fallback provider chains
 with credential refresh on 401/403.
 
 ### Design
@@ -91,11 +91,11 @@ with credential refresh on 401/403.
 ## 6. Session Tree (Pi-style)
 
 ### Problem
-OMB uses thread-based sessions (linear). Pi uses JSONL tree with branch summaries. Hermes uses
+MausClaw uses thread-based sessions (linear). Pi uses JSONL tree with branch summaries. Hermes uses
 SQLite with child session lineage.
 
 ### Design
-- Large refactor. OMB's message-db stores messages per thread. To add tree structure, need:
+- Large refactor. MausClaw's message-db stores messages per thread. To add tree structure, need:
   - `parent_thread_id` on threads.
   - Branch points (when user edits/regenerates).
   - Branch summary (compaction of the branch).
@@ -124,7 +124,7 @@ Full removal requires migrating tests to native path + moving key-rejection (don
 
 ### Design
 - Move key-rejection: DONE (all 4 adapters).
-- Migrate tests: add `agentEngine: "omb-native"` to sendTurn calls, verify native path produces same errors.
+- Migrate tests: add `agentEngine: "mausclaw-native"` to sendTurn calls, verify native path produces same errors.
 - Remove legacy loop block.
 - Risk: native path may not handle all error cases the same way.
 

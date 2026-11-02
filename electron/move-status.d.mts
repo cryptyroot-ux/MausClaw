@@ -5,7 +5,7 @@ export type MovePhase = "none" | "copy" | "wait" | "freeze" | "final" | "check" 
  * What holds the move now. Before any move starts (phase `none`, or `back` from an earlier one): `signed_out` (no MausBot
  * Cloud sign-in), `not_verified` (signed in, but the Admin's word on it isn't current: unreachable, expired or ended),
  * `team_only` (no Cloud of its own, only a team's), `no_cloud` (no Cloud of its own), `cloud_ended` (its Cloud ended and is
- * held until it is deleted), `moves_off` (the Admin doesn't let this account move: OMB_CLOUD_MOVES), `cloud_not_ready`
+ * held until it is deleted), `moves_off` (the Admin doesn't let this account move: MAUSCLAW_CLOUD_MOVES), `cloud_not_ready`
  * (setting up, stopped or failed: `cloudState` says which), `keep_here` ("Keep this computer's bots on this computer" is on),
  * `other_account` (this computer's move began for another account than the one signed in now), `frozen_without_move` (this
  * computer's server is frozen with no move under way, and is never lifted blindly), `local_unavailable` (this computer's

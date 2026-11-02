@@ -35,7 +35,7 @@ function row(overrides: Partial<UsageRow> = {}): Omit<UsageRow, "at"> & { at?: s
 
 describe("usage ledger files", () => {
   let dataDir: string;
-  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "omb-usage-")); });
+  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "mausclaw-usage-")); });
   afterEach(async () => { await removeTempDir(dataDir); });
 
   it("appends one private row per turn into the month's file and reads it back in order", async () => {

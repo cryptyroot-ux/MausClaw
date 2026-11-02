@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 import { activeLocale } from "./i18n";
 import { isMacPlatform } from "./keyboard-shortcuts";
 
-export const SEND_KEY_KEY = "omb-send-key";
+export const SEND_KEY_KEY = "mausclaw-send-key";
 
 /** The Enter-adds-a-line modes are for input methods that confirm a conversion with Enter (Japanese). */
 export const SEND_KEYS = ["enter", "shift-enter", "mod-enter"] as const;

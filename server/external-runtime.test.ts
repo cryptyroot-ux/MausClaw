@@ -16,7 +16,7 @@ const save = (value: unknown) => writeFileSync(file, JSON.stringify(value), { mo
 const authorize = (token = TOKEN) => authorizeExternalRuntime(file, `Bearer ${token}`, lookup);
 
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "omb-runtime-auth-"));
+  directory = mkdtempSync(join(tmpdir(), "mausclaw-runtime-auth-"));
   file = join(directory, "external-runtimes.json");
   bot = { id: "gateway", threadId: "original", hidden: false, tasks: [task("original")] };
   save({ gateway: registration() });

@@ -4,7 +4,7 @@ import { createServer, type Server } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { SessionRegistry } from "./sessions.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
@@ -40,7 +40,7 @@ const bot = async (name: string) => {
 };
 const mint = async (botId: string, threadId: string, kind = "connectors") => {
   const response = await fetch(fixture.info.url + "/api/testing/internal-capability", {
-    method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": key },
+    method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": key },
     body: JSON.stringify({ botId, threadId, kind }),
   });
   expect(response.status).toBe(201);
@@ -115,7 +115,7 @@ beforeAll(async () => {
   child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { ...verificationServerEnvironment({}, fixture.info.dataDir, Number(new URL(fixture.info.url).port)),
-      OMB_TEST_INTERNAL_CAPABILITY_KEY: key, OMB_COMPOSIO_API: brokerOrigin + "/api", OMB_COMPOSIO_TOOLKITS_API: brokerOrigin + "/api" },
+      MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: key, MAUSCLAW_COMPOSIO_API: brokerOrigin + "/api", MAUSCLAW_COMPOSIO_TOOLKITS_API: brokerOrigin + "/api" },
     stdio: ["ignore", log, log],
   });
   closeSync(log);

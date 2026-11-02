@@ -11,8 +11,8 @@ Native mid-turn steering EXISTS; no child kill or restart is needed.
   `/opt/homebrew/bin/codex.opencodex-real` -> `/opt/homebrew/Caskroom/codex/0.154.0/bin/codex`
   (native Rust build, Homebrew cask; not the npm package).
 - Live stdio probe of `codex.opencodex-real app-server` (transcript:
-  /private/tmp/omb-steer-probe2.log on this machine): server identifies as
-  `omb-probe/0.154.0`. `turn/steer`, `turn/interrupt`, and `thread/queue/add`
+  /private/tmp/mausclaw-steer-probe2.log on this machine): server identifies as
+  `mausclaw-probe/0.154.0`. `turn/steer`, `turn/interrupt`, and `thread/queue/add`
   all exist as JSON-RPC methods (empty params -> error `-32600` "Invalid
   request: missing field `threadId`"; an unknown method would return `-32601`).
   With a well-formed threadId, `turn/steer` dispatches without param errors.
@@ -30,7 +30,7 @@ Native mid-turn steering EXISTS; no child kill or restart is needed.
 - Semantics: steering redirects the RUNNING turn. Codex aborts the in-flight
   model stream at a safe boundary (turn-level abort via protocol) and continues
   the same turn/session with the new input folded in. The app-server child and
-  the native thread stay alive; nothing is SIGTERMed or restarted. The OpenMausBot
+  the native thread stay alive; nothing is SIGTERMed or restarted. The MausClaw
   codex driver already runs one app-server per turn, so `turn/steer` rides the
   live request instance that owns the running turn.
 

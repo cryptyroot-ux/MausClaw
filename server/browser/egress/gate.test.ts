@@ -14,7 +14,7 @@ import { ownAddresses, refusalFor, type EgressRules, type Refusal } from "./poli
 const OWN_PUBLIC_IPV4 = "198.51.100.7";
 const interfaces = (): NodeJS.Dict<NetworkInterfaceInfo[]> => ({
   ...NodeOS.networkInterfaces(),
-  "omb-test": [{ address: OWN_PUBLIC_IPV4, netmask: "255.255.255.0", family: "IPv4", mac: "00:00:00:00:00:00", internal: false, cidr: `${OWN_PUBLIC_IPV4}/24` }],
+  "mausclaw-test": [{ address: OWN_PUBLIC_IPV4, netmask: "255.255.255.0", family: "IPv4", mac: "00:00:00:00:00:00", internal: false, cidr: `${OWN_PUBLIC_IPV4}/24` }],
 });
 
 const serverRules: EgressRules = { host: "server", ownPort: () => false, botPort: async () => false, localNetwork: false, allowed: () => false };
@@ -314,7 +314,7 @@ describe("egress gate with the person's own computer as the way out", () => {
       expect(code).toBe(2);
     }
     expect(way.asked, "nothing private is ever asked of the person's computer").toEqual([]);
-    expect(refusals.map(([, reason]) => reason)).toEqual(["omb", "omb", "local-network", "metadata", "local-network", "local-network", "this-computer"]);
+    expect(refusals.map(([, reason]) => reason)).toEqual(["mausclaw", "mausclaw", "local-network", "metadata", "local-network", "local-network", "this-computer"]);
   });
 
   it("refuses Reddit before anything else, and never asks the person's computer for it", async () => {

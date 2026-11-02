@@ -1,4 +1,4 @@
-// The full server as a Cloud home over its real HTTP boundary, still sent the OMB_HOSTED_* settings an Admin from before
+// The full server as a Cloud home over its real HTTP boundary, still sent the MAUSCLAW_HOSTED_* settings an Admin from before
 // Cloud Pro dropped included AI. Disposable home; no network; a synthetic Claude CLI.
 import { randomBytes } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -13,25 +13,25 @@ import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0123456789ab.fly.dev";
+const HOST = "mausclaw-t-0123456789ab.fly.dev";
 const secret = randomBytes(32).toString("base64url");
-const token = `omb_cloudai_${randomBytes(32).toString("base64url")}`;
+const token = `mausclaw_cloudai_${randomBytes(32).toString("base64url")}`;
 const gateway = {
-  OMB_HOSTED_MODEL_URL: "https://cloud.example.test/api/cloud/gateway/g0123456789abcdef0123456789abcd",
-  OMB_HOSTED_MODEL_TOKEN: token,
-  OMB_HOSTED_MODELS: JSON.stringify({ anthropic: [], openai: ["gpt-fixture"], openrouter: ["anthropic/claude-fixture"] }),
+  MAUSCLAW_HOSTED_MODEL_URL: "https://cloud.example.test/api/cloud/gateway/g0123456789abcdef0123456789abcd",
+  MAUSCLAW_HOSTED_MODEL_TOKEN: token,
+  MAUSCLAW_HOSTED_MODELS: JSON.stringify({ anthropic: [], openai: ["gpt-fixture"], openrouter: ["anthropic/claude-fixture"] }),
 };
 // Cloud Pro's included Boat computers, voice and decisions.
 const included = {
-  OMB_CLOUD_BOAT_URL: "https://cloud.example.test/api/cloud/services/boat/api/box/v1",
-  OMB_CLOUD_BOAT_TOKEN: `box_omb_${randomBytes(24).toString("base64url")}`,
-  OMB_CLOUD_VOICE_URL: "https://cloud.example.test/api/cloud/services/voice/v1",
-  OMB_CLOUD_VOICE_TOKEN: `omb_voice_${randomBytes(24).toString("base64url")}`,
-  OMB_TTS_DEFAULT_VOICE: "preset0voice0id",
-  OMB_CLOUD_DECIDER_URL: "https://cloud.example.test/api/cloud/services/decider",
-  OMB_CLOUD_DECIDER_TOKEN: `omb_decide_${randomBytes(32).toString("base64url")}`,
+  MAUSCLAW_CLOUD_BOAT_URL: "https://cloud.example.test/api/cloud/services/boat/api/box/v1",
+  MAUSCLAW_CLOUD_BOAT_TOKEN: `box_mausclaw_${randomBytes(24).toString("base64url")}`,
+  MAUSCLAW_CLOUD_VOICE_URL: "https://cloud.example.test/api/cloud/services/voice/v1",
+  MAUSCLAW_CLOUD_VOICE_TOKEN: `mausclaw_voice_${randomBytes(24).toString("base64url")}`,
+  MAUSCLAW_TTS_DEFAULT_VOICE: "preset0voice0id",
+  MAUSCLAW_CLOUD_DECIDER_URL: "https://cloud.example.test/api/cloud/services/decider",
+  MAUSCLAW_CLOUD_DECIDER_TOKEN: `mausclaw_decide_${randomBytes(32).toString("base64url")}`,
 };
-const includedTokens = [included.OMB_CLOUD_BOAT_TOKEN, included.OMB_CLOUD_VOICE_TOKEN, included.OMB_CLOUD_DECIDER_TOKEN];
+const includedTokens = [included.MAUSCLAW_CLOUD_BOAT_TOKEN, included.MAUSCLAW_CLOUD_VOICE_TOKEN, included.MAUSCLAW_CLOUD_DECIDER_TOKEN];
 let home: string;
 let base: string;
 let child: ChildProcess;
@@ -59,8 +59,8 @@ async function api(method: string, path: string, options: { body?: unknown; remo
 }
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-cloud-home-server-"));
-  const dataDir = join(home, ".openmausbot");
+  home = mkdtempSync(join(tmpdir(), "mausclaw-cloud-home-server-"));
+  const dataDir = join(home, ".mausclaw");
   mkdirSync(dataDir, { recursive: true });
   // A signed-in Claude Code whose turns record the environment they were given.
   // While the hang marker exists, a new turn records itself elsewhere and
@@ -91,10 +91,10 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
   mkdirSync(join(dataDir, ".backups"));
   writeFileSync(join(dataDir, ".backups", "last-restore.json"), JSON.stringify({ restored: true, id: "7c9e6679-7425-40de-944b-e07fc1f90ae7" }));
   mkdirSync(join(dataDir, "workspaces", "moved"), { recursive: true });
-  writeFileSync(join(dataDir, "workspaces", "moved", "MEMORY.md"), "The register is C:\\Users\\Ada\\.openmausbot\\files\\register.xlsx.\n");
+  writeFileSync(join(dataDir, "workspaces", "moved", "MEMORY.md"), "The register is C:\\Users\\Ada\\.mausclaw\\files\\register.xlsx.\n");
   // The web UI's pages (a stand-in for the built app).
   mkdirSync(join(home, "web"));
-  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>OpenMausBot</title>");
+  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>MausClaw</title>");
   const port = await freePortBlock([0, 1]);
   base = `http://127.0.0.1:${port}`;
   const offlinePrelude = `data:text/javascript,${encodeURIComponent('globalThis.fetch = async () => new Response("offline fixture", { status: 503 });')}`;
@@ -104,9 +104,9 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
       PATH: process.env.PATH,
       ...(process.env.PATHEXT ? { PATHEXT: process.env.PATHEXT } : {}),
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-      HOME: home, USERPROFILE: home, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: join(home, "web"),
-      OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`,
+      HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: join(home, "web"),
+      MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`,
       ...gateway,
       ...included,
     },
@@ -129,11 +129,11 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
 }, 30_000);
 
 async function ownerPairing(): Promise<string> {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const granted = await api("POST", "/api/cloud/pairing", { remote: true, headers: {
-    "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-    "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+    "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body: JSON.parse(body) });
   return (await api("POST", "/api/auth/pair", { remote: true, body: { code: granted.body.code } })).body.token as string;
 }
@@ -144,7 +144,7 @@ afterAll(async () => {
 });
 
 it("boots with a gateway's settings, says once that it ignores them, and never logs them", () => {
-  expect(log.match(/cloud home: ignoring OMB_HOSTED_MODEL_URL, OMB_HOSTED_MODEL_TOKEN, OMB_HOSTED_MODELS: Cloud Pro includes no AI/g)).toHaveLength(1);
+  expect(log.match(/cloud home: ignoring MAUSCLAW_HOSTED_MODEL_URL, MAUSCLAW_HOSTED_MODEL_TOKEN, MAUSCLAW_HOSTED_MODELS: Cloud Pro includes no AI/g)).toHaveLength(1);
   expect(log).not.toContain(token);
   expect(log).not.toContain(secret);
   for (const includedToken of includedTokens) expect(log).not.toContain(includedToken);
@@ -152,7 +152,7 @@ it("boots with a gateway's settings, says once that it ignores them, and never l
 
 // Cloud homes are Linux; on Windows the data folder is itself a drive path.
 it.skipIf(process.platform === "win32")("rewrites the data folder of the computer it was moved from before anything reads it", () => {
-  const dataDir = join(home, ".openmausbot");
+  const dataDir = join(home, ".mausclaw");
   expect(readFileSync(join(dataDir, "workspaces", "moved", "MEMORY.md"), "utf8")).toBe(`The register is ${dataDir}/files/register.xlsx.\n`);
   expect(JSON.parse(readFileSync(join(dataDir, ".backups", "last-restore.json"), "utf8")).pathsRewritten).toBe(true);
 });
@@ -163,7 +163,7 @@ it("offers the included computers, voice and decisions with no key, and never sh
   expect(status.body.box).toEqual({ configured: true, included: true });
   expect(status.body.tts).toMatchObject({ configured: true, ready: true, provider: "elevenlabs", voice: "preset0voice0id", included: true });
   expect(status.body.decider).toEqual({ provider: "jev", configured: true, included: true, enabled: true, jobs: { roomRouting: true } });
-  const saved = readFileSync(join(home, ".openmausbot", "config.json"), "utf8");
+  const saved = readFileSync(join(home, ".mausclaw", "config.json"), "utf8");
   for (const includedToken of includedTokens) {
     expect(JSON.stringify(status.body)).not.toContain(includedToken);
     expect(saved).not.toContain(includedToken);
@@ -171,11 +171,11 @@ it("offers the included computers, voice and decisions with no key, and never sh
 });
 
 it("pairs the app on a signed request and tells it its first run is the engine sign-in; no gateway models are served", async () => {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const granted = await api("POST", "/api/cloud/pairing", { remote: true, headers: {
-    "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-    "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+    "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body: JSON.parse(body) });
   expect(granted.status, JSON.stringify(granted.body)).toBe(200);
   const paired = await api("POST", "/api/auth/pair", { remote: true, body: { code: granted.body.code } });
@@ -195,11 +195,11 @@ async function mintBrowserSignIn(owner = "ada@example.test"): Promise<string> {
   const body = JSON.stringify({ label: "Web browser (Cloud page)", ttlSeconds: 120, purpose: "browser", owner });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const granted = await api("POST", "/api/cloud/pairing", { remote: true, headers: {
-    "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-    "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+    "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body: JSON.parse(body) });
   expect(granted.status, JSON.stringify(granted.body)).toBe(200);
-  expect(granted.body).toMatchObject({ purpose: "browser", credential: expect.stringMatching(/^omb_pair_/) });
+  expect(granted.body).toMatchObject({ purpose: "browser", credential: expect.stringMatching(/^mausclaw_pair_/) });
   expect(granted.body).not.toHaveProperty("code");
   return granted.body.credential as string;
 }
@@ -287,8 +287,8 @@ console.log("dump-env 1.0.0");
   expect(probe.body, JSON.stringify(probe.body)).toMatchObject({ ok: true, version: "dump-env 1.0.0" });
   const env = JSON.parse(readFileSync(dump, "utf8"));
   // Proves the dump is the server's environment, not an empty one.
-  expect(env.OMB_TTS_DEFAULT_VOICE).toBe(included.OMB_TTS_DEFAULT_VOICE);
-  for (const key of ["OMB_CLOUD_BOAT_TOKEN", "OMB_CLOUD_VOICE_TOKEN", "OMB_CLOUD_DECIDER_TOKEN", "OMB_CLOUD_BOOTSTRAP_SECRET"]) expect(env).not.toHaveProperty(key);
+  expect(env.MAUSCLAW_TTS_DEFAULT_VOICE).toBe(included.MAUSCLAW_TTS_DEFAULT_VOICE);
+  for (const key of ["MAUSCLAW_CLOUD_BOAT_TOKEN", "MAUSCLAW_CLOUD_VOICE_TOKEN", "MAUSCLAW_CLOUD_DECIDER_TOKEN", "MAUSCLAW_CLOUD_BOOTSTRAP_SECRET"]) expect(env).not.toHaveProperty(key);
   for (const value of [...includedTokens, secret]) expect(JSON.stringify(env)).not.toContain(value);
 });
 
@@ -327,7 +327,7 @@ it("never hands a gateway's settings or the signing secret to an engine", async 
   await expect.poll(() => existsSync(dump), { timeout: 15_000 }).toBe(true);
   const { env } = JSON.parse(readFileSync(dump, "utf8"));
   expect(env.HOME).toBe(home);
-  for (const key of [...CLOUD_IGNORED_KEYS, "OMB_CLOUD_BOOTSTRAP_SECRET", "OMB_CLOUD_BOAT_TOKEN", "OMB_CLOUD_VOICE_TOKEN", "OMB_CLOUD_DECIDER_TOKEN"]) expect(env).not.toHaveProperty(key);
+  for (const key of [...CLOUD_IGNORED_KEYS, "MAUSCLAW_CLOUD_BOOTSTRAP_SECRET", "MAUSCLAW_CLOUD_BOAT_TOKEN", "MAUSCLAW_CLOUD_VOICE_TOKEN", "MAUSCLAW_CLOUD_DECIDER_TOKEN"]) expect(env).not.toHaveProperty(key);
   expect(JSON.stringify(env)).not.toContain(token);
   expect(JSON.stringify(env)).not.toContain(secret);
   for (const includedToken of includedTokens) expect(JSON.stringify(env)).not.toContain(includedToken);
@@ -337,7 +337,7 @@ it("records when a bot's turn first finished here, once, in the Cloud's own sett
   const first = async () => (await api("GET", "/api/config")).body.onboarding?.firstTurnAt as string | undefined;
   await expect.poll(first, { timeout: 15_000 }).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   const recorded = await first();
-  expect(JSON.parse(readFileSync(join(home, ".openmausbot", "config.json"), "utf8")).onboarding.firstTurnAt).toBe(recorded);
+  expect(JSON.parse(readFileSync(join(home, ".mausclaw", "config.json"), "utf8")).onboarding.firstTurnAt).toBe(recorded);
   const created = await api("POST", "/api/bots", { body: {
     name: "Second fixture", modelSelection: { instanceId: "claude", model: "claude-sonnet-5" }, requireAvailableModel: true,
   } });
@@ -371,12 +371,12 @@ it("offers its bots the browser and cloud computers only, and tells them they ca
     expect(systemPrompt).toContain("check list_shared_computers");
     expect(systemPrompt).not.toMatch(/Local VM is an isolated desktop|user's host|host desktop|select an available Local VM/);
     const agents = mcpConfig.mcpServers.agents;
-    expect(agents.env.OMB_CLOUD_HOME).toBe("1");
+    expect(agents.env.MAUSCLAW_CLOUD_HOME).toBe("1");
     const preview = (await api("GET", `/api/bots/${botId}/system-prompt`)).body.sections as Array<{ id: string; text: string }>;
     expect(preview.find((section) => section.id === "cloud-home")?.text).toBe(cloudHomePrompt(true));
     const select = (surface?: string) => fetch(`${base}/api/internal/computer/select`, {
       method: surface === undefined ? "GET" : "POST",
-      headers: { authorization: `Bearer ${agents.env.OMB_COMMS_TOKEN}`, ...(surface === undefined ? {} : { "content-type": "application/json" }) },
+      headers: { authorization: `Bearer ${agents.env.MAUSCLAW_COMMS_TOKEN}`, ...(surface === undefined ? {} : { "content-type": "application/json" }) },
       ...(surface === undefined ? {} : { body: JSON.stringify({ surface }) }),
     });
     const listed = await (await select()).json() as { canSelect: boolean; options: Array<{ surface: string }> };
@@ -431,8 +431,8 @@ it("tells the Admin's signed health read a failed turn's code, never its words, 
   }
   const read = async (key = secret) => {
     const target = "/api/cloud/health?after=0", timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
-    return api("GET", target, { remote: true, headers: { "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-      "x-omb-cloud-signature": `v1=${cloudRequestSignature(key, timestamp, nonce, "GET", target, "")}` } });
+    return api("GET", target, { remote: true, headers: { "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+      "x-mausclaw-cloud-signature": `v1=${cloudRequestSignature(key, timestamp, nonce, "GET", target, "")}` } });
   };
   await expect.poll(async () => (await read()).body.incidents?.some((incident: { botId: string }) => incident.botId === botId), { timeout: 15_000 }).toBe(true);
   const report = await read();

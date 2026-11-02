@@ -68,7 +68,7 @@ describe("which Chrome the bots' browser runs", () => {
   });
 
   it("on a Linux desktop without its own Google Chrome keeps the bundled shell, as a fixed choice", () => {
-    const linuxDesktop = (files: string[]) => host("linux", files, { env: { OMB_RESOURCES_PATH: "/opt/OpenMausBot/resources" } });
+    const linuxDesktop = (files: string[]) => host("linux", files, { env: { MAUSCLAW_RESOURCES_PATH: "/opt/MausClaw/resources" } });
     expect(resolveChromePlan(linuxDesktop(["/opt/google/chrome/chrome"]), managed)).toMatchObject({ kind: "chrome", chrome: { source: "installed" } });
     expect(resolveChromePlan(linuxDesktop([]), managed)).toEqual({ kind: "legacy", reason: "Google Chrome is not installed" });
     const policy = linuxDesktop(["/opt/google/chrome/chrome", "/etc/opt/chrome/policies/managed/corp.json"]);
@@ -85,20 +85,20 @@ describe("which Chrome the bots' browser runs", () => {
 
   it("wraps a Chrome named by the environment, as the Docker image names its Chrome for Testing", () => {
     const named = (env: NodeJS.ProcessEnv, files: string[]) => host("linux", files, { env });
-    expect(resolveChromePlan(named({ AGENT_BROWSER_EXECUTABLE_PATH: "/opt/openmausbot-browser/chrome" }, ["/opt/openmausbot-browser/chrome"]), null))
-      .toEqual({ kind: "chrome", chrome: { path: "/opt/openmausbot-browser/chrome", source: "named" }, fallback: null });
-    expect(resolveChromePlan(named({ OMB_CHROME_PATH: "/x/chrome", AGENT_BROWSER_EXECUTABLE_PATH: "/y/chrome" }, ["/x/chrome", "/y/chrome"]), null))
+    expect(resolveChromePlan(named({ AGENT_BROWSER_EXECUTABLE_PATH: "/opt/mausclaw-browser/chrome" }, ["/opt/mausclaw-browser/chrome"]), null))
+      .toEqual({ kind: "chrome", chrome: { path: "/opt/mausclaw-browser/chrome", source: "named" }, fallback: null });
+    expect(resolveChromePlan(named({ MAUSCLAW_CHROME_PATH: "/x/chrome", AGENT_BROWSER_EXECUTABLE_PATH: "/y/chrome" }, ["/x/chrome", "/y/chrome"]), null))
       .toMatchObject({ chrome: { path: "/x/chrome" } });
     expect(resolveChromePlan(named({ AGENT_BROWSER_EXECUTABLE_PATH: "/b/chrome-headless-shell-linux64/chrome-headless-shell" }, ["/b/chrome-headless-shell-linux64/chrome-headless-shell"]), managed))
       .toEqual({ kind: "legacy", reason: "the named browser is a headless shell" });
     expect(resolveChromePlan(named({ AGENT_BROWSER_EXECUTABLE_PATH: "/gone/chrome" }, []), managed)).toEqual({ kind: "legacy", reason: "/gone/chrome does not exist" });
   });
 
-  it("leaves the engine's own choice alone when agent-browser itself was named, and on OMB_BROWSER_LEGACY_SHELL=1", () => {
+  it("leaves the engine's own choice alone when agent-browser itself was named, and on MAUSCLAW_BROWSER_LEGACY_SHELL=1", () => {
     expect(resolveChromePlan(host("darwin", [MAC_CHROME]), { managed: false })).toMatchObject({ kind: "legacy" });
     expect(resolveChromePlan(host("darwin", [MAC_CHROME]), null)).toMatchObject({ kind: "legacy" });
-    expect(resolveChromePlan(host("darwin", [MAC_CHROME, "/x/chrome"], { env: { OMB_BROWSER_LEGACY_SHELL: "1", OMB_CHROME_PATH: "/x/chrome" } }), managed))
-      .toEqual({ kind: "legacy", reason: "OMB_BROWSER_LEGACY_SHELL=1" });
+    expect(resolveChromePlan(host("darwin", [MAC_CHROME, "/x/chrome"], { env: { MAUSCLAW_BROWSER_LEGACY_SHELL: "1", MAUSCLAW_CHROME_PATH: "/x/chrome" } }), managed))
+      .toEqual({ kind: "legacy", reason: "MAUSCLAW_BROWSER_LEGACY_SHELL=1" });
   });
 
   it("downloads only for a platform with a SHA-256 pin, and keeps the bundled shell where none is pinned yet", () => {
@@ -112,7 +112,7 @@ describe("which Chrome the bots' browser runs", () => {
     expect(isHeadlessShell("/r/browser-engine/chrome/chrome-headless-shell-mac-arm64/chrome-headless-shell")).toBe(true);
     expect(isHeadlessShell("C:\\r\\chrome-headless-shell-win64\\chrome-headless-shell.exe")).toBe(true);
     expect(isHeadlessShell(MAC_CHROME)).toBe(false);
-    expect(isHeadlessShell("/opt/openmausbot-browser/chrome")).toBe(false);
+    expect(isHeadlessShell("/opt/mausclaw-browser/chrome")).toBe(false);
   });
 
   it("asks LaunchServices and the registry once per host, since each answer costs a process", () => {

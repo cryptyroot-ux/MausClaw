@@ -17,7 +17,7 @@ const COMPUTER = "MacBook Air";
 let fx: CloudSendFixture;
 
 beforeAll(async () => {
-  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { OMB_ENVIRONMENT_LABEL: COMPUTER } });
+  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { MAUSCLAW_ENVIRONMENT_LABEL: COMPUTER } });
 }, hostTimeout(90_000));
 afterAll(async () => { await fx?.close(); });
 
@@ -25,7 +25,7 @@ type Side = CloudSendFixture["local"];
 type Row = { id: string; role: string; text?: string };
 type Run = { id: string; routineId: string; scheduledFor: number; createdAt: number; manual?: boolean; triggerSource?: string };
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const dataDir = (side: "desktop" | "cloud") => join(fx.root, side, ".openmausbot");
+const dataDir = (side: "desktop" | "cloud") => join(fx.root, side, ".mausclaw");
 const journal = () => (existsSync(fx.journalFile) ? JSON.parse(readFileSync(fx.journalFile, "utf8")) as { phase: string; frozenAt?: number; doneAt?: number; retryAt?: number; error?: string } | null : null);
 async function rows(side: Side, threadId: string): Promise<Row[]> {
   const out: Row[] = [];
@@ -188,7 +188,7 @@ it("when My Cloud ends, everything comes home: this computer at once, then My Cl
     if (asked === 1) return { starting: true };
     return { grant: { origin: fx.cloudBase, code: (await fx.grant("Bring My Cloud home")).code, expiresAt: Date.now() + 300_000 } };
   };
-  await fx.relaunch({ kill: false, cloud: { OMB_CLOUD_EXPORT_ONLY: "1" } });
+  await fx.relaunch({ kill: false, cloud: { MAUSCLAW_CLOUD_EXPORT_ONLY: "1" } });
   expect((await onCloud("POST", `/api/bots/${scout.id}/messages`, { text: "Anyone?", threadId: scout.threadId })).status, "a held Cloud runs nothing").toBe(409);
 
   await fx.oneHome.kick();

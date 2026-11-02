@@ -69,9 +69,9 @@ export const NOT_NOW = "Not now";
 
 const ENDED: ReadonlySet<string> = new Set(["completed", "failed", "cancelled"]);
 
-/** On unless OMB_QUOTA_SWITCH=0: the card is only an offer. */
+/** On unless MAUSCLAW_QUOTA_SWITCH=0: the card is only an offer. */
 export function quotaSwitchEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.OMB_QUOTA_SWITCH?.trim() !== "0";
+  return env.MAUSCLAW_QUOTA_SWITCH?.trim() !== "0";
 }
 
 const nameOf = (engine: QuotaSwitchEngine): string => engine.displayName || engine.driverKind;

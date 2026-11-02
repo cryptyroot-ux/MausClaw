@@ -122,7 +122,7 @@ describe("a row leaving the page", () => {
   afterEach(() => {
     if (original) proto.moveBefore = original;
     else delete proto.moveBefore;
-    document.getElementById("omb-app-frames-leaving")?.remove();
+    document.getElementById("mausclaw-app-frames-leaving")?.remove();
   });
 
   function initialized() {
@@ -152,7 +152,7 @@ describe("a row leaving the page", () => {
     const iframe = host.iframe;
     const width = iframe.style.width;
     host.retire();
-    const place = document.getElementById("omb-app-frames-leaving")!;
+    const place = document.getElementById("mausclaw-app-frames-leaving")!;
     expect(moves).toEqual([{ place, node: iframe }]);
     expect(iframe.style.width).not.toBe(width);
     expect(place.getAttribute("aria-hidden")).toBe("true");
@@ -190,7 +190,7 @@ describe("a row leaving the page", () => {
     host.retire();
     expect(teardownRequest()).toBeTruthy();
     expect(host.iframe.isConnected).toBe(false);
-    expect(document.getElementById("omb-app-frames-leaving")).toBeNull();
+    expect(document.getElementById("mausclaw-app-frames-leaving")).toBeNull();
   });
 });
 

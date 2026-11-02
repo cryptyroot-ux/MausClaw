@@ -1,5 +1,5 @@
 // What the agents proxy puts on the wire for `tools/list` with the tool
-// bridge on (OMB_AGENTS_TOOL_BRIDGE=1, agents-bridge.ts), pinned byte for
+// bridge on (MAUSCLAW_AGENTS_TOOL_BRIDGE=1, agents-bridge.ts), pinned byte for
 // byte and measured, the way agents-catalog-wire.test.ts pins the whole
 // catalog. That file and its goldens are not this one's to change: with the
 // switch off the proxy serves them to the byte, which it keeps checking and
@@ -31,7 +31,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PROXY_SOURCE = join(HERE, "agents-proxy.ts");
 const GOLDENS = join(HERE, "agents-catalog-goldens");
 const UPDATE = process.env.UPDATE_AGENTS_CATALOG_GOLDENS === "1";
-const BRIDGE_ON = { OMB_AGENTS_TOOL_BRIDGE: "1" };
+const BRIDGE_ON = { MAUSCLAW_AGENTS_TOOL_BRIDGE: "1" };
 
 const flag = (on: boolean) => (on ? "1" : "0");
 
@@ -47,23 +47,23 @@ function profiles(): Record<string, Record<string, string>> {
           const name = [skills && "skills", shared && "shared", voice && "voice", !chief && "non-chief"]
             .filter(Boolean).join("+") || "default";
           all[name] = {
-            OMB_SKILL_AUTHORING_ENABLED: flag(skills),
-            OMB_SHARED_COMPUTERS_ENABLED: flag(shared),
-            OMB_VOICE_NOTES: flag(voice),
-            OMB_CHIEF_OF_STAFF: flag(chief),
+            MAUSCLAW_SKILL_AUTHORING_ENABLED: flag(skills),
+            MAUSCLAW_SHARED_COMPUTERS_ENABLED: flag(shared),
+            MAUSCLAW_VOICE_NOTES: flag(voice),
+            MAUSCLAW_CHIEF_OF_STAFF: flag(chief),
           };
         }
       }
     }
   }
   for (const name of ["skills+shared+voice", "skills+shared+voice+non-chief"]) {
-    all[`${name}+cloud-home`] = { ...all[name]!, OMB_CLOUD_HOME: "1" };
+    all[`${name}+cloud-home`] = { ...all[name]!, MAUSCLAW_CLOUD_HOME: "1" };
   }
-  all["skills+shared+voice+escalations"] = { ...all["skills+shared+voice"]!, OMB_ESCALATIONS: "1" };
-  all["skills+shared+voice+escalations+x"] = { ...all["skills+shared+voice+escalations"]!, OMB_X_RESEARCH: "1" };
-  all["skills+shared+voice+escalations+x+team"] = { ...all["skills+shared+voice+escalations+x"]!, OMB_TEAM_PEOPLE: "1" };
-  all["default+legacy-switches"] = { ...all.default!, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1" };
-  for (const name of ["default", "skills+shared+voice"]) all[`${name}+mausbot`] = { ...all[name]!, OMB_MAUSBOT: "1" };
+  all["skills+shared+voice+escalations"] = { ...all["skills+shared+voice"]!, MAUSCLAW_ESCALATIONS: "1" };
+  all["skills+shared+voice+escalations+x"] = { ...all["skills+shared+voice+escalations"]!, MAUSCLAW_X_RESEARCH: "1" };
+  all["skills+shared+voice+escalations+x+team"] = { ...all["skills+shared+voice+escalations+x"]!, MAUSCLAW_TEAM_PEOPLE: "1" };
+  all["default+legacy-switches"] = { ...all.default!, MAUSCLAW_ROOM_TURN: "1", MAUSCLAW_OWN_THREAD_CREATION: "1", MAUSCLAW_EXTERNAL_RUNTIME: "1" };
+  for (const name of ["default", "skills+shared+voice"]) all[`${name}+mausbot`] = { ...all[name]!, MAUSCLAW_MAUSBOT: "1" };
   return all;
 }
 
@@ -109,11 +109,11 @@ type RpcAnswer = { id: number; result?: { tools?: unknown[]; content?: Array<{ t
 /** One freshly spawned proxy's raw answer lines to `requests`, in the order
  * asked, read off its stdout as they arrive. */
 async function proxyLines(entry: string, env: Record<string, string>, requests: Array<{ method: string; params?: unknown }>): Promise<string[]> {
-  // A developer shell (or an OpenMausBot turn running this suite) can carry
-  // OMB_* switches of its own; the profile must be the only source.
-  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("OMB_")));
+  // A developer shell (or an MausClaw turn running this suite) can carry
+  // MAUSCLAW_* switches of its own; the profile must be the only source.
+  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("MAUSCLAW_")));
   const child = spawn(process.execPath, [entry], {
-    env: { ...inherited, OMB_HARNESS_URL: "http://127.0.0.1:9", OMB_BOT_ID: "bot-golden", OMB_THREAD_ID: "thread-golden", OMB_COMMS_TOKEN: "unused", OMB_TURN_DEPTH: "0", ...env },
+    env: { ...inherited, MAUSCLAW_HARNESS_URL: "http://127.0.0.1:9", MAUSCLAW_BOT_ID: "bot-golden", MAUSCLAW_THREAD_ID: "thread-golden", MAUSCLAW_COMMS_TOKEN: "unused", MAUSCLAW_TURN_DEPTH: "0", ...env },
     stdio: ["pipe", "pipe", "inherit"],
   });
   try {
@@ -167,7 +167,7 @@ type Tool = { name: string; description: string; inputSchema: Record<string, unk
 const toolsOf = (wire: string) => (JSON.parse(wire) as { tools: Tool[] }).tools;
 /** The turn's whole catalog as the proxy serializes it with the switch off;
  * agents-catalog-wire.test.ts proves these are the proxy's bytes. */
-const unbridgedWire = (name: string) => JSON.stringify({ tools: availableTools(catalogProfileFromEnv({ OMB_BOT_ID: "bot-golden", ...PROFILES[name]! })) });
+const unbridgedWire = (name: string) => JSON.stringify({ tools: availableTools(catalogProfileFromEnv({ MAUSCLAW_BOT_ID: "bot-golden", ...PROFILES[name]! })) });
 
 const goldenPath = join(GOLDENS, "bridged.tools-list.json");
 const manifestPath = join(GOLDENS, "bridged.profiles.json");
@@ -258,7 +258,7 @@ describe("agents proxy tools/list golden with the tool bridge on", () => {
       expect(namedHidden(wire), name).toEqual(twinNames.filter((tool) => !listed.has(tool)));
     }
     // So a bot that is not a Chief is not told the Chief-only tools exist.
-    const nonChief = Object.keys(PROFILES).filter((name) => PROFILES[name]!.OMB_CHIEF_OF_STAFF === "0");
+    const nonChief = Object.keys(PROFILES).filter((name) => PROFILES[name]!.MAUSCLAW_CHIEF_OF_STAFF === "0");
     expect(nonChief).toHaveLength(9);
     for (const name of nonChief) {
       for (const tool of CHIEF_ONLY_TOOLS) expect(wires[name], `${name}: ${tool}`).not.toContain(tool);
@@ -273,13 +273,13 @@ describe("agents proxy tools/list golden with the tool bridge on", () => {
     expect(base).toEqual(["tool_result_read", "list_room_targets", "coordinate_bots", "list_bots", "list_rooms", "select_computer", "attach_file", "publish_page", "post_to_room", "request_credential", "request_sign_in", "fill_login", "memory_update"]);
     for (const name of Object.keys(PROFILES)) {
       expect(hotOf(name).filter((tool) => tool !== "send_voice_note"), name).toEqual(base);
-      expect(hotOf(name).includes("send_voice_note"), name).toBe(PROFILES[name]!.OMB_VOICE_NOTES === "1");
+      expect(hotOf(name).includes("send_voice_note"), name).toBe(PROFILES[name]!.MAUSCLAW_VOICE_NOTES === "1");
     }
   });
 
   it("is what the catalog and the bridge compute in-process, so another front end lists the same tools", () => {
     for (const name of Object.keys(PROFILES)) {
-      const turn = catalogProfileFromEnv({ OMB_BOT_ID: "bot-golden", ...PROFILES[name]! });
+      const turn = catalogProfileFromEnv({ MAUSCLAW_BOT_ID: "bot-golden", ...PROFILES[name]! });
       const tools = createToolBridge(availableTools(turn) as BridgeTool[]).listed;
       expect(JSON.stringify({ tools }), name).toBe(wires[name]);
     }
@@ -304,7 +304,7 @@ describe("agents proxy tools/list golden with the tool bridge on", () => {
   it("serves the unbridged goldens unless the switch is exactly 1", async () => {
     const full = JSON.stringify(readJson(join(GOLDENS, "full.tools-list.json")));
     expect(unbridgedWire(FULL)).toBe(full);
-    const served = await Promise.all(["0", "", "true", "yes", "on"].map((value) => toolsListWire(PROXY_SOURCE, { ...PROFILES[FULL]!, OMB_AGENTS_TOOL_BRIDGE: value })));
+    const served = await Promise.all(["0", "", "true", "yes", "on"].map((value) => toolsListWire(PROXY_SOURCE, { ...PROFILES[FULL]!, MAUSCLAW_AGENTS_TOOL_BRIDGE: value })));
     for (const wire of [...served, await toolsListWire(PROXY_SOURCE, PROFILES[FULL]!)]) expect(wire).toBe(full);
   }, 60_000);
 });
@@ -319,7 +319,7 @@ describe("agents proxy with the tool bridge on, from the packaged bundle", () =>
     // The proxy runs as its own process in a packaged build, so the bridge
     // and the ranker it searches with have to be inlined into the one
     // agents-proxy.js that scripts/bundle-server.mjs's options produce.
-    directory = realpathSync(mkdtempSync(join(tmpdir(), "omb-agents-proxy-bridge-bundle-")));
+    directory = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-agents-proxy-bridge-bundle-")));
     await build({
       entryPoints: [PROXY_SOURCE],
       bundle: true,

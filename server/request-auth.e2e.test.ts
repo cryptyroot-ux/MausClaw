@@ -3,7 +3,7 @@
 import { request } from "node:http";
 import { describe, expect, it } from "vitest";
 
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import { BROWSER_SIGN_IN } from "./request-auth.ts";
 
 /** Headers set exactly as given: Chrome's Sec-Fetch-* and Origin, which a page cannot change. */
@@ -28,7 +28,7 @@ const navigation = { "sec-fetch-site": "none", "sec-fetch-mode": "navigate", "se
 
 describe("a browser on a self-hosted server's own machine", () => {
   it("is refused until it signs in once with a pairing code, while the CLI keeps working", async () => {
-    const fixture = await launchVerificationServer({ OMB_DEV_TRUST_LOCAL_BROWSER: "0" });
+    const fixture = await launchVerificationServer({ MAUSCLAW_DEV_TRUST_LOCAL_BROWSER: "0" });
     const url = fixture.info.url;
     try {
       for (const headers of [fromPage(url), otherPage, navigation]) {
@@ -43,7 +43,7 @@ describe("a browser on a self-hosted server's own machine", () => {
       });
       expect(socket.status).toBe(401);
       // Public routes still answer a stranger: the sign-in page needs them.
-      expect(await raw(url, "/api/health", fromPage(url)).then((answer) => JSON.parse(answer.body))).toEqual({ app: "openmausbot" });
+      expect(await raw(url, "/api/health", fromPage(url)).then((answer) => JSON.parse(answer.body))).toEqual({ app: "mausclaw" });
 
       // The CLI is Node's fetch, which sends Sec-Fetch-Mode alone.
       const cli = await fetch(`${url}/api/bots`);

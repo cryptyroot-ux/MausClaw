@@ -1,18 +1,18 @@
 // The person's journey with app events in a real browser against a real server (temporary home, scripted engine, the
 // connected-apps service's code behind a fake Composio): set one up from chat and from + New, see its sentence, its
 // events and what it skipped, pause, resume, reconnect and delete. Runs where a Chromium and playwright-core are named:
-//   OMB_UI_CHROMIUM=<chrome or headless shell> OMB_UI_PLAYWRIGHT_CORE=<playwright-core dir> OMB_UI_DIST=<vite build dir>
-//   [OMB_UI_SHOTS=<folder for screenshots>] vitest run server/app-events.ui.e2e.test.ts
+//   MAUSCLAW_UI_CHROMIUM=<chrome or headless shell> MAUSCLAW_UI_PLAYWRIGHT_CORE=<playwright-core dir> MAUSCLAW_UI_DIST=<vite build dir>
+//   [MAUSCLAW_UI_SHOTS=<folder for screenshots>] vitest run server/app-events.ui.e2e.test.ts
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { WELCOME_VERSION } from "../electron/onboarding-record.mjs";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { startBrokerFake, type BrokerFake } from "./testing/broker-fake.ts";
 
-const { OMB_UI_CHROMIUM: chromiumPath, OMB_UI_PLAYWRIGHT_CORE: playwrightPath, OMB_UI_DIST: dist } = process.env;
-const shots = process.env.OMB_UI_SHOTS ?? join(process.cwd(), "docs", "screenshots", "automations-app-events");
+const { MAUSCLAW_UI_CHROMIUM: chromiumPath, MAUSCLAW_UI_PLAYWRIGHT_CORE: playwrightPath, MAUSCLAW_UI_DIST: dist } = process.env;
+const shots = process.env.MAUSCLAW_UI_SHOTS ?? join(process.cwd(), "docs", "screenshots", "automations-app-events");
 const ready = Boolean(chromiumPath && playwrightPath && dist);
 
 let broker: BrokerFake;
@@ -29,7 +29,7 @@ beforeAll(async () => {
   owner = await broker.install();
   gmail = broker.account(owner.userId, "gmail", "sales");
   broker.account(owner.userId, "slack");
-  fixture = await launchVerificationServer({ ...process.env, OMB_COMPOSIO_BROKER_URL: broker.url, OMB_COMPOSIO_BROKER_TOKEN: owner.token },
+  fixture = await launchVerificationServer({ ...process.env, MAUSCLAW_COMPOSIO_BROKER_URL: broker.url, MAUSCLAW_COMPOSIO_BROKER_TOKEN: owner.token },
     undefined, undefined, undefined, undefined, { scripted: true }, [], undefined, dist);
   const { chromium } = createRequire(join(playwrightPath!, "package.json"))("playwright-core");
   // A mock keychain keeps the test browser from asking the person's macOS keychain for anything.
@@ -45,7 +45,7 @@ afterAll(async () => {
 });
 
 it.skipIf(!ready)("sets one up from chat and from + New, shows its sentence and events, pauses, resumes, asks to reconnect and deletes", async () => {
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const api = async (method: string, path: string, body?: unknown) => (await fetch(`${fixture.info.url}${path}`, {
     method, headers: { "content-type": "application/json", origin: fixture.info.url }, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   })).json() as Promise<any>;

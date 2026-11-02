@@ -72,7 +72,7 @@ Downtime is nobody's budget: every window restarts at boot. At open, before anyt
 |---|---|
 | `queued` | Dispatches normally. |
 | `running`, no children started since its turn began, nothing known outward | One rerun in place, `restarts` 1, the turn opens with a note to check what it already did. A rerun cut again ends `failed(interrupted)` and is reported. |
-| `running`, no children started since its turn began, the host says it already acted outward (sent, posted, pushed, paid) | No rerun: `failed(interrupted)` at once, `outcomeDetail` "Interrupted by an OpenMausBot restart after it already <what it did>; not resumed, so nothing is done twice.", event `restart_reconciled` "failed: outward action done". Reported like any failed turn (a root into its own conversation); a requester's restart note lists it as cut after an outward action. |
+| `running`, no children started since its turn began, the host says it already acted outward (sent, posted, pushed, paid) | No rerun: `failed(interrupted)` at once, `outcomeDetail` "Interrupted by an MausClaw restart after it already <what it did>; not resumed, so nothing is done twice.", event `restart_reconciled` "failed: outward action done". Reported like any failed turn (a root into its own conversation); a requester's restart note lists it as cut after an outward action. |
 | `running`, children started since its turn began | `waiting`; its resume says the turn was cut. Nothing of it runs again. The host is not asked what it did outward. |
 | `needs_input` | Stays parked; `park` is called again so the card is re-shown. |
 | `waiting`, `resume` | Unchanged; the resume goes ahead. |

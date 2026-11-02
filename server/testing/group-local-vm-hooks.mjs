@@ -1,7 +1,7 @@
 // Loaded only by group-local-vm.e2e.test.ts via --import. Replace the container
 // boundary, preserving the real server, lease code, MCP config and fake driver.
 import { registerHooks } from 'node:module';
-const state = process.env.OMB_TEST_VM_STATE;
+const state = process.env.MAUSCLAW_TEST_VM_STATE;
 if (!state) throw new Error('An explicit isolated VM state file is required');
 const actual = new URL('../container-computer.ts?actual', import.meta.url).href;
 const atomic = new URL('../atomic.ts', import.meta.url).href;
@@ -61,7 +61,7 @@ registerHooks({
         while (read().blocked || read().blockedTarget === target.key) await new Promise(r => setTimeout(r, 30));
         const missing = !(await containerComputerExists('podman', target));
         const stopped = read().stopped?.includes(target.key);
-        // An old desktop: made by OpenMausBot, on an image this release no longer runs (and maybe not yet rebuilt).
+        // An old desktop: made by MausClaw, on an image this release no longer runs (and maybe not yet rebuilt).
         const image = !read().imageMissing;
         const outdated = !missing && Boolean(read().outdated?.includes(target.key));
         const ready = !missing && !stopped && !outdated && image && !read().failed;

@@ -57,7 +57,7 @@ export const WOKE_BY_MS = 30_000;
 /** Each kind of request, as a fixed code, by its path: never more of the request than that. Anything else is a page. */
 const WAKE_CODES: readonly [RegExp, string][] = [
   [/^\/api\/events$/, "events"], [/^\/api\/sync(\/|$)/, "sync"], [/^\/api\/shared-computers(\/|$)/, "lending"],
-  [/^\/\.well-known\/openmausbot\/environment$/, "version"], [/^\/api\/phones(\/|$)/, "phone"], [/^\/api\/presence(\/|$)/, "presence"],
+  [/^\/\.well-known\/mausclaw\/environment$/, "version"], [/^\/api\/phones(\/|$)/, "phone"], [/^\/api\/presence(\/|$)/, "presence"],
   [/^\/api\/auth\/session$/, "session"], [/^\/(?:api\/)?(?:auth\/)?pair(?:ing)?(?:\/|$)/, "pair"], [/^\/api\/cloud\//, "admin"],
   [/^\/api\/health$/, "health"], [/^\/hooks(\/|$)/, "webhook"], [/^\/mcp-oauth\//, "sign-in"], [/^\/api\//, "api"],
 ];
@@ -68,8 +68,8 @@ export const wakeCode = (path: string) => WAKE_CODES.find(([pattern]) => pattern
 const BACKGROUND = [/^\/api\/events$/, /^\/api\/health$/, /^\/api\/sync(\/|$)/, /^\/api\/shared-computers(\/|$)/, /^\/api\/cloud\/power(\/|$)/];
 export const CLOUD_POWER_PATH = "/api/cloud/power";
 export const CLOUD_POWER_SLEEP_PATH = "/api/cloud/power/sleep";
-export const CLOUD_BACKGROUND_HEADER = "x-omb-background";
-export const CLOUD_POWER_HEADER = "x-omb-cloud-power";
+export const CLOUD_BACKGROUND_HEADER = "x-mausclaw-background";
+export const CLOUD_POWER_HEADER = "x-mausclaw-cloud-power";
 const MARKER = "cloud-sleep.json";
 /** Long-polls and streams that stay open by design: never "in flight" work. */
 const HELD = [/^\/api\/events$/, /^\/api\/sync\/changes$/, /^\/api\/shared-computers\/[\w-]+\/(?:poll|link)$/];

@@ -35,7 +35,7 @@ class MemoryStore implements RoutineRequestStore {
 }
 
 function harness(reset: number | null = NOW + 2 * HOUR) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-limit-requests-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-limit-requests-"));
   dirs.push(dir);
   const clock = new LimitResetClock({ accounts: () => [], now: () => NOW });
   if (reset !== null) clock.noteRefusal("claude", reset);

@@ -7,7 +7,7 @@ import { createMoveStatusReport, MOVE_STATUS_GAP_MS, MOVE_STATUS_HEARTBEAT_MS, M
 import { CHECK_PASSES, createOneHome, parseJournal, QUIET_MS } from "./one-home.mjs";
 import { installOneHome, oneHomeCloud } from "./one-home-main.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 const ACCOUNT = { id: "acct-1", email: "person@example.test" };
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
@@ -151,12 +151,12 @@ test("every phase's failure has its own code", async () => {
   const limited = new CloudSendError("session", "Too many connection links.", { cause: Object.assign(new Error("Cloud request failed."), { status: 429 }) });
   const cases = [
     { name: "an owner session refused for too many requests", moves: [limited], expect: { phase: "copy", code: "rate_limited" } },
-    { name: "this computer's server not answering the pass", moves: [new CloudSendError("local", "OpenMausBot on this computer did not answer. Try again in a moment.")], expect: { phase: "copy", code: "local" } },
+    { name: "this computer's server not answering the pass", moves: [new CloudSendError("local", "MausClaw on this computer did not answer. Try again in a moment.")], expect: { phase: "copy", code: "local" } },
     { name: "My Cloud answering nothing usable", moves: [new CloudSendError("unreachable", "My Cloud said: Bot \"Sales team\" can't be read")], expect: { phase: "copy", code: "unreachable", message: "My Cloud said: …" } },
     { name: "My Cloud refusing the final pass", moves: [undefined, new CloudSendError("refused", "My Cloud could not add the chats.")], expect: { phase: "final", code: "refused" } },
     { name: "something unforeseen", moves: [new Error("Cannot read properties of undefined (reading 'items')")], expect: { phase: "copy", code: "error" } },
     { name: "the check still missing things after three passes", checks: [false, false, false], expect: { phase: "check", code: "incomplete", message: "Some of this computer's things did not reach My Cloud." } },
-    { name: "this computer's server refusing to pause", freezeError: Object.assign(new Error("OpenMausBot on this computer could not pause."), { status: 500 }), expect: { phase: "freeze", code: "freeze" } },
+    { name: "this computer's server refusing to pause", freezeError: Object.assign(new Error("MausClaw on this computer could not pause."), { status: 500 }), expect: { phase: "freeze", code: "freeze" } },
     { name: "My Cloud refusing to switch an automation on", cloudAnswer: (method) => (method === "PATCH" ? reply(500, { error: "Routines are busy." }) : null), expect: { phase: "switch", code: "switch_refused", message: "Routines are busy." } },
   ];
   for (const { name, moves = [], checks = [], freezeError = null, cloudAnswer = null, expect } of cases) {
@@ -257,7 +257,7 @@ test("what leaves this computer is ids and fixed words: quotes, what My Cloud sa
   assert.equal(safeSentence("This computer's bots can't go yet."), "This computer's bots can't go yet.");
   assert.equal(safeSentence("ENOENT: no such file or directory, open /Users/jane/Documents/plans.md"), "ENOENT: no such file or directory, open …");
   assert.equal(safeSentence("EPERM C:\\Users\\jane\\AppData\\x.db"), "EPERM …");
-  assert.equal(safeSentence("Sent to jane@example.com via https://omb-t-1.fly.dev/api/x?token=1"), "Sent to … via …");
+  assert.equal(safeSentence("Sent to jane@example.com via https://mausclaw-t-1.fly.dev/api/x?token=1"), "Sent to … via …");
   assert.equal(safeSentence(`Bearer omc_${"A".repeat(43)} was refused`), "Bearer … was refused");
   assert.equal(safeSentence("conversation 3f0c2a9e-1b2c-4d5e-8f90-123456789abc is missing"), "conversation 3f0c2a9e-1b2c-4d5e-8f90-123456789abc is missing", "ids stay");
   assert.equal(safeSentence("line one\nline two\u0007"), "line one line two");

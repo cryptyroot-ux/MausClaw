@@ -35,8 +35,8 @@ describe("the display a headless bot browser reports", () => {
     expect(await displayScreen("desktop", { platform: "linux", env: {}, runCommand: never })).toEqual(SERVER_SCREEN);
   });
 
-  it("takes OMB_BROWSER_SCREEN over anything it would read", async () => {
+  it("takes MAUSCLAW_BROWSER_SCREEN over anything it would read", async () => {
     const never = async () => { throw new Error("should not run"); };
-    expect(await displayScreen("server", { platform: "linux", env: { OMB_BROWSER_SCREEN: "1280x800@2" }, runCommand: never })).toEqual({ width: 1280, height: 800, deviceScaleFactor: 2 });
+    expect(await displayScreen("server", { platform: "linux", env: { MAUSCLAW_BROWSER_SCREEN: "1280x800@2" }, runCommand: never })).toEqual({ width: 1280, height: 800, deviceScaleFactor: 2 });
   });
 });

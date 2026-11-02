@@ -59,13 +59,13 @@ describe("connector MCP bridge", () => {
       });
     });
     const lines = start({
-      OMB_HARNESS_URL: harness,
-      OMB_CONNECTOR_TOKEN: "bridge-secret",
+      MAUSCLAW_HARNESS_URL: harness,
+      MAUSCLAW_CONNECTOR_TOKEN: "bridge-secret",
       // A simultaneously mounted agents proxy may define this different
       // value in Codex's flattened child environment.
-      OMB_COMMS_TOKEN: "agents-secret",
-      OMB_BOT_ID: "bot-1",
-      OMB_THREAD_ID: "thread-1",
+      MAUSCLAW_COMMS_TOKEN: "agents-secret",
+      MAUSCLAW_BOT_ID: "bot-1",
+      MAUSCLAW_THREAD_ID: "thread-1",
     });
     child!.stdin.write(`${JSON.stringify({
       jsonrpc: "2.0",
@@ -93,10 +93,10 @@ describe("connector MCP bridge", () => {
       });
     });
     const lines = start({
-      OMB_HARNESS_URL: harness,
-      OMB_CONNECTOR_TOKEN: "bridge-secret",
-      OMB_BOT_ID: "bot-1",
-      OMB_THREAD_ID: "thread-1",
+      MAUSCLAW_HARNESS_URL: harness,
+      MAUSCLAW_CONNECTOR_TOKEN: "bridge-secret",
+      MAUSCLAW_BOT_ID: "bot-1",
+      MAUSCLAW_THREAD_ID: "thread-1",
     });
     child!.stdin.write(`${JSON.stringify({
       jsonrpc: "2.0",
@@ -140,7 +140,7 @@ describe("connector MCP bridge", () => {
         response.end("{}");
       });
     });
-    const lines = start({ OMB_HARNESS_URL: harness, OMB_CONNECTOR_TOKEN: "bridge-secret", OMB_BOT_ID: "bot-1", OMB_THREAD_ID: "thread-1" });
+    const lines = start({ MAUSCLAW_HARNESS_URL: harness, MAUSCLAW_CONNECTOR_TOKEN: "bridge-secret", MAUSCLAW_BOT_ID: "bot-1", MAUSCLAW_THREAD_ID: "thread-1" });
     const manage = async (id: number, args: Record<string, unknown>) => {
       child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method: "tools/call", params: { name: "COMPOSIO_MANAGE_CONNECTIONS", arguments: args } })}\n`);
       return nextJson(lines);
@@ -178,10 +178,10 @@ describe("connector MCP bridge", () => {
         }));
       });
     });
-    const lines = start({ OMB_HARNESS_URL: harness, OMB_CONNECTOR_TOKEN: "bridge-secret", OMB_BOT_ID: "bot-1", OMB_THREAD_ID: "thread-1" });
+    const lines = start({ MAUSCLAW_HARNESS_URL: harness, MAUSCLAW_CONNECTOR_TOKEN: "bridge-secret", MAUSCLAW_BOT_ID: "bot-1", MAUSCLAW_THREAD_ID: "thread-1" });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "COMPOSIO_MANAGE_CONNECTIONS", arguments: { toolkits: ["xero"] } } })}\n`);
     expect((await nextJson(lines)).result.content[0].text).toBe(
-      "OpenMausBot showed the user a secure connection card for xero. xero connects with the person's own Composio auth config "
+      "MausClaw showed the user a secure connection card for xero. xero connects with the person's own Composio auth config "
       + "ac_xero1234, the most recently created of their 2 enabled ones. End this turn now. The app will continue the task "
       + "automatically after the connection finishes.",
     );
@@ -197,7 +197,7 @@ describe("connector MCP bridge", () => {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ jsonrpc: "2.0", id: 5, result: { tools: [manage, { name: "COMPOSIO_SEARCH_TOOLS" }] } }));
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 5, method: "tools/list", params: {} })}\n`);
     const [listed, search] = (await nextJson(lines)).result.tools;
     expect(listed.inputSchema.required).toEqual(["toolkits"]);
@@ -221,7 +221,7 @@ describe("connector MCP bridge", () => {
       result: {
         protocolVersion: "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "openmausbot-connectors", version: "1" },
+        serverInfo: { name: "mausclaw-connectors", version: "1" },
       },
     });
     expect(reply.result).not.toHaveProperty("isError");
@@ -237,7 +237,7 @@ describe("connector MCP bridge", () => {
       // Deliberately never respond. The proxy must abort this request and
       // return its local capability result instead of hanging OpenCode.
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream });
     child!.stdin.write(`${JSON.stringify({
       jsonrpc: "2.0",
       id: 11,
@@ -279,13 +279,13 @@ describe("connector MCP bridge", () => {
       });
     });
     const lines = start({
-      OMB_CONNECTOR_UPSTREAM_URL: upstream,
-      OMB_CONNECTOR_UPSTREAM_HEADERS: JSON.stringify({ authorization: "Bearer upstream-secret" }),
+      MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream,
+      MAUSCLAW_CONNECTOR_UPSTREAM_HEADERS: JSON.stringify({ authorization: "Bearer upstream-secret" }),
     });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "initialize", params: { protocolVersion: "2024-11-05" } })}\n`);
     const reply = await nextJson(lines);
     expect(reply.result.protocolVersion).toBe("2024-11-05");
-    expect(reply.result.serverInfo).toEqual({ name: "openmausbot-connectors", version: "1" });
+    expect(reply.result.serverInfo).toEqual({ name: "mausclaw-connectors", version: "1" });
     expect(upstreamAuthorization).toBe("Bearer upstream-secret");
     expect(upstreamBody).toMatchObject({ method: "initialize" });
     expect(JSON.stringify(reply)).not.toContain("upstream-secret");
@@ -308,8 +308,8 @@ describe("connector MCP bridge", () => {
       }));
     });
     const lines = start({
-      OMB_CONNECTOR_UPSTREAM_URL: upstream,
-      OMB_CONNECTOR_UPSTREAM_HEADERS: JSON.stringify({ authorization: "Bearer upstream-secret" }),
+      MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream,
+      MAUSCLAW_CONNECTOR_UPSTREAM_HEADERS: JSON.stringify({ authorization: "Bearer upstream-secret" }),
     });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 4, method: "tools/list", params: {} })}\n`);
     const reply = await nextJson(lines);
@@ -329,12 +329,12 @@ describe("connector MCP bridge", () => {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ jsonrpc: "2.0", id: 4, result: { tools } }));
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream, [TOOL_SCHEMA_PROFILE_ENV]: "moonshot" });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream, [TOOL_SCHEMA_PROFILE_ENV]: "moonshot" });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 4, method: "tools/list", params: {} })}\n`);
     const [search, page] = (await nextJson(lines)).result.tools;
     expect(search).toEqual(tools[0]);
     expect(schemaBytes(page.inputSchema)).toBeLessThanOrEqual(12_000);
-    expect(page.description).toContain("OpenMausBot shortened this tool's parameters to fit Kimi's size limit");
+    expect(page.description).toContain("MausClaw shortened this tool's parameters to fit Kimi's size limit");
   });
 
   it("lists no more connected-app tools than its share of the model's tool limit", async () => {
@@ -343,7 +343,7 @@ describe("connector MCP bridge", () => {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ jsonrpc: "2.0", id: 4, result: { tools } }));
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream, [TOOL_LIMIT_ENV]: "2" });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream, [TOOL_LIMIT_ENV]: "2" });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 4, method: "tools/list", params: {} })}\n`);
     expect((await nextJson(lines)).result.tools).toEqual(tools.slice(0, 2));
   });
@@ -368,7 +368,7 @@ describe("connector MCP bridge", () => {
         response.end(JSON.stringify({ jsonrpc: "2.0", id, result: answers.shift() }));
       });
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream });
     const call = (id: number) => child!.stdin.write(`${JSON.stringify({
       jsonrpc: "2.0",
       id,
@@ -399,7 +399,7 @@ describe("connector MCP bridge", () => {
         response.end(JSON.stringify({ jsonrpc: "2.0", id: 41, result: { tools: [{ name: "COMPOSIO_MANAGE_CONNECTIONS" }] } }));
       });
     });
-    const lines = start({ OMB_CONNECTOR_UPSTREAM_URL: upstream, OMB_CONNECTOR_ALLOWED_TOOLS: "{}" });
+    const lines = start({ MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream, MAUSCLAW_CONNECTOR_ALLOWED_TOOLS: "{}" });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 41, method: "tools/list", params: {} })}\n`);
     const reply = await nextJson(lines);
     expect(listings).toBe(2);
@@ -439,8 +439,8 @@ describe("connector MCP bridge", () => {
       }));
     });
     const lines = start({
-      OMB_CONNECTOR_UPSTREAM_URL: upstream,
-      OMB_CONNECTOR_ALLOWED_TOOLS: JSON.stringify({ gmail: { tools: ["GMAIL_SEND_EMAIL"] } }),
+      MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream,
+      MAUSCLAW_CONNECTOR_ALLOWED_TOOLS: JSON.stringify({ gmail: { tools: ["GMAIL_SEND_EMAIL"] } }),
     });
     child!.stdin.write(JSON.stringify({ jsonrpc: "2.0", id: 21, method: "tools/list", params: {} }) + "\n");
     const reply = await nextJson(lines);
@@ -472,8 +472,8 @@ describe("connector MCP bridge", () => {
       response.end("data: " + JSON.stringify(frame) + "\n\n");
     });
     const lines = start({
-      OMB_CONNECTOR_UPSTREAM_URL: upstream,
-      OMB_CONNECTOR_ALLOWED_TOOLS: JSON.stringify({ notion: { tools: ["NOTION_CREATE_PAGE"] } }),
+      MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream,
+      MAUSCLAW_CONNECTOR_ALLOWED_TOOLS: JSON.stringify({ notion: { tools: ["NOTION_CREATE_PAGE"] } }),
     });
     child!.stdin.write(JSON.stringify({ jsonrpc: "2.0", id: 22, method: "tools/list", params: {} }) + "\n");
     const reply = await nextJson(lines);
@@ -496,8 +496,8 @@ describe("connector MCP bridge", () => {
         }));
       });
       const lines = start({
-        OMB_CONNECTOR_UPSTREAM_URL: upstream,
-        ...(allowlist === undefined ? {} : { OMB_CONNECTOR_ALLOWED_TOOLS: allowlist }),
+        MAUSCLAW_CONNECTOR_UPSTREAM_URL: upstream,
+        ...(allowlist === undefined ? {} : { MAUSCLAW_CONNECTOR_ALLOWED_TOOLS: allowlist }),
       });
       child!.stdin.write(JSON.stringify({ jsonrpc: "2.0", id: 23, method: "tools/list", params: {} }) + "\n");
       const reply = await nextJson(lines);

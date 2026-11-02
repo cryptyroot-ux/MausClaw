@@ -34,9 +34,9 @@ afterEach(async () => {
 });
 
 function service(env: Record<string, string> = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-signin-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-signin-"));
   dirs.push(dir);
-  const created = createHighLevelService({ dataDir: dir, env: { OMB_HIGHLEVEL_RELAY_URL: relay.url, OMB_HIGHLEVEL_API_URL: hl.url, ...env }, pollMs: 20 });
+  const created = createHighLevelService({ dataDir: dir, env: { MAUSCLAW_HIGHLEVEL_RELAY_URL: relay.url, MAUSCLAW_HIGHLEVEL_API_URL: hl.url, ...env }, pollMs: 20 });
   services.push(created);
   return created;
 }
@@ -52,14 +52,14 @@ const until = async <T>(read: () => T, want: (value: T) => boolean, ms = 3_000):
 };
 
 describe("relay URL", () => {
-  it("defaults to accounts.openmausbot.com, accepts https or loopback http, and reads off as unavailable", () => {
+  it("defaults to accounts.mausclaw.com, accepts https or loopback http, and reads off as unavailable", () => {
     expect(highlevelRelayUrl({})).toBe(HIGHLEVEL_RELAY_URL_DEFAULT);
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "" })).toBe(HIGHLEVEL_RELAY_URL_DEFAULT);
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "https://relay.example.test/" })).toBe("https://relay.example.test");
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:4321" })).toBe("http://127.0.0.1:4321");
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "http://relay.example.test" })).toBeNull();
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "off" })).toBeNull();
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "not a url" })).toBeNull();
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "" })).toBe(HIGHLEVEL_RELAY_URL_DEFAULT);
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "https://relay.example.test/" })).toBe("https://relay.example.test");
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:4321" })).toBe("http://127.0.0.1:4321");
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "http://relay.example.test" })).toBeNull();
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "off" })).toBeNull();
+    expect(highlevelRelayUrl({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "not a url" })).toBeNull();
   });
 
   it("speaks the control plane's contract: 404 pending, 200 once, 410 after, 401 on a rejected refresh, 503 unavailable", async () => {
@@ -77,7 +77,7 @@ describe("relay URL", () => {
     expect(rotated.refreshToken).not.toBe(tokens.refreshToken);
     await expect(upstream.refresh(tokens.refreshToken)).rejects.toMatchObject({ status: 401, code: "highlevel_refresh_rejected" });
     relay.unavailable = true;
-    await expect(upstream.start()).rejects.toMatchObject({ status: 503, code: "highlevel_unavailable", message: "HighLevel sign-in is not available on the OpenMausBot relay right now." });
+    await expect(upstream.start()).rejects.toMatchObject({ status: 503, code: "highlevel_unavailable", message: "HighLevel sign-in is not available on the MausClaw relay right now." });
     relay.unavailable = false;
   });
 });
@@ -126,10 +126,10 @@ describe("sign-in flow", () => {
   });
 
   it("expires after the cap and keeps polling through relay hiccups", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-signin-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-signin-"));
     dirs.push(dir);
     let now = Date.now();
-    const svc = createHighLevelService({ dataDir: dir, env: { OMB_HIGHLEVEL_RELAY_URL: relay.url, OMB_HIGHLEVEL_API_URL: hl.url }, pollMs: 10, now: () => now });
+    const svc = createHighLevelService({ dataDir: dir, env: { MAUSCLAW_HIGHLEVEL_RELAY_URL: relay.url, MAUSCLAW_HIGHLEVEL_API_URL: hl.url }, pollMs: 10, now: () => now });
     services.push(svc);
     const started = await svc.startSignIn();
     relay.unavailable = true;
@@ -142,9 +142,9 @@ describe("sign-in flow", () => {
   });
 
   it("is unavailable without a relay, and a Private Integration token still works", async () => {
-    const svc = service({ OMB_HIGHLEVEL_RELAY_URL: "off" });
+    const svc = service({ MAUSCLAW_HIGHLEVEL_RELAY_URL: "off" });
     expect(svc.status()).toEqual({ state: "unavailable" });
-    await expect(svc.startSignIn()).rejects.toThrow(/no OpenMausBot relay is configured/u);
+    await expect(svc.startSignIn()).rejects.toThrow(/no MausClaw relay is configured/u);
     await expect(svc.connectWithToken("nope", FAKE_LOCATION_ID)).rejects.toThrow("Paste a Private Integration token. It starts with pit-.");
     await expect(svc.connectWithToken("pit-abcdefgh12345678", "x")).rejects.toThrow(/Enter the location id/u);
     await expect(svc.connectWithToken("pit-abcdefgh12345678", FAKE_LOCATION_ID)).rejects.toThrow(/^HighLevel did not accept this token \(401\)\./u);
@@ -160,7 +160,7 @@ describe("sign-in flow", () => {
 
 describe("a replaced flow's late claim", () => {
   function staged() {
-    const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-signin-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-signin-"));
     dirs.push(dir);
     const claims: Array<{ state: string; reject(error: unknown): void }> = [];
     let starts = 0;
@@ -251,7 +251,7 @@ describe("owner routes", () => {
     expect(JSON.stringify(connected.body)).not.toContain("pit-route");
     expect(await request(routes, "DELETE", "/api/highlevel", admin)).toEqual({ status: 200, body: { state: "signed-out" } });
     relay.unavailable = true;
-    expect(await request(routes, "POST", "/api/highlevel/sign-in", admin)).toEqual({ status: 502, body: { error: "HighLevel sign-in is not available on the OpenMausBot relay right now.", code: "highlevel_unavailable" } });
+    expect(await request(routes, "POST", "/api/highlevel/sign-in", admin)).toEqual({ status: 502, body: { error: "HighLevel sign-in is not available on the MausClaw relay right now.", code: "highlevel_unavailable" } });
     relay.unavailable = false;
   });
 });

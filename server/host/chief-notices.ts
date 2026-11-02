@@ -30,7 +30,7 @@ export interface ChiefNoticeDeps {
   threadSettling?(threadId: string): boolean;
   /** The thread waits for a free slot and starts on its own. */
   threadQueued?(botId: string, threadId: string): boolean;
-  /** Runs OpenMausBot's automatic retry after the failed turn's own handling is done; the host's next tick by default. */
+  /** Runs MausClaw's automatic retry after the failed turn's own handling is done; the host's next tick by default. */
   schedule?(run: () => void): void;
   /** Security invariant: a read-and-draft run's prompt and reply carry mail and invite text, so its failures and
    * questions never reach a Chief as a notice. */
@@ -66,7 +66,7 @@ export function createChiefNotices(deps: ChiefNoticeDeps) {
     return null;
   }
 
-  /** The one way a teammate's stopped thread runs again: a Chief's retry_thread and OpenMausBot's automatic retry both
+  /** The one way a teammate's stopped thread runs again: a Chief's retry_thread and MausClaw's automatic retry both
    * start it here, after the same refusal checks. Throws the refusal, or why the start failed. */
   async function retryThread(input: { chief: BotRecord; bot: BotRecord; threadId: string; unattended: boolean; note?: string; automatic?: true }): Promise<void> {
     const refused = retryRefusal(input.bot.id, input.threadId);
@@ -149,7 +149,7 @@ export function createChiefNotices(deps: ChiefNoticeDeps) {
     return "chief";
   }
 
-  /** A failed teammate run gets one retry from OpenMausBot before its Chief hears; the Chief then hears how that retry ended.
+  /** A failed teammate run gets one retry from MausClaw before its Chief hears; the Chief then hears how that retry ended.
    * Never retried: a stall the turn watchdog stopped (kind "stalled"), a stop, a refusal or a cap (retriesTeammateThread,
    * from the failure's words and `facts`), a run that answered a retry, and a thread whose asks are not the Chief's person's. */
   function reportIncident(input: { kind: IncidentKind; bot: BotRecord; threadId: string; detail: string; facts?: RoutineFailureFacts }): void {

@@ -1,4 +1,4 @@
-// Runs on the harness, never the renderer: the key must not leave the server. OMB_ELEVENLABS_API overrides the
+// Runs on the harness, never the renderer: the key must not leave the server. MAUSCLAW_ELEVENLABS_API overrides the
 // base URL for dev and tests.
 import { elevenLabsProviderApi } from "../included-services.ts";
 

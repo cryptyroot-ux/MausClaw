@@ -4,7 +4,7 @@ import { closeSync, existsSync, openSync, readFileSync, writeFileSync } from "no
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 const EMPTY = { instanceId: "", model: "" };
@@ -69,7 +69,7 @@ async function withUnselectedStarter(check: (fixture: Fixture) => Promise<void>)
   };
   try {
     await check({ api, request, saved, restart,
-      control: (...args) => runControlOmb([...args, "--url", url]) as Promise<any>,
+      control: (...args) => runControlMausclaw([...args, "--url", url]) as Promise<any>,
       connect: async () => { await api("PATCH", "/api/instances/claude", { cli: FAKE_CLI }); },
       makeCliAvailable: (holdProbe = false) => {
         const gate = join(dataDir, "probe-release");
@@ -232,8 +232,8 @@ it("a genuine first install stays unset until its provider account becomes ready
     await api("PATCH", "/api/instances/claude", { cli: signedInCli });
     expect((await api("GET", "/api/bots")).bots[0].modelSelection).toEqual(DEFAULT);
     const target = ["--bot", starter.id, "--task", starter.threadId, "--url", url];
-    await runControlOmb(["send", ...target, "--text", "FIRST_INSTALL_PROVIDER_READY_1R"]);
-    expect((await runControlOmb(["wait", ...target, "--timeout", "30"]) as any).status).toBe("settled");
+    await runControlMausclaw(["send", ...target, "--text", "FIRST_INSTALL_PROVIDER_READY_1R"]);
+    expect((await runControlMausclaw(["wait", ...target, "--timeout", "30"]) as any).status).toBe("settled");
     expect((await api("GET", `/api/threads/${starter.threadId}/messages?limit=20`)).messages
       .findLast((message: any) => message.role === "bot" && message.kind === "text")).toMatchObject({ turnSucceeded: true });
   } finally {

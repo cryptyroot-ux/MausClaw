@@ -1,5 +1,5 @@
 // Whether this machine can run the bot box, decided once at boot: on by default on a Cloud home, off everywhere else
-// unless OMB_BOT_BOX=1, and never on without a working unprivileged bubblewrap (a kernel that refuses user namespaces,
+// unless MAUSCLAW_BOT_BOX=1, and never on without a working unprivileged bubblewrap (a kernel that refuses user namespaces,
 // or an image without bwrap, reports `off` with its reason rather than running turns unboxed by surprise: the report
 // says so, and the Admin shows it).
 import { spawnSync } from "node:child_process";
@@ -26,12 +26,12 @@ export interface DetectInput {
 
 /** A Cloud home (`home`, or the Team Cloud role `team`) boxes turns unless told not to. */
 export function cloudRole(env: Record<string, string | undefined>): boolean {
-  return env.OMB_CLOUD_ROLE === "home" || env.OMB_CLOUD_ROLE === "team";
+  return env.MAUSCLAW_CLOUD_ROLE === "home" || env.MAUSCLAW_CLOUD_ROLE === "team";
 }
 
-/** `OMB_BOT_BOX`: unset (Cloud homes on, others off), 0/off, 1/on/bwrap. */
+/** `MAUSCLAW_BOT_BOX`: unset (Cloud homes on, others off), 0/off, 1/on/bwrap. */
 export function boxWanted(env: Record<string, string | undefined>): "on" | "off" | "default" {
-  const raw = (env.OMB_BOT_BOX ?? "").trim().toLowerCase();
+  const raw = (env.MAUSCLAW_BOT_BOX ?? "").trim().toLowerCase();
   if (raw === "0" || raw === "off" || raw === "false" || raw === "no") return "off";
   if (raw === "1" || raw === "on" || raw === "bwrap" || raw === "true" || raw === "yes") return "on";
   return "default";

@@ -9,7 +9,7 @@ import { createMoveFreezeRoutes } from "./routes/move-freeze.ts";
 import { PASS } from "./routes/table.ts";
 
 const dirs: string[] = [];
-const dataDir = () => { const dir = mkdtempSync(join(tmpdir(), "omb-move-freeze-")); dirs.push(dir); return dir; };
+const dataDir = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-move-freeze-")); dirs.push(dir); return dir; };
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function schedule() {
@@ -26,7 +26,7 @@ describe("this computer's copy, frozen at the move", () => {
     freeze.hold(calls.start, calls.stop);
     expect([routines.log, calls.log]).toEqual([["start"], ["start"]]);
 
-    freeze.freeze("https://omb-t-1.fly.dev");
+    freeze.freeze("https://mausclaw-t-1.fly.dev");
     expect(freeze.frozen()).toBe(true);
     expect(existsSync(join(dir, "moved.json"))).toBe(true);
     expect([routines.log, calls.log]).toEqual([["start", "stop"], ["start", "stop"]]);
@@ -64,11 +64,11 @@ describe("this computer's copy, frozen at the move", () => {
     const freeze = createMoveFreeze({ dataDir: dir });
     for (const path of ["/", "/home", "/settings", "/assets/index-1a2b.js"]) expect(freeze.screen(path), path).toBeNull();
     expect(freeze.cloud()).toBeNull();
-    freeze.freeze("https://omb-t-1.fly.dev");
+    freeze.freeze("https://mausclaw-t-1.fly.dev");
     for (const path of ["/", "/settings", "/desktop-viewer", "/pair", "/chats/b1"]) expect(freeze.screen(path), path).toBe(HOME_SCREEN);
     for (const path of [HOME_SCREEN, "/assets/index-1a2b.js", "/favicon.svg", "/manifest.webmanifest"]) expect(freeze.screen(path), path).toBeNull();
-    expect(freeze.cloud()).toBe("https://omb-t-1.fly.dev");
-    expect(createMoveFreeze({ dataDir: dir }).cloud(), "after a restart too").toBe("https://omb-t-1.fly.dev");
+    expect(freeze.cloud()).toBe("https://mausclaw-t-1.fly.dev");
+    expect(createMoveFreeze({ dataDir: dir }).cloud(), "after a restart too").toBe("https://mausclaw-t-1.fly.dev");
     freeze.unfreeze();
     expect([freeze.screen("/"), freeze.cloud()]).toEqual([null, null]);
     expect(createMoveFreeze({ dataDir: dataDir(), exportOnly: true }).screen("/"), "an ended Cloud's own page is never this computer's screen").toBeNull();
@@ -98,13 +98,13 @@ describe("/api/move/freeze", () => {
     const freeze = createMoveFreeze({ dataDir: dataDir() });
     const route = createMoveFreezeRoutes({ freeze, busy: () => busy, restart() {} });
     expect(await ask(route, "GET")).toEqual({ status: 200, body: { frozen: false, busy: "Scout", what: "bot" } });
-    expect(await ask(route, "POST", undefined, { cloud: "https://omb-t-1.fly.dev" })).toMatchObject({ status: 409, body: { busy: "Scout", what: "bot" } });
+    expect(await ask(route, "POST", undefined, { cloud: "https://mausclaw-t-1.fly.dev" })).toMatchObject({ status: 409, body: { busy: "Scout", what: "bot" } });
     expect(freeze.frozen()).toBe(false);
     busy = { name: "", what: "sign-in" };
-    expect(await ask(route, "POST", undefined, { cloud: "https://omb-t-1.fly.dev" }), "no name: what it is").toMatchObject({ status: 409, body: { busy: "", what: "sign-in" } });
+    expect(await ask(route, "POST", undefined, { cloud: "https://mausclaw-t-1.fly.dev" }), "no name: what it is").toMatchObject({ status: 409, body: { busy: "", what: "sign-in" } });
     busy = null;
-    expect(await ask(route, "POST", undefined, { cloud: "https://omb-t-1.fly.dev" })).toEqual({ status: 200, body: { frozen: true } });
-    expect(await ask(route, "GET"), "the desktop learns which Cloud, even with its journal lost").toEqual({ status: 200, body: { frozen: true, cloud: "https://omb-t-1.fly.dev" } });
+    expect(await ask(route, "POST", undefined, { cloud: "https://mausclaw-t-1.fly.dev" })).toEqual({ status: 200, body: { frozen: true } });
+    expect(await ask(route, "GET"), "the desktop learns which Cloud, even with its journal lost").toEqual({ status: 200, body: { frozen: true, cloud: "https://mausclaw-t-1.fly.dev" } });
     expect(await ask(route, "POST", "/api/bots/b1/messages")).toEqual({ status: 409, body: { error: MOVED_REFUSAL, code: "moved" } });
     expect(await ask(route, "GET", "/api/bots")).toBe("pass");
     busy = { name: "Scout", what: "bot" };
@@ -113,7 +113,7 @@ describe("/api/move/freeze", () => {
     expect(await ask(route, "POST", "/api/bots/b1/messages")).toBe("pass");
   });
 
-  it("is only for OpenMausBot on this computer, never a paired device", async () => {
+  it("is only for MausClaw on this computer, never a paired device", async () => {
     const freeze = createMoveFreeze({ dataDir: dataDir() });
     const route = createMoveFreezeRoutes({ freeze, busy: () => null, restart() {} });
     expect(await ask(route, "POST", undefined, {}, "session")).toMatchObject({ status: 403 });
@@ -137,7 +137,7 @@ describe("POST /api/move/forget", () => {
     };
     expect(await forget(), "a computer that never moved keeps everything").toMatchObject({ status: 409 });
     expect(readdirSync(dir)).toContain("config.json");
-    freeze.freeze("https://omb-t-1.fly.dev");
+    freeze.freeze("https://mausclaw-t-1.fly.dev");
     expect(await forget("session")).toMatchObject({ status: 403 });
     expect(await forget()).toEqual({ status: 200, body: { forgot: true } });
     expect(readdirSync(dir).sort()).toEqual(["environment-id", "moved.json", "sync", "tools"]);

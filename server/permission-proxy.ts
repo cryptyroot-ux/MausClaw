@@ -6,8 +6,8 @@ import { parseAskQuestions, questionAnswersByQuestion, type AskQuestion } from "
 import { allowsTool, parseToolScope } from "../shared/tool-scope.ts";
 import { REFUSED_NEXT_STEP } from "./reply-habits.ts";
 
-const selection = parseToolScope(process.env.OMB_PERMISSION_TOOL_SCOPE === undefined
-  ? undefined : (() => { try { return JSON.parse(process.env.OMB_PERMISSION_TOOL_SCOPE); } catch { return null; } })());
+const selection = parseToolScope(process.env.MAUSCLAW_PERMISSION_TOOL_SCOPE === undefined
+  ? undefined : (() => { try { return JSON.parse(process.env.MAUSCLAW_PERMISSION_TOOL_SCOPE); } catch { return null; } })());
 if (!selection.ok) throw new Error(selection.error);
 const allowQuestion = allowsTool(selection.scope, { kind: "mcp", server: "ogb", name: "ask_user" });
 
@@ -25,7 +25,7 @@ interface AllowPermissionResult {
 }
 const dead = () => {
   for (const resolve of waiting.values()) {
-    resolve({ behavior: "deny", message: "OpenMausBot: permission broker unavailable — skip this action" });
+    resolve({ behavior: "deny", message: "MausClaw: permission broker unavailable — skip this action" });
   }
   waiting.clear();
 };
@@ -85,7 +85,7 @@ async function answerNativeQuestions(input: unknown): Promise<string> {
     return JSON.stringify({
       behavior: "deny",
       message:
-        "OpenMausBot: this AskUserQuestion call had no answerable question (each one needs question text), so nobody was shown it. Ask again with a well-formed call, or continue without it.",
+        "MausClaw: this AskUserQuestion call had no answerable question (each one needs question text), so nobody was shown it. Ask again with a well-formed call, or continue without it.",
     });
   }
   const answer = await askBroker({
@@ -96,7 +96,7 @@ async function answerNativeQuestions(input: unknown): Promise<string> {
     input: { questions },
   });
   if (answer.behavior === "deny") {
-    return JSON.stringify({ behavior: "deny", message: answer.message || "Denied from OpenMausBot" });
+    return JSON.stringify({ behavior: "deny", message: answer.message || "Denied from MausClaw" });
   }
   // Only the person's own answer fills `answers`: the broker's notes (a timeout's sentence) would read as their choice.
   const answers =
@@ -109,7 +109,7 @@ async function answerNativeQuestions(input: unknown): Promise<string> {
 const TOOLS = [
   {
     name: "approve",
-    description: "Ask the OpenMausBot user whether a tool use is allowed",
+    description: "Ask the MausClaw user whether a tool use is allowed",
     inputSchema: {
       type: "object",
       properties: {
@@ -151,7 +151,7 @@ async function handle(msg: any) {
       result: {
         protocolVersion: msg.params?.protocolVersion ?? "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "openmausbot-permissions", version: "1" },
+        serverInfo: { name: "mausclaw-permissions", version: "1" },
       },
     });
   }
@@ -161,7 +161,7 @@ async function handle(msg: any) {
     const name = msg.params?.name;
     const args = msg.params?.arguments ?? {};
     const reply = (text: string) => send({ jsonrpc: "2.0", id: msg.id, result: { content: [{ type: "text", text }] } });
-    if (name === "ask_user" && !allowQuestion) return reply("OpenMausBot: this question tool is excluded by the bot's tool selection.");
+    if (name === "ask_user" && !allowQuestion) return reply("MausClaw: this question tool is excluded by the bot's tool selection.");
     if (name === "approve" && args.tool_name === ASK_USER_QUESTION) {
       return reply(await answerNativeQuestions(args.input));
     }
@@ -189,7 +189,7 @@ async function handle(msg: any) {
         if (answer.always && suggestions) result.updatedPermissions = suggestions;
         text = JSON.stringify(result);
       } else {
-        text = JSON.stringify({ behavior: "deny", message: (answer.message || "Denied from OpenMausBot") + (answer.source === "user" ? REFUSED_NEXT_STEP : "") });
+        text = JSON.stringify({ behavior: "deny", message: (answer.message || "Denied from MausClaw") + (answer.source === "user" ? REFUSED_NEXT_STEP : "") });
       }
     }
     return reply(text);

@@ -12,7 +12,7 @@ export interface CloudAccountState {
   entitlement?: { plan: "free" | "pro"; tier?: string; status: "active" | "inactive"; expiresAt: number | null; version: number };
   verifiedAt?: number;
   verifiedUntil?: number;
-  /** Connected, but the last checks with OMB Cloud failed; the snapshot is the last verified one. */
+  /** Connected, but the last checks with MausClaw Cloud failed; the snapshot is the last verified one. */
   checking?: true;
   /** Not connected (unavailable, or the sign-in ended): the paid plan last
    * verified for this account, for display only. It activates nothing. */
@@ -26,13 +26,13 @@ export interface CloudAccountState {
   clouds?: import("./cloud-list.mjs").CloudListEntry[];
   /** With `clouds`: whether the Admin opens another Cloud's checkout now, and why not. */
   addCloud?: { canAdd: true } | { canAdd: false; blocked: CloudAddBlock };
-  /** The newest OpenMausBot release the Admin knows, while it follows releases (with `clouds`); absent otherwise. */
+  /** The newest MausClaw release the Admin knows, while it follows releases (with `clouds`); absent otherwise. */
   latestVersion?: string;
   /** Another Cloud this app is buying (in the last 24 hours): its id, name, swatch and plan, when its checkout opened,
    * whether main keeps that page (`link`), and `done` once it was opened or announced. */
   /** `cloudId` null: a checkout the Admin said is still open, before the session lists its Cloud. */
   adding?: { cloudId: string | null; name: string; color: import("./cloud-list.mjs").CloudSwatch | null; tier: string | null; startedAt: number; link?: true; done?: true };
-  /** A payment OMB Cloud received and is still linking to this account. */
+  /** A payment MausClaw Cloud received and is still linking to this account. */
   purchase?: import("./cloud-home.mjs").CloudPurchase;
   /** Connected: the free trial on this account's Cloud, when the Admin says (display only). */
   trial?: import("./cloud-home.mjs").CloudTrial;
@@ -47,7 +47,7 @@ export interface CloudAccountState {
    * starts the 30-minute watch again). `link`: main keeps its page, so Reopen
    * and Copy link use that same page. */
   checkout?: { plan: string; startedAt: number; signIn?: true; link?: true; done?: true };
-  /** This app talks to the staging Admin (OMB_CLOUD_STAGING=1): test payments, test Clouds. */
+  /** This app talks to the staging Admin (MAUSCLAW_CLOUD_STAGING=1): test payments, test Clouds. */
   staging?: true;
   /** Connected: opening My Cloud waits for it to wake. */
   waking?: true;

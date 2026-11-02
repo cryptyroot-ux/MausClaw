@@ -39,7 +39,7 @@ module.exports = async function verifySkillApprovalUi({ root, home, url, api, un
     button.click(); return true;
   })()`);
   const state = window => evaluate(window, "JSON.parse(document.querySelector('#fixture-state').textContent)");
-  const evidence = join(root, ".omb-scratch/verify-evidence/skill-approval");
+  const evidence = join(root, ".mausclaw-scratch/verify-evidence/skill-approval");
   mkdirSync(evidence, { recursive: true });
   try {
     for (const window of windows) await window.loadURL(`${preview.previewUrl}?bot=${bot.id}`);

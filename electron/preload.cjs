@@ -2,7 +2,7 @@
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 // Sandboxed preloads get Electron's restricted `require`, which cannot load sibling CommonJS files.
-const desktopRemoteClient = process.argv.includes("--openmausbot-remote-client");
+const desktopRemoteClient = process.argv.includes("--mausclaw-remote-client");
 
 let pendingPackageInstallUrl = null;
 const packageInstallListeners = new Set();
@@ -36,7 +36,7 @@ ipcRenderer.on("app:open-settings", (_event, section) => {
 });
 
 // The full bridge goes only to the local server's UI; a remote page gets the safe subset, and main enforces the same rule.
-const localOrigin = process.argv.find((arg) => arg.startsWith("--omb-local-origin="))?.slice("--omb-local-origin=".length) ?? null;
+const localOrigin = process.argv.find((arg) => arg.startsWith("--mausclaw-local-origin="))?.slice("--mausclaw-local-origin=".length) ?? null;
 const isLocalPage = !localOrigin || location.origin === localOrigin;
 
 // The window's own rail of places stands at its left edge (electron/chrome-rail.mjs): main says how wide, and every page
@@ -95,13 +95,13 @@ const remoteKeys = isLocalPage ? REMOTE_SAFE : new Set([...REMOTE_SAFE, ...(upda
 
 // Keep in parity with shared/workspace-backup-client.ts (a sandboxed preload cannot import it).
 const COMPANY_BACKUP_CLIENT_KEYS = [
-  "omb-drafts", "omb-draft-attachments", "omb-draft-send-ids", "omb-draft-channel-modes",
-  "omb-skin", "omb-show-threads", "omb-show-run-card", "omb-send-key", "omb-color-user-bubbles", "omb-chat-width", "openmausbot.sidebarDensity",
-  "openmausbot.sidebarToolsLayout",
-  "openmausbot.sidebarCollapsedSections.v1", "openmausbot.sidebarSectionOrder.v1",
-  "omb-analytics-opt-out", "openmausbot.remote-voice.v1",
+  "mausclaw-drafts", "mausclaw-draft-attachments", "mausclaw-draft-send-ids", "mausclaw-draft-channel-modes",
+  "mausclaw-skin", "mausclaw-show-threads", "mausclaw-show-run-card", "mausclaw-send-key", "mausclaw-color-user-bubbles", "mausclaw-chat-width", "mausclaw.sidebarDensity",
+  "mausclaw.sidebarToolsLayout",
+  "mausclaw.sidebarCollapsedSections.v1", "mausclaw.sidebarSectionOrder.v1",
+  "mausclaw-analytics-opt-out", "mausclaw.remote-voice.v1",
 ];
-if (isLocalPage && !desktopRemoteClient && process.argv.includes("--omb-company-desktop=1")) {
+if (isLocalPage && !desktopRemoteClient && process.argv.includes("--mausclaw-company-desktop=1")) {
   ipcRenderer.on("company-backups:collect-client-state", (_event, request) => {
     if (!request || typeof request.requestId !== "string" || !/^[a-f0-9-]{36}$/.test(request.requestId)) return;
     try {
@@ -121,7 +121,7 @@ if (isLocalPage && !desktopRemoteClient && process.argv.includes("--omb-company-
 }
 
 // main passes app.getVersion(): a server's page carries that server's version, so About asks this for the app's own.
-const appVersion = (process.argv.find((arg) => arg.startsWith("--omb-app-version="))?.slice("--omb-app-version=".length) ?? "").slice(0, 64);
+const appVersion = (process.argv.find((arg) => arg.startsWith("--mausclaw-app-version="))?.slice("--mausclaw-app-version=".length) ?? "").slice(0, 64);
 
 const bridge = {
   platform: process.platform,
@@ -344,7 +344,7 @@ const bridge = {
   openAtLogin: {
     state: () => ipcRenderer.invoke("open-at-login:state"),
     set: on => on !== true || isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("open-at-login:set", on === true) : Promise.reject(new Error("Turn on the switch to open OpenMausBot at login.")),
+      ? ipcRenderer.invoke("open-at-login:set", on === true) : Promise.reject(new Error("Turn on the switch to open MausClaw at login.")),
   },
   setCredential: (name, value) => ipcRenderer.invoke("credential:set", name, value),
 
@@ -378,7 +378,7 @@ const bridge = {
       return () => ipcRenderer.removeListener("workspaces:open-settings", handler);
     },
   },
-  cloudAccount: process.argv.includes("--omb-company-desktop=1") ? {
+  cloudAccount: process.argv.includes("--mausclaw-company-desktop=1") ? {
     state: () => ipcRenderer.invoke("cloud-account:state"),
     begin: () => ipcRenderer.invoke("cloud-account:begin"),
     signInAgain: () => ipcRenderer.invoke("cloud-account:signInAgain"),
@@ -432,7 +432,7 @@ const bridge = {
       },
     },
   } : undefined,
-  cloudLending: process.argv.includes("--omb-company-desktop=1") ? {
+  cloudLending: process.argv.includes("--mausclaw-company-desktop=1") ? {
     open: () => ipcRenderer.invoke("cloud-lending:open"),
     state: () => ipcRenderer.invoke("cloud-lending:state"),
     set: on => on !== true || isLocalPage || navigator.userActivation?.isActive === true
@@ -449,7 +449,7 @@ const bridge = {
     ask: language => ipcRenderer.invoke("cloud-lending:ask", String(language ?? "")),
   } : undefined,
   // Either page: the one-time move's line.
-  cloudSendPage: process.argv.includes("--omb-company-desktop=1") ? {
+  cloudSendPage: process.argv.includes("--mausclaw-company-desktop=1") ? {
     notice: () => ipcRenderer.invoke("cloud-send:notice"),
     dismiss: signature => ipcRenderer.invoke("cloud-send:dismiss", String(signature)),
     moveRetry: () => isLocalPage || navigator.userActivation?.isActive === true
@@ -471,7 +471,7 @@ const bridge = {
       return () => ipcRenderer.removeListener("cloud-send:notice-changed", handler);
     },
   } : undefined,
-  cloudPlan: process.argv.includes("--omb-company-desktop=1") ? {
+  cloudPlan: process.argv.includes("--mausclaw-company-desktop=1") ? {
     state: () => ipcRenderer.invoke("cloud-plan:state"),
     manage: () => isLocalPage || navigator.userActivation?.isActive === true
       ? ipcRenderer.invoke("cloud-plan:manage") : Promise.reject(new Error("Choose Manage to open your Plan page.")),
@@ -484,7 +484,7 @@ const bridge = {
     upgrade: (plan, source) => navigator.userActivation?.isActive === true
       ? ipcRenderer.invoke("cloud-plan:upgrade", String(plan), String(source)) : Promise.reject(new Error("Choose Upgrade to change your plan.")),
   } : undefined,
-  organization: process.argv.includes("--omb-company-desktop=1") ? {
+  organization: process.argv.includes("--mausclaw-company-desktop=1") ? {
     settingsOpened: () => ipcRenderer.invoke("organization:settings-opened"),
     state: () => ipcRenderer.invoke("organization:state"),
     begin: input => ipcRenderer.invoke("organization:begin", input),
@@ -498,7 +498,7 @@ const bridge = {
       return () => ipcRenderer.removeListener("organization:state-changed", handler);
     },
   } : undefined,
-  companyBackups: process.argv.includes("--omb-company-desktop=1") ? {
+  companyBackups: process.argv.includes("--mausclaw-company-desktop=1") ? {
     state: () => ipcRenderer.invoke("company-backups:state"),
     list: () => ipcRenderer.invoke("company-backups:list"),
     create: input => ipcRenderer.invoke("company-backups:create", input),

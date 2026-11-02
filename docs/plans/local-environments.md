@@ -7,7 +7,7 @@ Manual checks: [verification recipe](../verification/local-environments.md).
 ## Problem
 
 One desktop installation runs one configuration at a time: the bots,
-providers, groups, routines and history under `~/.openmausbot`. People who
+providers, groups, routines and history under `~/.mausclaw`. People who
 work on several unrelated projects — a ham-radio bot team and a mobile-app
 bot team, say — want completely separate teams, model choices and histories,
 and want to pick the right one at the start of a work session.
@@ -17,13 +17,13 @@ and want to pick the right one at the start of a work session.
 **Named local environments**: additional data directories the same
 installation can restart onto, managed beside the saved servers, one active
 at a time. Creating one registers a name and a data folder ("My environment"
-→ `~/.openmausbot-my-environment`, or a folder chosen through the native
+→ `~/.mausclaw-my-environment`, or a folder chosen through the native
 picker); switching stops the app's server child, moves it onto the target
 directory, health-probes it, and reloads the window — roughly fifteen
 seconds, and a failed switch leaves you exactly where you were. The current
 data folder stays "This computer" and behaves exactly as before: zero
 migration, and it is never forgettable. The server itself is unchanged —
-`OMB_DATA_DIR` already isolates everything, and the per-directory
+`MAUSCLAW_DATA_DIR` already isolates everything, and the per-directory
 `environment-id` already tells two environments apart.
 
 Everything the environment holds is isolated with it: bots, provider

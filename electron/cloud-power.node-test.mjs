@@ -94,10 +94,10 @@ test("waiting ends when its own work is cancelled", async () => {
 
 test("only a 503 that says asleep is My Cloud going to sleep", () => {
   const answer = (status, headers = {}) => new Response(null, { status, headers });
-  assert.equal(asleepAnswer(answer(503, { "x-omb-cloud-power": "asleep" })), true);
+  assert.equal(asleepAnswer(answer(503, { "x-mausclaw-cloud-power": "asleep" })), true);
   assert.equal(asleepAnswer(answer(503)), false);
-  assert.equal(asleepAnswer(answer(503, { "x-omb-cloud-power": "awake" })), false);
-  assert.equal(asleepAnswer(answer(200, { "x-omb-cloud-power": "asleep" })), false);
+  assert.equal(asleepAnswer(answer(503, { "x-mausclaw-cloud-power": "awake" })), false);
+  assert.equal(asleepAnswer(answer(200, { "x-mausclaw-cloud-power": "asleep" })), false);
   assert.equal(asleepAnswer({ status: 503 }), false);
   assert.equal(asleepAnswer(null), false);
 });

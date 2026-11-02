@@ -8,8 +8,8 @@ key or Composio dependency. The bundled logo is attributed in
 ## Isolated browser verification
 
 Use an installed Playwright module and Chromium executable. Set
-`OMB_VERIFY_PLAYWRIGHT` to its absolute module entry and
-`OMB_VERIFY_BROWSER_CHROME` to the browser executable if Playwright cannot
+`MAUSCLAW_VERIFY_PLAYWRIGHT` to its absolute module entry and
+`MAUSCLAW_VERIFY_BROWSER_CHROME` to the browser executable if Playwright cannot
 resolve its own browser. Then run:
 
 ```sh
@@ -34,8 +34,8 @@ has no alternate endpoint or test switch. It checks:
 - Reload keeps the connection; disconnect disables it and revokes sign-in.
 - Narrow layout has no page overflow; no business tools execute during setup.
 
-Screenshots default to `/tmp/omb-whop-evidence`; override with
-`OMB_UI_EVIDENCE_DIR`. All fixture processes and data are cleaned up, with the
+Screenshots default to `/tmp/mausclaw-whop-evidence`; override with
+`MAUSCLAW_UI_EVIDENCE_DIR`. All fixture processes and data are cleaned up, with the
 server log retained. This proves the integration mechanics, **not a live Whop
 account or a real payment operation**. The live endpoint's published OAuth
 metadata was inspected separately and advertises dynamic registration, PKCE
@@ -64,6 +64,6 @@ Whop's hosted service currently requests admin access across the user's managed
 businesses. Choosing a business in a prompt is not an account-level restriction.
 Consequential operations retain Whop's prepare/confirm protocol and idempotency
 requirements. This change adds no blanket auto-confirm policy, new payment
-tools, or independent credential store. Normal OMB approval modes are unchanged.
+tools, or independent credential store. Normal MausClaw approval modes are unchanged.
 
 Upstream: [official Whop MCP](https://github.com/whopio/whop-mcp-server).

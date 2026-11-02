@@ -1,4 +1,4 @@
-# OMB-Claw Project Status Report
+# MausClaw Project Status Report
 
 **Generated:** 2026-10-28  
 **Branch:** `feature/native-agent-engine`  
@@ -9,10 +9,10 @@
 
 ## Executive Summary
 
-OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0). Unlike the upstream app, OMB-Claw:
+MausClaw is a **standalone agent platform** forked from MausClaw (Apache-2.0). Unlike the upstream app, MausClaw:
 - Does **not** require external CLI/ACP engines (Claude Code, Codex, OpenCode, Hermes, Pi, Antigravity)
 - Uses **provider API adapters** for all model access
-- Runs an **OMB-owned native agent engine** (`omb-native`) with SQLite run journal and capability orchestration
+- Runs an **MausClaw-owned native agent engine** (`mausclaw-native`) with SQLite run journal and capability orchestration
 - Has a **unified capability runtime** governing MCP, native tools, skills, browser, and computer use
 
 **Current Phase:** Native agent engine migration — legacy driver loop being retired, 40+ tests migrating to native path.
@@ -34,7 +34,7 @@ OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0)
 └──────────────────────────────┬──────────────────────────────────┘
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  OMB Agent Engine — Native Loop                                 │
+│  MausClaw Agent Engine — Native Loop                                 │
 │  • Admission, model rounds, tool orchestration                  │
 │  • Context, state, retry, recovery, steering, budgets           │
 │  • Request-size recovery + summarization compaction             │
@@ -63,7 +63,7 @@ OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0)
 
 | Feature | Status | Evidence |
 |---------|--------|----------|
-| Native agent loop (`omb-native`) | ✅ Working | 198 tests pass, lint/typecheck/locale clean |
+| Native agent loop (`mausclaw-native`) | ✅ Working | 198 tests pass, lint/typecheck/locale clean |
 | SQLite run journal + capability journal | ✅ Working | `server/agent-runtime/run-store.ts` |
 | Natural cancellation & retry classification | ✅ Working | `server/drivers/retry.ts`, engine-errors.ts |
 | Request-size recovery + summarization compaction | ✅ Working | `agent_compactions` table, `run.compacted` event |
@@ -118,7 +118,7 @@ OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0)
 
 ---
 
-## Parallel Work Plan (From `/root/.opencode/plan/omb-claw-parallel-execution.md`)
+## Parallel Work Plan (From `/root/.opencode/plan/mausclaw-parallel-execution.md`)
 
 ### Agent A: Session Tree (`feature/session-tree`)
 - `server/message-db.ts` — schema + fork/resume functions
@@ -144,8 +144,8 @@ OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0)
 ### Systemd Services
 | Service | Status | Description |
 |---------|--------|-------------|
-| `omb-test.service` | failed | Test service on port 8798, no-pair mode |
-| `omb-backup.service` + timer | configured | Encrypted workspace backup |
+| `mausclaw-test.service` | failed | Test service on port 8798, no-pair mode |
+| `mausclaw-backup.service` + timer | configured | Encrypted workspace backup |
 | `pango-portal.service` | active | Pango Hub auth (port 20200) |
 
 ### Nginx / TLS
@@ -155,9 +155,9 @@ OMB-Claw is a **standalone agent platform** forked from OpenMausBot (Apache-2.0)
 - **9Router Gateway:** `https://files.pango.fun/v1` (OpenAI-compatible, `9router.key` in systemd credentials)
 
 ### Backups
-- `/root/omb-full-backup-20261026-165846.tar.gz` (1.1 GB) — full workspace backup
+- `/root/mausclaw-full-backup-20261026-165846.tar.gz` (1.1 GB) — full workspace backup
 - `/root/openclaw_backup_20261023-131955.tar.gz` (193 MB) — earlier backup
-- Backup script: `/root/.openmausbot/backup-now.sh` (run by `omb-backup.service`)
+- Backup script: `/root/.mausclaw/backup-now.sh` (run by `mausclaw-backup.service`)
 
 ---
 
@@ -189,13 +189,13 @@ pnpm lint             # oxlint --deny-warnings
 
 ## Skills & Extensions
 
-### Active Skills (from `/root/OMB-Claw/skills/`)
+### Active Skills (from `/root/MausClaw/skills/`)
 - `create-verification-skill` — generates verification skills
 - `data-dashboards` — dashboard generation
 - `phone-harness` — phone testing agents
 
-### Verification Skill (`.claude/skills/verify-omb/`)
-Follows `docs/verification/README.md` — uses `pnpm control:omb` with fake engine fixtures
+### Verification Skill (`.claude/skills/verify-mausclaw/`)
+Follows `docs/verification/README.md` — uses `pnpm control:mausclaw` with fake engine fixtures
 
 ### Documentation Structure
 ```
@@ -291,7 +291,7 @@ docs/
 
 | Project | Path | Status |
 |---------|------|--------|
-| **OpenMausBot (upstream install)** | `/root/OpenMausBot-install/` | Deployed at `maus.pango.fun`, gates G1-G9 passing |
+| **MausClaw (upstream install)** | `/root/MausClaw-install/` | Deployed at `maus.pango.fun`, gates G1-G9 passing |
 | **Pango Portal** | `/root/pango-portal/` | Active auth service on 20200 |
 | **9Router Gateway** | `/root/.9router/` | Model gateway at `files.pango.fun/v1` |
 | **Hermes Agent (LUNA)** | `/usr/local/lib/hermes-agent/` | Runtime for this conversation |

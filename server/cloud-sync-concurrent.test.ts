@@ -13,7 +13,7 @@ const sha = (text: string) => createHash("sha256").update(text).digest("hex");
 let home: string, sync: CloudSync, folder: files.SyncFolder;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), "omb-sync-concurrent-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-sync-concurrent-"));
   sync = createCloudSync({ dataDir: join(home, "data"), root: join(home, "Synced"), now: () => new Date(2026, 9, 15, 12).getTime(), statfs: () => ({ totalBytes: 10 * GB, freeBytes: 9 * GB }) });
   folder = sync.register({ computerId: PC, computerName: "PC", pcPath: "/project", name: "Project" });
 });

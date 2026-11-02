@@ -1,4 +1,4 @@
-// OMB Cloud's Admin relay still speaks Boat's retired box dialect (/boxes under a base ending in /api/box/v1, box and boxes
+// MausClaw Cloud's Admin relay still speaks Boat's retired box dialect (/boxes under a base ending in /api/box/v1, box and boxes
 // envelopes; the same bx_ ids), so an included credential wired to such a base is translated here, at the transport only.
 // Delete this file once no home is wired to /api/box/v1.
 import type { ServiceCredential } from "./included-services.ts";

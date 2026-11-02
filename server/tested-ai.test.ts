@@ -136,7 +136,7 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     clock = 1_000_000;
     timers = [];
     company = () => false;
-    data = mkdtempSync(join(tmpdir(), "omb-tested-ai-"));
+    data = mkdtempSync(join(tmpdir(), "mausclaw-tested-ai-"));
     store = new FakeStore(() => pick);
     tested = make();
   });
@@ -492,13 +492,13 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
 });
 
 describe("test messages in the background", () => {
-  it("are on unless OMB_AI_CHECKS=0, and under vitest only when a test asks for them, so fake engines log only the turns a test sends", () => {
+  it("are on unless MAUSCLAW_AI_CHECKS=0, and under vitest only when a test asks for them, so fake engines log only the turns a test sends", () => {
     expect(backgroundAiChecks({})).toBe(true);
-    expect(backgroundAiChecks({ OMB_AI_CHECKS: "0" })).toBe(false);
-    expect(backgroundAiChecks({ OMB_AI_CHECKS: " 0 " })).toBe(false);
+    expect(backgroundAiChecks({ MAUSCLAW_AI_CHECKS: "0" })).toBe(false);
+    expect(backgroundAiChecks({ MAUSCLAW_AI_CHECKS: " 0 " })).toBe(false);
     expect(backgroundAiChecks({ VITEST: "true" })).toBe(false);
-    expect(backgroundAiChecks({ VITEST: "true", OMB_AI_CHECKS: "1" })).toBe(true);
-    expect(backgroundAiChecks({ OMB_TEST_SEALED_PATH: "1" })).toBe(false);
-    expect(backgroundAiChecks({ OMB_TEST_SEALED_PATH: "1", OMB_AI_CHECKS: "1" })).toBe(true);
+    expect(backgroundAiChecks({ VITEST: "true", MAUSCLAW_AI_CHECKS: "1" })).toBe(true);
+    expect(backgroundAiChecks({ MAUSCLAW_TEST_SEALED_PATH: "1" })).toBe(false);
+    expect(backgroundAiChecks({ MAUSCLAW_TEST_SEALED_PATH: "1", MAUSCLAW_AI_CHECKS: "1" })).toBe(true);
   });
 });

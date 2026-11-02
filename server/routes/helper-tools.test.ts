@@ -10,7 +10,7 @@ import type { Extractor } from "../extractor/index.ts";
 import { createHelperToolRoutes, HELPER_MESSAGES } from "./helper-tools.ts";
 import { PASS } from "./table.ts";
 
-const home = mkdtempSync(join(tmpdir(), "omb-helper-tools-"));
+const home = mkdtempSync(join(tmpdir(), "mausclaw-helper-tools-"));
 const work = join(home, "work");
 const elsewhere = join(home, "elsewhere");
 mkdirSync(work);

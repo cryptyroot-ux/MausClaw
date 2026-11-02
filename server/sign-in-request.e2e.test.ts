@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 import { openSse } from "./testing/sse.ts";
 
@@ -11,7 +11,7 @@ const asked = (turn: any): string => JSON.stringify(turn.prompt?.message?.conten
 
 // The browser stand-in is a shell script; the mount only needs it to exist.
 it.skipIf(process.platform === "win32")("asks the person to sign in from a real turn, and runs the bot's next turn when they press Done", async () => {
-  const tools = mkdtempSync(join(tmpdir(), "omb-sign-in-e2e-"));
+  const tools = mkdtempSync(join(tmpdir(), "mausclaw-sign-in-e2e-"));
   const binaryPath = join(tools, "agent-browser");
   // Answers the saved-login check the mount makes; every other command succeeds silently.
   writeFileSync(binaryPath, `#!/bin/sh\nif [ "$1" = session ] && [ "$2" = list ]; then printf '{"success":true,"data":{"sessions":[]}}'; fi\nexit 0\n`, { mode: 0o755 });
@@ -38,7 +38,7 @@ it.skipIf(process.platform === "win32")("asks the person to sign in from a real 
       { reply: "You are signed in, so I opened the dashboard." },
     ] } }));
 
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Check my example.com dashboard.", "--url", url]);
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Check my example.com dashboard.", "--url", url]);
     await expect.poll(() => evidence().length, { timeout: 20_000 }).toBe(1);
     const call = evidence()[0].evidence.find((entry: any) => entry.step?.tool === "request_sign_in");
     expect(call.response.result.isError).toBeFalsy();
@@ -56,7 +56,7 @@ it.skipIf(process.platform === "win32")("asks the person to sign in from a real 
     const notices = stream.frames.filter((frame) => frame.kind === "notify" && frame.notification?.kind === "sign-in");
     expect(notices).toHaveLength(1);
     expect(notices[0].notification.title).toBe("Signer needs you to sign in to example.com");
-    expect((await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "20", "--url", url]) as any).status).toBe("needs-user");
+    expect((await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "20", "--url", url]) as any).status).toBe("needs-user");
 
     expect(await api("POST", `/api/bots/${bot.id}/sign-in-cards/${cards[0].id}/done`, { threadId: bot.threadId }))
       .toMatchObject({ status: 200, body: { done: true, resumed: true } });

@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireBot } from "../shared/wire.ts";
 import { splitLaunchNote } from "./testing/launch-note.ts";
 import { turnClockLine } from "./turn-clock.ts";
@@ -16,10 +16,10 @@ const CLOCK = new RegExp(`^Current time when this message was sent: \\w+day, (\\
 const minute = (at: number) => /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.exec(turnClockLine(at, REPORTED))![0];
 
 it("stamps every direct and room turn with the time it was sent", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-turn-clock-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-turn-clock-"));
   const prompts = join(scratch, "prompts.jsonl");
   const fixture = await launchVerificationServer({ ...process.env, TZ: ZONE, FAKE_CLAUDE_PROMPTS: prompts });
-  const control = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
   const api = async <T = any>(path: string, method = "GET", body?: unknown, status = 200): Promise<T> => {
     const response = await fetch(fixture.info.url + path, {
       method,

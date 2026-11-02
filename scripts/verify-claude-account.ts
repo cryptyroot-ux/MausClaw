@@ -2,7 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const fixture = await launchVerificationServer();
@@ -44,7 +44,7 @@ try {
   };
   writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
   await api("PUT", "/api/config", { defaultModelSelection: { instanceId: "claude-review", model: "sonnet" } });
-  await runControlOmb(["new-bot", "--name", "Claude Account Fixture", "--url", fixture.info.url]);
+  await runControlMausclaw(["new-bot", "--name", "Claude Account Fixture", "--url", fixture.info.url]);
   const { instances } = await api("GET", "/api/instances");
   const account = instances.find((instance: { instanceId: string }) => instance.instanceId === "claude-review");
   if (account?.snapshot.account?.email !== "ada@example.test" || !account.authentication?.signOut) {

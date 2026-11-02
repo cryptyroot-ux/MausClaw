@@ -130,7 +130,7 @@ function desktopApp(saved: string | null = null) {
 async function openPage(app: ReturnType<typeof desktopApp>, stored: string | null = null) {
   vi.resetModules();
   local = memoryStorage();
-  if (stored !== null) local.setItem("omb-language", stored);
+  if (stored !== null) local.setItem("mausclaw-language", stored);
   const bridge = app.page();
   browser = Object.assign(new EventTarget(), { ogb: { desktopLanguage: bridge } });
   vi.stubGlobal("localStorage", local);
@@ -147,7 +147,7 @@ describe("app language in the desktop app", () => {
     expect(app.saved()).toBe("en");
 
     const team = await openPage(app);
-    expect(team.storage.getItem("omb-language"), "the team's page has its own storage").toBeNull();
+    expect(team.storage.getItem("mausclaw-language"), "the team's page has its own storage").toBeNull();
     expect(team.preference.languageChoice()).toBe("en");
     expect(team.preference.effectiveLanguage(team.preference.useLanguageChoice(), "de")).toBe("en");
 

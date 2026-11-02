@@ -3,19 +3,19 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireBot } from "../shared/wire.ts";
 import { CAPTURE_MARKER } from "./memory-capture.ts";
 
 it("captures a member bot's room turn into its memory, sourced to the room, once Learn from group chats is on", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-room-capture-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-room-capture-"));
   const routes = join(scratch, "routes.json");
   const textLog = join(scratch, "text-prompts.jsonl");
   writeFileSync(routes, JSON.stringify({
     [CAPTURE_MARKER]: JSON.stringify([{ text: "The garden launch moved to Friday", kind: "decision", confidence: 0.9 }]),
   }));
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_TEXT_ROUTES: routes, FAKE_CLAUDE_TEXT_LOG: textLog });
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
+  const env = { MAUSCLAW_URL: fixture.info.url };
   const api = async <T = any>(path: string, method = "GET", body?: unknown): Promise<T> => {
     const response = await fetch(fixture.info.url + path, {
       method,
@@ -50,7 +50,7 @@ it("captures a member bot's room turn into its memory, sourced to the room, once
       setup: { bulletin: "", defaultResponder: { kind: "member", botId: lead.id } },
     });
     await api(`/api/groups/${group.id}/messages`, "POST", { text: "Lead, the garden launch moved to Friday." });
-    await runControlOmb(["wait", "--bot", lead.id, "--timeout", "30"], { env });
+    await runControlMausclaw(["wait", "--bot", lead.id, "--timeout", "30"], { env });
 
     await expect.poll(async () => (await api<{ text: string }>(`/api/bots/${lead.id}/memory/file?path=MEMORY.md`)).text, { timeout: 30_000 })
       .toMatch(/- \d{4}-\d{2}-\d{2} · from room "Garden room" \(noticed\) · The garden launch moved to Friday/);
@@ -65,7 +65,7 @@ it("captures a member bot's room turn into its memory, sourced to the room, once
 
 // Codex has no generateText: its background call is generateMemoryText, a tool-free `codex exec`.
 it("captures a Codex member bot's room turn through Codex's own background call", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-room-capture-codex-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-room-capture-codex-"));
   const routes = join(scratch, "routes.json");
   const textLog = join(scratch, "codex-exec.jsonl");
   writeFileSync(routes, JSON.stringify({
@@ -73,7 +73,7 @@ it("captures a Codex member bot's room turn through Codex's own background call"
   }));
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CODEX_TEXT_ROUTES: routes, FAKE_CODEX_TEXT_LOG: textLog },
     undefined, undefined, undefined, undefined, undefined, ["codex"]);
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
+  const env = { MAUSCLAW_URL: fixture.info.url };
   const api = async <T = any>(path: string, method = "GET", body?: unknown): Promise<T> => {
     const response = await fetch(fixture.info.url + path, {
       method,
@@ -102,7 +102,7 @@ it("captures a Codex member bot's room turn through Codex's own background call"
       setup: { bulletin: "", defaultResponder: { kind: "member", botId: lead.id } },
     });
     await api(`/api/groups/${group.id}/messages`, "POST", { text: "Lead, the orchard tour moved to Monday." });
-    await runControlOmb(["wait", "--bot", lead.id, "--timeout", "30"], { env });
+    await runControlMausclaw(["wait", "--bot", lead.id, "--timeout", "30"], { env });
 
     await expect.poll(async () => (await api<{ text: string }>(`/api/bots/${lead.id}/memory/file?path=MEMORY.md`)).text, { timeout: 30_000 })
       .toMatch(/- \d{4}-\d{2}-\d{2} · from room "Orchard room" \(noticed\) · The orchard tour moved to Monday/);

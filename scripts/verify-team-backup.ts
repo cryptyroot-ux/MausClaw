@@ -1,7 +1,7 @@
 // One owned fake-engine fixture. This command accepts no live server URL.
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { request } from "./mcp-server.ts";
 import { parseTeamBackup } from "../shared/team-backup.ts";
 
@@ -10,7 +10,7 @@ export async function verifyTeamBackup(report: (event: unknown) => void = () => 
   report({ fixture: fixture.info });
   const url = fixture.info.url;
   const command = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", url]);
+    const result = await runControlMausclaw([...args, "--url", url]);
     report({ command: [...args, "--url", url], result });
     return result;
   };

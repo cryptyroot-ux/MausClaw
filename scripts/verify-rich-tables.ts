@@ -2,7 +2,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -10,7 +10,7 @@ const fixture = await launchVerificationServer();
 let ui: MountedPreview | undefined;
 try {
   const api = fixtureApi(fixture.info.url);
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
   await control(["new-bot", "--name", "Table reviewer"]);
   const { bots } = await api("GET", "/api/bots?messages=0");
   const bot = bots.find((item: { name: string }) => item.name === "Table reviewer");
@@ -40,7 +40,7 @@ try {
   const message = messages.find((item: { text?: string }) => item.text?.includes("Quarterly report"));
   if (!message) throw new Error("Fixture did not produce the table reply");
   ui = await mountPreview(fixture, {
-    entry: "/scripts/testing/rich-tables-preview.tsx", route: "/__rich-tables.html", title: "Isolated OMB tables",
+    entry: "/scripts/testing/rich-tables-preview.tsx", route: "/__rich-tables.html", title: "Isolated MausClaw tables",
     extraRoutes: [{ path: "/__table-fixture", handler: (_req, res) => {
       res.setHeader("content-type", "application/json");
       res.end(JSON.stringify({ text: message.text, message: { threadId: sent.taskId, messageId: message.id } }));

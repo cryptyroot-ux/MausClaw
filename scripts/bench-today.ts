@@ -6,10 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 
-const directory = mkdtempSync(join(tmpdir(), "omb-today-bench-"));
+const directory = mkdtempSync(join(tmpdir(), "mausclaw-today-bench-"));
 process.env.HOME = directory;
 process.env.USERPROFILE = directory;
-process.env.OMB_DATA_DIR = join(directory, "data");
+process.env.MAUSCLAW_DATA_DIR = join(directory, "data");
 const messageDb = await import("../server/message-db.ts");
 const { todayReport } = await import("../server/today.ts");
 
@@ -48,7 +48,7 @@ for (let turn = 0; seeded < total; turn++) {
 }
 try {
   for (const [threadId, messages] of threads) messageDb.importThread(threadId, messages as never, String(messages.at(-1)?.id ?? ""));
-  const raw = new DatabaseSync(join(process.env.OMB_DATA_DIR, "messages.db"));
+  const raw = new DatabaseSync(join(process.env.MAUSCLAW_DATA_DIR, "messages.db"));
   console.log(JSON.stringify({ bytes: (raw.prepare("SELECT page_count * page_size AS bytes FROM pragma_page_count(), pragma_page_size()").get() as { bytes: number }).bytes }));
   const sources = { bots, groups: [], routines: null, engines: [], parked: [] };
   const viewer = { admin: true, thread: () => true, routine: () => true };

@@ -38,7 +38,7 @@ describe("useExternalChatLinks", () => {
 
     const [cleanup] = render(loading, dispatch);
     expect(cleanup).toBe(unsubscribe);
-    deliver!("openmausbot://bot/scout");
+    deliver!("mausclaw://bot/scout");
     render(loading, dispatch);
     expect(dispatch).not.toHaveBeenCalled();
 
@@ -56,7 +56,7 @@ describe("useExternalChatLinks", () => {
 
   it("closes Settings and the shortcuts list so the linked chat is not left behind them", () => {
     vi.stubGlobal("window", {});
-    fixture.link = "openmausbot://bot/scout";
+    fixture.link = "mausclaw://bot/scout";
     const dispatch = vi.fn();
     render({ ...loaded, appSettingsOpen: true, shortcutsOpen: true }, dispatch);
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
@@ -69,7 +69,7 @@ describe("useExternalChatLinks", () => {
 
   it("opens a bot's link as its row would: at its main thread while threads are hidden", () => {
     vi.stubGlobal("window", {});
-    fixture.link = "openmausbot://bot/scout";
+    fixture.link = "mausclaw://bot/scout";
     fixture.showThreads = false;
     const dispatch = vi.fn();
     const left = { ...scout, threadId: "scout-report", mainThreadId: "scout-main",

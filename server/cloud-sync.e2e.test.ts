@@ -13,7 +13,7 @@ import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0123456789ab.fly.dev";
+const HOST = "mausclaw-t-0123456789ab.fly.dev";
 const PC_ORIGIN = `https://${HOST}`;
 const secret = randomBytes(32).toString("base64url");
 let home: string;
@@ -44,18 +44,18 @@ async function api(method: string, path: string, options: { body?: unknown; remo
 }
 
 async function ownerPairing(): Promise<string> {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const granted = await api("POST", "/api/cloud/pairing", { remote: true, headers: {
-    "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-    "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+    "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body: JSON.parse(body) });
   return (await api("POST", "/api/auth/pair", { remote: true, body: { code: granted.body.code } })).body.token as string;
 }
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-cloud-sync-e2e-"));
-  const dataDir = join(home, ".openmausbot");
+  home = mkdtempSync(join(tmpdir(), "mausclaw-cloud-sync-e2e-"));
+  const dataDir = join(home, ".mausclaw");
   mkdirSync(dataDir, { recursive: true });
   const cli = join(home, "fixture-claude.mjs");
   writeFileSync(cli, `#!/usr/bin/env node
@@ -72,7 +72,7 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
     },
   }));
   mkdirSync(join(home, "web"));
-  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>OpenMausBot</title>");
+  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>MausClaw</title>");
   const port = await freePortBlock([0, 1]);
   base = `http://127.0.0.1:${port}`;
   const offlinePrelude = `data:text/javascript,${encodeURIComponent('globalThis.fetch = async () => new Response("offline fixture", { status: 503 });')}`;
@@ -82,9 +82,9 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
       PATH: process.env.PATH,
       ...(process.env.PATHEXT ? { PATHEXT: process.env.PATHEXT } : {}),
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-      HOME: home, USERPROFILE: home, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: join(home, "web"),
-      OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`, OMB_SYNC_ROOT: join(home, "Synced"),
+      HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: join(home, "web"),
+      MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`, MAUSCLAW_SYNC_ROOT: join(home, "Synced"),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -112,14 +112,14 @@ const desktopFetch = (url: string, init: RequestInit & { headers?: Record<string
 function desktop(pcHome: string) {
   return createCloudFilesService({
     settingsFile: join(pcHome, "user", "settings.json"), stateFile: join(pcHome, "user", "state.db"),
-    documentsDir: join(pcHome, "Documents"), localDataDir: join(pcHome, ".openmausbot"), homeDir: pcHome, platform: process.platform, hostname: "Ash-PC",
+    documentsDir: join(pcHome, "Documents"), localDataDir: join(pcHome, ".mausclaw"), homeDir: pcHome, platform: process.platform, hostname: "Ash-PC",
     cloudOrigin: () => PC_ORIGIN, fetch: desktopFetch as typeof fetch, trashItem: async (file: string) => rmSync(file), markDownloaded: async () => {},
     watch: () => () => {}, now: () => Date.now() + 60_000,
   });
 }
 
 it("shares a PC folder as a read-only copy: changes go to My Cloud, a bot's edit there is replaced, a delete goes to the trash", async () => {
-  const pcHome = realpathSync(mkdtempSync(join(tmpdir(), "omb-files-pc-")));
+  const pcHome = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-files-pc-")));
   const project = join(pcHome, "Clients");
   mkdirSync(project, { recursive: true });
   writeFileSync(join(project, "brief.md"), "the brief");
@@ -163,13 +163,13 @@ it("shares a PC folder as a read-only copy: changes go to My Cloud, a bot's edit
 }, 60_000);
 
 it("a bot's turn wakes the desktop, and its new work comes down to Documents/MausBot/<bot>/<conversation>", async () => {
-  const pcHome = realpathSync(mkdtempSync(join(tmpdir(), "omb-files-pc-")));
+  const pcHome = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-files-pc-")));
   const created = await api("POST", "/api/bots", { body: { name: "Report Owl", modelSelection: { instanceId: "claude", model: "claude-sonnet-5" } } });
   const bot = created.body.bot as { id: string; threadId: string };
   const service = desktop(pcHome);
   try {
     await service.pass();
-    const output = join(home, ".openmausbot", "task-workspaces", bot.id, bot.threadId);
+    const output = join(home, ".mausclaw", "task-workspaces", bot.id, bot.threadId);
     mkdirSync(output, { recursive: true });
     writeFileSync(join(output, "report.md"), "# Q3");
     const later = new Date(Date.now() + 120_000);

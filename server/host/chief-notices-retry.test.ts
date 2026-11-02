@@ -67,14 +67,14 @@ describe("why a Chief's retry of a teammate's thread is refused", () => {
 
 const CRASH = "claude exited 3 before result: fake-claude: simulated crash before result";
 const DENIED = "One or more tool operations failed or were denied. See the tool results; the final response is not an execution receipt.";
-const RETRIED = "OpenMausBot already retried this run once by itself; the failure above is how that retry ended.";
+const RETRIED = "MausClaw already retried this run once by itself; the failure above is how that retry ended.";
 
-describe("OpenMausBot's one automatic retry of a teammate's failed thread", () => {
+describe("MausClaw's one automatic retry of a teammate's failed thread", () => {
   it("runs the thread once more before its Chief hears, then tells the Chief how that retry ended, and never retries the retry", () => {
     const f = fixture();
     f.store.appendMessage("ada-job", { role: "user", kind: "text", text: "Reconcile the September invoices." });
     f.notices.reportIncident({ kind: "failed", bot: f.ada as never, threadId: "ada-job", detail: CRASH });
-    expect(f.turnsOf("ada")).toEqual([{ threadId: "ada-job", text: expect.stringMatching(/^\[Retry requested by OpenMausBot, automatically, once, before telling Clive, your Chief of Staff,/) }]);
+    expect(f.turnsOf("ada")).toEqual([{ threadId: "ada-job", text: expect.stringMatching(/^\[Retry requested by MausClaw, automatically, once, before telling Clive, your Chief of Staff,/) }]);
     expect(f.turnsOf("ada")[0]!.text).toContain("Continue the request above from where it stopped and finish it.");
     expect(f.turnsOf("chief")).toEqual([]);
 
@@ -129,7 +129,7 @@ describe("OpenMausBot's one automatic retry of a teammate's failed thread", () =
     waiting.shift()!();
     await new Promise((resolve) => setImmediate(resolve));
     expect(f.turnsOf("ada")).toEqual([]);
-    expect(f.turnsOf("chief")[0]!.text).toContain(`OpenMausBot did not retry it: its retry could not start (${RETRY_BLOCKED.running}).`);
+    expect(f.turnsOf("chief")[0]!.text).toContain(`MausClaw did not retry it: its retry could not start (${RETRY_BLOCKED.running}).`);
   });
 
   it("tells the Chief, without retrying, when someone wrote in the thread since it failed", () => {
@@ -142,7 +142,7 @@ describe("OpenMausBot's one automatic retry of a teammate's failed thread", () =
       f.store.appendMessage("ada-job", { role: "user", kind: "text", text: "Never mind, I did it myself." });
       waiting.shift()!();
       expect(f.turnsOf("ada")).toEqual([]);
-      expect(f.turnsOf("chief")[0]!.text).toContain("OpenMausBot did not retry it: someone wrote in that thread since.");
+      expect(f.turnsOf("chief")[0]!.text).toContain("MausClaw did not retry it: someone wrote in that thread since.");
     } finally {
       vi.useRealTimers();
     }

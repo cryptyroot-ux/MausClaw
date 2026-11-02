@@ -13,7 +13,7 @@ import { removeTempDir } from "../../server/testing/cleanup.ts";
 import { createWorkspaceAccess } from "./workspace-access.ts";
 import { HOSTED_CONTRACT_VERSION } from "../../server/hosted-contract.ts";
 
-const env = { OMB_ADMIN_URL: "https://admin.example.test", OMB_ADMIN_WORKSPACE: "acme", OMB_PUBLIC_URL: "https://acme.example.test" };
+const env = { MAUSCLAW_ADMIN_URL: "https://admin.example.test", MAUSCLAW_ADMIN_WORKSPACE: "acme", MAUSCLAW_PUBLIC_URL: "https://acme.example.test" };
 const email = "member@example.test";
 const proof = () => randomBytes(32).toString("base64url");
 const digest = (value: string) => createHash("sha256").update(value).digest("base64url");
@@ -35,7 +35,7 @@ const closed = vi.fn();
 const remote = vi.fn<typeof fetch>();
 
 beforeEach(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-hosted-access-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-hosted-access-"));
   clock = Date.now(); licensed = true; outage = false;
   contractVersion = HOSTED_CONTRACT_VERSION;
   localScopes = ["admin", "client"]; member = { email, role: "admin" };
@@ -44,7 +44,7 @@ beforeEach(async () => {
   closed.mockReset().mockImplementation((id: string) => streams.get(id)?.end());
   sessions.onSessionRevoked(closed);
   remote.mockReset().mockImplementation(async (url, init) => {
-    expect(new URL(String(url)).origin).toBe(env.OMB_ADMIN_URL);
+    expect(new URL(String(url)).origin).toBe(env.MAUSCLAW_ADMIN_URL);
     expect(init).toMatchObject({ method: "POST", credentials: "omit", redirect: "error", headers: { "content-type": "application/json" } });
     expect(init?.signal).toBeInstanceOf(AbortSignal);
     if (outage) throw new Error("PRIVATE upstream failure");
@@ -62,7 +62,7 @@ beforeEach(async () => {
   });
   access = createWorkspaceAccess({ sessions, cookieName: "session", closeSessionStreams: closed, entitled: () => licensed, env, now: () => clock, fetchImpl: remote });
   server = createServer(async (req, res) => {
-    const url = new URL(req.url!, env.OMB_PUBLIC_URL);
+    const url = new URL(req.url!, env.MAUSCLAW_PUBLIC_URL);
     if (await access.handlePublic(req, res, url)) return;
     const gate = resolveRequestAuth(req, { sessions, cookieName: "session", streamPath: "/api/events", url });
     const failure = gate.auth ? await access.authorize(req, gate.auth) : gate;
@@ -96,7 +96,7 @@ async function begin(workspace = "acme") {
   const start = await call("/api/auth/hosted/start");
   expect(start.status).toBe(302);
   const target = new URL(start.location);
-  expect(target.origin + target.pathname).toBe(`${env.OMB_ADMIN_URL}/connect`);
+  expect(target.origin + target.pathname).toBe(`${env.MAUSCLAW_ADMIN_URL}/connect`);
   expect(target.searchParams.get("workspace")).toBe("acme");
   const state = target.searchParams.get("state")!;
   const code = proof(); codes.set(code, { workspace, challenge: target.searchParams.get("challenge")! });
@@ -259,7 +259,7 @@ describe("hosted workspace handoff and continuous access", () => {
     expect((await call("/api/auth/session", cookie)).status).toBe(200);
   });
   it("lets only verified portal grants use portal membership and still enforces outage, demotion and stream revocation", async () => {
-    const portalEnv = { ...env, OMB_ADMIN_MEMBERSHIP: "portal" };
+    const portalEnv = { ...env, MAUSCLAW_ADMIN_MEMBERSHIP: "portal" };
     localScopes = null;
     sessions = new SessionRegistry({ file: join(home, "sessions.json"), emailScopes: () => localScopes, portalMembership: hostedWorkspaceConfiguration(portalEnv)?.portalMembership === true });
     sessions.onSessionRevoked(closed);
@@ -305,10 +305,10 @@ describe("hosted workspace handoff and continuous access", () => {
     expect(closed).toHaveBeenCalledWith(session.id);
   }, 7_000);
   it.each([
-    { OMB_ADMIN_URL: "http://admin.example.test" }, { OMB_ADMIN_URL: "https://admin.example.test/path/.." },
-    { OMB_ADMIN_URL: "https://user:secret@admin.example.test" }, { OMB_ADMIN_WORKSPACE: "" },
-    { OMB_PUBLIC_URL: "https://acme.example.test/?redirect=evil" },
-    { OMB_ADMIN_MEMBERSHIP: "invalid" },
+    { MAUSCLAW_ADMIN_URL: "http://admin.example.test" }, { MAUSCLAW_ADMIN_URL: "https://admin.example.test/path/.." },
+    { MAUSCLAW_ADMIN_URL: "https://user:secret@admin.example.test" }, { MAUSCLAW_ADMIN_WORKSPACE: "" },
+    { MAUSCLAW_PUBLIC_URL: "https://acme.example.test/?redirect=evil" },
+    { MAUSCLAW_ADMIN_MEMBERSHIP: "invalid" },
   ])("fails closed with invalid configuration: %j", async (patch) => {
     access = createWorkspaceAccess({ sessions, cookieName: "session", closeSessionStreams: closed, entitled: () => true, env: { ...env, ...patch }, fetchImpl: remote });
     expect((await call("/api/auth/hosted/start")).status).toBe(503);

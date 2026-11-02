@@ -48,7 +48,7 @@ export function createOutboundHold(deps: OutboundHoldDeps): OutboundHold {
       const policy = currentSender.outbound ?? DEFAULT_OUTBOUND_POLICY;
       const { app, calls, summary } = outboundCard(outboundCalls);
       const capNote = (count: number) =>
-        `OpenMausBot did not send this. ${currentSender.name} has reached its daily limit of ${count} outbound action${count === 1 ? "" : "s"}. Ask the user to raise the limit under the bot's Permissions before trying again.`;
+        `MausClaw did not send this. ${currentSender.name} has reached its daily limit of ${count} outbound action${count === 1 ? "" : "s"}. Ask the user to raise the limit under the bot's Permissions before trying again.`;
       if (policy.policy === "allow" && !opaque) {
         const today = outboundCounts.today(currentSender.id);
         if (today + outboundCalls.length > policy.dailyCap) {
@@ -105,8 +105,8 @@ export function createOutboundHold(deps: OutboundHoldDeps): OutboundHold {
           }
           return refuseOutbound(
             answer === "timeout"
-              ? "OpenMausBot did not send this: nobody answered the approval in time. Ask the user before trying again."
-              : "OpenMausBot did not send this: the user declined. Do not retry it; ask the user what they would like instead.",
+              ? "MausClaw did not send this: nobody answered the approval in time. Ask the user before trying again."
+              : "MausClaw did not send this: the user declined. Do not retry it; ask the user what they would like instead.",
           );
         }
         return { ok: true, approved: true };

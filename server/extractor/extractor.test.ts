@@ -16,7 +16,7 @@ const CF_TOKEN = "cf_extract_unit_token_0123456789";
 const ACCOUNT = "fedcba9876543210fedcba9876543210";
 const OR_KEY = "sk-or-v1-extract-unit-0123456789";
 const RELAY = "https://cloud.example.test/api/cloud/services/decider";
-const INCLUDED = "omb_decide_extract_included_token_0123456789";
+const INCLUDED = "mausclaw_decide_extract_included_token_0123456789";
 const CF_RUN = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/ai/run/@cf/cloudflare`;
 const OWN: AppConfig = { decider: { enabled: true, workersAiToken: CF_TOKEN, workersAiAccountId: ACCOUNT } };
 const FIELDS = workersFixture.fields as FieldSchema;
@@ -28,13 +28,13 @@ const extractor = (config: AppConfig, fetchImpl: FetchMock) => createExtractor({
 const sent = (fetchImpl: FetchMock, index = 0) => {
   const [url, init] = fetchImpl.mock.calls[index]!;
   const headers = init!.headers as Record<string, string>;
-  return { url: String(url), auth: headers.authorization, body: JSON.parse(String(init!.body)), ...(headers["x-omb-seam"] ? { seam: headers["x-omb-seam"] } : {}) };
+  return { url: String(url), auth: headers.authorization, body: JSON.parse(String(init!.body)), ...(headers["x-mausclaw-seam"] ? { seam: headers["x-mausclaw-seam"] } : {}) };
 };
 /** Answers like Workers AI, by model, from the fixture. */
 const workersAi = () => vi.fn<typeof fetch>(async (url) => json(String(url).endsWith("/clairic") ? workersFixture.clairic.response : workersFixture.clef.response));
 const cloud = () => {
-  vi.stubEnv("OMB_CLOUD_DECIDER_URL", RELAY);
-  vi.stubEnv("OMB_CLOUD_DECIDER_TOKEN", INCLUDED);
+  vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_URL", RELAY);
+  vi.stubEnv("MAUSCLAW_CLOUD_DECIDER_TOKEN", INCLUDED);
 };
 
 afterEach(() => {

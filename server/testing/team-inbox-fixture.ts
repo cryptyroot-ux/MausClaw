@@ -24,7 +24,7 @@ type Task = { threadId: string; title: string; archivedAt?: number; activity?: s
 type Bot = Partial<Omit<BotRecord, "tasks">> & { id: string; name: string; threadId: string; tasks: Task[] };
 
 export function teamInbox(options: { team?: boolean; representative?: TeamMessagesDeps["inbox"]["representative"]; noChiefFor?: string[]; handed?: Record<string, string> } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-team-inbox-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-team-inbox-"));
   const listeners = new Set<(change: StoreChange) => void>();
   const emit = (change: StoreChange) => { for (const listener of listeners) listener(change); };
   const threads = new Map<string, Message[]>();

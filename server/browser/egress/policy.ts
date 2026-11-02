@@ -1,5 +1,5 @@
 // What a bot's browser may connect to: every address a destination resolves to gets a class, and the host
-// OpenMausBot runs on decides which classes pass.
+// MausClaw runs on decides which classes pass.
 import { BlockList, isIP } from "node:net";
 import { z } from "zod";
 
@@ -11,11 +11,11 @@ export { addressClass, ownAddresses, type AddressClass };
 export type EgressHost = "desktop" | "server" | "cloud";
 
 /** `home-network` and `port` come from the person's own computer when My Cloud's browsing goes out through it. */
-export type Refusal = "omb" | "this-computer" | "local-network" | "link-local" | "metadata" | "reserved" | "rebinding" | "reddit" | "home-network" | "port";
+export type Refusal = "mausclaw" | "this-computer" | "local-network" | "link-local" | "metadata" | "reserved" | "rebinding" | "reddit" | "home-network" | "port";
 
 /** How a refusal reads in the page-health line. */
 export const REFUSAL_TEXT: Record<Refusal, string> = {
-  omb: "OpenMausBot's own service",
+  mausclaw: "MausClaw's own service",
   "this-computer": "a service on this computer that no bot started",
   "local-network": "the local network",
   "link-local": "a link-local address",
@@ -37,7 +37,7 @@ export function namesThisMachine(host: string): boolean {
 /** `browserEngine.egress` in config.json. */
 export const browserEgressConfigSchema = z.object({
   /** Self-hosted servers only: local-network or this-computer destinations bots' browsers may reach, as
-   * `10.0.0.5`, `192.168.1.0/24`, `10.0.0.5:8080`, `fd12::/48` or `[fd12::1]:443`. OpenMausBot's own ports,
+   * `10.0.0.5`, `192.168.1.0/24`, `10.0.0.5:8080`, `fd12::/48` or `[fd12::1]:443`. MausClaw's own ports,
    * cloud metadata and link-local addresses stay closed. MausBot Cloud ignores it. */
   allow: z.array(z.string().trim().max(64).refine((entry) => parseAllowEntry(entry) !== null, {
     message: "must be an IP address or CIDR range, with an optional :port",
@@ -81,7 +81,7 @@ export function allowList(entries: readonly string[] | undefined): (address: str
 
 export interface EgressRules {
   host: EgressHost;
-  /** A port one of OpenMausBot's own listeners holds on this machine. */
+  /** A port one of MausClaw's own listeners holds on this machine. */
   ownPort(port: number): boolean;
   /** Whether every listener on this loopback port belongs to a bot's processes. */
   botPort(port: number): Promise<boolean>;
@@ -111,7 +111,7 @@ export async function refusalFor(
       if (open) continue;
       return "local-network";
     }
-    if (rules.ownPort(port)) return "omb";
+    if (rules.ownPort(port)) return "mausclaw";
     // Desktop dev servers are reached by name or address, never through a public name that points here.
     if (rules.host === "desktop") {
       if (namesThisMachine(host)) continue;

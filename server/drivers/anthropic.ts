@@ -1,4 +1,4 @@
-// Anthropic Messages API driver over the OMB-owned native engine.
+// Anthropic Messages API driver over the MausClaw-owned native engine.
 import type { ProviderDriver } from "../contracts.ts";
 import { createOpenAIChatRuntime } from "./openai-chat.ts";
 import { createNativeChatEngine } from "./native-engine.ts";

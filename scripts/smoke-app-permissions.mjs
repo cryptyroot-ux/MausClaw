@@ -15,7 +15,7 @@ import screenPreview from "../electron/screen-preview.cjs";
 // Chromium can write cache files after app.quit. The Node parent owns cleanup
 // so the disposable profile is removed only after the Electron child exits.
 if (!process.versions.electron) {
-  const data = mkdtempSync(join(tmpdir(), "omb-permission-smoke-"));
+  const data = mkdtempSync(join(tmpdir(), "mausclaw-permission-smoke-"));
   let code = 1;
   try {
     const result = spawnSync(electron, [fileURLToPath(import.meta.url), data], { stdio: "inherit", timeout: 40_000 });

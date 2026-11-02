@@ -28,7 +28,7 @@ class MemoryStore implements WebhookRequestStore {
 }
 
 function harness() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-webhook-requests-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-webhook-requests-"));
   dirs.push(dir);
   let now = Date.parse("2026-10-17T10:00:00Z");
   const queued: Array<{ webhookId: string; prompt: string }> = [];

@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { removeTempDir } from "../server/testing/cleanup.ts";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const ARABIC_REPLY = [
@@ -56,7 +56,7 @@ const ENGLISH_REPLY = [
 // Each turn spawns a fresh CLI, so the reply cursor lives in a file — in this
 // launcher's own scratch directory, since the fixture home does not exist
 // until the server is up. The launcher forwards FAKE_CLAUDE_* to its engine.
-const scratch = mkdtempSync(join(tmpdir(), "openmausbot-verify-bidi-"));
+const scratch = mkdtempSync(join(tmpdir(), "mausclaw-verify-bidi-"));
 const fixture = await launchVerificationServer({
   ...process.env,
   FAKE_CLAUDE_REPLIES: JSON.stringify([ARABIC_REPLY, ENGLISH_REPLY]),
@@ -68,7 +68,7 @@ const fixture = await launchVerificationServer({
 let ui: MountedPreview | undefined;
 try {
   const api = fixtureApi(fixture.info.url);
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
 
   await control(["new-bot", "--name", "Probe"]);
   const { bots } = await api("GET", "/api/bots?messages=0");

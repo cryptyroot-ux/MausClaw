@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --experimental-strip-types
-// The openmausbot headless verbs for verifying an isolated fixture. A verb that
+// The mausclaw headless verbs for verifying an isolated fixture. A verb that
 // changes something never runs on a server it merely found.
 import { spawn, type ChildProcess } from "node:child_process";
 import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, writeFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { parseArgs, type ParseArgsOptionsConfig } from "node:util";
 import { EXIT, HeadlessError } from "../server/headless/args.ts";
 import { runHeadlessCommand } from "../server/headless/main.ts";
 import type { handleToolCall, request } from "./mcp-server.ts";
-import { launchUi, runControlOmbUi } from "./testing/control-omb-ui.ts";
+import { launchUi, runControlMausclawUi } from "./testing/control-mausclaw-ui.ts";
 import { removeTempDir, waitForExit } from "../server/testing/cleanup.ts";
 import { hostTimeout } from "../server/testing/host-timeout.ts";
 import { freePortBlock } from "../server/testing/ports.ts";
@@ -22,20 +22,20 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const FIXTURE_STARTER_BOT_NAME = "Fixture Starter";
 const FAKE_CLI = join(ROOT, "server", "testing", "fake-claude-cli.ts");
 
-export class ControlOmbError extends HeadlessError {
+export class ControlMausclawError extends HeadlessError {
   constructor(message: string, hint?: string) {
     super(message, EXIT.failed, hint);
   }
 }
 
-export interface ControlOmbDependencies {
+export interface ControlMausclawDependencies {
   callTool?: typeof handleToolCall;
   request?: typeof request;
   env?: NodeJS.ProcessEnv;
 }
 
 export const HELP_UI = `renderer (needs a ui launch handle; every verb takes --ui HANDLE, never discovery):
-  node --experimental-strip-types scripts/control-omb.ts ui launch [--entry threads] [--tool-calls JSON] [--mode happy] [--engine codex]
+  node --experimental-strip-types scripts/control-mausclaw.ts ui launch [--entry threads] [--tool-calls JSON] [--mode happy] [--engine codex]
   ui snapshot --ui HANDLE [--interactive]
   ui click --ui HANDLE (--ref @eN | --name NAME)
   ui type --ui HANDLE (--ref @eN | --name NAME) --text TEXT
@@ -47,7 +47,7 @@ export const HELP_UI = `renderer (needs a ui launch handle; every verb takes --u
   ui wait-settle --ui HANDLE [--timeout 30]
   ui help`;
 
-export const HELP = `control-omb — the openmausbot headless verbs (docs/headless-cli.md), for verifying a fixture
+export const HELP = `control-mausclaw — the mausclaw headless verbs (docs/headless-cli.md), for verifying a fixture
 
 read-only (every verb also takes --url URL):
   doctor
@@ -61,7 +61,7 @@ read-only (every verb also takes --url URL):
   export --thread ID --out DIR
   events --job THREAD_ID --until-settled
 
-mutating (an explicit --url or OPENMAUSBOT_URL/OMB_PORT is required):
+mutating (an explicit --url or MAUSCLAW_URL/MAUSCLAW_PORT is required):
   new-bot --name NAME [--section TEAM]
   new-channel --name NAME --members ID,ID
   send --bot ID --text TEXT [--task ID] [--dry-run]
@@ -76,7 +76,7 @@ mutating (an explicit --url or OPENMAUSBOT_URL/OMB_PORT is required):
 ${HELP_UI}
 
 isolated fixture:
-  node --experimental-strip-types scripts/control-omb.ts launch
+  node --experimental-strip-types scripts/control-mausclaw.ts launch
 
 Output is JSON. wait defaults to 30 seconds here. launch and ui launch own a temporary fake-engine server until interrupted.`;
 
@@ -97,21 +97,21 @@ export function parse(
       allowPositionals: false,
     }).values as Record<string, unknown> & { url?: string };
   } catch (error) {
-    throw new ControlOmbError(
+    throw new ControlMausclawError(
       error instanceof Error ? error.message : String(error),
-      `run control-omb help for the ${command} syntax`,
+      `run control-mausclaw help for the ${command} syntax`,
     );
   }
 }
 
-export async function runControlOmb(
+export async function runControlMausclaw(
   argv: string[],
-  dependencies: ControlOmbDependencies = {},
+  dependencies: ControlMausclawDependencies = {},
 ): Promise<unknown> {
   const [command = "help", ...args] = argv;
   if (command === "help" || command === "--help" || command === "-h") return HELP;
-  if (command === "launch") throw new ControlOmbError("launch is available only from the executable CLI");
-  if (command === "ui") return runControlOmbUi(args);
+  if (command === "launch") throw new ControlMausclawError("launch is available only from the executable CLI");
+  if (command === "ui") return runControlMausclawUi(args);
   return runHeadlessCommand(argv, {
     env: dependencies.env ?? process.env,
     ...(dependencies.callTool ? { callTool: dependencies.callTool } : {}),
@@ -150,9 +150,9 @@ export function verificationServerEnvironment(parentEnv: NodeJS.ProcessEnv, data
     TMP: fixtureTemp,
     TMPDIR: fixtureTemp,
     HERMES_HOME: join(dataDir, ".hermes"),
-    OMB_DATA_DIR: dataDir,
-    OMB_PORT: String(port),
-    OMB_WEBHOOK_PORT: String(port + 1),
+    MAUSCLAW_DATA_DIR: dataDir,
+    MAUSCLAW_PORT: String(port),
+    MAUSCLAW_WEBHOOK_PORT: String(port + 1),
     // A caller's FAKE_CLAUDE_MODE overrides this below to drive failure paths.
     FAKE_CLAUDE_MODE: parentEnv.FAKE_CLAUDE_MODE || "happy",
     FAKE_CLAUDE_DUMP: join(dataDir, "fake-claude-dump.json"),
@@ -161,7 +161,7 @@ export function verificationServerEnvironment(parentEnv: NodeJS.ProcessEnv, data
     PATH: dirname(process.execPath),
     // Without it the server also scans /opt/homebrew/bin, /usr/local/bin and the
     // login shell's PATH, finding a developer's own engine CLIs that CI lacks.
-    OMB_TEST_SEALED_PATH: "1",
+    MAUSCLAW_TEST_SEALED_PATH: "1",
   });
   // The fake engines' knobs are the one thing a caller may script into the child.
   for (const [key, value] of Object.entries(parentEnv)) {
@@ -169,63 +169,63 @@ export function verificationServerEnvironment(parentEnv: NodeJS.ProcessEnv, data
     if ((key.startsWith("FAKE_CLAUDE_") || key.startsWith("FAKE_CODEX_TEXT_") || key.startsWith("FAKE_CODEX_COMMAND")) && key !== "FAKE_CLAUDE_DUMP" && value) childEnv[key] = value;
   }
   // Enables POST /api/testing/org-library; the route does not exist without it.
-  if (parentEnv.OMB_TEST_ORG_LIBRARY_KEY) childEnv.OMB_TEST_ORG_LIBRARY_KEY = parentEnv.OMB_TEST_ORG_LIBRARY_KEY;
+  if (parentEnv.MAUSCLAW_TEST_ORG_LIBRARY_KEY) childEnv.MAUSCLAW_TEST_ORG_LIBRARY_KEY = parentEnv.MAUSCLAW_TEST_ORG_LIBRARY_KEY;
   // One log line per browser call and preview frame.
-  if (parentEnv.OMB_BROWSER_TIMING === "1") childEnv.OMB_BROWSER_TIMING = "1";
+  if (parentEnv.MAUSCLAW_BROWSER_TIMING === "1") childEnv.MAUSCLAW_BROWSER_TIMING = "1";
   // A loopback fake only: the key never reaches a real provider.
-  const liveUrl = parentEnv.OMB_OPENAI_LIVE_URL?.trim() ?? "";
+  const liveUrl = parentEnv.MAUSCLAW_OPENAI_LIVE_URL?.trim() ?? "";
   if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(liveUrl)) {
-    childEnv.OMB_OPENAI_LIVE_URL = liveUrl;
-    if (parentEnv.OMB_OPENAI_LIVE_KEY) childEnv.OMB_OPENAI_LIVE_KEY = parentEnv.OMB_OPENAI_LIVE_KEY;
+    childEnv.MAUSCLAW_OPENAI_LIVE_URL = liveUrl;
+    if (parentEnv.MAUSCLAW_OPENAI_LIVE_KEY) childEnv.MAUSCLAW_OPENAI_LIVE_KEY = parentEnv.MAUSCLAW_OPENAI_LIVE_KEY;
   }
   // A loopback connected-apps service only (server/testing/broker-fake.ts): its token never reaches the real one.
-  const brokerUrl = parentEnv.OMB_COMPOSIO_BROKER_URL?.trim() ?? "";
-  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(brokerUrl) && parentEnv.OMB_COMPOSIO_BROKER_TOKEN) {
-    childEnv.OMB_COMPOSIO_BROKER_URL = brokerUrl;
-    childEnv.OMB_COMPOSIO_BROKER_TOKEN = parentEnv.OMB_COMPOSIO_BROKER_TOKEN;
+  const brokerUrl = parentEnv.MAUSCLAW_COMPOSIO_BROKER_URL?.trim() ?? "";
+  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(brokerUrl) && parentEnv.MAUSCLAW_COMPOSIO_BROKER_TOKEN) {
+    childEnv.MAUSCLAW_COMPOSIO_BROKER_URL = brokerUrl;
+    childEnv.MAUSCLAW_COMPOSIO_BROKER_TOKEN = parentEnv.MAUSCLAW_COMPOSIO_BROKER_TOKEN;
   }
   // Research against loopback stubs only (server/x-research.e2e.test.ts): the relay token crosses only with its stub,
   // and a treg stand-in replaces treg.to, so no test reaches a real relay or treg.
-  const xUrl = parentEnv.OMB_CLOUD_X_URL?.trim() ?? "";
+  const xUrl = parentEnv.MAUSCLAW_CLOUD_X_URL?.trim() ?? "";
   if (/^http:\/\/127\.0\.0\.1:\d{1,5}(?:\/[A-Za-z0-9_-]+)*$/.test(xUrl)) {
-    childEnv.OMB_CLOUD_X_URL = xUrl;
-    if (parentEnv.OMB_CLOUD_X_TOKEN) childEnv.OMB_CLOUD_X_TOKEN = parentEnv.OMB_CLOUD_X_TOKEN;
+    childEnv.MAUSCLAW_CLOUD_X_URL = xUrl;
+    if (parentEnv.MAUSCLAW_CLOUD_X_TOKEN) childEnv.MAUSCLAW_CLOUD_X_TOKEN = parentEnv.MAUSCLAW_CLOUD_X_TOKEN;
   }
   // @devs reports reach a loopback fake only, else a closed port: never the MausBot team.
-  const bugReportUrl = parentEnv.OMB_BUG_REPORT_URL?.trim() ?? "";
-  childEnv.OMB_BUG_REPORT_URL = /^http:\/\/127\.0\.0\.1:\d{1,5}\/[A-Za-z0-9/_-]*$/.test(bugReportUrl) ? bugReportUrl : "http://127.0.0.1:9/api/bug-reports";
-  const tregUrl = parentEnv.OMB_TREG_URL?.trim() ?? "";
-  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(tregUrl)) childEnv.OMB_TREG_URL = tregUrl;
+  const bugReportUrl = parentEnv.MAUSCLAW_BUG_REPORT_URL?.trim() ?? "";
+  childEnv.MAUSCLAW_BUG_REPORT_URL = /^http:\/\/127\.0\.0\.1:\d{1,5}\/[A-Za-z0-9/_-]*$/.test(bugReportUrl) ? bugReportUrl : "http://127.0.0.1:9/api/bug-reports";
+  const tregUrl = parentEnv.MAUSCLAW_TREG_URL?.trim() ?? "";
+  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(tregUrl)) childEnv.MAUSCLAW_TREG_URL = tregUrl;
   // Loopback only, for harness mechanics: a fake ElevenLabs the measurement
   // substrate can drive without a key. Never a real address.
-  const elevenApi = parentEnv.OMB_ELEVENLABS_API?.trim() ?? "";
-  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(elevenApi)) childEnv.OMB_ELEVENLABS_API = elevenApi;
+  const elevenApi = parentEnv.MAUSCLAW_ELEVENLABS_API?.trim() ?? "";
+  if (/^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(elevenApi)) childEnv.MAUSCLAW_ELEVENLABS_API = elevenApi;
   // Live calls need Pro; without it the fixture refuses a call with 402 needsPro.
-  if (parentEnv.OMB_PRO_PLAN?.trim() === "1") childEnv.OMB_PRO_PLAN = "1";
+  if (parentEnv.MAUSCLAW_PRO_PLAN?.trim() === "1") childEnv.MAUSCLAW_PRO_PLAN = "1";
   // Arms the one-shot audio-append failure inside the fixture server.
-  if (parentEnv.OMB_TEST_FAIL_AUDIO_APPEND_ONCE) {
-    childEnv.OMB_TEST_FAIL_AUDIO_APPEND_ONCE = parentEnv.OMB_TEST_FAIL_AUDIO_APPEND_ONCE;
+  if (parentEnv.MAUSCLAW_TEST_FAIL_AUDIO_APPEND_ONCE) {
+    childEnv.MAUSCLAW_TEST_FAIL_AUDIO_APPEND_ONCE = parentEnv.MAUSCLAW_TEST_FAIL_AUDIO_APPEND_ONCE;
   }
   // The Claude broker's approval deadline fires on a marker file, not after 15 minutes.
-  if (parentEnv.OMB_TEST_APPROVAL_CLOCK === "1") childEnv.OMB_TEST_APPROVAL_CLOCK = "1";
+  if (parentEnv.MAUSCLAW_TEST_APPROVAL_CLOCK === "1") childEnv.MAUSCLAW_TEST_APPROVAL_CLOCK = "1";
   // The stall watchdog fires on a marker file, not after 20 minutes of silence.
-  if (parentEnv.OMB_TEST_STALL_CLOCK === "1") childEnv.OMB_TEST_STALL_CLOCK = "1";
+  if (parentEnv.MAUSCLAW_TEST_STALL_CLOCK === "1") childEnv.MAUSCLAW_TEST_STALL_CLOCK = "1";
   // The first-reply rescue's delay in ms, so a check need not sit through 20 s of silence.
-  if (/^\d{1,6}$/.test(parentEnv.OMB_FIRST_REPLY_NOTICE_MS ?? "")) childEnv.OMB_FIRST_REPLY_NOTICE_MS = parentEnv.OMB_FIRST_REPLY_NOTICE_MS;
+  if (/^\d{1,6}$/.test(parentEnv.MAUSCLAW_FIRST_REPLY_NOTICE_MS ?? "")) childEnv.MAUSCLAW_FIRST_REPLY_NOTICE_MS = parentEnv.MAUSCLAW_FIRST_REPLY_NOTICE_MS;
   // The quiet-status knobs in ms, so a long tool call shows its sign of life without a minute's wait.
-  for (const knob of ["OMB_ACP_QUIET_NOTICE_MS", "OMB_ACP_QUIET_TICK_MS"] as const) {
+  for (const knob of ["MAUSCLAW_ACP_QUIET_NOTICE_MS", "MAUSCLAW_ACP_QUIET_TICK_MS"] as const) {
     if (/^\d{1,7}$/.test(parentEnv[knob] ?? "")) childEnv[knob] = parentEnv[knob];
   }
-  // The UI checks drive this fixture from a real browser, as `pnpm dev` does; OMB_DEV_TRUST_LOCAL_BROWSER=0 tests the sign-in.
-  if (parentEnv.OMB_DEV_TRUST_LOCAL_BROWSER !== "0") childEnv.OMB_DEV_TRUST_LOCAL_BROWSER = "1";
+  // The UI checks drive this fixture from a real browser, as `pnpm dev` does; MAUSCLAW_DEV_TRUST_LOCAL_BROWSER=0 tests the sign-in.
+  if (parentEnv.MAUSCLAW_DEV_TRUST_LOCAL_BROWSER !== "0") childEnv.MAUSCLAW_DEV_TRUST_LOCAL_BROWSER = "1";
   // Desktop mode: the owner capability the app would hand the server.
-  if (parentEnv.OMB_TEST_DESKTOP_OWNER_TOKEN) {
-    childEnv.OMB_TEST_DESKTOP_OWNER_TOKEN = parentEnv.OMB_TEST_DESKTOP_OWNER_TOKEN;
-    childEnv.OMB_DESKTOP_PARENT = "1";
-    if (parentEnv.OMB_TEST_DESKTOP_PAGES_ACCESS) childEnv.OMB_TEST_DESKTOP_PAGES_ACCESS = parentEnv.OMB_TEST_DESKTOP_PAGES_ACCESS;
+  if (parentEnv.MAUSCLAW_TEST_DESKTOP_OWNER_TOKEN) {
+    childEnv.MAUSCLAW_TEST_DESKTOP_OWNER_TOKEN = parentEnv.MAUSCLAW_TEST_DESKTOP_OWNER_TOKEN;
+    childEnv.MAUSCLAW_DESKTOP_PARENT = "1";
+    if (parentEnv.MAUSCLAW_TEST_DESKTOP_PAGES_ACCESS) childEnv.MAUSCLAW_TEST_DESKTOP_PAGES_ACCESS = parentEnv.MAUSCLAW_TEST_DESKTOP_PAGES_ACCESS;
   }
   // The driver record the app hands its own server: without it, no server may use this computer.
-  if (parentEnv.OMB_TEST_DESKTOP_CUA_CONNECTION) childEnv.OMB_TEST_DESKTOP_CUA_CONNECTION = parentEnv.OMB_TEST_DESKTOP_CUA_CONNECTION;
+  if (parentEnv.MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION) childEnv.MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION = parentEnv.MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION;
   return childEnv;
 }
 
@@ -234,10 +234,10 @@ export function verificationServerArgs(childEnv: NodeJS.ProcessEnv): string[] {
   const hook = (file: string) => ["--import", pathToFileURL(join(ROOT, "server", "testing", file)).href];
   return [
     "--experimental-strip-types",
-    ...(childEnv.OMB_TEST_FAIL_AUDIO_APPEND_ONCE === "1" ? hook("fail-audio-append-once.mjs") : []),
-    ...(childEnv.OMB_TEST_DESKTOP_OWNER_TOKEN || childEnv.OMB_TEST_DESKTOP_CUA_CONNECTION ? hook("desktop-parent.mjs") : []),
-    ...(childEnv.OMB_TEST_APPROVAL_CLOCK === "1" ? hook("approval-clock-hooks.mjs") : []),
-    ...(childEnv.OMB_TEST_STALL_CLOCK === "1" ? hook("stall-clock-hooks.mjs") : []),
+    ...(childEnv.MAUSCLAW_TEST_FAIL_AUDIO_APPEND_ONCE === "1" ? hook("fail-audio-append-once.mjs") : []),
+    ...(childEnv.MAUSCLAW_TEST_DESKTOP_OWNER_TOKEN || childEnv.MAUSCLAW_TEST_DESKTOP_CUA_CONNECTION ? hook("desktop-parent.mjs") : []),
+    ...(childEnv.MAUSCLAW_TEST_APPROVAL_CLOCK === "1" ? hook("approval-clock-hooks.mjs") : []),
+    ...(childEnv.MAUSCLAW_TEST_STALL_CLOCK === "1" ? hook("stall-clock-hooks.mjs") : []),
     join(ROOT, "server", "index.ts"),
   ];
 }
@@ -261,29 +261,29 @@ export async function launchVerificationServer(
 ): Promise<VerificationServer> {
   if (boatFixtureApi) {
     if (!/^http:\/\/127\.0\.0\.1:[1-9]\d{0,4}$/.test(boatFixtureApi)) {
-      throw new ControlOmbError("Boat verification requires an explicit loopback HTTP provider");
+      throw new ControlMausclawError("Boat verification requires an explicit loopback HTTP provider");
     }
     try { new URL(boatFixtureApi); }
-    catch { throw new ControlOmbError("Boat verification requires a valid loopback port"); }
+    catch { throw new ControlMausclawError("Boat verification requires a valid loopback port"); }
   }
   if (localVm) {
     const endpoint = new URL(localVm.host);
     if (endpoint.protocol !== "ssh:" || endpoint.hostname !== "127.0.0.1" || endpoint.password) {
-      throw new ControlOmbError("Local VM verification requires an explicit loopback Podman machine");
+      throw new ControlMausclawError("Local VM verification requires an explicit loopback Podman machine");
     }
   }
-  // OMB_TEST_PORTS=19975-19999 keeps a recipe's fixture in a range of its own.
-  const range = /^(\d+)-(\d+)$/.exec((parentEnv.OMB_TEST_PORTS ?? process.env.OMB_TEST_PORTS)?.trim() ?? "");
+  // MAUSCLAW_TEST_PORTS=19975-19999 keeps a recipe's fixture in a range of its own.
+  const range = /^(\d+)-(\d+)$/.exec((parentEnv.MAUSCLAW_TEST_PORTS ?? process.env.MAUSCLAW_TEST_PORTS)?.trim() ?? "");
   const port = range ? await freePortBlock([0, 1], Number(range[1]), Number(range[2]) - Number(range[1])) : await freePortBlock([0, 1]);
-  if (signal?.aborted) throw new ControlOmbError("verification launch cancelled");
+  if (signal?.aborted) throw new ControlMausclawError("verification launch cancelled");
   const url = `http://127.0.0.1:${port}`;
   // Native browser daemons use UNIX sockets, and a macOS temp home can exceed
   // their path limit.
-  const dataDir = mkdtempSync(join(browser && process.platform !== "win32" ? "/tmp" : tmpdir(), "openmausbot-verify-data-"));
+  const dataDir = mkdtempSync(join(browser && process.platform !== "win32" ? "/tmp" : tmpdir(), "mausclaw-verify-data-"));
   const fixtureTemp = join(dataDir, "tmp");
   const fixtureDumpPath = join(dataDir, "fake-claude-dump.json");
   mkdirSync(fixtureTemp, { recursive: true });
-  const evidenceDir = join(tmpdir(), "openmausbot-verification-evidence");
+  const evidenceDir = join(tmpdir(), "mausclaw-verification-evidence");
   mkdirSync(evidenceDir, { recursive: true });
   const logPath = join(evidenceDir, `server-${Date.now()}-${process.pid}.log`);
   writeFileSync(join(dataDir, "config.json"), JSON.stringify({
@@ -324,18 +324,18 @@ export async function launchVerificationServer(
   // Opt-in live Local VM fixture: keep the temporary home and fake engine,
   // granting only the explicitly selected machine connection and static UI.
   if (localVm) Object.assign(childEnv, {
-    OMB_EXTRA_PATH: [localVm.binDir, ...(process.platform === "win32" ? [join(childEnv.SYSTEMROOT || "C:\\Windows", "System32")] : [])].join(delimiter),
+    MAUSCLAW_EXTRA_PATH: [localVm.binDir, ...(process.platform === "win32" ? [join(childEnv.SYSTEMROOT || "C:\\Windows", "System32")] : [])].join(delimiter),
     CONTAINER_HOST: localVm.host,
     CONTAINER_SSHKEY: localVm.sshKey,
-    OMB_STATIC_DIR: localVm.staticDir,
+    MAUSCLAW_STATIC_DIR: localVm.staticDir,
   });
-  if (enterprise) Object.assign(childEnv, { OMB_ENTERPRISE_DIR: enterprise.dir, OMB_LICENSE_KEY: enterprise.licenseKey });
+  if (enterprise) Object.assign(childEnv, { MAUSCLAW_ENTERPRISE_DIR: enterprise.dir, MAUSCLAW_LICENSE_KEY: enterprise.licenseKey });
   if (browser) Object.assign(childEnv, {
-    OMB_AGENT_BROWSER_PATH: browser.binaryPath,
+    MAUSCLAW_AGENT_BROWSER_PATH: browser.binaryPath,
     AGENT_BROWSER_EXECUTABLE_PATH: browser.executablePath,
   });
-  if (boatFixtureApi) childEnv.OMB_BOAT_API = boatFixtureApi;
-  if (staticDir) childEnv.OMB_STATIC_DIR = staticDir;
+  if (boatFixtureApi) childEnv.MAUSCLAW_BOAT_API = boatFixtureApi;
+  if (staticDir) childEnv.MAUSCLAW_STATIC_DIR = staticDir;
   const child = spawn(process.execPath, verificationServerArgs(childEnv), {
     cwd: ROOT,
     env: childEnv,
@@ -354,7 +354,7 @@ export async function launchVerificationServer(
   const deadline = Date.now() + hostTimeout(20_000);
   try {
     for (;;) {
-      if (signal?.aborted) throw new ControlOmbError("verification launch cancelled");
+      if (signal?.aborted) throw new ControlMausclawError("verification launch cancelled");
       if (child.exitCode !== null || child.signalCode !== null) {
         throw new Error(`verification server exited before it was ready; see ${logPath}${logTail()}`);
       }
@@ -364,7 +364,7 @@ export async function launchVerificationServer(
           signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
         });
         const body = response.ok ? await response.json() as { app?: string } : null;
-        if (body?.app === "openmausbot") break;
+        if (body?.app === "mausclaw") break;
       } catch {
       }
       if (Date.now() >= deadline) throw new Error(`verification server did not become ready; see ${logPath}${logTail()}`);
@@ -426,10 +426,10 @@ export function controlResultSucceeded(command: string, result: unknown): boolea
 
 /** pnpm swallows Ctrl-C; a launcher that owns processes must get the signal itself. */
 function requireForegroundTerminal(command: string): void {
-  if (process.env.npm_lifecycle_event === "control:omb") {
-    throw new ControlOmbError(
+  if (process.env.npm_lifecycle_event === "control:mausclaw") {
+    throw new ControlMausclawError(
       `${command} must own the terminal directly so Ctrl-C can clean up its children`,
-      `run \`node --experimental-strip-types scripts/control-omb.ts ${command}\``,
+      `run \`node --experimental-strip-types scripts/control-mausclaw.ts ${command}\``,
     );
   }
 }
@@ -478,7 +478,7 @@ async function main() {
     });
     return;
   }
-  const result = await runControlOmb(process.argv.slice(2));
+  const result = await runControlMausclaw(process.argv.slice(2));
   process.stdout.write(typeof result === "string" ? `${result}\n` : `${JSON.stringify(result, null, 2)}\n`);
   if (!controlResultSucceeded(command, result)) process.exitCode = 1;
 }

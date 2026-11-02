@@ -48,22 +48,22 @@ describe("fleet naming", () => {
 
 describe("rendered files", () => {
   it("renders one template unit for every workspace, hardened and parameterised by slug", () => {
-    const unit = templateUnit({ node: "/usr/bin/node", script: "/usr/lib/node_modules/openmausbot/cli.js", layout });
-    expect(unit).toContain("User=omb-%i");
-    expect(unit).toContain("EnvironmentFile=/etc/openmausbot/instances/%i.env");
-    expect(unit).toContain("ExecStart=/usr/bin/node /usr/lib/node_modules/openmausbot/cli.js serve --port ${OMB_PORT} --data-dir ${OMB_DATA_DIR} --public-url ${OMB_PUBLIC_URL} --label %i --no-pair");
-    for (const line of ["PrivateTmp=yes", "NoNewPrivileges=yes", "ProtectSystem=strict", "ReadWritePaths=/var/lib/openmausbot/%i"]) expect(unit).toContain(line);
+    const unit = templateUnit({ node: "/usr/bin/node", script: "/usr/lib/node_modules/mausclaw/cli.js", layout });
+    expect(unit).toContain("User=mausclaw-%i");
+    expect(unit).toContain("EnvironmentFile=/etc/mausclaw/instances/%i.env");
+    expect(unit).toContain("ExecStart=/usr/bin/node /usr/lib/node_modules/mausclaw/cli.js serve --port ${MAUSCLAW_PORT} --data-dir ${MAUSCLAW_DATA_DIR} --public-url ${MAUSCLAW_PUBLIC_URL} --label %i --no-pair");
+    for (const line of ["PrivateTmp=yes", "NoNewPrivileges=yes", "ProtectSystem=strict", "ReadWritePaths=/var/lib/mausclaw/%i"]) expect(unit).toContain(line);
     expect(templateUnit({ node: "/usr/bin/node", script: "/src/server/cli.ts", layout })).toContain("--experimental-strip-types /src/server/cli.ts");
   });
 
   it("requires the loopback fence to start successfully before every tenant instance", () => {
-    const unit = templateUnit({ node: "/usr/bin/node", script: "/src/server/openmausbot.ts", layout });
+    const unit = templateUnit({ node: "/usr/bin/node", script: "/src/server/mausclaw.ts", layout });
     const header = unit.split("[Service]")[0];
-    expect(header).toContain("After=network-online.target openmausbot-fence.service\n");
-    expect(header).toContain("Requires=openmausbot-fence.service\n");
+    expect(header).toContain("After=network-online.target mausclaw-fence.service\n");
+    expect(header).toContain("Requires=mausclaw-fence.service\n");
     const fence = fenceUnit(layout);
-    expect(fence).toContain("Type=oneshot\nRemainAfterExit=yes\nExecStart=/usr/sbin/nft -f /etc/openmausbot/fence.nft\n");
-    expect(fence).not.toContain("Before=openmausbot@.service");
+    expect(fence).toContain("Type=oneshot\nRemainAfterExit=yes\nExecStart=/usr/sbin/nft -f /etc/mausclaw/fence.nft\n");
+    expect(fence).not.toContain("Before=mausclaw@.service");
   });
 
   it("fences each workspace's loopback ports to its own user, Caddy and root", () => {
@@ -71,15 +71,15 @@ describe("rendered files", () => {
       { slug: "globex", host: "globex.x", port: 8820, webhookPort: 8821, status: "running", createdAt: "" },
       { slug: "acme", host: "acme.x", port: 8810, webhookPort: 8811, status: "running", createdAt: "" },
     ]);
-    expect(rules).toContain("add table inet openmausbot\nflush table inet openmausbot");
-    expect(rules.indexOf("omb-acme")).toBeLessThan(rules.indexOf("omb-globex"));
-    expect(rules).toContain("oif lo tcp dport { 8810, 8811 } meta skuid != { omb-acme, caddy, root } reject");
+    expect(rules).toContain("add table inet mausclaw\nflush table inet mausclaw");
+    expect(rules.indexOf("mausclaw-acme")).toBeLessThan(rules.indexOf("mausclaw-globex"));
+    expect(rules).toContain("oif lo tcp dport { 8810, 8811 } meta skuid != { mausclaw-acme, caddy, root } reject");
     expect(fenceRules([])).not.toContain("reject");
     const incomplete: FleetWorkspace = { slug: "pending", host: "pending.x", port: 8830, webhookPort: 8831, status: "provisioning", createdAt: "" };
-    expect(fenceRules([incomplete])).not.toContain("omb-pending");
-    expect(fenceRules([{ ...incomplete, accountCreated: true }])).toContain("omb-pending");
-    expect(fenceRules([{ ...incomplete, status: "error", accountCreated: true }])).toContain("omb-pending");
-    expect(fenceRules([{ ...incomplete, status: "retained" }])).toContain("omb-pending");
+    expect(fenceRules([incomplete])).not.toContain("mausclaw-pending");
+    expect(fenceRules([{ ...incomplete, accountCreated: true }])).toContain("mausclaw-pending");
+    expect(fenceRules([{ ...incomplete, status: "error", accountCreated: true }])).toContain("mausclaw-pending");
+    expect(fenceRules([{ ...incomplete, status: "retained" }])).toContain("mausclaw-pending");
   });
 
   it("serves a running workspace and answers 503 for a suspended one", () => {
@@ -96,8 +96,8 @@ describe("rendered files", () => {
 
   it("writes the environment, the first config and the sign-in edits the server reads live", () => {
     const workspace: FleetWorkspace = { slug: "acme", host: "acme.agentada.cc", port: 8810, webhookPort: 8811, status: "running", createdAt: "" };
-    expect(instanceEnv({ workspace, dataDir: "/var/lib/openmausbot/acme/.openmausbot", licenseKey: "omb1.k" })).toBe(
-      "OMB_DATA_DIR=/var/lib/openmausbot/acme/.openmausbot\nOMB_PORT=8810\nOMB_WEBHOOK_PORT=8811\nOMB_PUBLIC_URL=https://acme.agentada.cc\nOMB_LICENSE_KEY=omb1.k\n",
+    expect(instanceEnv({ workspace, dataDir: "/var/lib/mausclaw/acme/.mausclaw", licenseKey: "omb1.k" })).toBe(
+      "MAUSCLAW_DATA_DIR=/var/lib/mausclaw/acme/.mausclaw\nMAUSCLAW_PORT=8810\nMAUSCLAW_WEBHOOK_PORT=8811\nMAUSCLAW_PUBLIC_URL=https://acme.agentada.cc\nMAUSCLAW_LICENSE_KEY=omb1.k\n",
     );
     expect(JSON.parse(initialConfig({ admins: ["ada@example.test"], members: ["@acme.test"], anthropicKey: "sk-ant-x", monthlyCapUsd: 50 }))).toEqual({
       signIn: { admins: ["ada@example.test"], members: ["@acme.test"] }, anthropic: { key: "sk-ant-x" }, budgets: { monthlyUsd: 50 },
@@ -121,18 +121,18 @@ describe("rendered files", () => {
 
 describe("plans", () => {
   it("initialises the server once: folders, registry, templates, fence, the Caddy import, and reloads", () => {
-    const { steps, registry } = initPlan({ domain: "AgentAda.cc", node: "/usr/bin/node", script: "/usr/lib/node_modules/openmausbot/cli.js", layout });
+    const { steps, registry } = initPlan({ domain: "AgentAda.cc", node: "/usr/bin/node", script: "/usr/lib/node_modules/mausclaw/cli.js", layout });
     expect(registry).toEqual({ version: 1, domain: "agentada.cc", nextPort: 8810, workspaces: {} });
-    expect(writesOf(steps)).toEqual(["/etc/openmausbot/fleet.json", "/etc/systemd/system/openmausbot@.service", "/etc/openmausbot/fence.nft", "/etc/systemd/system/openmausbot-fence.service"]);
-    expect(steps.find((step) => step.kind === "append-once")).toEqual({ kind: "append-once", path: "/etc/caddy/Caddyfile", line: "import /etc/caddy/omb.d/*.caddy" });
-    expect(argvOf(steps)).toEqual(["systemctl daemon-reload", "systemctl enable --now openmausbot-fence.service", "systemctl reload caddy"]);
+    expect(writesOf(steps)).toEqual(["/etc/mausclaw/fleet.json", "/etc/systemd/system/mausclaw@.service", "/etc/mausclaw/fence.nft", "/etc/systemd/system/mausclaw-fence.service"]);
+    expect(steps.find((step) => step.kind === "append-once")).toEqual({ kind: "append-once", path: "/etc/caddy/Caddyfile", line: "import /etc/caddy/mausclaw.d/*.caddy" });
+    expect(argvOf(steps)).toEqual(["systemctl daemon-reload", "systemctl enable --now mausclaw-fence.service", "systemctl reload caddy"]);
     expect(() => initPlan({ domain: "not a domain", node: "n", script: "s", layout })).toThrow("domain name");
-    const withAgent = initPlan({ domain: "agentada.cc", node: "/usr/bin/node", script: "/usr/lib/node_modules/openmausbot/cli.js", operator: "maus", layout });
+    const withAgent = initPlan({ domain: "agentada.cc", node: "/usr/bin/node", script: "/usr/lib/node_modules/mausclaw/cli.js", operator: "maus", layout });
     expect(withAgent.registry.operator).toBe("maus");
-    const agent = withAgent.steps.find((step) => step.kind === "write" && step.path === "/etc/systemd/system/openmausbot-fleet.service");
-    expect(agent).toMatchObject({ content: expect.stringContaining("fleet agent --socket /run/openmausbot/fleet.sock --group maus") });
-    expect(agent).toMatchObject({ content: expect.stringContaining("RuntimeDirectory=openmausbot") });
-    expect(argvOf(withAgent.steps)).toContain("systemctl enable --now openmausbot-fleet.service");
+    const agent = withAgent.steps.find((step) => step.kind === "write" && step.path === "/etc/systemd/system/mausclaw-fleet.service");
+    expect(agent).toMatchObject({ content: expect.stringContaining("fleet agent --socket /run/mausclaw/fleet.sock --group maus") });
+    expect(agent).toMatchObject({ content: expect.stringContaining("RuntimeDirectory=mausclaw") });
+    expect(argvOf(withAgent.steps)).toContain("systemctl enable --now mausclaw-fleet.service");
     expect(() => initPlan({ domain: "agentada.cc", node: "n", script: "s", operator: "Not A User", layout })).toThrow("Unix user");
   });
 
@@ -152,15 +152,15 @@ describe("plans", () => {
     expect(plan.steps[2]).toMatchObject({ kind: "write", path: layout.registryFile });
     expect(checkpoints.every((checkpoint) => checkpoint.nextPort === 8820)).toBe(true);
     expect(argvOf(plan.steps)).toEqual([
-      "useradd --system --create-home --home-dir /var/lib/openmausbot/acme --shell /usr/sbin/nologin --user-group omb-acme",
-      "nft -f /etc/openmausbot/fence.nft",
+      "useradd --system --create-home --home-dir /var/lib/mausclaw/acme --shell /usr/sbin/nologin --user-group mausclaw-acme",
+      "nft -f /etc/mausclaw/fence.nft",
       "systemctl daemon-reload",
-      "systemctl enable --now openmausbot@acme.service",
+      "systemctl enable --now mausclaw@acme.service",
       "systemctl reload caddy",
     ]);
-    const config = plan.steps.find((step) => step.kind === "write" && step.path.endsWith("/acme/.openmausbot/config.json"));
-    expect(config).toMatchObject({ mode: 0o600, owner: "omb-acme" });
-    const env = plan.steps.find((step) => step.kind === "write" && step.path === "/etc/openmausbot/instances/acme.env");
+    const config = plan.steps.find((step) => step.kind === "write" && step.path.endsWith("/acme/.mausclaw/config.json"));
+    expect(config).toMatchObject({ mode: 0o600, owner: "mausclaw-acme" });
+    const env = plan.steps.find((step) => step.kind === "write" && step.path === "/etc/mausclaw/instances/acme.env");
     expect(env).toMatchObject({ mode: 0o600 });
     // root keeps the environment file: it carries the licence key
     expect(env).not.toHaveProperty("owner");
@@ -178,18 +178,18 @@ describe("plans", () => {
     const created = createPlan({ registry: emptyRegistry("agentada.cc"), slug: "acme", seed: { admins: ["a@b.test"], members: [] }, now, layout });
     const suspended = suspendPlan({ registry: created.registry, slug: "acme", layout });
     expect(suspended.registry.workspaces.acme?.status).toBe("suspended");
-    expect(argvOf(suspended.steps)).toEqual(["systemctl disable --now openmausbot@acme.service", "systemctl reload caddy"]);
+    expect(argvOf(suspended.steps)).toEqual(["systemctl disable --now mausclaw@acme.service", "systemctl reload caddy"]);
     expect(suspended.steps.find((step) => step.kind === "write" && step.path.endsWith("acme.caddy"))).toMatchObject({ content: expect.stringContaining("503") });
     const resumed = resumePlan({ registry: suspended.registry, slug: "acme", layout });
     expect(resumed.registry.workspaces.acme?.status).toBe("running");
-    expect(argvOf(resumed.steps)).toEqual(["systemctl enable --now openmausbot@acme.service", "systemctl reload caddy"]);
+    expect(argvOf(resumed.steps)).toEqual(["systemctl enable --now mausclaw@acme.service", "systemctl reload caddy"]);
     const kept = deletePlan({ registry: resumed.registry, slug: "acme", keepData: true, layout });
     expect(kept.registry.workspaces.acme).toMatchObject({ status: "retained", port: 8810 });
     expect(argvOf(kept.steps).some((argv) => argv.startsWith("userdel"))).toBe(false);
-    expect(argvOf(deletePlan({ registry: resumed.registry, slug: "acme", keepData: false, layout }).steps)).toContain("userdel --remove omb-acme");
+    expect(argvOf(deletePlan({ registry: resumed.registry, slug: "acme", keepData: false, layout }).steps)).toContain("userdel --remove mausclaw-acme");
     expect(() => deletePlan({ registry: kept.registry, slug: "acme", keepData: true, layout })).toThrow("operator recovery");
     expect(() => createPlan({ registry: kept.registry, slug: "acme", seed: { admins: ["a@b.test"], members: [] }, layout })).toThrow("already exists");
-    expect(fenceRules(Object.values(kept.registry.workspaces))).toContain("omb-acme");
+    expect(fenceRules(Object.values(kept.registry.workspaces))).toContain("mausclaw-acme");
     for (const status of ["provisioning", "error", "retained"] as const) {
       const incomplete = { ...created.registry, workspaces: { acme: { ...created.workspace, status } } };
       expect(() => resumePlan({ registry: incomplete, slug: "acme", layout })).toThrow("operator recovery");
@@ -197,7 +197,7 @@ describe("plans", () => {
       expect(() => deletePlan({ registry: incomplete, slug: "acme", keepData: false, layout })).toThrow("operator recovery");
     }
     const two = createPlan({ registry: created.registry, slug: "globex", seed: { admins: ["g@x.test"], members: [] }, now, layout }).registry;
-    expect(argvOf(upgradePlan({ registry: suspendPlan({ registry: two, slug: "globex", layout }).registry }))).toEqual(["npm install -g openmausbot@latest", "systemctl restart openmausbot@acme.service"]);
+    expect(argvOf(upgradePlan({ registry: suspendPlan({ registry: two, slug: "globex", layout }).registry }))).toEqual(["npm install -g mausclaw@latest", "systemctl restart mausclaw@acme.service"]);
   });
 
   it("seeds only the trusted portal gateway and reserves the portal hostname", () => {
@@ -205,10 +205,10 @@ describe("plans", () => {
     const seed = { admins: ["owner@example.test"], members: [], portalUrl: "https://admin.example.test", anthropicUrl: "https://admin.example.test/api/gateway/acme/anthropic", anthropicKey: "workspace-scoped-token" };
     const plan = createPlan({ registry, slug: "acme", seed, now, layout });
     const env = plan.steps.find((step) => step.kind === "write" && step.path.endsWith("/acme.env"));
-    expect(env).toMatchObject({ mode: 0o600, content: expect.stringContaining("OMB_ADMIN_URL=https://admin.example.test\nOMB_ADMIN_WORKSPACE=acme") });
+    expect(env).toMatchObject({ mode: 0o600, content: expect.stringContaining("MAUSCLAW_ADMIN_URL=https://admin.example.test\nMAUSCLAW_ADMIN_WORKSPACE=acme") });
     expect(env).not.toHaveProperty("owner");
     const config = plan.steps.find((step) => step.kind === "write" && step.path.endsWith("/config.json"));
-    expect(config).toMatchObject({ owner: "omb-acme", content: expect.stringContaining('"url": "https://admin.example.test/api/gateway/acme/anthropic"') });
+    expect(config).toMatchObject({ owner: "mausclaw-acme", content: expect.stringContaining('"url": "https://admin.example.test/api/gateway/acme/anthropic"') });
     for (const portalUrl of ["http://admin.example.test", "https://admin.example.test/", "https://user:secret@admin.example.test", "https://admin.example.test/path"]) {
       expect(() => createPlan({ registry, slug: "acme", seed: { ...seed, portalUrl }, layout })).toThrow("HTTPS origin");
     }
@@ -219,22 +219,22 @@ describe("plans", () => {
 
   it("renders privileged steps but never recommends root writes through tenant paths", () => {
     const lines = describeSteps([
-      { kind: "mkdir", path: "/var/lib/openmausbot/acme/.openmausbot", mode: 0o700, owner: "omb-acme" },
-      { kind: "write", path: "/var/lib/openmausbot/acme/.openmausbot/config.json", content: "secret", mode: 0o600, owner: "omb-acme" },
-      { kind: "write", path: "/etc/openmausbot/instances/acme.env", content: "OMB_PORT=8810\n", mode: 0o600 },
-      { kind: "run", argv: ["useradd", "--comment", "Acme Inc", "omb-acme"], why: "the account" },
-      { kind: "append-once", path: "/etc/caddy/Caddyfile", line: "import /etc/caddy/omb.d/*.caddy" },
+      { kind: "mkdir", path: "/var/lib/mausclaw/acme/.mausclaw", mode: 0o700, owner: "mausclaw-acme" },
+      { kind: "write", path: "/var/lib/mausclaw/acme/.mausclaw/config.json", content: "secret", mode: 0o600, owner: "mausclaw-acme" },
+      { kind: "write", path: "/etc/mausclaw/instances/acme.env", content: "MAUSCLAW_PORT=8810\n", mode: 0o600 },
+      { kind: "run", argv: ["useradd", "--comment", "Acme Inc", "mausclaw-acme"], why: "the account" },
+      { kind: "append-once", path: "/etc/caddy/Caddyfile", line: "import /etc/caddy/mausclaw.d/*.caddy" },
       { kind: "note", text: "done" },
     ]);
     expect(lines).toEqual([
-      "# Create /var/lib/openmausbot/acme/.openmausbot mode 700 as omb-acme (use fleet --yes; never root chown on tenant paths)",
-      "# Write /var/lib/openmausbot/acme/.openmausbot/config.json mode 600 as omb-acme (use fleet --yes; tenant content omitted)",
-      "cat > /etc/openmausbot/instances/acme.env <<'OMB_EOF'",
-      "OMB_PORT=8810",
-      "OMB_EOF",
-      "chmod 600 /etc/openmausbot/instances/acme.env",
-      "useradd --comment 'Acme Inc' omb-acme   # the account",
-      "grep -qxF 'import /etc/caddy/omb.d/*.caddy' /etc/caddy/Caddyfile || printf '\\n%s\\n' 'import /etc/caddy/omb.d/*.caddy' >> /etc/caddy/Caddyfile",
+      "# Create /var/lib/mausclaw/acme/.mausclaw mode 700 as mausclaw-acme (use fleet --yes; never root chown on tenant paths)",
+      "# Write /var/lib/mausclaw/acme/.mausclaw/config.json mode 600 as mausclaw-acme (use fleet --yes; tenant content omitted)",
+      "cat > /etc/mausclaw/instances/acme.env <<'MAUSCLAW_EOF'",
+      "MAUSCLAW_PORT=8810",
+      "MAUSCLAW_EOF",
+      "chmod 600 /etc/mausclaw/instances/acme.env",
+      "useradd --comment 'Acme Inc' mausclaw-acme   # the account",
+      "grep -qxF 'import /etc/caddy/mausclaw.d/*.caddy' /etc/caddy/Caddyfile || printf '\\n%s\\n' 'import /etc/caddy/mausclaw.d/*.caddy' >> /etc/caddy/Caddyfile",
       "# done",
     ]);
   });
@@ -244,14 +244,14 @@ describe("plans", () => {
     const registry = emptyRegistry("example.test");
     const plan = createPlan({ registry, slug: "acme", seed, layout });
     const config = plan.steps.find((step) => step.kind === "write" && step.path.endsWith("/opencode.json"));
-    expect(config).toMatchObject({ owner: "omb-acme", mode: 0o600 });
+    expect(config).toMatchObject({ owner: "mausclaw-acme", mode: 0o600 });
     expect(config?.kind === "write" && JSON.parse(config.content)).toEqual({ provider: { [MANAGED_OPENROUTER]: {
       npm: "@ai-sdk/openai-compatible", name: "Managed OpenRouter",
       options: { baseURL: seed.openrouterUrl, apiKey: seed.openrouterKey }, models: { "anthropic/claude-sonnet-4": { name: "anthropic/claude-sonnet-4" } },
     } } });
     expect(plan.steps.filter((step) => step.kind === "mkdir" && step.path.includes("/.config"))).toEqual([
-      { kind: "mkdir", path: "/var/lib/openmausbot/acme/.config", mode: 0o700, owner: "omb-acme" },
-      { kind: "mkdir", path: "/var/lib/openmausbot/acme/.config/opencode", mode: 0o700, owner: "omb-acme" },
+      { kind: "mkdir", path: "/var/lib/mausclaw/acme/.config", mode: 0o700, owner: "mausclaw-acme" },
+      { kind: "mkdir", path: "/var/lib/mausclaw/acme/.config/opencode", mode: 0o700, owner: "mausclaw-acme" },
     ]);
     expect(JSON.parse(initialConfig(seed)).defaultModelSelection).toEqual({ instanceId: "opencodeGo", model: `${MANAGED_OPENROUTER}/anthropic/claude-sonnet-4` });
     expect(JSON.parse(initialConfig({ ...seed, openrouterDefault: false, anthropicKey: "other-scoped-token" }))).not.toHaveProperty("defaultModelSelection");

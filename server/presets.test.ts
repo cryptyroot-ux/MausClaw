@@ -13,7 +13,7 @@ const skillText = (name: string, body = "Do it well.") => `---\nname: ${name}\nd
 let home: string;
 
 async function installation() {
-  home = mkdtempSync(join(tmpdir(), "omb-presets-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-presets-"));
   vi.resetModules();
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);

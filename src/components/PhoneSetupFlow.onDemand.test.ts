@@ -14,7 +14,7 @@ function PhoneSetupFlow() {
   return createElement(PhoneSetupFlowView, { controller: usePhoneSetupController() });
 }
 
-const HOSTED = "https://c-opaque.openmausbot.com";
+const HOSTED = "https://c-opaque.mausclaw.com";
 const FULL =
   "Secure HTTPS links are temporarily full. Try again in 10 minutes, or pair on this Wi-Fi or with Tailscale.";
 
@@ -40,7 +40,7 @@ function desktop() {
         companion = {
           ...companion,
           pairing: open
-            ? { code: "123456", token: `omb_pair_${"a".repeat(43)}`, expiresAt: Date.now() + 120_000 }
+            ? { code: "123456", token: `mausclaw_pair_${"a".repeat(43)}`, expiresAt: Date.now() + 120_000 }
             : null,
         };
         return companion;

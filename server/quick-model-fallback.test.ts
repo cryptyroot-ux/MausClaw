@@ -76,7 +76,7 @@ describe("QuickModelFallback", () => {
   let delivered: Array<{ event: RuntimeEvent; routed: string | undefined }>;
 
   beforeEach(() => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-quick-fallback-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-quick-fallback-"));
     file = join(scratch, "refused-quick-models.json");
     stopped = false;
     fallback = new QuickModelFallback({ file, publish: (event) => bus.publish(event), stopped: () => stopped });

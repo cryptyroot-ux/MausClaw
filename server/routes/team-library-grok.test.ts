@@ -25,7 +25,7 @@ afterEach(async () => {
 const TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjQxMDI0NDQ4MDB9.c2lnbmF0dXJlLXZhbHVl";
 /** A Cursor session over a throwaway folder, talking to a stubbed Cursor. */
 function cursor(answer: (url: string) => Response = () => new Response("", { status: 404 })) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-cursor-route-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-cursor-route-"));
   dirs.push(dataDir);
   const calls: string[] = [];
   const fetcher = vi.fn(async (url: string | URL | Request) => {

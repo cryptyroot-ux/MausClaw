@@ -108,7 +108,7 @@ describe("Upgrade", () => {
     const after = render();
     expect([after.confirming, after.note]).toEqual([false, { tone: "good", text: "You're on Max now. Your new allowances are ready." }]);
     // Every meter on the page reads the plan again at once.
-    expect(dispatchEvent.mock.calls.map(([event]) => (event as Event).type)).toEqual(["omb:cloud-plan-changed"]);
+    expect(dispatchEvent.mock.calls.map(([event]) => (event as Event).type)).toEqual(["mausclaw:cloud-plan-changed"]);
   });
   it("opens the Cloud page when the app can't change plans, and never previews or changes then", async () => {
     const b = bridge();

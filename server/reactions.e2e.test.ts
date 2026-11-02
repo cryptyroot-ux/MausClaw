@@ -4,11 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("answers a bot's yes-or-no question with a 👍, and the bot goes on by itself", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-reactions-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-reactions-"));
   const promptLog = join(scratch, "prompts.jsonl");
   const fixture = await launchVerificationServer({
     FAKE_CLAUDE_REPLIES: JSON.stringify(["I drafted the email to Sam. Shall I send it?", "Sent it to Sam.", "Glad it helped.", "Understood: I'll recall it.", "Then it stays sent."]),
@@ -109,7 +109,7 @@ it("answers a bot's yes-or-no question with a 👍, and the bot goes on by itsel
 type Fixture = Awaited<ReturnType<typeof launchVerificationServer>>;
 
 it("leaves a conversation's title alone when a 👍 is the first thing the person says in it", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-reaction-title-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-reaction-title-"));
   const fixture = await launchVerificationServer({
     FAKE_CLAUDE_REPLIES: JSON.stringify(["Happy to help. What first?"]),
     FAKE_CLAUDE_REPLY_STATE: join(scratch, "reply-state"),
@@ -147,7 +147,7 @@ function client(fixture: Fixture, evidence: unknown[]) {
 }
 
 it("allows an open approval with a 👍 on its card and denies one with a 👎", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-reaction-cards-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-reaction-cards-"));
   const gate = join(scratch, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_FINISH_GATE: gate });
   const evidence: unknown[] = [];
@@ -194,7 +194,7 @@ it("allows an open approval with a 👍 on its card and denies one with a 👎",
 }, 90_000);
 
 it("in a room, gives the 👍 to the member that asked, by name", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-reaction-room-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-reaction-room-"));
   const promptLog = join(scratch, "prompts.jsonl");
   const fixture = await launchVerificationServer({
     FAKE_CLAUDE_REPLIES: JSON.stringify(["Shall I post the launch note?", "Posted it.", "Noted."]),

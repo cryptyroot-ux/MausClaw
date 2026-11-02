@@ -51,8 +51,8 @@ describe("selected-text citations", () => {
       display: serialized.replace("Quoted message", "Changed message"),
       citations: [],
     });
-    expect(splitTranscriptCitations("<!--omb-citation-v1:not-json-->\n> Quoted message:\n> unsafe")).toEqual({
-      display: "<!--omb-citation-v1:not-json-->\n> Quoted message:\n> unsafe",
+    expect(splitTranscriptCitations("<!--mausclaw-citation-v1:not-json-->\n> Quoted message:\n> unsafe")).toEqual({
+      display: "<!--mausclaw-citation-v1:not-json-->\n> Quoted message:\n> unsafe",
       citations: [],
     });
     expect(isAttachment({ ...citation, quote: "" })).toBe(false);
@@ -60,7 +60,7 @@ describe("selected-text citations", () => {
 
   it("previews the words as typed, with citations folded in and nothing hidden", () => {
     const citation = citationAttachment(source, createCitationTextSelector("quoted text", 0, 11)!, "Check this");
-    const text = "Compare [earlier task](omb://thread/bot-1/thread-2)";
+    const text = "Compare [earlier task](mausclaw://thread/bot-1/thread-2)";
     expect(citationPreviewText(text)).toBe(text);
     expect(citationPreviewText(composeMessage(text, [citation]))).toBe(`${text} quoted text — Check this`);
     const typed = '<data-context>{"cardId":"c_1"}</data-context>\nDo not hide this';

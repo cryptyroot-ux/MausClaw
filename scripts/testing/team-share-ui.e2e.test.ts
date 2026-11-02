@@ -4,16 +4,16 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
 import { request } from "../mcp-server.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
-const forced = process.env.OMB_UI_E2E === "1";
+const forced = process.env.MAUSCLAW_UI_E2E === "1";
 const enabled = forced || Boolean(binary);
 const launchTimeout = forced && !binary ? 600_000 : 180_000;
-if (!enabled) console.log("skipping share-team UI e2e: set OMB_UI_E2E=1 to install the pinned browser");
+if (!enabled) console.log("skipping share-team UI e2e: set MAUSCLAW_UI_E2E=1 to install the pinned browser");
 
 describe("Share team in the real renderer", () => {
   let child: ChildProcess | undefined;
@@ -23,7 +23,7 @@ describe("Share team in the real renderer", () => {
     let stdout = "";
     let stderr = "";
     let info: { ui: string; url: string; botId: string; logPath: string };
-    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-omb.ts"), "ui", "launch"], {
+    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-mausclaw.ts"), "ui", "launch"], {
       cwd: ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"],
     });
     child.stdout!.on("data", (chunk: Buffer) => { stdout += String(chunk); });
@@ -33,12 +33,12 @@ describe("Share team in the real renderer", () => {
       if (child!.exitCode !== null || child!.signalCode !== null) throw new Error(`UI launcher exited: ${stderr}`);
       try { info = JSON.parse(stdout); return Boolean(info.ui); } catch { return false; }
     }, { timeout: launchTimeout, interval: 250 }).toBe(true);
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const click = (name: string) => ui("click", "--name", name);
     const snapshot = async () => (await ui("snapshot")).snapshot as string;
     const api = (path: string, method = "GET", body?: unknown) => request(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, info.url);
-    const control = (...args: string[]) => runControlOmb([...args, "--url", info.url]) as Promise<Record<string, any>>;
+    const control = (...args: string[]) => runControlMausclaw([...args, "--url", info.url]) as Promise<Record<string, any>>;
 
     await api(`/api/bots/${info!.botId}`, "PATCH", { section: "Sales desk", chiefOfStaff: true, soul: "Lead the desk. The portal password=UiFixture-Secret-1 stays private.\n" });
     const scout = (await control("new-bot", "--name", "Scout", "--section", "Sales desk")).bot;
@@ -78,7 +78,7 @@ describe("Share team in the real renderer", () => {
     for (const line of ["research-brief", "fill-01", "fill-30", "Starter notes are included", "Save file"]) expect(dialog).toContain(line);
     expect(dialog).not.toContain("What's in the file");
     expect(await saveDisabled()).toBe(true);
-    await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-refused.png"));
+    await ui("screenshot", "--out", join(ROOT, ".mausclaw-scratch", "verify-evidence", "share-team-refused.png"));
     // Leaving out one long skill is a choice that fits.
     await click("fill-01");
     await expect.poll(snapshot, { timeout: 20_000 }).toContain("What's in the file");
@@ -102,7 +102,7 @@ describe("Share team in the real renderer", () => {
     expect(await snapshot()).not.toContain("Scout has more than 30 skills");
     expect(await saveDisabled()).toBe(false);
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Removed what looked like a key or password from:");
-    await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-dialog.png"));
+    await ui("screenshot", "--out", join(ROOT, ".mausclaw-scratch", "verify-evidence", "share-team-dialog.png"));
     await click("Save file");
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Saved sales-desk-1.0.0.openmaus.json");
     await evaluate("window.__shareBlob.text().then((text) => { window.__shareText = text; }); true");
@@ -116,7 +116,7 @@ describe("Share team in the real renderer", () => {
     for (const name of ["research-brief", "fill-01", "fill-30"]) expect(savedScout.skills).toContain(name);
     expect(savedScout.skills).not.toContain("fill-02");
     expect(JSON.stringify(saved)).not.toContain("UiFixture-Secret-1");
-    await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-saved.png"));
+    await ui("screenshot", "--out", join(ROOT, ".mausclaw-scratch", "verify-evidence", "share-team-saved.png"));
     await click("Done");
 
     // Add the saved file back through Import: the preview names every part.
@@ -128,7 +128,7 @@ describe("Share team in the real renderer", () => {
       expect(preview).toContain(line);
     }
     expect(preview).not.toContain("Connections to finish");
-    await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-import-preview.png"));
+    await ui("screenshot", "--out", join(ROOT, ".mausclaw-scratch", "verify-evidence", "share-team-import-preview.png"));
     await click("Add team");
     await expect.poll(snapshot, { timeout: 10_000 }).toContain('button "Sales desk 2"');
     const bots = (await api("/api/bots")).bots.filter((bot: { section?: string }) => bot.section === "Sales desk 2");

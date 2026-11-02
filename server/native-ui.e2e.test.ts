@@ -1,6 +1,6 @@
 // The native-only build has no fake Claude engine, so the UI fixture seeds its bot on a loopback
 // chat-completions provider and drives the real renderer. The assertions prove the turn the person sees came from the
-// OMB-owned loop: the provider answered, the reply is in the DOM, and agent_runs records one completed native run.
+// MausClaw-owned loop: the provider answered, the reply is in the DOM, and agent_runs records one completed native run.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createServer } from "node:http";
@@ -11,15 +11,15 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { resolveAgentBrowserBinary } from "../server/browser-engine.ts";
 import { waitForExit } from "../server/testing/cleanup.ts";
-import { runControlOmb } from "../scripts/control-omb.ts";
-import { UI_TOOLS_DIR } from "../scripts/testing/control-omb-ui.ts";
+import { runControlMausclaw } from "../scripts/control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "../scripts/testing/control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const CLI = join(ROOT, "scripts", "control-omb.ts");
-const forced = process.env.OMB_UI_E2E === "1";
+const CLI = join(ROOT, "scripts", "control-mausclaw.ts");
+const forced = process.env.MAUSCLAW_UI_E2E === "1";
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
 const enabled = forced || Boolean(binary);
-if (!enabled) console.log("skipping native UI e2e: no agent-browser; set OMB_UI_E2E=1 to install the pinned release");
+if (!enabled) console.log("skipping native UI e2e: no agent-browser; set MAUSCLAW_UI_E2E=1 to install the pinned release");
 const run = enabled ? it : it.skip;
 const LAUNCH_TIMEOUT_MS = forced ? 600_000 : 180_000;
 
@@ -48,7 +48,7 @@ describe("a native bot turn through the real renderer", () => {
     }
   });
 
-  run("shows a turn produced by the OMB native loop", async () => {
+  run("shows a turn produced by the MausClaw native loop", async () => {
     const requests: Array<{ messages: Array<{ role: string }> }> = [];
     const upstream = createServer(async (request, response) => {
       if (request.url === "/v1/models") {
@@ -69,9 +69,9 @@ describe("a native bot turn through the real renderer", () => {
 
     const env: NodeJS.ProcessEnv = {
       ...process.env,
-      OMB_UI_NATIVE_URL: `http://127.0.0.1:${address.port}/v1`,
-      OMB_UI_NATIVE_KEY: "synthetic-ui-key",
-      OMB_UI_NATIVE_MODEL: "fixture-model",
+      MAUSCLAW_UI_NATIVE_URL: `http://127.0.0.1:${address.port}/v1`,
+      MAUSCLAW_UI_NATIVE_KEY: "synthetic-ui-key",
+      MAUSCLAW_UI_NATIVE_MODEL: "fixture-model",
     };
     const chrome = process.env.AGENT_BROWSER_EXECUTABLE_PATH?.trim();
     if (chrome) env.AGENT_BROWSER_EXECUTABLE_PATH = chrome;
@@ -89,7 +89,7 @@ describe("a native bot turn through the real renderer", () => {
       try { info = JSON.parse(stdout) as Info; return Boolean(info.ui); } catch { return false; }
     }, { timeout: LAUNCH_TIMEOUT_MS + 120_000, interval: 250 }).toBe(true);
     const handle = info!;
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", handle.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", handle.ui, ...args]) as Promise<Record<string, any>>;
 
     await ui("type", "--name", "Message Pepper", "--text", "Say hello through the native loop.");
     await ui("press", "--keys", "Enter");

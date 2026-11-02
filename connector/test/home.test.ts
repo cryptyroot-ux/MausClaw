@@ -11,16 +11,16 @@ import { StateStore, type Operation } from "../src/state.ts";
 import type { Transfer } from "../src/transfer.ts";
 import { FakeDocker } from "./fake-docker.ts";
 
-const image = (letter: string) => `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${letter.repeat(64)}`;
+const image = (letter: string) => `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${letter.repeat(64)}`;
 const A = image("a"), B = image("b"), C = image("c");
 const SECRET = "Bootstrap-secret-0123456789abcdefghijklmnopq";
-const RELAY = "box_omb_relay-token-0123456789abcdefghijklmnop";
+const RELAY = "box_mausclaw_relay-token-0123456789abcdefghijklmnop";
 const env = {
-  OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-  OMB_PUBLIC_URL: "https://acme.example.test", OMB_CLOUD_BOOTSTRAP_SECRET: SECRET, OMB_CLOUD_BOAT_TOKEN: RELAY,
+  MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+  MAUSCLAW_PUBLIC_URL: "https://acme.example.test", MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: SECRET, MAUSCLAW_CLOUD_BOAT_TOKEN: RELAY,
 };
 const SECCOMP = '{"defaultAction":"SCMP_ACT_ERRNO","syscalls":[]}';
-const LEASE = ".openmausbot/openmausbot-server.lease";
+const LEASE = ".mausclaw/mausclaw-server.lease";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -28,7 +28,7 @@ afterEach(() => {
 });
 
 function fixture(options: { free?: number } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-connector-home-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-connector-home-"));
   dirs.push(dir);
   const state = new StateStore(join(dir, "state"));
   const docker = new FakeDocker(state.dir);
@@ -41,10 +41,10 @@ function fixture(options: { free?: number } = {}) {
     const home = docker.container("mausbot-home");
     if (!home || home.status !== "running") return { status: 0, report: null };
     const homeEnv = Object.fromEntries((home.spec.Env ?? []).map((entry) => [entry.slice(0, entry.indexOf("=")), entry.slice(entry.indexOf("=") + 1)]));
-    if (target.secret !== homeEnv.OMB_CLOUD_BOOTSTRAP_SECRET) return { status: 401, report: { error: "invalid_signature" } };
-    if (target.publicHost !== new URL(homeEnv.OMB_PUBLIC_URL).hostname || target.port !== 8080) return { status: 403, report: null };
+    if (target.secret !== homeEnv.MAUSCLAW_CLOUD_BOOTSTRAP_SECRET) return { status: 401, report: { error: "invalid_signature" } };
+    if (target.publicHost !== new URL(homeEnv.MAUSCLAW_PUBLIC_URL).hostname || target.port !== 8080) return { status: 403, report: null };
     if (!healthy.has(home.spec.Image)) return { status: 0, report: null };
-    return { status: 200, report: { version: "0.1.130", image: homeEnv.OMB_CLOUD_IMAGE, box: { box: "bwrap", checks: "32/32", failed: [] } } };
+    return { status: 200, report: { version: "0.1.130", image: homeEnv.MAUSCLAW_CLOUD_IMAGE, box: { box: "bwrap", checks: "32/32", failed: [] } } };
   };
   const uploads: { url: string; headers: Record<string, string>; body: string }[] = [];
   const downloads: { url: string; headers: Record<string, string> }[] = [];
@@ -103,12 +103,12 @@ describe("the home on an own server", () => {
     expect(spec).toEqual(homeSpec(A, env, SECCOMP));
     expect(spec.HostConfig).toMatchObject({
       Init: true, ShmSize: 512 * 1024 * 1024, MaskedPaths: [], ReadonlyPaths: [], CapDrop: ["ALL"], CapAdd: ["CHOWN", "SETUID", "SETGID", "KILL"], OomScoreAdj: -800,
-      SecurityOpt: ["apparmor=omb-home-narrow", `seccomp=${SECCOMP}`, "no-new-privileges=true"], RestartPolicy: { Name: "no" },
+      SecurityOpt: ["apparmor=mausclaw-home-narrow", `seccomp=${SECCOMP}`, "no-new-privileges=true"], RestartPolicy: { Name: "no" },
       PortBindings: { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: "8080" }] }, Mounts: [{ Type: "volume", Source: "mausbot-data", Target: "/data" }],
     });
     expect(spec.StopTimeout).toBe(30);
     expect(Object.keys(spec.HostConfig)).not.toContain("Privileged");
-    expect(spec.Env).toEqual([...Object.entries(env).map(([name, value]) => `${name}=${value}`), `OMB_CLOUD_IMAGE=${A}`]);
+    expect(spec.Env).toEqual([...Object.entries(env).map(([name, value]) => `${name}=${value}`), `MAUSCLAW_CLOUD_IMAGE=${A}`]);
     expect(JSON.parse(readFileSync(f.state.path("home-env.json"), "utf8"))).toEqual(env);
     if (process.platform !== "win32") {
       expect(statSync(f.state.path("home-env.json")).mode & 0o777).toBe(0o600);
@@ -124,12 +124,12 @@ describe("the home on an own server", () => {
   it("clears the lease a killed home left before each start, until the image clears it itself, and never while a home runs", async () => {
     const f = fixture();
     await f.docker.createVolume("mausbot-data", {});
-    for (const path of [LEASE, `${LEASE}.reap-0f5e6c4a-1b2c-4d3e-8f9a-0b1c2d3e4f5a`, ".openmausbot/.openmausbot-server-child/openmausbot-server.lease"]) f.write(path, "{}");
-    f.write(".openmausbot/state.json", "keep");
-    f.write("notes/openmausbot-server.lease", "someone's file");
+    for (const path of [LEASE, `${LEASE}.reap-0f5e6c4a-1b2c-4d3e-8f9a-0b1c2d3e4f5a`, ".mausclaw/.mausclaw-server-child/mausclaw-server.lease"]) f.write(path, "{}");
+    f.write(".mausclaw/state.json", "keep");
+    f.write("notes/mausclaw-server.lease", "someone's file");
     await started(f);
-    expect(f.data()).toEqual({ ".openmausbot/state.json": "keep", "notes/openmausbot-server.lease": "someone's file" });
-    expect(f.lines.some((line) => line.startsWith("cleared the data-directory lease records a stopped home left: /data/.openmausbot/openmausbot-server.lease"))).toBe(true);
+    expect(f.data()).toEqual({ ".mausclaw/state.json": "keep", "notes/mausclaw-server.lease": "someone's file" });
+    expect(f.lines.some((line) => line.startsWith("cleared the data-directory lease records a stopped home left: /data/.mausclaw/mausclaw-server.lease"))).toBe(true);
     // A start while the home runs never touches its live lease.
     f.write(LEASE, "{}");
     const finds = () => f.docker.helperRuns.filter((command) => command[0] === "find" && command[1] === "/data").length;
@@ -373,7 +373,7 @@ describe("the home on an own server", () => {
     const f = fixture();
     await started(f);
     await f.home.stop();
-    f.docker.startFailures.set("mausbot-home", `container create failed: env OMB_CLOUD_BOOTSTRAP_SECRET=${SECRET} rejected`);
+    f.docker.startFailures.set("mausbot-home", `container create failed: env MAUSCLAW_CLOUD_BOOTSTRAP_SECRET=${SECRET} rejected`);
     const failed = await failure(f.home.restart());
     expect(failed.code).toBe("docker");
     expect(JSON.stringify(failed.toJobError())).not.toContain(SECRET);

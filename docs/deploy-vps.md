@@ -1,16 +1,16 @@
-# Deploy OpenMausBot on a VPS
+# Deploy MausClaw on a VPS
 
-From a blank Linux server to OpenMausBot running on it around the clock, reachable from your laptop, the desktop app and your phone, with your bots working while every laptop is closed. It assumes nothing beyond being able to open a terminal and paste commands. About twenty minutes, most of it waiting.
+From a blank Linux server to MausClaw running on it around the clock, reachable from your laptop, the desktop app and your phone, with your bots working while every laptop is closed. It assumes nothing beyond being able to open a terminal and paste commands. About twenty minutes, most of it waiting.
 
 Three ways to make the server reachable are covered. Pick one; the rest of the guide is the same.
 
 | | You need | Who can reach it | Best for |
 |---|---|---|---|
-| **A. Public address, no domain** (`serve --tunnel`) | an OpenMausBot account (email code) | anyone with a pairing code, over HTTPS | the fastest path; a phone on cellular |
+| **A. Public address, no domain** (`serve --tunnel`) | an MausClaw account (email code) | anyone with a pairing code, over HTTPS | the fastest path; a phone on cellular |
 | **B. Your own domain** (Docker + Caddy) | a domain name, ports 80/443 | anyone with a pairing code, over HTTPS | a permanent address you own |
 | **C. Your Tailscale network** (`serve --tailscale`) | Tailscale on the server and your devices | only your tailnet | the most private; nothing public at all |
 
-Whichever you pick, the login is the same: you **pair** each device once with a short code and it stays signed in. A session lasts 30 days; using it with half that or less left renews it to a full 30, up to 180 days from pairing (`OMB_SESSION_TTL_DAYS` and `OMB_SESSION_MAX_DAYS` change both numbers). There is no password.
+Whichever you pick, the login is the same: you **pair** each device once with a short code and it stays signed in. A session lasts 30 days; using it with half that or less left renews it to a full 30, up to 180 days from pairing (`MAUSCLAW_SESSION_TTL_DAYS` and `MAUSCLAW_SESSION_MAX_DAYS` change both numbers). There is no password.
 
 ## Hetzner launch check (2026-09-07)
 
@@ -70,21 +70,21 @@ root, sign in again as `maus`; those accounts have different homes and credentia
 
 ## Path A: a public address with one command
 
-No domain, no proxy, no open port. The server gets an address like `https://c-7f3a9c.openmausbot.com` through a Cloudflare tunnel; only traffic through the tunnel reaches it, and that traffic still has to pair.
+No domain, no proxy, no open port. The server gets an address like `https://c-7f3a9c.mausclaw.com` through a Cloudflare tunnel; only traffic through the tunnel reaches it, and that traffic still has to pair.
 
 ```sh
-npx openmausbot setup          # once: choose AI access, connect, and choose a model
-npx openmausbot login          # once: an emailed code signs this machine in and reserves its address
-npx openmausbot serve --tunnel # runs the server there and prints the pairing link with a QR code
+npx mausclaw setup          # once: choose AI access, connect, and choose a model
+npx mausclaw login          # once: an emailed code signs this machine in and reserves its address
+npx mausclaw serve --tunnel # runs the server there and prints the pairing link with a QR code
 ```
 
-`setup` connects an AI provider; it is separate from the OpenMausBot account.
+`setup` connects an AI provider; it is separate from the MausClaw account.
 Use Codex's device-code option over SSH, or enter a hidden API key for a
 chat-only connection. More engines can be added later. See [CLI setup](cli-onboarding.md).
 
-`login` asks for your email, sends an 8-digit code, and prints the address it reserved for this machine. `serve --tunnel` downloads `cloudflared` on the first run (a pinned version with a verified digest, into `~/.openmausbot`), starts the server, connects the tunnel, and after a few seconds prints `tunnel: live at https://…`. Leave it running; see "Keep it running" for a service.
+`login` asks for your email, sends an 8-digit code, and prints the address it reserved for this machine. `serve --tunnel` downloads `cloudflared` on the first run (a pinned version with a verified digest, into `~/.mausclaw`), starts the server, connects the tunnel, and after a few seconds prints `tunnel: live at https://…`. Leave it running; see "Keep it running" for a service.
 
-The account credentials live in `~/.openmausbot/tunnel-account.json`, readable only by your user. `npx openmausbot logout` releases the address.
+The account credentials live in `~/.mausclaw/tunnel-account.json`, readable only by your user. `npx mausclaw logout` releases the address.
 
 Skip to "Install and sign the engines in".
 
@@ -103,7 +103,7 @@ One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 3. **Get the deploy files and set the name:**
 
    ```sh
-   git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot/deploy
+   git clone https://github.com/milind-soni/MausClaw && cd MausClaw/deploy
    cp .env.example .env
    nano .env                # DOMAIN=maus.example.com ; ENGINES=@anthropic-ai/claude-code @openai/codex
    ```
@@ -113,16 +113,16 @@ One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 4. **Start it:**
 
    ```sh
-   docker compose pull omb && docker compose up -d
-   docker compose ps        # omb "healthy", caddy "running"
+   docker compose pull mausclaw && docker compose up -d
+   docker compose ps        # mausclaw "healthy", caddy "running"
    ```
 
    Caddy requests the certificate on its own; give it a minute. Then `https://maus.example.com` shows a page asking for a pairing code. That is correct: nothing works until you pair.
 
-In this path, every `npx openmausbot …` command below is run inside the container instead:
+In this path, every `npx mausclaw …` command below is run inside the container instead:
 
 ```sh
-docker compose exec omb node dist-server/openmausbot.js pair --label "My MacBook"
+docker compose exec mausclaw node dist-server/mausclaw.js pair --label "My MacBook"
 ```
 
 ## Path C: only your Tailscale network
@@ -130,7 +130,7 @@ docker compose exec omb node dist-server/openmausbot.js pair --label "My MacBook
 From the administrator shell, install Tailscale on the server and sign in (`curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up`). Enable HTTPS certificates for your tailnet once in the admin console (DNS → HTTPS Certificates), then run this from the `maus` shell:
 
 ```sh
-npx openmausbot serve --tailscale
+npx mausclaw serve --tailscale
 ```
 
 Tailscale terminates HTTPS with its own certificate and the pairing link uses the server's MagicDNS name (`https://maus.tail1234.ts.net`). Only devices on your tailnet can reach it, which is a very good property for a server that can run tools.
@@ -142,13 +142,13 @@ the image. For paths A and C, install Linux system libraries once from the
 administrator shell:
 
 ```sh
-sudo -H npx --yes openmausbot browser install --with-deps
+sudo -H npx --yes mausclaw browser install --with-deps
 ```
 
 Then install the browser in the service account's home, from the `maus` shell:
 
 ```sh
-npx --yes openmausbot browser install
+npx --yes mausclaw browser install
 ```
 
 The administrator's browser download is in a different home; it does not install
@@ -162,7 +162,7 @@ gets its own isolated session whose logins persist across restarts.
 
 ## Install and sign the engines in
 
-The npm OpenMausBot package does not install model engine CLIs. For paths A and C,
+The npm MausClaw package does not install model engine CLIs. For paths A and C,
 install the engine you use in the service account, then sign it in. For example,
 from the `maus` shell, for Claude:
 
@@ -175,10 +175,10 @@ claude
 For Codex, use `@openai/codex` as the npm package and run `codex login --device-auth`
 to sign in from a headless server. Complete the CLI's account flow in your browser. Repeat only for the
 engines you use. For path B, run the installed CLI inside the container, for
-example `docker compose exec omb claude`.
+example `docker compose exec mausclaw claude`.
 
 Engine logins belong to the service user's home (for example `~/.codex` and
-`~/.claude`), separately from OpenMausBot's `~/.openmausbot`. Keep that home when
+`~/.claude`), separately from MausClaw's `~/.mausclaw`. Keep that home when
 restarting or upgrading. The systemd example below includes `~/.local/bin` in PATH.
 
 ## Pair your first device
@@ -186,13 +186,13 @@ restarting or upgrading. The systemd example below includes `~/.local/bin` in PA
 `serve` already printed a pairing link and QR code when it started. For another device later:
 
 ```sh
-npx openmausbot pair --label "Kitchen iPad"
+npx mausclaw pair --label "Kitchen iPad"
 ```
 
 ```
 pairing code:  RR8Y-BLR6-H939
 expires:       10:59:45 AM (single use)
-open or scan:  https://c-7f3a9c.openmausbot.com/pair#code=RR8Y-BLR6-H939
+open or scan:  https://c-7f3a9c.mausclaw.com/pair#code=RR8Y-BLR6-H939
 ```
 
 - **A browser:** open the link. The code is filled in; press **Connect**. That browser is paired for 30 days, renewed on use as above.
@@ -206,28 +206,28 @@ Worth knowing: a code works **once** and expires after **five minutes**; the lin
 Every paired device is a session:
 
 ```sh
-npx openmausbot sessions              # id, device, scope, last seen, expires
-npx openmausbot sessions revoke ID    # signs that device out and closes its stream at once
-npx openmausbot status                # what the server says about itself
+npx mausclaw sessions              # id, device, scope, last seen, expires
+npx mausclaw sessions revoke ID    # signs that device out and closes its stream at once
+npx mausclaw status                # what the server says about itself
 ```
 
 ## Keep it running
 
-`npx openmausbot serve` is a plain foreground process. For systemd (paths A and C),
+`npx mausclaw serve` is a plain foreground process. For systemd (paths A and C),
 install a chosen release first, from the `maus` shell. Replace `X.Y.Z` with the
 published version you want to run:
 
 ```sh
-npm install --global --prefix "$HOME/.local" openmausbot@X.Y.Z
+npm install --global --prefix "$HOME/.local" mausclaw@X.Y.Z
 ```
 
 Stop the foreground server with Ctrl-C before enabling the service. From the
-administrator shell, save this as `/etc/systemd/system/openmausbot.service`:
+administrator shell, save this as `/etc/systemd/system/mausclaw.service`:
 
 ```ini
-# /etc/systemd/system/openmausbot.service
+# /etc/systemd/system/mausclaw.service
 [Unit]
-Description=OpenMausBot server
+Description=MausClaw server
 After=network-online.target
 
 [Service]
@@ -235,7 +235,7 @@ User=maus
 WorkingDirectory=/home/maus
 Environment=HOME=/home/maus
 Environment=PATH=/home/maus/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/maus/.local/bin/openmausbot serve --tunnel --no-pair
+ExecStart=/home/maus/.local/bin/mausclaw serve --tunnel --no-pair
 Restart=always
 RestartSec=5
 
@@ -244,11 +244,11 @@ WantedBy=multi-user.target
 ```
 
 ```sh
-sudo systemctl daemon-reload && sudo systemctl enable --now openmausbot
-journalctl -u openmausbot -f            # the server's log, including "tunnel: live at …"
+sudo systemctl daemon-reload && sudo systemctl enable --now mausclaw
+journalctl -u mausclaw -f            # the server's log, including "tunnel: live at …"
 ```
 
-Use `--tailscale` instead of `--tunnel` for path C. `--no-pair` skips printing a code at every restart; mint one with `npx openmausbot pair` when you need it. Docker (path B) restarts on its own (`restart: unless-stopped`).
+Use `--tailscale` instead of `--tunnel` for path C. `--no-pair` skips printing a code at every restart; mint one with `npx mausclaw pair` when you need it. Docker (path B) restarts on its own (`restart: unless-stopped`).
 
 Adjust the account, home, and PATH if yours differ; Node 24 must be available on
 that PATH. The service runs the installed CLI directly, so a restart uses the
@@ -260,22 +260,22 @@ same release without an npm install prompt or an implicit upgrade.
   then run these commands from the administrator shell, replacing `X.Y.Z`:
 
   ```sh
-  sudo systemctl stop openmausbot
-  sudo -iu maus npm install --global --prefix /home/maus/.local openmausbot@X.Y.Z
-  sudo systemctl start openmausbot
+  sudo systemctl stop mausclaw
+  sudo -iu maus npm install --global --prefix /home/maus/.local mausclaw@X.Y.Z
+  sudo systemctl start mausclaw
   ```
 
   Check that installation succeeded before starting. A service restart by itself
   does not update the installed package. For foreground `npx` usage, specify the
-  desired release as `npx --yes openmausbot@X.Y.Z serve --tunnel`.
-- **Path B:** `cd OpenMausBot/deploy && docker compose pull omb && docker compose up -d`.
+  desired release as `npx --yes mausclaw@X.Y.Z serve --tunnel`.
+- **Path B:** `cd MausClaw/deploy && docker compose pull mausclaw && docker compose up -d`.
 
 Routines and queued work survive a restart. A teammate turn running at that moment runs again once at the next start, told to check what it already did, and the bot that asked for it is told. A person's own turn and a running routine are not run again: the conversation says it was interrupted. Update between runs where you can.
 
 ## Back up
 
 Stop the server before copying its SQLite database: Ctrl-C for a foreground
-process, or `sudo systemctl stop openmausbot` from the administrator shell for
+process, or `sudo systemctl stop mausclaw` from the administrator shell for
 the service above. Stop any engine processes and managed desktops still writing
 files you intend to back up.
 
@@ -284,8 +284,8 @@ credentials, and paired sessions). Run it from the service account's shell:
 
 ```sh
 umask 077
-backup_dir=$(mktemp -d "$PWD/openmausbot-backup.XXXXXX")
-tar czf "$backup_dir/openmausbot-data.tgz" -C "$HOME" .openmausbot
+backup_dir=$(mktemp -d "$PWD/mausclaw-backup.XXXXXX")
+tar czf "$backup_dir/mausclaw-data.tgz" -C "$HOME" .mausclaw
 ```
 
 A full backup also needs your engine credential/configuration paths, such as
@@ -295,20 +295,20 @@ any configured home/data-directory overrides, and workspaces outside the app
 directory. These are not included in the command above.
 
 For path B, the whole `/data` volume includes the container's CLI homes. From
-`OpenMausBot/deploy`, stop the app before archiving; `deploy_data` is the default
+`MausClaw/deploy`, stop the app before archiving; `deploy_data` is the default
 volume name, so use your actual volume name if you changed the Compose project:
 
 ```sh
-docker compose stop omb
-backup_dir=$(mktemp -d "$PWD/openmausbot-backup.XXXXXX")
-docker run --rm -v deploy_data:/data:ro -v "$backup_dir":/b alpine sh -c 'umask 077; tar czf /b/openmausbot-data.tgz -C /data .'
+docker compose stop mausclaw
+backup_dir=$(mktemp -d "$PWD/mausclaw-backup.XXXXXX")
+docker run --rm -v deploy_data:/data:ro -v "$backup_dir":/b alpine sh -c 'umask 077; tar czf /b/mausclaw-data.tgz -C /data .'
 ```
 
 Each command creates a fresh private folder in the current directory, so it
 cannot overwrite an older archive with more permissive access. Keep the
 archive inside that folder privately on another machine. Restore with the server stopped,
 using the same paths and original ownership. After backup or restore, start the
-service with `sudo systemctl start openmausbot`, or `docker compose start omb`.
+service with `sudo systemctl start mausclaw`, or `docker compose start mausclaw`.
 
 ## The rules the setup relies on
 
@@ -318,13 +318,13 @@ Read this before putting anything else in front of the server.
 - A request that arrives through a proxy or the tunnel is treated as remote and needs a session, whatever headers it carries. A proxy of your own (nginx, Traefik, Cloudflare Tunnel) must forward the real `Host` and add `X-Forwarded-For` and `X-Forwarded-Proto`, must not buffer the event stream, and must **not** rewrite `Host` to `127.0.0.1`.
 - Pairing is the login. Want a second wall in front of it? Path B's `Caddyfile` has a commented `basic_auth` block for a shared password.
 - The session cookie is marked `Secure`; do not serve this over plain HTTP on the public internet.
-- The one thing a stranger can read is `/.well-known/openmausbot/environment` (the server's id, label, version, capabilities) and `/api/health` (only the app name). Everything else answers "pair this device".
+- The one thing a stranger can read is `/.well-known/mausclaw/environment` (the server's id, label, version, capabilities) and `/api/health` (only the app name). Everything else answers "pair this device".
 
 ## Troubleshooting
 
-**`serve --tunnel` says "no account on this machine yet".** Run `npx openmausbot login` on this machine first; the credentials are per machine.
+**`serve --tunnel` says "no account on this machine yet".** Run `npx mausclaw login` on this machine first; the credentials are per machine.
 
-**The tunnel stays on "retrying".** The server is running and usable locally; the public hop is not verified yet. Wait a minute (Cloudflare needs a moment on a fresh address), then check `journalctl`/the terminal for the reason. If it never comes up, `npx openmausbot logout && npx openmausbot login` issues a fresh address.
+**The tunnel stays on "retrying".** The server is running and usable locally; the public hop is not verified yet. Wait a minute (Cloudflare needs a moment on a fresh address), then check `journalctl`/the terminal for the reason. If it never comes up, `npx mausclaw logout && npx mausclaw login` issues a fresh address.
 
 **Path B: the page never loads or shows a certificate error.** Caddy could not get a certificate. Check that the name resolves to the server and that ports 80 and 443 are open; `docker compose logs caddy` shows the reason.
 
@@ -334,9 +334,9 @@ Read this before putting anything else in front of the server.
 
 **A bot says the engine is not signed in.** Sign that engine in again on the server.
 
-**What does the server think it is?** `https://<address>/.well-known/openmausbot/environment` is public and shows its id, label, version and capabilities; `npx openmausbot status` prints the same on the server.
+**What does the server think it is?** `https://<address>/.well-known/mausclaw/environment` is public and shows its id, label, version and capabilities; `npx mausclaw status` prints the same on the server.
 
-**Something else.** `journalctl -u openmausbot --since -10m` (or `docker compose logs omb --tail 100`) shows the server's startup lines. Paste them with your question in the community channel.
+**Something else.** `journalctl -u mausclaw --since -10m` (or `docker compose logs mausclaw --tail 100`) shows the server's startup lines. Paste them with your question in the community channel.
 
 ### Ubuntu 24.04 browser sandbox
 
@@ -357,13 +357,13 @@ placeholder, not a fixed Chrome release. Copy the whole directory, including its
 libraries, to a new location that the service user cannot modify:
 
 ```sh
-sudo install -d -o root -g root -m 0755 /opt/openmausbot-browser
-sudo cp -R /home/maus/.agent-browser/browsers/chrome-VERSION /opt/openmausbot-browser/
-sudo chown -R root:root /opt/openmausbot-browser/chrome-VERSION
-sudo chmod -R go-w /opt/openmausbot-browser/chrome-VERSION
+sudo install -d -o root -g root -m 0755 /opt/mausclaw-browser
+sudo cp -R /home/maus/.agent-browser/browsers/chrome-VERSION /opt/mausclaw-browser/
+sudo chown -R root:root /opt/mausclaw-browser/chrome-VERSION
+sudo chmod -R go-w /opt/mausclaw-browser/chrome-VERSION
 ```
 
-Save this as the root-owned `/etc/apparmor.d/openmausbot-chrome`, replacing
+Save this as the root-owned `/etc/apparmor.d/mausclaw-chrome`, replacing
 `VERSION` with the same value. Keep the exact executable path: a wildcard under
 the writable service home would also allow replacement executables.
 
@@ -371,7 +371,7 @@ the writable service home would also allow replacement executables.
 abi <abi/4.0>,
 include <tunables/global>
 
-profile openmausbot-chrome /opt/openmausbot-browser/chrome-VERSION/chrome flags=(unconfined) {
+profile mausclaw-chrome /opt/mausclaw-browser/chrome-VERSION/chrome flags=(unconfined) {
   userns,
 }
 ```
@@ -379,15 +379,15 @@ profile openmausbot-chrome /opt/openmausbot-browser/chrome-VERSION/chrome flags=
 Load the profile:
 
 ```sh
-sudo apparmor_parser -r /etc/apparmor.d/openmausbot-chrome
+sudo apparmor_parser -r /etc/apparmor.d/mausclaw-chrome
 ```
 
 Add the following line under `[Service]` in the systemd unit above, again using
 the exact installed version, then run `sudo systemctl daemon-reload` and
-`sudo systemctl restart openmausbot`:
+`sudo systemctl restart mausclaw`:
 
 ```ini
-Environment=AGENT_BROWSER_EXECUTABLE_PATH=/opt/openmausbot-browser/chrome-VERSION/chrome
+Environment=AGENT_BROWSER_EXECUTABLE_PATH=/opt/mausclaw-browser/chrome-VERSION/chrome
 ```
 
 For a foreground server, export `AGENT_BROWSER_EXECUTABLE_PATH` to that same

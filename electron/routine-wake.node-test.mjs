@@ -17,7 +17,7 @@ test("the hold is on only when enabled, plugged in, and the server says a routin
 });
 
 test("the toggle is on until switched off, and survives a reread", () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-routine-wake-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-routine-wake-"));
   try {
     assert.deepEqual(routineWakeSettings(dir), { keepAwake: true });
     rememberRoutineWake(dir, false);

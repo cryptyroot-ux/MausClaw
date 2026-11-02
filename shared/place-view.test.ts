@@ -66,11 +66,11 @@ describe("U1: one line and at most one action for every state", () => {
       const view = placeViewOf(state, { ...PARAMS, words: "x" }, { role: "admin", server: "my-cloud" });
       const words = `${view.short} ${view.line} ${view.action?.label ?? ""}`;
       if (!boatAllowed.has(state)) expect(words, state).not.toMatch(/Boat/);
-      expect(words, state).not.toMatch(/\bbox\b|OMB|Hosted desktop|Cloud box|Works on to Auto|\btools?\b/i);
+      expect(words, state).not.toMatch(/\bbox\b|MausClaw|Hosted desktop|Cloud box|Works on to Auto|\btools?\b/i);
       if (state.startsWith("cc-")) expect(words, state).not.toMatch(/\bVM\b/);
     }
     for (const [id, sentence] of Object.entries(PLACE_WORDS)) {
-      expect(sentence, id).not.toMatch(/\bbox\b|OMB|Hosted desktop|Cloud box|Works on to Auto|\btools?\b/i);
+      expect(sentence, id).not.toMatch(/\bbox\b|MausClaw|Hosted desktop|Cloud box|Works on to Auto|\btools?\b/i);
       if (id !== "add-boat-key") expect(sentence, id).not.toMatch(/Boat/);
     }
   });

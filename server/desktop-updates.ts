@@ -15,7 +15,7 @@ import { keepFirefoxProfileBeforeRemove, keepInstalledAppsBeforeRemove } from ".
 
 export type LocalVmUpdateNeed = "image" | "recreate";
 
-/** A desktop OpenMausBot made, or a durable folder left by one, that this release cannot run without updating. */
+/** A desktop MausClaw made, or a durable folder left by one, that this release cannot run without updating. */
 export function localVmUpdateNeed(status: ContainerComputerStatus, workspaceExists: boolean): LocalVmUpdateNeed | null {
   if (!status.runtime || !status.daemonUp) return null;
   if (status.container === "missing") return workspaceExists && !status.image && status.create_supported ? "image" : null;
@@ -23,7 +23,7 @@ export function localVmUpdateNeed(status: ContainerComputerStatus, workspaceExis
   return status.image ? "recreate" : "image";
 }
 
-/** A VPS desktop OpenMausBot made whose image this release no longer runs. Replacing it deletes its files, so a person does it. */
+/** A VPS desktop MausClaw made whose image this release no longer runs. Replacing it deletes its files, so a person does it. */
 export function vpsDesktopOutdated(status: {
   configured?: boolean; daemonUp?: boolean; container?: string; managed?: boolean; imageMatches?: boolean;
 } | null | undefined): boolean {
@@ -92,7 +92,7 @@ export function createLocalVmUpdater(deps: LocalVmUpdaterDeps) {
   const entries = new Map<string, Entry>();
   const fine = new Set<string>();
   const pollMs = deps.pollMs ?? 1_000;
-  const waitMs = deps.waitMs ?? Math.max(1_000, Number(process.env.OMB_LOCAL_VM_UPDATE_WAIT_MS) || 20 * 60_000);
+  const waitMs = deps.waitMs ?? Math.max(1_000, Number(process.env.MAUSCLAW_LOCAL_VM_UPDATE_WAIT_MS) || 20 * 60_000);
   const keepSignIns = deps.keepSignIns ?? keepFirefoxProfileBeforeRemove;
   const keepApps = deps.keepApps ?? keepInstalledAppsBeforeRemove;
   const workspaceExists = deps.workspaceExists ?? localVmWorkspaceExists;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { phonePairingLink } from "./pairing-link";
 
 describe("phonePairingLink", () => {
-  const token = `omb_pair_${"a".repeat(43)}`;
+  const token = `mausclaw_pair_${"a".repeat(43)}`;
   const secretPublicKey = "BIPBQ12_dWnF1DZLsTZO3Vg0NGjds5-jp9h3jhjr2To7bJelczS0LM82rfXV68PmSJhz2ePosj3fL974XckCpDU";
 
   const decodedEndpoints = (link: string) => {
@@ -32,7 +32,7 @@ describe("phonePairingLink", () => {
     });
 
     const url = new URL(link!);
-    expect(url.protocol).toBe("openmausbot:");
+    expect(url.protocol).toBe("mausclaw:");
     expect(url.host).toBe("pair");
     expect(url.searchParams.get("address")).toBe("macbook.tail1234.ts.net:8810");
     expect(url.searchParams.get("token")).toBe(token);
@@ -67,10 +67,10 @@ describe("phonePairingLink", () => {
       port: 8810,
       code: "004209",
       token,
-      hosts: ["macbook.tail1234.ts.net", "192.168.1.42", "openmausbot-abcd1234.local"],
+      hosts: ["macbook.tail1234.ts.net", "192.168.1.42", "mausclaw-abcd1234.local"],
     });
     expect(new URL(link!).searchParams.get("hosts")).toBe(
-      "macbook.tail1234.ts.net,192.168.1.42,openmausbot-abcd1234.local",
+      "macbook.tail1234.ts.net,192.168.1.42,mausclaw-abcd1234.local",
     );
   });
 
@@ -80,22 +80,22 @@ describe("phonePairingLink", () => {
       port: 8810,
       code: "004209",
       token,
-      hosts: ["192.168.1.42", "openmausbot-abcd1234.local"],
+      hosts: ["192.168.1.42", "mausclaw-abcd1234.local"],
       endpoints: [
         { url: "http://192.168.1.42:8810", kind: "lan", priority: 200 },
         { url: "https://Device-123.Companion.Example/", kind: "hosted", priority: 0 },
-        { url: "http://openmausbot-abcd1234.local:8810", kind: "bonjour", priority: 300 },
+        { url: "http://mausclaw-abcd1234.local:8810", kind: "bonjour", priority: 300 },
       ],
     });
 
     const url = new URL(link!);
     expect(url.searchParams.get("address")).toBe("192.168.1.42:8810");
-    expect(url.searchParams.get("hosts")).toBe("192.168.1.42,openmausbot-abcd1234.local");
+    expect(url.searchParams.get("hosts")).toBe("192.168.1.42,mausclaw-abcd1234.local");
     expect(url.searchParams.get("endpoints")).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(decodedEndpoints(link!)).toEqual([
       { url: "https://device-123.companion.example", kind: "hosted", priority: 0 },
       { url: "http://192.168.1.42:8810", kind: "lan", priority: 200 },
-      { url: "http://openmausbot-abcd1234.local:8810", kind: "bonjour", priority: 300 },
+      { url: "http://mausclaw-abcd1234.local:8810", kind: "bonjour", priority: 300 },
     ]);
   });
 
@@ -154,10 +154,10 @@ describe("phonePairingLink", () => {
 
   it("is the server's link too: an https origin, a credential, a name and no code", () => {
     const link = phonePairingLink({ address: "https://mini.example", token, name: "Ada's server" })!;
-    expect(link).toBe(`openmausbot://pair?address=https%3A%2F%2Fmini.example&token=${token}&name=Ada's%20server`);
+    expect(link).toBe(`mausclaw://pair?address=https%3A%2F%2Fmini.example&token=${token}&name=Ada's%20server`);
     expect(rawField(link, "code")).toBeUndefined();
     expect(phonePairingLink({ address: "http://192.168.1.5:8787", token })).toBe(
-      `openmausbot://pair?address=http%3A%2F%2F192.168.1.5%3A8787&token=${token}`,
+      `mausclaw://pair?address=http%3A%2F%2F192.168.1.5%3A8787&token=${token}`,
     );
   });
 
@@ -170,7 +170,7 @@ describe("phonePairingLink", () => {
     expect(rawField(phonePairingLink({ address: "https://Mini.Example:443/", token })!, "address")).toBe(
       "https://mini.example",
     );
-    expect(phonePairingLink({ address: "https://mini.example/omb", token })).toBeNull();
+    expect(phonePairingLink({ address: "https://mini.example/mausclaw", token })).toBeNull();
     expect(phonePairingLink({ address: "https://mini.example/?x=1", token })).toBeNull();
     expect(phonePairingLink({ address: "https://mini.example/#pair", token })).toBeNull();
   });

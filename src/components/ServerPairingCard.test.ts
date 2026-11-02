@@ -49,7 +49,7 @@ describe("pairing devices from a hosted server's settings", () => {
     expect(pairingBlockedReason({ kind: "unauthenticated", error: "pair" })).toBeNull();
     const html = renderToStaticMarkup(createElement(ServerPairingCard, { initialSession: chatOnly }));
     expect(html).toContain("data-server-pairing-chat-only");
-    expect(html).toContain("openmausbot pair");
+    expect(html).toContain("mausclaw pair");
     expect(html).not.toContain("Create pairing code");
     const admin = renderToStaticMarkup(createElement(ServerPairingCard, { initialSession: { ...chatOnly, scopes: ["admin", "client"] } }));
     expect(admin).toContain("Create pairing code");
@@ -67,15 +67,15 @@ describe("pairing devices from a hosted server's settings", () => {
     expect(html).toContain("data-server-pairing-portal");
     expect(html).toContain("organization&#x27;s Admin");
     expect(html).not.toContain("Create pairing code");
-    expect(html).not.toMatch(/pairing code from|openmausbot pair/);
+    expect(html).not.toMatch(/pairing code from|mausclaw pair/);
     expect(html).toContain("Signed-in devices");
     expect(html).not.toContain("data-phone-pairing-action");
     const member = renderToStaticMarkup(createElement(ServerPairingCard, { initialSession: { ...admin, scopes: ["client"] }, initialPairingCodes: false }));
     expect(member).toContain("data-server-pairing-chat-only");
-    expect(member).not.toContain("openmausbot pair");
+    expect(member).not.toContain("mausclaw pair");
   });
 
-  it("on an OMB Cloud home, which is personal, offers no chat-only choice, lists only the owner's devices, and says why in one line", () => {
+  it("on an MausClaw Cloud home, which is personal, offers no chat-only choice, lists only the owner's devices, and says why in one line", () => {
     const admin = { kind: "session" as const, id: "s", label: "Mac", scopes: ["admin", "client"], expiresAt: 1 };
     const cloud = renderToStaticMarkup(createElement(ServerPairingCard, { initialSession: admin, cloudHome: true }));
     expect(cloud).toContain("Create pairing code");

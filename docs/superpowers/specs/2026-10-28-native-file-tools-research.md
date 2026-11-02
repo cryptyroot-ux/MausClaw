@@ -2,15 +2,15 @@
 
 Date: 2026-10-28
 Status: research, awaiting execution approval
-Scope: design of built-in file tools (Read/Edit/Write/Glob/Grep) for OMB native engine,
-so OMB can do coding tasks without MCP file servers.
+Scope: design of built-in file tools (Read/Edit/Write/Glob/Grep) for MausClaw native engine,
+so MausClaw can do coding tasks without MCP file servers.
 
 ## 1. Why native file tools
 
-OMB currently has NO built-in file tools. All file access goes through MCP servers (user-configured)
+MausClaw currently has NO built-in file tools. All file access goes through MCP servers (user-configured)
 or the browser/computer MCP. Top agents (Claude Code, Codex, OpenCode, Hermes, Pi) all have built-in
-Read/Edit/Write/Glob/Grep. Without them, OMB cannot do coding tasks out of the box. This is the
-single biggest gap for OMB to be a universal agent platform.
+Read/Edit/Write/Glob/Grep. Without them, MausClaw cannot do coding tasks out of the box. This is the
+single biggest gap for MausClaw to be a universal agent platform.
 
 ## 2. Design (Claude Code / Codex / OpenCode inspired)
 
@@ -67,7 +67,7 @@ single biggest gap for OMB to be a universal agent platform.
 
 - Read-only tools (Read, Glob, Grep) can run concurrently.
 - Mutating tools (Edit, Write) run sequentially.
-- OMB engine currently runs tools sequentially. Need to classify and parallelize read-only.
+- MausClaw engine currently runs tools sequentially. Need to classify and parallelize read-only.
 
 ## 5. Integration with CapabilityProvider
 

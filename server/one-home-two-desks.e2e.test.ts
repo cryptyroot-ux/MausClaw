@@ -11,14 +11,14 @@ import { launchCloudSendFixture, type CloudSendDesk, type CloudSendFixture } fro
 import { hostTimeout } from "./testing/host-timeout.ts";
 
 const TOKEN = `ops_fake-two-desks-${randomBytes(8).toString("hex")}`;
-const GATES = mkdtempSync(join(tmpdir(), "omb-two-desks-"));
+const GATES = mkdtempSync(join(tmpdir(), "mausclaw-two-desks-"));
 const HOLD = join(GATES, "hold"), RELEASE = join(GATES, "release");
 /** Either computer's turns that start while HOLD exists run until RELEASE does. */
 const HOLD_TURNS = `if ((await import("node:fs")).existsSync(${JSON.stringify(HOLD)})) { process.env.FAKE_CLAUDE_MODE = "hang"; process.env.FAKE_CLAUDE_RELEASE = ${JSON.stringify(RELEASE)}; }`;
 let fx: CloudSendFixture, studio: CloudSendDesk;
 
 beforeAll(async () => {
-  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { OMB_ENVIRONMENT_LABEL: "MacBook Air" }, desktopEngine: HOLD_TURNS });
+  fx = await launchCloudSendFixture({ onePasswordToken: TOKEN, env: { MAUSCLAW_ENVIRONMENT_LABEL: "MacBook Air" }, desktopEngine: HOLD_TURNS });
   studio = await fx.addDesk({ label: "Studio iMac" });
 }, hostTimeout(120_000));
 afterAll(async () => { writeFileSync(RELEASE, ""); await fx?.close(); rmSync(GATES, { recursive: true, force: true }); });
@@ -109,7 +109,7 @@ it("My Cloud ends after two computers moved to it: everything comes home to the 
     return { grant: { origin: fx.cloudBase, code: (await fx.grant("Bring My Cloud home")).code, expiresAt: Date.now() + 300_000 } };
   };
   studio.account.exportHome = async () => { asked.imac++; throw Object.assign(new Error("Your bots came back to MacBook Air."), { status: 403, code: "not_homecoming" }); };
-  await fx.relaunch({ kill: false, cloud: { OMB_CLOUD_EXPORT_ONLY: "1" } });
+  await fx.relaunch({ kill: false, cloud: { MAUSCLAW_CLOUD_EXPORT_ONLY: "1" } });
   const ended = Date.now();
 
   // The iMac: its own copy, as it was at the move, open again with every automation off; nothing from My Cloud.

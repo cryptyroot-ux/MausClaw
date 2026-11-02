@@ -6,7 +6,7 @@ import { createCloudAccountClient } from "./cloud-account.mjs";
 
 const accessToken = `omc_${"T".repeat(43)}`;
 const NOW = 1_800_000_000_000;
-const HOME = "https://omb-u-1a2b3c4d5e6f.fly.dev", CLIENT_A = "https://omb-c-a.fly.dev", TEAM = "https://omb-t-acme.fly.dev";
+const HOME = "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", CLIENT_A = "https://mausclaw-c-a.fly.dev", TEAM = "https://mausclaw-t-acme.fly.dev";
 const CHECKOUT = "https://test.checkout.dodopayments.com/session/cks_new";
 const entry = (over = {}) => ({ id: "c-a", name: "Client A", color: "green", role: "owner", tier: "pro", runsOn: "cloud", status: "ready", origin: CLIENT_A,
   teamId: null, seats: null, renewsAt: null, cancelAtPeriodEnd: false, primary: false, ...over });
@@ -89,11 +89,11 @@ test("the session's Clouds: each other own Cloud pairs with its id, and only a g
 test("the Admin's word on each of the person's Clouds by its address: My Cloud's `cloud.power`, another's from the Clouds list", async t => {
   const f = await admin(t);
   f.session = { cloud: { state: "ready", origin: HOME, pairingAvailable: true, power: { state: "awake", since: 5, sleeps: true } },
-    clouds: [PRIMARY, entry({ power: { state: "asleep", since: 7, sleeps: true } }), entry({ id: "c-b", name: "Client B", origin: "https://omb-c-b.fly.dev" })] };
+    clouds: [PRIMARY, entry({ power: { state: "asleep", since: 7, sleeps: true } }), entry({ id: "c-b", name: "Client B", origin: "https://mausclaw-c-b.fly.dev" })] };
   await f.client.start();
   assert.deepEqual(f.client.powerOf(HOME), { state: "awake", since: 5, sleeps: true });
   assert.deepEqual(f.client.powerOf(CLIENT_A), { state: "asleep", since: 7, sleeps: true });
-  assert.equal(f.client.powerOf("https://omb-c-b.fly.dev"), null, "a Cloud whose plan never sleeps");
+  assert.equal(f.client.powerOf("https://mausclaw-c-b.fly.dev"), null, "a Cloud whose plan never sleeps");
   assert.equal(f.client.powerOf(TEAM), null, "nothing the session lists");
   assert.equal(f.client.powerOf(""), null);
 });

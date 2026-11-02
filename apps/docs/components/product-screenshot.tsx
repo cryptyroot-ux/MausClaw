@@ -34,8 +34,8 @@ export function ProductScreenshot({
   position?: 'center' | 'top';
 }) {
   return (
-    <figure className="omb-product-shot">
-      <div className="omb-product-shot-frame">
+    <figure className="mausclaw-product-shot">
+      <div className="mausclaw-product-shot-frame">
         <img
           src={`/screenshots/${name}.png`}
           alt={alt}

@@ -11,7 +11,7 @@ let filename: string;
 const candidate = () => ({ command: "git status --short", cwd: directory, providerInstanceId: "claude" });
 
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "omb-command-rules-"));
+  directory = mkdtempSync(join(tmpdir(), "mausclaw-command-rules-"));
   filename = join(directory, "command-allowlist.json");
 });
 afterEach(() => {

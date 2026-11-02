@@ -16,7 +16,7 @@ const TOTP = parseTotpKey("JBSWY3DPEHPK3PXP")!;
 const KEY = "ab".repeat(32);
 
 let dir: string;
-beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "omb-logins-")); });
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "mausclaw-logins-")); });
 afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
 
 const at = (host: string, hosts: string[] = [], exactHost = false) => loginPlace(host, hosts, exactHost);

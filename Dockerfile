@@ -1,5 +1,5 @@
-# OpenMausBot harness server — hosted/self-hosted tenant image, and the
-# OMB Cloud Pro home machine (docs/cloud-pro.md).
+# MausClaw harness server — hosted/self-hosted tenant image, and the
+# MausClaw Cloud Pro home machine (docs/cloud-pro.md).
 #
 # Build the renderer + the self-contained server bundle, then ship only those
 # artifacts on a slim Node runtime. The runtime stage holds what changes
@@ -11,12 +11,12 @@
 # Caddy in the same network namespace to terminate TLS and authentication at
 # the edge.
 #
-#   docker build -t openmausbot .
-#   docker build --build-arg ENGINES="@anthropic-ai/claude-code @openai/codex" -t openmausbot .
-#   docker build --target cloud-home -t omb-cloud-home .
+#   docker build -t mausclaw .
+#   docker build --build-arg ENGINES="@anthropic-ai/claude-code @openai/codex" -t mausclaw .
+#   docker build --target cloud-home -t mausclaw-cloud-home .
 #
 # HOME is the /data volume, so engine CLI logins (~/.claude, ~/.codex, ~/.grok,
-# ...) and OpenMausBot's own state (~/.openmausbot) persist across container
+# ...) and MausClaw's own state (~/.mausclaw) persist across container
 # restarts.
 #
 # A plain `docker run` of either image wants `--init --shm-size=512m`, as the
@@ -79,8 +79,8 @@ ARG CHROME_CACHE_TAG=""
 # postinstall points it there); the other platforms' binaries are never run.
 RUN echo "agent-browser ${AGENT_BROWSER_VERSION}, Chrome for Testing ${CHROME_CACHE_TAG:-Stable}" \
   && npm install -g --cache /tmp/npm-cache agent-browser@${AGENT_BROWSER_VERSION} \
-  && HOME=/opt/openmausbot-browser agent-browser install \
-  && ln -s /opt/openmausbot-browser/.agent-browser/browsers/chrome-*/chrome /opt/openmausbot-browser/chrome \
+  && HOME=/opt/mausclaw-browser agent-browser install \
+  && ln -s /opt/mausclaw-browser/.agent-browser/browsers/chrome-*/chrome /opt/mausclaw-browser/chrome \
   && native="$(readlink -f "$(command -v agent-browser)")" \
   && case "$native" in */agent-browser/bin/agent-browser-linux-*) ;; *) echo "agent-browser is not a native binary: $native" >&2; exit 1;; esac \
   && [ "$(head -c 4 "$native")" = "$(printf '\177ELF')" ] \
@@ -91,13 +91,13 @@ RUN echo "agent-browser ${AGENT_BROWSER_VERSION}, Chrome for Testing ${CHROME_CA
 # which may be an existing mounted volume. Session state still lives in HOME,
 # which each image sets after its last build step, so no build step writes
 # into what a fresh volume starts with.
-#  OMB_DUCKDB_DIR: the DuckDB binding tree the server requires (no node_modules here).
-ENV AGENT_BROWSER_EXECUTABLE_PATH=/opt/openmausbot-browser/chrome \
-    OMB_DUCKDB_DIR=/app/duckdb \
-    OMB_DATA_DIR=/data/.openmausbot \
-    OMB_STATIC_DIR=/app/dist \
-    OMB_PORT=8799 \
-    OMB_WEBHOOK_PORT=8800 \
+#  MAUSCLAW_DUCKDB_DIR: the DuckDB binding tree the server requires (no node_modules here).
+ENV AGENT_BROWSER_EXECUTABLE_PATH=/opt/mausclaw-browser/chrome \
+    MAUSCLAW_DUCKDB_DIR=/app/duckdb \
+    MAUSCLAW_DATA_DIR=/data/.mausclaw \
+    MAUSCLAW_STATIC_DIR=/app/dist \
+    MAUSCLAW_PORT=8799 \
+    MAUSCLAW_WEBHOOK_PORT=8800 \
     NODE_ENV=production
 WORKDIR /app
 
@@ -110,9 +110,9 @@ FROM runtime AS cloud-home
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 poppler-utils unzip bubblewrap socat \
   && rm -rf /var/lib/apt/lists/* \
-  && HOME=/tmp/omb-build-home npm install -g pnpm@10.33.0 \
-  && bwrap --version && socat -V | head -1 && HOME=/tmp/omb-build-home pnpm --version \
-  && rm -rf /tmp/omb-build-home /tmp/node-compile-cache
+  && HOME=/tmp/mausclaw-build-home npm install -g pnpm@10.33.0 \
+  && bwrap --version && socat -V | head -1 && HOME=/tmp/mausclaw-build-home pnpm --version \
+  && rm -rf /tmp/mausclaw-build-home /tmp/node-compile-cache
 # Caddy and Grok are pinned, so they sit beneath the engines, which change
 # more often.
 COPY --from=edge /caddy /usr/local/bin/caddy
@@ -141,8 +141,8 @@ RUN if [ -n "$GROK_VERSION" ]; then \
 ARG CLOUD_HOME_ENGINES="@anthropic-ai/claude-code @openai/codex"
 ARG ENGINES_CACHE_TAG=""
 RUN echo "engines: ${CLOUD_HOME_ENGINES:-none} ${ENGINES_CACHE_TAG}" \
-  && if [ -n "$CLOUD_HOME_ENGINES" ]; then HOME=/tmp/omb-build-home npm install -g $CLOUD_HOME_ENGINES; fi \
-  && rm -rf /tmp/omb-build-home /tmp/node-compile-cache
+  && if [ -n "$CLOUD_HOME_ENGINES" ]; then HOME=/tmp/mausclaw-build-home npm install -g $CLOUD_HOME_ENGINES; fi \
+  && rm -rf /tmp/mausclaw-build-home /tmp/node-compile-cache
 COPY deploy/fly/Caddyfile /app/cloud/Caddyfile
 # The root supervisor runs /app's code and hands the server its secrets, so
 # no file there may be one `maus` can change: unlike the server image's, these
@@ -154,20 +154,20 @@ COPY --from=build /src/dist-server ./dist-server
 COPY --from=build /src/dist ./dist
 # The bundled skills (server/skill-library.ts reads ./skills from /app).
 COPY --from=build /src/skills ./skills
-RUN export HOME=/tmp/omb-build-home \
+RUN export HOME=/tmp/mausclaw-build-home \
  && chmod go-w /app/cloud /app/cloud/Caddyfile \
  && caddy version \
- && OMB_CLOUD_PUBLIC_HOST=validate.fly.dev caddy validate --config /app/cloud/Caddyfile --adapter caddyfile \
+ && MAUSCLAW_CLOUD_PUBLIC_HOST=validate.fly.dev caddy validate --config /app/cloud/Caddyfile --adapter caddyfile \
  && test -f /app/dist-server/cloud-home-start.js \
  && untrusted="$(find /app /usr/local/bin/caddy \( ! -user root -o ! -type l -perm /022 \) -print)" \
  && if [ -n "$untrusted" ]; then echo "not root's, or writable by others:" >&2; echo "$untrusted" >&2; exit 1; fi \
- && rm -rf /tmp/omb-build-home
+ && rm -rf /tmp/mausclaw-build-home
 ENV HOME=/data
 VOLUME ["/data"]
 EXPOSE 8080
 # Fly uses the checks in fly.toml; this one serves a plain `docker run`.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
-  CMD curl -sf http://127.0.0.1:8080/api/health | grep -q openmausbot || exit 1
+  CMD curl -sf http://127.0.0.1:8080/api/health | grep -q mausclaw || exit 1
 # Starts as root: hands a fresh volume to `maus`, runs the server and the edge
 # as `maus`, and hands the server its secrets over a pipe, never an
 # environment `maus` could read (server/cloud-home-start.ts). It runs only
@@ -179,8 +179,8 @@ CMD ["node", "/app/dist-server/cloud-home-start.js"]
 FROM runtime AS server
 # Optional engine CLIs baked into the image (space-separated npm packages).
 ARG ENGINES=""
-RUN HOME=/tmp/omb-build-home npm install -g rea-agents --allow-scripts=frida && rm -rf /tmp/omb-build-home /tmp/node-compile-cache
-RUN if [ -n "$ENGINES" ]; then HOME=/tmp/omb-build-home npm install -g $ENGINES && rm -rf /tmp/omb-build-home /tmp/node-compile-cache; fi
+RUN HOME=/tmp/mausclaw-build-home npm install -g rea-agents --allow-scripts=frida && rm -rf /tmp/mausclaw-build-home /tmp/node-compile-cache
+RUN if [ -n "$ENGINES" ]; then HOME=/tmp/mausclaw-build-home npm install -g $ENGINES && rm -rf /tmp/mausclaw-build-home /tmp/node-compile-cache; fi
 COPY --from=build --chown=maus:maus /src/dist-native/duckdb/linux-x64 ./duckdb
 COPY --from=build --chown=maus:maus /src/dist-server ./dist-server
 COPY --from=build --chown=maus:maus /src/dist ./dist
@@ -189,7 +189,7 @@ ENV HOME=/data
 VOLUME ["/data"]
 USER maus
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD curl -sf http://127.0.0.1:8799/api/health | grep -q openmausbot || exit 1
+  CMD curl -sf http://127.0.0.1:8799/api/health | grep -q mausclaw || exit 1
 # The launcher runs dist-server/index.js and starts it again when it asks to
 # (a copied workspace committing, server/restart.ts), so the container, and a
 # Caddy sharing its network, stays up through that restart.

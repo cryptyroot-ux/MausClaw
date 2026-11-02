@@ -157,7 +157,7 @@ describe("claim-time computer refusal in bindTurnComputer", () => {
     await expect(bindTurnComputer({}, "computer:host")).resolves.toBe("claimed");
   });
 
-  it("refuses this computer and a Local VM on an OMB Cloud home, and nothing else", async () => {
+  it("refuses this computer and a Local VM on an MausClaw Cloud home, and nothing else", async () => {
     expect(refusalStart).toBeGreaterThan(0);
     const { managed } = overlay(null);
     const bindTurnComputer = bind(managed, true);

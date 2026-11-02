@@ -18,7 +18,7 @@ let child: ChildProcess;
 let stderr = "";
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-legacy-test-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-legacy-test-"));
   const legacy = join(home, ".opengrokbot");
   mkdirSync(legacy, { recursive: true });
   // A non-product shadow: an empty map would select the full default fleet, whose CLI probes are not part of this test.
@@ -33,9 +33,9 @@ beforeAll(async () => {
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       HOME: home,
       USERPROFILE: home,
-      OMB_PORT: String(PORT),
-      OMB_WEBHOOK_PORT: String(WEBHOOK_PORT),
-      OMB_BROWSER_CONNECTION: join(home, "browser-test-connection.json"),
+      MAUSCLAW_PORT: String(PORT),
+      MAUSCLAW_WEBHOOK_PORT: String(WEBHOOK_PORT),
+      MAUSCLAW_BROWSER_CONNECTION: join(home, "browser-test-connection.json"),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -59,7 +59,7 @@ afterAll(async () => {
 
 describe("legacy data dir", () => {
   it("is renamed to the new name on first boot, with its contents and a fresh environment id", () => {
-    const fresh = join(home, ".openmausbot");
+    const fresh = join(home, ".mausclaw");
     expect(existsSync(join(home, ".opengrokbot"))).toBe(false);
     expect(readFileSync(join(fresh, "keep-me.txt"), "utf8")).toBe("carried over");
     expect(readFileSync(join(fresh, "environment-id"), "utf8").trim()).toMatch(/^[0-9a-f-]{36}$/);

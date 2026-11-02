@@ -12,7 +12,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function harness(options: { bot?: () => "ready" | "busy" | "missing"; turn?: () => Promise<void>; resolveResultsThread?: RoutineManagerOptions["resolveResultsThread"] } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-checks-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-checks-"));
   dirs.push(dir);
   let now = new Date(2026, 9, 22, 9, 0, 0).getTime();
   const answers: RoutineCheckResult[] = [];

@@ -109,7 +109,7 @@ const fullLine = `Not sent: ${MAX_OUTBOX} bug reports are already waiting to go 
 const droppedLine = "A bug report from this conversation could not reach the MausBot team for a week, so it was dropped. Type @devs again to send a new one.";
 
 /** Rides on the turn that answers a @devs message. */
-const TURN_NOTE = "\n\n[From OpenMausBot, not the person: this message tags @devs, so it is a bug report for the MausBot team, OpenMausBot's developers. Call report_bug once, first: what the person says went wrong; what you saw yourself in this conversation (errors, failed tools, stuck steps), or that you saw nothing unusual; and steps to reproduce. Leave out passwords, keys, tokens and file contents; OpenMausBot adds the app's own diagnostics. Then tell the person, word for word, the line report_bug returns, and help with the problem if you can.]";
+const TURN_NOTE = "\n\n[From MausClaw, not the person: this message tags @devs, so it is a bug report for the MausBot team, MausClaw's developers. Call report_bug once, first: what the person says went wrong; what you saw yourself in this conversation (errors, failed tools, stuck steps), or that you saw nothing unusual; and steps to reproduce. Leave out passwords, keys, tokens and file contents; MausClaw adds the app's own diagnostics. Then tell the person, word for word, the line report_bug returns, and help with the problem if you can.]";
 
 const iso = (at: number) => new Date(at).toISOString();
 const firstLine = (text: string | undefined) => (text ?? "").split("\n").map((line) => line.trim()).find(Boolean) ?? "";
@@ -257,9 +257,9 @@ export function createDevsReports(deps: DevsReportsDeps) {
 
   /** Why no bot wrote the summary, read once the conversation is quiet. */
   function why(entry: Waiting): string {
-    if (entry.restored) return "OpenMausBot restarted before a bot wrote one";
+    if (entry.restored) return "MausClaw restarted before a bot wrote one";
     if (!entry.answered) return "no bot answered the message";
-    if (entry.offered === false) return "the bot's engine cannot use OpenMausBot's tools";
+    if (entry.offered === false) return "the bot's engine cannot use MausClaw's tools";
     const path = store.activePath(entry.threadId);
     const after = path.slice(path.findIndex((line) => line.id === entry.messageId) + 1);
     if (after.some((line) => line.kind === "activity" && line.tool && failedTurnCause(line.tool.name) !== null)) return "the bot's turn failed";
@@ -352,7 +352,7 @@ export function createDevsReports(deps: DevsReportsDeps) {
 
   return {
     /** The note on a turn in this conversation while a @devs message waits for its summary; empty otherwise, and for a
-     * turn without OpenMausBot's tools. */
+     * turn without MausClaw's tools. */
     note(threadId: string, tools: boolean): string {
       const entry = waiting.filter((one) => one.threadId === threadId && !inFlight.has(one.messageId)).at(-1);
       if (!entry) return "";

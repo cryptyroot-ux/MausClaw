@@ -5,23 +5,23 @@ import { CLOUD_ORIGIN, STAGING_CLOUD_ORIGIN, checkoutDestination, cloudOrigin, c
 
 const accessToken = `omc_${"S".repeat(43)}`;
 
-test("OMB_CLOUD_STAGING=1, and only that, points the app at the fixed staging Admin with its own token file", () => {
+test("MAUSCLAW_CLOUD_STAGING=1, and only that, points the app at the fixed staging Admin with its own token file", () => {
   assert.deepEqual(cloudTarget({}), { origin: CLOUD_ORIGIN, staging: false, file: "cloud-account.bin", environments: "environments.json", sync: "cloud-sync", look: "cloud-home-look.json" });
-  assert.deepEqual(cloudTarget({ OMB_CLOUD_STAGING: "1" }), { origin: "https://omb-cloud-staging.fly.dev", staging: true, file: "cloud-account-staging.bin",
+  assert.deepEqual(cloudTarget({ MAUSCLAW_CLOUD_STAGING: "1" }), { origin: "https://mausclaw-cloud-staging.fly.dev", staging: true, file: "cloud-account-staging.bin",
     environments: "environments-staging.json", sync: "cloud-sync-staging", look: "cloud-home-look-staging.json" });
-  const production = Object.values(cloudTarget({})), staging = Object.values(cloudTarget({ OMB_CLOUD_STAGING: "1" }));
+  const production = Object.values(cloudTarget({})), staging = Object.values(cloudTarget({ MAUSCLAW_CLOUD_STAGING: "1" }));
   assert.ok(staging.filter(value => typeof value === "string").every(name => !production.includes(name)), "no file or address shared with production");
-  assert.equal(STAGING_CLOUD_ORIGIN, "https://omb-cloud-staging.fly.dev");
-  for (const value of ["0", "true", "yes", " 1", "1 ", "01", "2", "", "https://evil.example.test", "https://omb-cloud-staging.fly.dev"]) {
-    assert.deepEqual(cloudTarget({ OMB_CLOUD_STAGING: value }), cloudTarget({}), JSON.stringify(value));
+  assert.equal(STAGING_CLOUD_ORIGIN, "https://mausclaw-cloud-staging.fly.dev");
+  for (const value of ["0", "true", "yes", " 1", "1 ", "01", "2", "", "https://evil.example.test", "https://mausclaw-cloud-staging.fly.dev"]) {
+    assert.deepEqual(cloudTarget({ MAUSCLAW_CLOUD_STAGING: value }), cloudTarget({}), JSON.stringify(value));
   }
-  assert.deepEqual(cloudTarget({ OMB_CLOUD_ORIGIN: "https://evil.example.test", OMB_CLOUD_STAGING_URL: "https://evil.example.test" }), cloudTarget({}), "no address is ever read from the environment");
-  assert.deepEqual(cloudTarget(undefined).origin, process.env.OMB_CLOUD_STAGING === "1" ? STAGING_CLOUD_ORIGIN : CLOUD_ORIGIN);
+  assert.deepEqual(cloudTarget({ MAUSCLAW_CLOUD_ORIGIN: "https://evil.example.test", MAUSCLAW_CLOUD_STAGING_URL: "https://evil.example.test" }), cloudTarget({}), "no address is ever read from the environment");
+  assert.deepEqual(cloudTarget(undefined).origin, process.env.MAUSCLAW_CLOUD_STAGING === "1" ? STAGING_CLOUD_ORIGIN : CLOUD_ORIGIN);
 });
 
 test("the staging address is the one exact https origin; staging checkouts are only Dodo's test page", () => {
   assert.equal(cloudOrigin(STAGING_CLOUD_ORIGIN), STAGING_CLOUD_ORIGIN);
-  for (const value of ["http://omb-cloud-staging.fly.dev", `${STAGING_CLOUD_ORIGIN}/`, `${STAGING_CLOUD_ORIGIN}:8443`, "https://omb-cloud-staging.fly.dev.evil.test", "https://evil.fly.dev"]) {
+  for (const value of ["http://mausclaw-cloud-staging.fly.dev", `${STAGING_CLOUD_ORIGIN}/`, `${STAGING_CLOUD_ORIGIN}:8443`, "https://mausclaw-cloud-staging.fly.dev.evil.test", "https://evil.fly.dev"]) {
     assert.throws(() => cloudOrigin(value), /Invalid MausBot Cloud address/, value);
   }
   const test = "https://test.checkout.dodopayments.com/session/cks_1", live = "https://checkout.dodopayments.com/session/cks_1";
@@ -46,7 +46,7 @@ test("a staging client talks only to the staging Admin, says it is staging, and 
     if (path === "/api/cloud/desktop/checkout") return answer(200, { cloudContractVersion: 1, url: checkoutUrl });
     return answer(404, { error: "not_found" });
   };
-  const client = createCloudAccountClient({ origin: cloudTarget({ OMB_CLOUD_STAGING: "1" }).origin, fetch, deviceName: "Staging VM", platform: "linux", appVersion: "0.1.113",
+  const client = createCloudAccountClient({ origin: cloudTarget({ MAUSCLAW_CLOUD_STAGING: "1" }).origin, fetch, deviceName: "Staging VM", platform: "linux", appVersion: "0.1.113",
     store: { read: async () => saved, write: async value => { saved = value; } }, openBrowser: async url => { browsers.push(url); }, onState: state => states.push(state),
     setTimer: () => 1, clearTimer: () => {} });
   try {

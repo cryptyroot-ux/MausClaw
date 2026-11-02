@@ -1,5 +1,5 @@
-// Native file tools for the OMB agent engine: Read, Edit, Write, Glob, Grep.
-// These are built-in capabilities (no MCP server needed) so OMB can do coding
+// Native file tools for the MausClaw agent engine: Read, Edit, Write, Glob, Grep.
+// These are built-in capabilities (no MCP server needed) so MausClaw can do coding
 // tasks out of the box. Path-safe: all paths resolve inside a workspace root.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";

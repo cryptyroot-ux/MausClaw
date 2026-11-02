@@ -1,4 +1,4 @@
-// The one `openmausbot://pair` link builder, read by the Android and iOS
+// The one `mausclaw://pair` link builder, read by the Android and iOS
 // scanners (`PairingInvite.parse`). Every value is written with
 // encodeURIComponent, so a space is `%20`.
 
@@ -147,7 +147,7 @@ export function phonePairingLink({
   secretPublicKey,
 }: PhonePairingLinkOptions): string | null {
   const dial = linkAddress(address, port);
-  if (!dial || !/^omb_pair_[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  if (!dial || !/^mausclaw_pair_[A-Za-z0-9_-]{43}$/.test(token)) return null;
   if (code !== undefined && !/^\d{6}$/.test(code)) return null;
 
   const fields: Array<[string, string]> = [["address", dial], ["token", token]];
@@ -165,5 +165,5 @@ export function phonePairingLink({
   const secretKey = validSecretPublicKey(secretPublicKey);
   if (secretKey) fields.push(["secretKey", secretKey]);
 
-  return `openmausbot://pair?${fields.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&")}`;
+  return `mausclaw://pair?${fields.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&")}`;
 }

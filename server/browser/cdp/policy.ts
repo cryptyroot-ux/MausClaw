@@ -1,4 +1,4 @@
-// The CDP methods omb-cdp may send, per kind of session. Pages detect a CDP
+// The CDP methods mausclaw-cdp may send, per kind of session. Pages detect a CDP
 // client through the Runtime domain: with Runtime enabled, V8 builds console
 // previews (an Error's getters run twice per console.log), which
 // deviceandbrowserinfo.com and others report as isAutomatedWithCDP (measured on

@@ -6,8 +6,8 @@ import { createServer } from "node:https";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { credentialStoreFlags } from "../server/browser/egress/gate.ts";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
-import { agentBrowser, ensureUiBrowser, sessionEnv } from "./testing/control-omb-ui.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
+import { agentBrowser, ensureUiBrowser, sessionEnv } from "./testing/control-mausclaw-ui.ts";
 import { mountPreview, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const fixture = await launchVerificationServer();
@@ -23,14 +23,14 @@ let attempts = 0;
 const requestBodies: Array<{ alias?: string }> = [];
 const deletedAccounts: string[] = [];
 const services: Record<string, { connected: boolean; pending: boolean; status: string; accounts: Array<{ id: string; alias: string; status: string }> }> = {};
-const evidence = resolve(process.env.OMB_UI_EVIDENCE_DIR ?? ".omb-scratch/connected-apps-evidence");
+const evidence = resolve(process.env.MAUSCLAW_UI_EVIDENCE_DIR ?? ".mausclaw-scratch/connected-apps-evidence");
 mkdirSync(evidence, { recursive: true });
 const pauseAuthorize = (fail = false) => {
   failure = fail;
   hold = new Promise<void>((done) => { release = done; });
 };
 try {
-  await runControlOmb(["doctor", "--url", fixture.info.url]);
+  await runControlMausclaw(["doctor", "--url", fixture.info.url]);
   // All native popups use this dedicated test hostname mapped to loopback.
   // Its ephemeral certificate and ignored trust live only in this fixture.
   const key = join(fixture.info.dataDir, "oauth-fixture.key");
@@ -65,7 +65,7 @@ try {
         const slug = req.url?.startsWith("/api/connectors/") ? req.url.split("/")[3]! : null;
         if (!failed && slug) services[slug] = {
           connected: false, pending: true, status: "INITIALIZING",
-          accounts: [...(services[slug]?.accounts ?? []), { id: `ca-${attempt}`, alias: body.alias ?? `omb-retry-${attempt}`, status: "INITIALIZING" }],
+          accounts: [...(services[slug]?.accounts ?? []), { id: `ca-${attempt}`, alias: body.alias ?? `mausclaw-retry-${attempt}`, status: "INITIALIZING" }],
         };
         await hold;
         res.writeHead(failed ? 503 : 200, { "content-type": "application/json" });

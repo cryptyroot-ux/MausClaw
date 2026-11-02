@@ -1,4 +1,4 @@
-# OpenMausBot control plane
+# MausClaw control plane
 
 This directory is an isolated Cloudflare Worker for cloud account identity,
 installation ownership, and per-installation managed companion endpoints. It
@@ -13,7 +13,7 @@ tool output.
   messages. Authentication responses remain generic even when delivery fails;
   email addresses, OTPs, secrets, and provider errors are never logged.
 - Owner-scoped desktop installations and independently revocable
-  `omb_install_…` credentials. Account bearer tokens are never accepted as
+  `mausclaw_install_…` credentials. Account bearer tokens are never accepted as
   installation credentials, or vice versa.
 - Exact-origin CORS, bounded JSON bodies, redacted errors, and `no-store` on
   every response.
@@ -83,7 +83,7 @@ requests cannot both return credentials while one invalidates the other.
 
 ### Managed endpoint contract
 
-All three endpoint methods require `Authorization: Bearer <omb_install_…>`.
+All three endpoint methods require `Authorization: Bearer <mausclaw_install_…>`.
 Account bearer tokens are rejected.
 
 - `GET` returns `{ "endpoint": null }` before allocation or after deletion.
@@ -104,7 +104,7 @@ Account bearer tokens are rejected.
   recoverable from GET or D1. After an idle reclaim the same call allocates a
   new tunnel behind the **same hostname**, so a paired phone keeps its
   address; it may also take back an endpoint whose reclaim is still pending.
-  The desktop app (Remote access on) and `openmausbot serve --tunnel` ask
+  The desktop app (Remote access on) and `mausclaw serve --tunnel` ask
   `GET` every 15 minutes, even while their connector reports ready, and make
   this call when the endpoint is gone or in `error`; a `401` from `GET` (the
   90-day installation credential expired) sends them through account
@@ -158,7 +158,7 @@ Revoking an installation first revokes its local installation credentials, then
 schedules best-effort endpoint cleanup. Cloud cleanup failure cannot restore or
 delay credential revocation. Repeating the owner-scoped installation DELETE is
 safe and retries retained cleanup state. A five-minute cron also processes at
-most `OMB_CLEANUP_SWEEP_LIMIT` (code default 20, which `wrangler.jsonc` ships;
+most `MAUSCLAW_CLEANUP_SWEEP_LIMIT` (code default 20, which `wrangler.jsonc` ships;
 it needs Workers Paid, whose per-invocation subrequest and D1 limits the
 default relies on) expired-lease rows per run when
 they are already deleting, belong to a revoked installation, or outlive a
@@ -212,7 +212,7 @@ alert`, `apns-priority: 10`, a 24-hour `apns-expiration`, `apns-topic` set to
 the bundle id, and an `apns-collapse-id` derived from the kind and thread, so
 a repeat replaces the older alert. The payload is
 `{ "aps": { "alert": { "title" }, "sound": "default", "thread-id",
-"interruption-level" }, "omb": { "v": 1, "kind", "botId", "botName",
+"interruption-level" }, "mausclaw": { "v": 1, "kind", "botId", "botName",
 "threadId", "roomId"?, "roomName"?, "pairing"? } }`; `interruption-level` is
 `time-sensitive` for `approval`, `question`, `sign-in` and `mention`, else
 `active`.
@@ -271,7 +271,7 @@ A failure in one account is logged and never stops the others:
    - `inactive` (never ran), with no activation time, created at least two
      days ago; or
    - `down` with its last connection ended at least
-     `OMB_TUNNEL_OFFLINE_RECLAIM_DAYS` (default 21, minimum 3) days ago and no
+     `MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS` (default 21, minimum 3) days ago and no
      later activation.
 
    `healthy` and `degraded` tunnels, any reported connection, an unknown
@@ -305,11 +305,11 @@ A failure in one account is logged and never stops the others:
    emits `"alert": "managed_endpoint_pool_capacity"`: once an account fills it
    reports `full` for good, so page on the pool alert instead.
 
-`OMB_TUNNEL_RECLAIM` is `observe` unless set to `on` (an unset or invalid value
+`MAUSCLAW_TUNNEL_RECLAIM` is `observe` unless set to `on` (an unset or invalid value
 observes): it logs `idle`/`eligible` counts without marking anything. Deploy in
 `observe`, check one full scan cycle of real counts, then set it to `on`.
 
-`OMB_TUNNEL_LIMIT` and `OMB_DNS_RECORD_LIMIT` (default 1000 each) are the
+`MAUSCLAW_TUNNEL_LIMIT` and `MAUSCLAW_DNS_RECORD_LIMIT` (default 1000 each) are the
 primary account's tunnel quota and its zone's DNS record quota; extra accounts
 carry their own. The limits drive the alerts and `/healthz`, rank accounts for
 new endpoints, and decide whether a tunnel-creation `429` is the quota. They
@@ -318,8 +318,8 @@ to Cloudflare's real quotas and raise them when Cloudflare raises a quota (a
 limit below the real quota turns a genuine rate limit at that count into a
 ten-minute capacity gate for that account and, with several accounts, makes
 the account look full, so new endpoints go elsewhere while it still has
-room). `wrangler.jsonc` sets `OMB_DNS_RECORD_LIMIT` to 3500 because the
-`openmausbot.com` zone is on Pro.
+room). `wrangler.jsonc` sets `MAUSCLAW_DNS_RECORD_LIMIT` to 3500 because the
+`mausclaw.com` zone is on Pro.
 
 `GET /healthz` keeps `ok` and `service` unchanged (desktops gate hosted sign-in
 on them; a full quota must not hide sign-in or recovery) and adds a
@@ -354,7 +354,7 @@ ID):
   "reclaim": { "mode": "on", "pending": 12 },
   "accounts": [
     {
-      "hostSuffix": "openmausbot.com",
+      "hostSuffix": "mausclaw.com",
       "newEndpoints": true,
       "status": "full",
       "checkedAt": 1790000060000,
@@ -394,8 +394,8 @@ trail D1 by that long; allocation gating always reads D1.
 ### Several Cloudflare accounts
 
 The account configured by `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_ZONE_ID`,
-`COMPANION_HOST_SUFFIX`, the `CLOUDFLARE_API_TOKEN` secret, `OMB_TUNNEL_LIMIT`,
-and `OMB_DNS_RECORD_LIMIT` is the primary. Without `CLOUDFLARE_ENDPOINT_ACCOUNTS`
+`COMPANION_HOST_SUFFIX`, the `CLOUDFLARE_API_TOKEN` secret, `MAUSCLAW_TUNNEL_LIMIT`,
+and `MAUSCLAW_DNS_RECORD_LIMIT` is the primary. Without `CLOUDFLARE_ENDPOINT_ACCOUNTS`
 it is the only account, and endpoints behave exactly as described above.
 
 `CLOUDFLARE_ENDPOINT_ACCOUNTS` adds up to three more accounts. It is a JSON
@@ -511,7 +511,7 @@ Cloudflare. Every such refusal, with one account too, logs
 and `errorCode`; only an operator can fix the token.
 
 **Why `minAppVersion`.** Desktop releases up to 0.1.103 accept only
-`openmausbot.com` names for **Remote computer → Desktop companion** pairing
+`mausclaw.com` names for **Remote computer → Desktop companion** pairing
 (phones, pairing links, and Tailscale have no domain rule). The desktop app
 accepts `mausbot.si` from the release that ships this change, and from the
 same release it reports its version with every endpoint request; older apps
@@ -542,7 +542,7 @@ Tailscale still work).
    Cloudflare Tunnel → Edit and Zone → DNS → Edit. Before relying on it, you
    can prove it may write: with the token, create a tunnel
    (`POST accounts/<account id>/cfd_tunnel` with
-   `{"name": "omb-token-check", "config_src": "cloudflare"}`) and a TXT record
+   `{"name": "mausclaw-token-check", "config_src": "cloudflare"}`) and a TXT record
    in the zone, then delete both.
 5. `wrangler secret put CLOUDFLARE_API_TOKEN_MAUSBOT_SI` (or the name you
    chose). Never put a token in `vars`, `.dev.vars.example`, logs, or CI output.
@@ -568,7 +568,7 @@ Tailscale still work).
 **Raising a zone's record quota.** After moving a zone to a plan with more
 DNS records (Free zones added since September 2024 allow 200, Pro 3,500),
 confirm the new quota with `GET zones/<zone id>/dns_records/usage`
-(`record_quota`), set the account's limit to it (`OMB_DNS_RECORD_LIMIT` for
+(`record_quota`), set the account's limit to it (`MAUSCLAW_DNS_RECORD_LIMIT` for
 the primary, the entry's `dnsRecordLimit` in `CLOUDFLARE_ENDPOINT_ACCOUNTS`
 otherwise; with 3,500 records the account's 1,000 tunnels bind first), and
 deploy. Until that deploy the account looks full at its old limit and gets
@@ -577,12 +577,12 @@ no new endpoint while another account has room.
 Each account adds two Cloudflare reads to every cron run (a tunnel page and a
 DNS count), and each move two lookups in the old account. Tokens created by
 the same Cloudflare user share its 1,200 requests per five minutes. On
-Workers Free, four accounts with `OMB_CLEANUP_SWEEP_LIMIT` 4 use the whole
+Workers Free, four accounts with `MAUSCLAW_CLEANUP_SWEEP_LIMIT` 4 use the whole
 50-subrequest budget, hence at most three extra accounts.
 
 ### HighLevel OAuth relay
 
-OpenMausBot's native HighLevel (GoHighLevel, and white-labels such as Growably)
+MausClaw's native HighLevel (GoHighLevel, and white-labels such as Growably)
 integration signs a person in through a Marketplace app registered to us. The
 app's client secret lives only in this Worker; the harness (desktop or a Cloud
 home) never sees it. Routes, none of which need an installation credential: the
@@ -603,7 +603,7 @@ Logs carry counts and error codes, never codes or tokens.
 Setup, once:
 
 1. Register the Marketplace app (private, sub-account, installable by agency and
-   sub-account). Redirect URL: `https://accounts.openmausbot.com/v1/highlevel/callback`.
+   sub-account). Redirect URL: `https://accounts.mausclaw.com/v1/highlevel/callback`.
    Scopes: `contacts.readonly contacts.write opportunities.readonly opportunities.write conversations.readonly locations.readonly calendars.readonly users.readonly`.
 2. Put the client id in `vars.HIGHLEVEL_CLIENT_ID` (it is public: it appears in the
    authorization URL). Keep `HIGHLEVEL_REDIRECT_URL` and `HIGHLEVEL_SCOPES` in step
@@ -636,8 +636,8 @@ non-production scoped `CLOUDFLARE_API_TOKEN`, apply the migrations locally, and
 start Wrangler:
 
 ```sh
-pnpm --filter @openmausbot/control-plane exec wrangler d1 migrations apply DB --local --config wrangler.jsonc
-pnpm --filter @openmausbot/control-plane exec wrangler dev --config wrangler.jsonc
+pnpm --filter @mausclaw/control-plane exec wrangler d1 migrations apply DB --local --config wrangler.jsonc
+pnpm --filter @mausclaw/control-plane exec wrangler dev --config wrangler.jsonc
 ```
 
 Do not commit `.dev.vars`. Because `wrangler.jsonc` declares
@@ -675,7 +675,7 @@ companion on port `8810` also does not prove managed HTTPS is ready.
 2. Check the scope of failures without exporting account or installation data:
 
    ```sh
-   pnpm --filter @openmausbot/control-plane exec wrangler d1 execute DB --remote --command "SELECT provider_account, status, last_error_code, COUNT(*) AS endpoints FROM installation_endpoints GROUP BY provider_account, status, last_error_code"
+   pnpm --filter @mausclaw/control-plane exec wrangler d1 execute DB --remote --command "SELECT provider_account, status, last_error_code, COUNT(*) AS endpoints FROM installation_endpoints GROUP BY provider_account, status, last_error_code"
    ```
 
 3. Check **account-wide** undeleted tunnel usage in the endpoint's Cloudflare
@@ -751,7 +751,7 @@ Before a production deployment, an operator must:
    the APNs secrets listed under **Phone push relay**. Without them the push
    routes answer `503 push_unavailable` and nothing else changes.
 9. Deploy the Worker and verify that `GET <BETTER_AUTH_URL>/healthz` returns
-   `"ok": true` and `"service": "openmausbot-control-plane"` over HTTPS
+   `"ok": true` and `"service": "mausclaw-control-plane"` over HTTPS
    before shipping the desktop build. Electron probes this endpoint and
    keeps new hosted onboarding hidden until it is healthy; an already signed-in
    user remains visible so cleanup and recovery are not stranded.

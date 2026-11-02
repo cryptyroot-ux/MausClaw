@@ -2,7 +2,7 @@
 // where they overlap: elementFromPoint inside the entry returns the composer,
 // never the header. Real renderer against the fake-engine fixture. Needs the
 // pinned agent-browser binary: runs when one resolves (tools directory,
-// OMB_AGENT_BROWSER_PATH, or PATH) or OMB_UI_E2E=1 asks for the verified
+// MAUSCLAW_AGENT_BROWSER_PATH, or PATH) or MAUSCLAW_UI_E2E=1 asks for the verified
 // download; otherwise skipped.
 import { spawn, type ChildProcess } from "node:child_process";
 import { join } from "node:path";
@@ -10,13 +10,13 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
-const enabled = process.env.OMB_UI_E2E === "1" || Boolean(binary);
-if (!enabled) console.info("skipping rich table composer UI e2e: set OMB_UI_E2E=1 to install the pinned browser");
+const enabled = process.env.MAUSCLAW_UI_E2E === "1" || Boolean(binary);
+if (!enabled) console.info("skipping rich table composer UI e2e: set MAUSCLAW_UI_E2E=1 to install the pinned browser");
 
 const ENTRY = 'textarea[aria-label="Message Pepper"]';
 // The list lines above the table leave the transcript headroom to scroll
@@ -71,7 +71,7 @@ const PROBE = `(() => {
   let info: { ui: string } | undefined;
   try {
     let stdout = "", stderr = "";
-    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-omb.ts"), "ui", "launch"], {
+    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-mausclaw.ts"), "ui", "launch"], {
       cwd: ROOT,
       env: { ...process.env, FAKE_CLAUDE_REPLIES: JSON.stringify([REPLY]), FAKE_CLAUDE_TOOL_CALLS: "[]" },
       stdio: ["ignore", "pipe", "pipe"],
@@ -83,7 +83,7 @@ const PROBE = `(() => {
       if (child!.exitCode !== null || child!.signalCode !== null) throw new Error(`UI launcher exited: ${stderr}`);
       try { info = JSON.parse(stdout); return Boolean(info?.ui); } catch { return false; }
     }, { timeout: binary ? 180_000 : 600_000, interval: 250 }).toBe(true);
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info!.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", info!.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
 
     await expect.poll(() => evaluate(`Boolean(document.querySelector('${ENTRY}'))`), { timeout: 15_000 }).toBe(true);

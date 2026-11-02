@@ -16,7 +16,7 @@ const adaKey = personKey({ id: "", email: ada.email });
 const url = (path: string) => new URL(`http://x${path}`);
 
 let dir = "";
-beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "omb-move-in-")); });
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "mausclaw-move-in-")); });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function setup(over: Partial<TeamMoveInDeps> = {}) {
@@ -30,7 +30,7 @@ function setup(over: Partial<TeamMoveInDeps> = {}) {
   const bots: Array<{ id: string; name: string; threadId: string }> = [{ id: OTHER, name: "Scout", threadId: "other-main" }];
   const deps: TeamMoveInDeps = {
     team: ACME, dataDir: dir,
-    sessions: { issueMoveIn: (input) => { issued.push(input); return { token: `omb_sess_${input.bot}`, session: {} as never }; }, revokeMoveIns: (bot) => { revoked.push(bot); return 1; } },
+    sessions: { issueMoveIn: (input) => { issued.push(input); return { token: `mausclaw_sess_${input.bot}`, session: {} as never }; }, revokeMoveIns: (bot) => { revoked.push(bot); return 1; } },
     store: {
       get bots() { return bots; },
       bot: (id) => bots.find((bot) => bot.id === id) ?? null,
@@ -87,7 +87,7 @@ describe("beginning a move-in", () => {
   it("any person in the team may move a bot of their own in, under its name, or \"Scout (Ada)\" beside one of that name", async () => {
     const { moveIn, issued } = setup();
     const begun = await call(moveIn.routes, "POST", "/api/team-move-in", session(), { v: 1, bot: { id: SCOUT, name: "Scout", threadId: "my-main" }, label: "Ada" });
-    expect(begun.answer).toEqual({ status: 200, body: { v: 1, token: `omb_sess_${SCOUT}`, name: "Scout (Ada)" } });
+    expect(begun.answer).toEqual({ status: 200, body: { v: 1, token: `mausclaw_sess_${SCOUT}`, name: "Scout (Ada)" } });
     expect(issued).toEqual([{ label: "Move to Acme", email: ada.email, teamRole: "member", bot: SCOUT }]);
     expect(moveIn.list()[SCOUT]).toMatchObject({ person: adaKey, who: "Ada", name: "Scout (Ada)", threadId: "my-main", state: "moving" });
     // Again (a resumed move): the same name, a fresh sign-in.

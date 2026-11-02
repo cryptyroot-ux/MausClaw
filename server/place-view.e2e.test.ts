@@ -78,12 +78,12 @@ describe("a cloud computer that can't start, against the real server", () => {
     const proc = spawn(process.execPath, [join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
-        TEMP: home, TMP: home, TMPDIR: home, OMB_TEST_SEALED_PATH: "1",
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
-        OMB_BOAT_API: boatApi, OMB_USER_DATA: join(home, "user-data"),
-        ...(included ? { OMB_CLOUD_BOAT_URL: boatApi, OMB_CLOUD_BOAT_TOKEN: "relay_place_view_fixture" } : {}),
+        TEMP: home, TMP: home, TMPDIR: home, MAUSCLAW_TEST_SEALED_PATH: "1",
+        MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: ui,
+        MAUSCLAW_BOAT_API: boatApi, MAUSCLAW_USER_DATA: join(home, "user-data"),
+        ...(included ? { MAUSCLAW_CLOUD_BOAT_URL: boatApi, MAUSCLAW_CLOUD_BOAT_TOKEN: "relay_place_view_fixture" } : {}),
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;
@@ -102,7 +102,7 @@ describe("a cloud computer that can't start, against the real server", () => {
   }
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-place-view-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-place-view-"));
     data = join(home, "data");
     ui = join(home, "static");
     mkdirSync(data);

@@ -327,7 +327,7 @@ describe("the buying sheet, one view per state", () => {
     expect(cloudAddView(paid({ credit: { ...credit, remainingUsd: 0, state: "used_up" } }), undefined, at)).toMatchObject({ kind: "starting", credit: null });
     expect(cloudAddView(paid({ machine: { status: "provisioning", setup: { step: "storage", slow: true } } }), undefined, at))
       .toEqual({ kind: "starting", tier: "pro", trial: null, credit: null, step: "storage", slow: true, received: false });
-    const ready = { status: "ready" as const, origin: "https://omb-u-1.fly.dev" };
+    const ready = { status: "ready" as const, origin: "https://mausclaw-u-1.fly.dev" };
     expect(cloudAddView(paid({ machine: ready, checkout: { plan: "pro", startedAt: NOW - 3600_000 } }), undefined, at)).toEqual({ kind: "ready", tier: "pro", trial: null, credit: null });
     expect(cloudAddView(paid({ machine: ready }), undefined, at), "Add a Cloud… with a Cloud: one Cloud for now").toEqual({ kind: "has-cloud" });
     expect(cloudAddView(paid({ machine: ready, checkout: { plan: "pro", startedAt: NOW - 3600_000, done: true } }), undefined, at),
@@ -342,7 +342,7 @@ describe("the buying sheet, one view per state", () => {
     const team = (machine: CloudTeam["machine"], extra: Partial<CloudTeam> = {}): CloudTeam => ({ id: "team-acme", name: "Acme", role: "owner", machine, ...extra });
     const onTeam = (tier: string, teams?: CloudTeam[], extra: Partial<CloudAccountState> = {}) =>
       paid({ entitlement: { plan: "pro", tier, status: "active", expiresAt: NOW + 30 * DAY, version: 2 }, ...(teams ? { teams } : {}), ...extra });
-    const up = { status: "ready" as const, origin: "https://omb-t-2.fly.dev" };
+    const up = { status: "ready" as const, origin: "https://mausclaw-t-2.fly.dev" };
     for (const tier of ["team", "business"]) {
       expect(cloudAddView(onTeam(tier, [team(up)]), undefined, at), tier).toEqual({ kind: "team-ready", team: { id: "team-acme", name: "Acme" } });
       expect(cloudAddView(onTeam(tier, [team(up)]), undefined, { ...at, arrived: true }), `${tier}, signed in here just now`).toEqual({ kind: "team-ready", team: { id: "team-acme", name: "Acme" } });
@@ -385,7 +385,7 @@ describe("the buying sheet, one view per state", () => {
 
   it("never offers anything to someone who pays or may pay: a problem, an ended sign-in or an unreachable Cloud is Settings' to say", () => {
     for (const account of [
-      connected({ entitlement: { plan: "pro", tier: "pro", status: "inactive", expiresAt: null, version: 3 }, machine: { status: "payment-problem", origin: "https://omb-u-1.fly.dev" } }),
+      connected({ entitlement: { plan: "pro", tier: "pro", status: "inactive", expiresAt: null, version: 3 }, machine: { status: "payment-problem", origin: "https://mausclaw-u-1.fly.dev" } }),
       connected({ machine: { status: "stopped" }, trial: trial("ended", { keep: "checkout" }) }),
       paid({ machine: { status: "failed" } }),
       { status: "reauth-required", message: "expired", lastPlan: { tier: "pro", active: true } },
@@ -402,7 +402,7 @@ describe("This computer's Cloud sign-in card", () => {
   const view = (account: CloudAccountState) => cloudNoticeKind(cloudPlanView(account), account);
   it("says sign in again where the sign-in ended, and nothing to someone signed in", () => {
     const base = { status: "connected" as const, account: { id: "a", email: "p@example.test" } };
-    const ready = { status: "ready" as const, origin: "https://omb-u-1.fly.dev" };
+    const ready = { status: "ready" as const, origin: "https://mausclaw-u-1.fly.dev" };
     expect(view({ ...base, entitlement: { plan: "pro", status: "active", expiresAt: NOW + DAY, version: 1 }, machine: ready })).toBeNull();
     expect(view({ status: "reauth-required", message: "expired", lastPlan: { active: true } })).toBe("sign-in-again");
     expect(view({ status: "reauth-required", message: "expired", lastPlan: { active: false } })).toBeNull();

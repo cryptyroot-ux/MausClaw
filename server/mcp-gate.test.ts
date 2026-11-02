@@ -54,7 +54,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     if (delayedList) { send(delayedList.id, catalog()); delayedList = undefined; }
     return;
   }
-  send(msg.id, { scope: process.env.OMB_GATE_TOOL_SCOPE ?? null, upstreamOnly: process.env.UPSTREAM_ONLY });
+  send(msg.id, { scope: process.env.MAUSCLAW_GATE_TOOL_SCOPE ?? null, upstreamOnly: process.env.UPSTREAM_ONLY });
 });
 `;
 
@@ -84,9 +84,9 @@ describe("mcp-gate", () => {
       stdio: ["pipe", "pipe", "pipe"],
       env: {
         ...process.env,
-        OMB_GATE_NAME: "shop",
-        OMB_GATE_SPILL_DIR: join(scratch, "spill"),
-        OMB_GATE_UPSTREAM: JSON.stringify({
+        MAUSCLAW_GATE_NAME: "shop",
+        MAUSCLAW_GATE_SPILL_DIR: join(scratch, "spill"),
+        MAUSCLAW_GATE_UPSTREAM: JSON.stringify({
           command: process.execPath,
           args: [upstreamJs],
           env: { SCRIPT: script, UPSTREAM_ONLY: "yes" },
@@ -126,7 +126,7 @@ describe("mcp-gate", () => {
   };
 
   beforeEach(() => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-gate-test-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-gate-test-"));
     lines = [];
     waiting = [];
   });
@@ -147,8 +147,8 @@ describe("mcp-gate", () => {
     expect(JSON.parse(await nextLine())).toEqual({ jsonrpc: "2.0", id: 7, result: { echoed: "tools/list", params: null } });
   });
 
-  it.each([undefined, "not-json", "{}", '{"OMB_GATE_NAME":"notes","OMB_GATE_TOOL_SCOPE":"{}"}'])("refuses missing or corrupt private gate settings before spawning upstream: %s", value => {
-    const key = `OMB_GATE_CONFIG_${"a".repeat(64)}`;
+  it.each([undefined, "not-json", "{}", '{"MAUSCLAW_GATE_NAME":"notes","MAUSCLAW_GATE_TOOL_SCOPE":"{}"}'])("refuses missing or corrupt private gate settings before spawning upstream: %s", value => {
+    const key = `MAUSCLAW_GATE_CONFIG_${"a".repeat(64)}`;
     start({}, value === undefined ? {} : { [key]: value }, SCOPED_UPSTREAM, ["--config-env", key]);
     return once(gate!, "close").then(([code]) => {
       expect(code).toBe(1);
@@ -171,7 +171,7 @@ describe("mcp-gate", () => {
     const answer = await call("search_products");
     const text = answer.result.content[0].text;
     expect(text.length).toBeLessThan(full.length / 10);
-    expect(text.startsWith("⚠️ SHAPED by OpenMausBot:")).toBe(true);
+    expect(text.startsWith("⚠️ SHAPED by MausClaw:")).toBe(true);
 
     const spillDir = join(scratch, "spill");
     const [file] = readdirSync(spillDir);
@@ -215,7 +215,7 @@ describe("mcp-gate", () => {
 
   it("honours a budget the harness sets", async () => {
     const products = Array.from({ length: 300 }, (_, i) => ({ id: `p${i}`, blurb: "x".repeat(300) }));
-    start({ content: [{ type: "text", text: JSON.stringify({ products }) }], structuredContent: undefined }, { OMB_GATE_BUDGET: "2000" });
+    start({ content: [{ type: "text", text: JSON.stringify({ products }) }], structuredContent: undefined }, { MAUSCLAW_GATE_BUDGET: "2000" });
     const text = (await call("search_products")).result.content[0].text;
     expect(text.length).toBeLessThan(2_400);
   });
@@ -225,7 +225,7 @@ describe("mcp-gate", () => {
     send({ jsonrpc: "2.0", id: 3, method: "peek" });
     await nextLine();
     // The upstream started at all, so it read SCRIPT from the env the gate passed through.
-    expect(JSON.parse(JSON.stringify(process.env.OMB_GATE_UPSTREAM ?? null))).toBe(null);
+    expect(JSON.parse(JSON.stringify(process.env.MAUSCLAW_GATE_UPSTREAM ?? null))).toBe(null);
   });
 
   it("spawns an upstream named as a bare command on PATH", async () => {
@@ -238,8 +238,8 @@ describe("mcp-gate", () => {
       stdio: ["pipe", "pipe", "pipe"],
       env: {
         ...process.env,
-        OMB_GATE_NAME: "shop",
-        OMB_GATE_UPSTREAM: JSON.stringify({ command: "node", args: [upstreamJs], env: { SCRIPT: script } }),
+        MAUSCLAW_GATE_NAME: "shop",
+        MAUSCLAW_GATE_UPSTREAM: JSON.stringify({ command: "node", args: [upstreamJs], env: { SCRIPT: script } }),
       },
     }) as ChildProcessWithoutNullStreams;
     createInterface({ input: gate.stdout }).on("line", (line) => {
@@ -257,7 +257,7 @@ describe("mcp-gate", () => {
     expect(answer.result.someOtherShape.length).toBe(40_000);
   });
 
-  const selected = { OMB_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), OMB_GATE_BUDGET: "0" };
+  const selected = { MAUSCLAW_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), MAUSCLAW_GATE_BUDGET: "0" };
 
   it("filters each catalog page and rejects a withheld call before upstream execution", async () => {
     start({}, selected, SCOPED_UPSTREAM);
@@ -283,14 +283,14 @@ describe("mcp-gate", () => {
 
   it("enforces deny precedence without trimming when the result budget is zero", async () => {
     const text = "z".repeat(40_000);
-    start({ text }, { OMB_GATE_BUDGET: "0", OMB_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:*"], deny: ["mcp:shop:write"] }) }, SCOPED_UPSTREAM);
+    start({ text }, { MAUSCLAW_GATE_BUDGET: "0", MAUSCLAW_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:*"], deny: ["mcp:shop:write"] }) }, SCOPED_UPSTREAM);
     expect((await call("write")).error).toMatchObject({ code: -32602 });
     expect((await call("read", 2)).result.content[0].text).toBe(text);
     expect(existsSync(join(scratch, "spill"))).toBe(false);
   });
 
   it.each(["{", "null", '{"allow":null}'])("exits on invalid scope %s before starting the upstream", async (scope) => {
-    start({}, { OMB_GATE_TOOL_SCOPE: scope }, SCOPED_UPSTREAM);
+    start({}, { MAUSCLAW_GATE_TOOL_SCOPE: scope }, SCOPED_UPSTREAM);
     const closed = once(gate!, "close");
     gate!.stdin.end();
     const [code] = await closed;
@@ -348,20 +348,20 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   };
 
   it("checks call_tool against the tool it runs only when its upstream is the tool directory", async () => {
-    const scope = { OMB_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), OMB_GATE_BUDGET: "600" };
-    start({}, { ...scope, OMB_GATE_DIRECTORY: "1" }, DIRECTORY_UPSTREAM);
+    const scope = { MAUSCLAW_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), MAUSCLAW_GATE_BUDGET: "600" };
+    start({}, { ...scope, MAUSCLAW_GATE_DIRECTORY: "1" }, DIRECTORY_UPSTREAM);
     send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     expect(JSON.parse(await nextLine()).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["search_tools", "describe_tool", "call_tool", "read", "query_result"]);
     expect((await callWith("call_tool", { name: "write", arguments: {} }, 2)).error).toMatchObject({ code: -32602 });
     expect(ran()).toEqual([]);
     expect((await callWith("describe_tool", { name: "read" }, 3)).result.content[0].text).toHaveLength(4_000);
     expect((await callWith("call_tool", { arguments: {} }, 4)).result.content[0].text).toHaveLength(4_000);
-    expect((await callWith("call_tool", { name: "read", arguments: {} }, 5)).result.content[0].text).toContain("TRUNCATED by OpenMausBot");
+    expect((await callWith("call_tool", { name: "read", arguments: {} }, 5)).result.content[0].text).toContain("TRUNCATED by MausClaw");
     expect(ran()).toEqual(["describe_tool", "call_tool", "call_tool"]);
   });
 
   it("treats those names as ordinary tools for any other upstream", async () => {
-    start({}, { OMB_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), OMB_GATE_BUDGET: "600" }, DIRECTORY_UPSTREAM);
+    start({}, { MAUSCLAW_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }), MAUSCLAW_GATE_BUDGET: "600" }, DIRECTORY_UPSTREAM);
     send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     expect(JSON.parse(await nextLine()).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["read", "query_result"]);
     expect((await callWith("call_tool", { name: "read", arguments: {} }, 2)).error).toMatchObject({ code: -32602 });
@@ -372,16 +372,16 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   it("fits each listed schema to the engine's provider profile, and lists tools as they came without one", async () => {
     const catalog = { tools: [{ name: "small", inputSchema: { type: "object", properties: { q: { type: "string" } } } },
       { name: "create_page", description: "Create a page.", inputSchema: createPageSchema() }] };
-    start(catalog, { OMB_GATE_BUDGET: "0", [TOOL_SCHEMA_PROFILE_ENV]: "moonshot" }, LISTING_UPSTREAM);
+    start(catalog, { MAUSCLAW_GATE_BUDGET: "0", [TOOL_SCHEMA_PROFILE_ENV]: "moonshot" }, LISTING_UPSTREAM);
     send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     const [small, page] = JSON.parse(await nextLine()).result.tools;
     expect(small).toEqual(catalog.tools[0]);
     expect(schemaBytes(page.inputSchema)).toBeLessThanOrEqual(12_000);
-    expect(page.description).toMatch(/^Create a page\.\n\n\(OpenMausBot shortened this tool's parameters to fit Kimi's size limit/);
+    expect(page.description).toMatch(/^Create a page\.\n\n\(MausClaw shortened this tool's parameters to fit Kimi's size limit/);
     gate!.kill();
     await once(gate!, "close");
 
-    start(catalog, { OMB_GATE_BUDGET: "0" }, LISTING_UPSTREAM);
+    start(catalog, { MAUSCLAW_GATE_BUDGET: "0" }, LISTING_UPSTREAM);
     send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     expect(JSON.parse(await nextLine()).result).toEqual(catalog);
   });
@@ -406,7 +406,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     });
 
     it("never lists it when the budget is zero", async () => {
-      start({ text: full }, { OMB_GATE_BUDGET: "0" }, SCOPED_UPSTREAM);
+      start({ text: full }, { MAUSCLAW_GATE_BUDGET: "0" }, SCOPED_UPSTREAM);
       send({ jsonrpc: "2.0", id: 1, method: "tools/list", params: { cursor: "second" } });
       expect(JSON.parse(await nextLine()).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["write"]);
     });
@@ -414,7 +414,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     it("holds the whole result and answers a query locally with just the selection", async () => {
       start({ text: full }, {}, SCOPED_UPSTREAM);
       const shaped: string = (await call("read")).result.content[0].text;
-      expect(shaped.startsWith("⚠️ SHAPED by OpenMausBot:")).toBe(true);
+      expect(shaped.startsWith("⚠️ SHAPED by MausClaw:")).toBe(true);
       expect(shaped).toContain('query_result {"result":"r1","query":');
       expect(shaped).toContain("products: 300 items{id, name, price, blurb}");
       expect(shaped.length).toBeLessThan(8_200);
@@ -427,7 +427,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     });
 
     it("cuts a query answer to the same budget, so the whole thing never comes back", async () => {
-      start({ text: full }, { OMB_GATE_BUDGET: "2000" }, SCOPED_UPSTREAM);
+      start({ text: full }, { MAUSCLAW_GATE_BUDGET: "2000" }, SCOPED_UPSTREAM);
       await call("read");
       const answer = await query({ result: "r1", query: "@" }, 2);
       expect(answer.result.content[0].text.length).toBeLessThan(2_400);
@@ -442,7 +442,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     });
 
     it("keeps query_result listed and callable under a tool selection that never names it", async () => {
-      start({ text: full }, { OMB_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }) }, SCOPED_UPSTREAM);
+      start({ text: full }, { MAUSCLAW_GATE_TOOL_SCOPE: JSON.stringify({ allow: ["mcp:shop:read"] }) }, SCOPED_UPSTREAM);
       send({ jsonrpc: "2.0", id: 1, method: "tools/list", params: { cursor: "second" } });
       expect(JSON.parse(await nextLine()).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["query_result"]);
       await call("read", 2);

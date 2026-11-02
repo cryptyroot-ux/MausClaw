@@ -25,7 +25,7 @@ export function parseDisplay(text: string): ScreenSpec | null {
 }
 
 export async function displayScreen(host: HostKind, { platform = process.platform, env = process.env, runCommand = run }: { platform?: NodeJS.Platform; env?: NodeJS.ProcessEnv; runCommand?: Run } = {}): Promise<ScreenSpec> {
-  const named = parseDisplay(env.OMB_BROWSER_SCREEN?.trim() ?? "");
+  const named = parseDisplay(env.MAUSCLAW_BROWSER_SCREEN?.trim() ?? "");
   if (named) return named;
   if (host !== "desktop") return SERVER_SCREEN;
   try {

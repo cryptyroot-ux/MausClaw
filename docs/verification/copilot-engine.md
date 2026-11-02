@@ -52,7 +52,7 @@ the longer Windows stop timeout.
 
 These checks do not establish acceptance by GitHub. A manual check against an
 installed, signed-in Copilot CLI 1.0.103 on Windows 11, through the driver with
-a throwaway `OMB_DATA_DIR`, reported `authenticated: true`. It listed 14 models,
+a throwaway `MAUSCLAW_DATA_DIR`, reported `authenticated: true`. It listed 14 models,
 each with its multiplier and effort levels. It then ran one prompt on
 `claude-haiku-4.5`, which completed with the reasoning streamed apart from the
 reply. Copilot CLI 1.0.103 keeps every ACP session under

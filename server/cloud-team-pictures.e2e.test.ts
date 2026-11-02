@@ -59,7 +59,7 @@ it("shows every member a teammate's picture, served to the team's members only",
     expect(served.headers.get("content-type"), who).toBe("image/png");
     expect(Buffer.from(await served.arrayBuffer()), who).toEqual(PNG);
   }
-  for (const [who, token] of [["signed out", undefined], ["a made-up token", "omb_not-a-session"]] as const) {
+  for (const [who, token] of [["signed out", undefined], ["a made-up token", "mausclaw_not-a-session"]] as const) {
     const refused = await picture(adas.pictureUrl!, token);
     expect(refused.status, who).toBe(403);
     expect(refused.headers.get("content-type"), who).not.toBe("image/png");

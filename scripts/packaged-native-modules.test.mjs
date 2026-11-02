@@ -27,11 +27,11 @@ describe("packaged native modules", () => {
   });
 
   it("declares every natively required package in the npm manifest at the app's exact pin", () => {
-    const checkout = mkdtempSync(join(tmpdir(), "omb-npm-package-"));
+    const checkout = mkdtempSync(join(tmpdir(), "mausclaw-npm-package-"));
     temporaryDirectories.push(checkout);
     const pins = Object.fromEntries(nativelyRequired().map((name, i) => [name, `9.9.${i}`]));
     writeFileSync(join(checkout, "package.json"), JSON.stringify({ version: "0.0.1", dependencies: { ...pins, react: "19.0.0" } }));
-    for (const file of ["dist-server/index.js", "dist-server/openmausbot.js", "dist/index.html", "LICENSE"]) {
+    for (const file of ["dist-server/index.js", "dist-server/mausclaw.js", "dist/index.html", "LICENSE"]) {
       mkdirSync(join(checkout, file, ".."), { recursive: true });
       writeFileSync(join(checkout, file), "");
     }
@@ -47,6 +47,6 @@ describe("packaged native modules", () => {
     expect(text.indexOf("RUN node scripts/prepare-duckdb.mjs")).toBeGreaterThan(text.indexOf("COPY . ."));
     expect(text).toMatch(/^COPY --from=build \S+ \/src\/dist-native\/duckdb\/linux-x64 \.\/duckdb$/m);
     expect(text).toMatch(/^WORKDIR \/app$/m);
-    expect(text).toMatch(/\bOMB_DUCKDB_DIR=\/app\/duckdb\b/);
+    expect(text).toMatch(/\bMAUSCLAW_DUCKDB_DIR=\/app\/duckdb\b/);
   });
 });

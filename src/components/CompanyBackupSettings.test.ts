@@ -319,8 +319,8 @@ describe("optional Company cloud backup settings", () => {
 
   it("requires an explicit backup dialog without passwords, then exports only allowlisted local preferences", async () => {
     await ready();
-    storage.set("omb-drafts", "private fixture draft"); storage.set("omb-skin", "fixture-theme");
-    storage.set("auth-token", "fixture auth secret"); storage.set("omb-webhook-credentials", "fixture connection secret");
+    storage.set("mausclaw-drafts", "private fixture draft"); storage.set("mausclaw-skin", "fixture-theme");
+    storage.set("auth-token", "fixture auth secret"); storage.set("mausclaw-webhook-credentials", "fixture connection secret");
     button("Back up this installation").props.onClick!();
     expect(bridge.create).not.toHaveBeenCalled(); expect(passwords()).toHaveLength(0);
     expect(render().nodes.some(node => node.type === "dialog")).toBe(true);
@@ -330,7 +330,7 @@ describe("optional Company cloud backup settings", () => {
     const submitButton = () => render().nodes.find(node => node.type === "button" && node.props.type === "submit")!;
     expect(submitButton().props.disabled).toBe(false);
     const createForm = form(); submit(createForm); submit(createForm); await flush();
-    expect(bridge.create).toHaveBeenCalledExactlyOnceWith({ clientState: { "omb-drafts": "private fixture draft", "omb-skin": "fixture-theme" } });
+    expect(bridge.create).toHaveBeenCalledExactlyOnceWith({ clientState: { "mausclaw-drafts": "private fixture draft", "mausclaw-skin": "fixture-theme" } });
     expect([...storage.values()]).not.toContain(PASSWORD);
     expect(render().html).not.toContain(PASSWORD);
     expect(fetch).not.toHaveBeenCalled();

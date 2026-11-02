@@ -8,7 +8,7 @@ import { buildOTPEmail, sendOTPEmail } from "../src/email";
 import worker from "../src/index";
 import { sha256 } from "../src/installations";
 
-const BASE_URL = "https://auth.openmausbot.test";
+const BASE_URL = "https://auth.mausclaw.test";
 
 interface CallOptions {
   method?: string;
@@ -221,7 +221,7 @@ describe("control-plane migrations and health", () => {
           (installation_id, hostname, tunnel_name, tunnel_id, dns_record_id, status,
            last_reconciled_at, created_at, updated_at)
          VALUES ('before-0007', ?, ?, '10000000-0000-4000-8000-000000000001', 'dns-1', 'ready', 5, 1, 5)`,
-      ).bind(`c-${"a".repeat(32)}.openmausbot.com`, `omb-c-${"a".repeat(32)}`),
+      ).bind(`c-${"a".repeat(32)}.mausclaw.com`, `mausclaw-c-${"a".repeat(32)}`),
       db.prepare(
         `UPDATE managed_endpoint_capacity
             SET scan_page = 7, tunnel_count = 1000, dns_record_count = 990, reclaim_pending = 3,
@@ -237,21 +237,21 @@ describe("control-plane migrations and health", () => {
       "SELECT provider_account, hostname, status FROM installation_endpoints WHERE installation_id = 'before-0007'",
     ).first()).toEqual({
       provider_account: env.CLOUDFLARE_ACCOUNT_ID,
-      hostname: `c-${"a".repeat(32)}.openmausbot.com`,
+      hostname: `c-${"a".repeat(32)}.mausclaw.com`,
       status: "ready",
     });
     // A Worker that predates the column keeps inserting into the same account.
     await db.prepare(
       `INSERT INTO installation_endpoints (installation_id, hostname, tunnel_name, status, created_at, updated_at)
        VALUES ('older-worker', ?, ?, 'pending', 1, 1)`,
-    ).bind(`c-${"b".repeat(32)}.openmausbot.com`, `omb-c-${"b".repeat(32)}`).run();
+    ).bind(`c-${"b".repeat(32)}.mausclaw.com`, `mausclaw-c-${"b".repeat(32)}`).run();
     expect(await db.prepare(
       "SELECT provider_account FROM installation_endpoints WHERE installation_id = 'older-worker'",
     ).first()).toEqual({ provider_account: env.CLOUDFLARE_ACCOUNT_ID });
     await expect(db.prepare(
       `INSERT INTO installation_endpoints
         (installation_id, provider_account, hostname, tunnel_name, status, created_at, updated_at)
-       VALUES ('bad-account', 'short', 'c-x.example', 'omb-c-x', 'pending', 1, 1)`,
+       VALUES ('bad-account', 'short', 'c-x.example', 'mausclaw-c-x', 'pending', 1, 1)`,
     ).run()).rejects.toThrow(/CHECK/);
     expect(await db.prepare("SELECT * FROM managed_endpoint_account_capacity").all().then((rows) => rows.results))
       .toEqual([{
@@ -273,7 +273,7 @@ describe("control-plane migrations and health", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       ok: true,
-      service: "openmausbot-control-plane",
+      service: "mausclaw-control-plane",
       capacity: {
         status: "unknown",
         checkedAt: null,
@@ -327,11 +327,11 @@ describe("control-plane migrations and health", () => {
   it("validates capacity tuning variables and keeps safe defaults when they are absent", () => {
     const base = { ...env } as Record<string, unknown>;
     for (const name of [
-      "OMB_TUNNEL_LIMIT",
-      "OMB_DNS_RECORD_LIMIT",
-      "OMB_TUNNEL_RECLAIM",
-      "OMB_TUNNEL_OFFLINE_RECLAIM_DAYS",
-      "OMB_CLEANUP_SWEEP_LIMIT",
+      "MAUSCLAW_TUNNEL_LIMIT",
+      "MAUSCLAW_DNS_RECORD_LIMIT",
+      "MAUSCLAW_TUNNEL_RECLAIM",
+      "MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS",
+      "MAUSCLAW_CLEANUP_SWEEP_LIMIT",
     ]) {
       Reflect.deleteProperty(base, name);
     }
@@ -344,22 +344,22 @@ describe("control-plane migrations and health", () => {
     });
     const withVars = (vars: Record<string, string>) => ({ ...base, ...vars }) as unknown as Env;
     expect(readConfig(withVars({
-      OMB_TUNNEL_LIMIT: "2500",
-      OMB_TUNNEL_RECLAIM: "observe",
-      OMB_TUNNEL_OFFLINE_RECLAIM_DAYS: "30",
-      OMB_CLEANUP_SWEEP_LIMIT: "4",
+      MAUSCLAW_TUNNEL_LIMIT: "2500",
+      MAUSCLAW_TUNNEL_RECLAIM: "observe",
+      MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS: "30",
+      MAUSCLAW_CLEANUP_SWEEP_LIMIT: "4",
     })).capacity).toMatchObject({
       cleanupSweepLimit: 4,
       offlineReclaimMs: 30 * 24 * 60 * 60 * 1_000,
       reclaimMode: "observe",
       tunnelLimit: 2500,
     });
-    expect(readConfig(withVars({ OMB_TUNNEL_OFFLINE_RECLAIM_DAYS: "2" })).capacity.offlineReclaimMs).toBe(21 * 24 * 60 * 60 * 1_000);
-    expect(readConfig(withVars({ OMB_TUNNEL_OFFLINE_RECLAIM_DAYS: "3" })).capacity.offlineReclaimMs).toBe(3 * 24 * 60 * 60 * 1_000);
-    expect(readConfig(withVars({ OMB_CLEANUP_SWEEP_LIMIT: "51" })).capacity.cleanupSweepLimit).toBe(20);
-    expect(readConfig(withVars({ OMB_TUNNEL_LIMIT: "1e3" })).capacity.tunnelLimit).toBe(1000);
-    expect(readConfig(withVars({ OMB_TUNNEL_RECLAIM: "yes" })).capacity.reclaimMode).toBe("observe");
-    expect(readConfig(withVars({ OMB_TUNNEL_RECLAIM: "on" })).capacity.reclaimMode).toBe("on");
+    expect(readConfig(withVars({ MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS: "2" })).capacity.offlineReclaimMs).toBe(21 * 24 * 60 * 60 * 1_000);
+    expect(readConfig(withVars({ MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS: "3" })).capacity.offlineReclaimMs).toBe(3 * 24 * 60 * 60 * 1_000);
+    expect(readConfig(withVars({ MAUSCLAW_CLEANUP_SWEEP_LIMIT: "51" })).capacity.cleanupSweepLimit).toBe(20);
+    expect(readConfig(withVars({ MAUSCLAW_TUNNEL_LIMIT: "1e3" })).capacity.tunnelLimit).toBe(1000);
+    expect(readConfig(withVars({ MAUSCLAW_TUNNEL_RECLAIM: "yes" })).capacity.reclaimMode).toBe("observe");
+    expect(readConfig(withVars({ MAUSCLAW_TUNNEL_RECLAIM: "on" })).capacity.reclaimMode).toBe("on");
   });
 
   it("reports an unhealthy deployment without exposing invalid configuration", async () => {
@@ -378,11 +378,11 @@ describe("control-plane migrations and health", () => {
       HIGHLEVEL_CLIENT_ID: env.HIGHLEVEL_CLIENT_ID,
       HIGHLEVEL_REDIRECT_URL: env.HIGHLEVEL_REDIRECT_URL,
       HIGHLEVEL_SCOPES: env.HIGHLEVEL_SCOPES,
-      OMB_TUNNEL_LIMIT: env.OMB_TUNNEL_LIMIT,
-      OMB_DNS_RECORD_LIMIT: env.OMB_DNS_RECORD_LIMIT,
-      OMB_TUNNEL_RECLAIM: env.OMB_TUNNEL_RECLAIM,
-      OMB_TUNNEL_OFFLINE_RECLAIM_DAYS: env.OMB_TUNNEL_OFFLINE_RECLAIM_DAYS,
-      OMB_CLEANUP_SWEEP_LIMIT: env.OMB_CLEANUP_SWEEP_LIMIT,
+      MAUSCLAW_TUNNEL_LIMIT: env.MAUSCLAW_TUNNEL_LIMIT,
+      MAUSCLAW_DNS_RECORD_LIMIT: env.MAUSCLAW_DNS_RECORD_LIMIT,
+      MAUSCLAW_TUNNEL_RECLAIM: env.MAUSCLAW_TUNNEL_RECLAIM,
+      MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS: env.MAUSCLAW_TUNNEL_OFFLINE_RECLAIM_DAYS,
+      MAUSCLAW_CLEANUP_SWEEP_LIMIT: env.MAUSCLAW_CLEANUP_SWEEP_LIMIT,
       BETTER_AUTH_SECRET: "too-short",
     };
     const request = new Request(`${BASE_URL}/healthz`);
@@ -584,7 +584,7 @@ describe("Better Auth email OTP and bearer boundary", () => {
   it("requires account bearers and never confuses installation credentials", async () => {
     expect((await call("/v1/me")).status).toBe(401);
     expect((await call("/v1/me", { token: "not-a-signed-session" })).status).toBe(401);
-    expect((await call("/v1/me", { token: "omb_install_AAAAAAAAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" })).status).toBe(401);
+    expect((await call("/v1/me", { token: "mausclaw_install_AAAAAAAAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" })).status).toBe(401);
 
     const account = await signIn("auth-boundary@example.com");
     expect((await call("/v1/installations/self", { token: account.token })).status).toBe(401);
@@ -699,7 +699,7 @@ describe("installation lifecycle", () => {
   it("registers once, stores no raw credential, and serves installation self", async () => {
     const account = await signIn("owner@example.com");
     const created = await createInstall(account.token, "mac-stable-1");
-    expect(created.credential).toMatch(/^omb_install_[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$/);
+    expect(created.credential).toMatch(/^mausclaw_install_[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$/);
     expect(created.credentialExpiresAt).toBeGreaterThan(Date.now() + 89 * 24 * 60 * 60 * 1_000);
 
     const stored = await env.DB.prepare(
@@ -977,20 +977,20 @@ describe("HTTP boundary hardening", () => {
     blocked.headers.forEach((value, name) => { serializedHeaders += `${name}: ${value}\n`; });
     expect(serializedHeaders).not.toContain("*");
 
-    const allowed = await call("/v1/me", { origin: "https://app.openmausbot.test" });
+    const allowed = await call("/v1/me", { origin: "https://app.mausclaw.test" });
     expect(allowed.status).toBe(401);
-    expect(allowed.headers.get("access-control-allow-origin")).toBe("https://app.openmausbot.test");
+    expect(allowed.headers.get("access-control-allow-origin")).toBe("https://app.mausclaw.test");
     expect(allowed.headers.get("cache-control")).toBe("no-store");
 
     const deniedPreflight = await call("/v1/installations", {
       method: "OPTIONS",
-      origin: "https://app.openmausbot.test",
+      origin: "https://app.mausclaw.test",
       headers: {
         "access-control-request-method": "POST",
         "access-control-request-headers": "authorization, x-unexpected",
       },
     });
     expect(deniedPreflight.status).toBe(403);
-    expect(deniedPreflight.headers.get("access-control-allow-origin")).toBe("https://app.openmausbot.test");
+    expect(deniedPreflight.headers.get("access-control-allow-origin")).toBe("https://app.mausclaw.test");
   });
 });

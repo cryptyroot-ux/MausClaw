@@ -10,7 +10,7 @@ import { connect, type Socket } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { openSse, type SseRecorder } from "./testing/sse.ts";
 
@@ -128,7 +128,7 @@ it("denies a never-list command a grant would have allowed, at a saved command a
     expect(await notices(bot.threadId)).toHaveLength(1);
     await stop(bot);
 
-    // Restart with the file's switch removed and only OMB_SAFETY_FLOOR=1 set,
+    // Restart with the file's switch removed and only MAUSCLAW_SAFETY_FLOOR=1 set,
     // then give the bot Full access the way a person does.
     await waitForExit(fixture.child, { signal: "SIGTERM" });
     const configPath = join(dataDir, "config.json");
@@ -138,7 +138,7 @@ it("denies a never-list command a grant would have allowed, at a saved command a
     const log = openSync(logPath, "a", 0o600);
     restarted = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
       cwd: fileURLToPath(new URL("..", import.meta.url)),
-      env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang" }, dataDir, Number(new URL(url).port)), OMB_SAFETY_FLOOR: "1" },
+      env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang" }, dataDir, Number(new URL(url).port)), MAUSCLAW_SAFETY_FLOOR: "1" },
       stdio: ["ignore", log, log],
     });
     closeSync(log);

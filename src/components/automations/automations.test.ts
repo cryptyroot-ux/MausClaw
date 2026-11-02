@@ -165,7 +165,7 @@ describe("Copy address", () => {
     flushSync(() => button(container, "Copy address").click());
     await vi.waitFor(() => expect(copied.texts).toEqual([kept.url]));
     expect(fixture.api.mock.calls.map(([path]) => path)).not.toContain("/api/webhooks/hook-1/rotate");
-    expect(credentials.items.get("omb-webhook-credentials")).toContain(kept.url);
+    expect(credentials.items.get("mausclaw-webhook-credentials")).toContain(kept.url);
   });
 
   it("makes a new one only for an address from before addresses were kept that nothing here holds", async () => {

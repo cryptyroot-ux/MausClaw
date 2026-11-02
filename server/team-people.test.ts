@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createTeamPeople } from "./team-people.ts";
 
 const dirs: string[] = [];
-const dir = () => { const made = mkdtempSync(join(tmpdir(), "omb-team-people-")); dirs.push(made); return made; };
+const dir = () => { const made = mkdtempSync(join(tmpdir(), "mausclaw-team-people-")); dirs.push(made); return made; };
 afterEach(() => { for (const made of dirs.splice(0)) rmSync(made, { recursive: true, force: true }); });
 
 describe("the people a Team Cloud bot can report to", () => {

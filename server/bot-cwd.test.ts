@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { inMyFolderCwd, sharedProjectFolder, validateBotCwd } from "./bot-cwd.ts";
 
-const dir = mkdtempSync(join(tmpdir(), "omb-cwd-"));
+const dir = mkdtempSync(join(tmpdir(), "mausclaw-cwd-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("validateBotCwd", () => {
@@ -36,8 +36,8 @@ describe("validateBotCwd", () => {
 });
 
 describe("sharedProjectFolder", () => {
-  const data = join(dir, "omb-data");
-  const project = join(dir, "omb-data-site");
+  const data = join(dir, "mausclaw-data");
+  const project = join(dir, "mausclaw-data-site");
   mkdirSync(join(data, "task-workspaces", "bot", "thread"), { recursive: true });
   mkdirSync(project);
 
@@ -55,8 +55,8 @@ describe("sharedProjectFolder", () => {
 });
 
 describe("inMyFolderCwd", () => {
-  const data = join(dir, "omb-data");
-  const project = join(dir, "omb-data-site");
+  const data = join(dir, "mausclaw-data");
+  const project = join(dir, "mausclaw-data-site");
   const privateFolder = join(data, "task-workspaces", "bot", "thread");
 
   it("shares the sender's project folder outside a room unless asked not to", () => {

@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { InstanceInfo } from "../src/state/store.tsx";
-import { launchVerificationServer } from "./control-omb.ts";
+import { launchVerificationServer } from "./control-mausclaw.ts";
 import { mountPreview } from "./testing/preview-fixture.ts";
-import { ensureUiBrowser, sessionEnv, agentBrowser } from "./testing/control-omb-ui.ts";
+import { ensureUiBrowser, sessionEnv, agentBrowser } from "./testing/control-mausclaw-ui.ts";
 
 const fixture = await launchVerificationServer();
 const engine: InstanceInfo = {
@@ -57,7 +57,7 @@ try {
   assert.match(String(await evaluate("document.body.innerText")), /Sign-in required/);
   assert.equal(await evaluate("document.querySelector('[data-engine-card=kimi]').open"), true);
   assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
-  const evidence = join(import.meta.dirname, "..", ".omb-scratch", "provider-setup");
+  const evidence = join(import.meta.dirname, "..", ".mausclaw-scratch", "provider-setup");
   mkdirSync(evidence, { recursive: true });
   await command("screenshot", join(evidence, "sign-in.png"));
   engine.snapshot = { state: "available", authenticated: true, version: "fixture 1.0.0" };

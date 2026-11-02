@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { ROUTINE_SUPERSEDED } from "./routine-execution.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
@@ -33,7 +33,7 @@ it("starts the next scheduled run of a routine whose sign-in nobody answered, an
   };
   const runs = async () => (await api("GET", "/api/routines")).runs as any[];
   const messages = async (threadId: string) => (await api("GET", `/api/threads/${threadId}/messages?limit=100`)).messages as any[];
-  const bot = (await runControlOmb(["new-bot", "--name", "Morning bot", "--url", url]) as any).bot;
+  const bot = (await runControlMausclaw(["new-bot", "--name", "Morning bot", "--url", url]) as any).bot;
   // Each conversation's turn waits on its own gate file, so a run stays running until the test finishes it.
   const wrapper = join(dataDir, "routine-gated.mjs");
   writeFileSync(wrapper, [
@@ -41,7 +41,7 @@ it("starts the next scheduled run of a routine whose sign-in nobody answered, an
     'import { readFileSync } from "node:fs";',
     'import { join } from "node:path";',
     'const at = process.argv.indexOf("--mcp-config");',
-    'const thread = at < 0 ? "probe" : JSON.parse(readFileSync(process.argv[at + 1], "utf8")).mcpServers?.agents?.env?.OMB_THREAD_ID ?? "probe";',
+    'const thread = at < 0 ? "probe" : JSON.parse(readFileSync(process.argv[at + 1], "utf8")).mcpServers?.agents?.env?.MAUSCLAW_THREAD_ID ?? "probe";',
     'process.env.FAKE_CLAUDE_MODE = thread === "probe" ? "happy" : "slow";',
     `process.env.FAKE_CLAUDE_SLOW_FINISH_GATE = join(${JSON.stringify(dataDir)}, thread + ".gate");`,
     `process.env.FAKE_CLAUDE_DUMP = join(${JSON.stringify(dataDir)}, thread + ".json");`,
@@ -62,7 +62,7 @@ it("starts the next scheduled run of a routine whose sign-in nobody answered, an
   await expect.poll(() => {
     try { launch = JSON.parse(readFileSync(join(dataDir, `${threadId}.json`), "utf8")); return true; } catch { return false; }
   }, { timeout: 15_000 }).toBe(true);
-  const asked = await raw("POST", "/api/internal/request-sign-in", { site: "example.com" }, launch.mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN);
+  const asked = await raw("POST", "/api/internal/request-sign-in", { site: "example.com" }, launch.mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN);
   expect(asked.status, JSON.stringify(asked.body)).toBe(201);
   writeFileSync(join(dataDir, `${threadId}.gate`), "finish");
   await expect.poll(async () => (await runs()).find((run) => run.id === first.id)?.status, { timeout: 15_000 }).toBe("waiting");

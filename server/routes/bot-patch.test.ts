@@ -142,7 +142,7 @@ describe("PATCH /api/bots/:id vpsAlias relocation guard", () => {
     const member = { kind: "session", via: "bearer", scopes: ["client"], session: { id: "s", label: "Laptop", scopes: ["client"] } } as unknown as RequestAuth;
 
     const fromMember = await patch(bot.id, { vpsAlias: "gamma-vps" }, { auth: member });
-    const fromPhone = await patch(bot.id, { vpsAlias: "gamma-vps" }, { headers: { "x-openmausbot-companion": "1" } });
+    const fromPhone = await patch(bot.id, { vpsAlias: "gamma-vps" }, { headers: { "x-mausclaw-companion": "1" } });
 
     expect(fromMember.status).toBe(403);
     expect(fromMember.body.error).toMatch(/not "vpsAlias"/);
@@ -315,7 +315,7 @@ describe("PATCH /api/bots/:id phoneApps", () => {
     const { store, bot, patch } = fixture();
 
     const client = await patch(bot.id, { phoneApps: { calendar: "write" } }, { auth: { kind: "session", via: "bearer", scopes: ["client"], session: { id: "s-member", email: "member@example.com", label: "Front desk" } } as unknown as RequestAuth });
-    const paired = await patch(bot.id, { phoneApps: { calendar: "write" } }, { headers: { "x-openmausbot-companion": "1" } });
+    const paired = await patch(bot.id, { phoneApps: { calendar: "write" } }, { headers: { "x-mausclaw-companion": "1" } });
 
     expect(client.status).toBe(403);
     expect(paired.status).toBe(403);

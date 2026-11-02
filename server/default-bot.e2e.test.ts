@@ -4,9 +4,9 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
-import { childEnv } from "./testing/omb-env.ts";
+import { childEnv } from "./testing/mausclaw-env.ts";
 
 type McpServer = { command: string; args: string[]; env: Record<string, string> };
 type Answer = { id: number; result?: { content?: Array<{ text: string }>; isError?: boolean }; error?: { code: number; message: string } };
@@ -37,7 +37,7 @@ it("makes MausBot a new install's first bot, never deleted, hidden by its switch
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(10_000) });
     return { status: response.status, body: await response.json() as any };
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const bots = async () => (await api("GET", "/api/bots")).body.bots as any[];
   try {
     const [maus] = await bots();
@@ -64,7 +64,7 @@ it("makes MausBot a new install's first bot, never deleted, hidden by its switch
     const launched = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")) as { systemPrompt: string; mcpConfig: { mcpServers: Record<string, McpServer> } };
     rmSync(fixture.fixtureDumpPath, { force: true });
     const agents = launched.mcpConfig.mcpServers.agents!;
-    expect(agents.env.OMB_CHIEF_OF_STAFF).toBe("1");
+    expect(agents.env.MAUSCLAW_CHIEF_OF_STAFF).toBe("1");
     expect(launched.systemPrompt).toContain("You are also this person's MausBot");
     expect(launched.systemPrompt).toContain("but you are not the Chief");
     const created = await callTool(agents, "create_bot", { name: "Scout", role: "Researcher", instructions: "Find what the person asks for." });
@@ -83,7 +83,7 @@ it("makes MausBot a new install's first bot, never deleted, hidden by its switch
 it("lets MausBot read the unread notifications and mark finished work read, and gives no other bot the tools", async () => {
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_MODE: "hang" });
   const api = async (path: string) => (await (await fetch(`${fixture.info.url}${path}`, { signal: AbortSignal.timeout(10_000) })).json()) as any;
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const launch = async (botId: string) => {
     await control(["send", "--bot", botId, "--text", "Stay active."]);
     await expect.poll(() => existsSync(fixture.fixtureDumpPath), { timeout: 30_000 }).toBe(true);
@@ -95,7 +95,7 @@ it("lets MausBot read the unread notifications and mark finished work read, and 
   try {
     const [maus] = (await api("/api/bots")).bots as any[];
     const agents = await launch(maus.id);
-    expect(agents.env.OMB_MAUSBOT).toBe("1");
+    expect(agents.env.MAUSCLAW_MAUSBOT).toBe("1");
 
     const unread = await callTool(agents, "list_unread_notifications", {});
     expect(unread.result?.isError, text(unread)).toBeFalsy();
@@ -108,7 +108,7 @@ it("lets MausBot read the unread notifications and mark finished work read, and 
 
     const { bot: clive } = await control(["new-bot", "--name", "Clive"]);
     const other = await launch(clive.id);
-    expect(other.env.OMB_MAUSBOT).toBe("0");
+    expect(other.env.MAUSCLAW_MAUSBOT).toBe("0");
     expect((await callTool(other, "list_unread_notifications", {})).result?.isError ?? true).toBe(true);
     expect((await callTool(other, "mark_notifications_read", { ids: ["no-such-notification"] })).result?.isError ?? true).toBe(true);
     await control(["interrupt", "--bot", maus.id]);

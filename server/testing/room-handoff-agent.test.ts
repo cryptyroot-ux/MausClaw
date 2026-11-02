@@ -6,12 +6,12 @@ import { removeTempDir } from "./cleanup.ts";
 import { ownTurnText, runRoomHandoffAgent } from "./room-handoff-agent.ts";
 
 async function withMcp(script: string, test: (run: () => Promise<string>, dir: string) => Promise<void>) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-handoff-process-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-handoff-process-"));
   const config = join(dir, "mcp.json");
   const prompt = join(dir, "system.txt");
   const plan = join(dir, "plan.json");
   writeFileSync(config, JSON.stringify({ mcpServers: { agents: {
-    command: process.execPath, args: ["-e", script], env: { OMB_BOT_ID: "fixture", FIXTURE_HOME: dir },
+    command: process.execPath, args: ["-e", script], env: { MAUSCLAW_BOT_ID: "fixture", FIXTURE_HOME: dir },
   } } }));
   writeFileSync(prompt, "Only this disposable test fixture.");
   writeFileSync(plan, JSON.stringify({ fixture: { reply: "Completed fixture" } }));

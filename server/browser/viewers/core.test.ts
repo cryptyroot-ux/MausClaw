@@ -35,7 +35,7 @@ const PAGE: FakeDocument = { title: "Page", text: "hello", elements: [{ role: "t
 type WatchOptions = { owner?: string; size?: { width: number; height: number }; maxWidth?: number; maxHeight?: number; pace?: "hi" | "lo"; ack?: boolean; authPrompts?: boolean; pointer?: boolean };
 
 async function setup({ pageLimit = null, document = PAGE, holdLimits }: { pageLimit?: { width: number; height: number } | null; document?: FakeDocument; holdLimits?: HoldLimits } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-viewers-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-viewers-"));
   folders.push(dataDir);
   const backend = new FakeBackend(() => new FakeChrome({ documents: () => ({ ...document, elements: document.elements.map((element) => ({ ...element })) }) }), { pageLimit });
   const service = new BrowserService({ dataDir, backend: () => backend, maxRunning: 4, idleMs: () => 600_000, takeoverMs: 200, ...(holdLimits ? { holdLimits } : {}) });

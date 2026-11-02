@@ -10,7 +10,7 @@ const OWNER = key("owner"), NOBODY = key("nobody");
 const MACHINE = "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93";
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
-const folder = () => { const dir = mkdtempSync(join(tmpdir(), "omb-cloud-owner-")); dirs.push(dir); return dir; };
+const folder = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-cloud-owner-")); dirs.push(dir); return dir; };
 
 /** A v0.1.91 Cloud home's data at a boot: sessions, thread openers, routines with writers and fingerprints, and who wrote lines and answered cards. */
 interface World {

@@ -2,7 +2,7 @@
 // disposable fake-engine server; the desktop bridge's rail and add-a-Cloud answers are the preview's own fixtures.
 // Run: node --experimental-strip-types scripts/verify-cloud-rail.ts [--shots <dir> [--only <view,view>]]
 // With --shots it photographs each view in a light and a dark skin with a headless Chrome in a throwaway profile
-// (OMB_CDP_CHROME, else the installed Google Chrome) at twice the window's size (1280x800 unless --size says) and
+// (MAUSCLAW_CDP_CHROME, else the installed Google Chrome) at twice the window's size (1280x800 unless --size says) and
 // exits; without, it prints the preview's address and waits. With --shots it also checks that the sidebar's button for
 // the window's rail lands on the same spot with the rail shown and hidden, and fails if it doesn't.
 import { spawn } from "node:child_process";
@@ -10,14 +10,14 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const at = process.argv.indexOf("--shots");
 const shots = at === -1 ? null : resolve(process.argv[at + 1] ?? "");
 const onlyAt = process.argv.indexOf("--only");
 const only = onlyAt === -1 ? null : new Set((process.argv[onlyAt + 1] ?? "").split(",").filter(Boolean));
-const CHROME = process.env.OMB_CDP_CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const CHROME = process.env.MAUSCLAW_CDP_CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const RAIL_AND_BUTTON = "body:has([data-places-rail]) [data-rail-toggle]";
 /** Each view: its query, what must be on screen before the picture, and the window's height. Views that name the same
  * `button` spot must have the rail's button at the same place. */
@@ -99,14 +99,14 @@ async function openChrome(profile: string) {
 const fixture = await launchVerificationServer();
 let ui: MountedPreview | undefined;
 try {
-  for (const name of ["Chief of Staff", "Research", "Inbox"]) await runControlOmb(["new-bot", "--name", name, "--url", fixture.info.url]);
+  for (const name of ["Chief of Staff", "Research", "Inbox"]) await runControlMausclaw(["new-bot", "--name", name, "--url", fixture.info.url]);
   ui = await mountPreview(fixture, { entry: "/scripts/testing/rail-preview.tsx", route: "/__cloud-rail.html", title: "Isolated rail of Clouds", logLevel: "warn" });
   if (!shots) {
     console.log(JSON.stringify({ ...fixture.info, previewUrl: ui.previewUrl }, null, 2));
     await parkUntilSignal();
   } else {
     mkdirSync(shots, { recursive: true });
-    const profile = mkdtempSync(join(tmpdir(), "omb-rail-chrome-"));
+    const profile = mkdtempSync(join(tmpdir(), "mausclaw-rail-chrome-"));
     const chrome = await openChrome(profile);
     try {
       let _banner = false;

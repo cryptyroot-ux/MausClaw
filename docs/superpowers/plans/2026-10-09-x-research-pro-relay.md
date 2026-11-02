@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Each task is test-first (superpowers:test-driven-development). Omkar asked for one pass; this plan names files, interfaces and tests rather than listing full code.
 
-**Goal:** X research becomes an included service of paid OpenMausBot Cloud plans: an Admin relay with per-tier monthly allowances, tokens for Cloud homes and signed-in desktops, and no bring-your-own token.
+**Goal:** X research becomes an included service of paid MausClaw Cloud plans: an Admin relay with per-tier monthly allowances, tokens for Cloud homes and signed-in desktops, and no bring-your-own token.
 
 **Spec:** `docs/superpowers/specs/2026-10-09-x-research-pro-relay-design.md`
 
@@ -12,9 +12,9 @@
 
 - Admin rules (openmaus-cloud AGENTS.md): schema only through `migrate()`, additive and idempotent; no edits to applied migrations or `runtime/`; tests never make paid calls; expected errors are a status and a plain sentence; never log bodies, tokens or emails.
 - Relay endpoint allow-list is exactly the eight ids in the spec.
-- Allowances: personal 1,500, pro 5,000, max 15,000 per account per UTC month; unknown plan `OMB_CLOUD_X_CALLS_PER_MONTH` (default 1,500).
-- Token prefixes: home `omb_x_`, desktop `omb_xd_`. Env: `OMB_CLOUD_TREG_KEY` (Admin), `OMB_CLOUD_X_URL` + secret `OMB_CLOUD_X_TOKEN` (homes).
-- App parent-port message: `{ type: "openmausbot:included-x", access: { url, token } | null }`.
+- Allowances: personal 1,500, pro 5,000, max 15,000 per account per UTC month; unknown plan `MAUSCLAW_CLOUD_X_CALLS_PER_MONTH` (default 1,500).
+- Token prefixes: home `mausclaw_x_`, desktop `mausclaw_xd_`. Env: `MAUSCLAW_CLOUD_TREG_KEY` (Admin), `MAUSCLAW_CLOUD_X_URL` + secret `MAUSCLAW_CLOUD_X_TOKEN` (homes).
+- App parent-port message: `{ type: "mausclaw:included-x", access: { url, token } | null }`.
 - The included token is never written to config.json, never reported to a client, never in an engine's environment.
 
 ## Review Focus
@@ -30,7 +30,7 @@
 ### Task C1: Tier allowance `xCallsPerMonth`
 - Files: `server/cloud-plans.ts`, `tests/cloud-plans.test.ts` (or the existing tier tests).
 - Add `xCallsPerMonth: count(10_000_000)` to the tier numbers, the override shape, and the defaults (1,500 / 5,000 / 15,000). Pro takes 5,000 directly.
-- Tests: the defaults per tier; an `OMB_CLOUD_TIERS` override of one tier's `xCallsPerMonth`; an out-of-range value refused with a sentence naming the variable.
+- Tests: the defaults per tier; an `MAUSCLAW_CLOUD_TIERS` override of one tier's `xCallsPerMonth`; an out-of-range value refused with a sentence naming the variable.
 
 ### Task C2: X relay, allowance and tokens
 - Files: `server/cloud-services.ts`, `tests/cloud-services.test.ts`, new `tests/treg-fake.ts`.
@@ -51,10 +51,10 @@
 - `createCloudDesktop` option `services?: { x(device: { id: string; userId: string }): { url: string; token: string } | null; revoke(deviceId: string): void }`.
 - `POST /api/cloud/desktop/services/x`: authenticate `omc_`; a paid, active entitlement or 402; X not configured gives 404; otherwise `{ url, token }`, no-store.
 - Session DELETE (sign-out) revokes. Portal: the `devicePath`, `nativeDevicePath` and licence-expired regexes take `services/x`.
-- `cloud-machines.ts` passes `accountAccess` from billing's entitlement; `main.ts` reads `OMB_CLOUD_TREG_KEY` and `OMB_CLOUD_X_CALLS_PER_MONTH` and adds them to the Fly requirement, startup lines and docs.
+- `cloud-machines.ts` passes `accountAccess` from billing's entitlement; `main.ts` reads `MAUSCLAW_CLOUD_TREG_KEY` and `MAUSCLAW_CLOUD_X_CALLS_PER_MONTH` and adds them to the Fly requirement, startup lines and docs.
 - Tests: paid gets a token that the relay accepts; free gets 402; a second request replaces the first token; sign-out revokes; the route through the portal (native device path, no same-origin header needed).
 
-## App tasks (OpenMausBot)
+## App tasks (MausClaw)
 
 ### Task A1: Remove the person's treg token
 - Files:
@@ -77,7 +77,7 @@
 - Files:
   - `server/x-research.ts`: `createXRelayClient({ url, token })`, the error mapping
   - `server/routes/x-research.ts`: deps `credential: () => ServiceCredential | null`
-  - `server/index.ts`: `OMB_X_RESEARCH`, configStatus `xResearch`
+  - `server/index.ts`: `MAUSCLAW_X_RESEARCH`, configStatus `xResearch`
   - `src/state/store.tsx`
   - tests
 - Tests: the path and Bearer header; 402, 429 and 401 sentences; the gate refuses without a credential; configStatus `xResearch.included`.
@@ -92,8 +92,8 @@
 
 ### Task A6: e2e and docs
 - Files:
-  - `server/x-research.e2e.test.ts`: a loopback relay stub via `OMB_CLOUD_X_URL` and `OMB_CLOUD_X_TOKEN`
-  - `scripts/control-omb.ts` (+ test): allows a loopback `OMB_CLOUD_X_URL` and its token; drops `OMB_TREG_URL`
+  - `server/x-research.e2e.test.ts`: a loopback relay stub via `MAUSCLAW_CLOUD_X_URL` and `MAUSCLAW_CLOUD_X_TOKEN`
+  - `scripts/control-mausclaw.ts` (+ test): allows a loopback `MAUSCLAW_CLOUD_X_URL` and its token; drops `MAUSCLAW_TREG_URL`
   - `apps/docs/content/docs/connected-apps/index.mdx`
 - Tests: the e2e (tools shown, search answered through the stub with the Bearer token); the launcher crossing rules.
 

@@ -83,7 +83,7 @@ describe("the connector's connection to MausBot", () => {
   it("keeps a reply made while the connection is down, comes back with backoff, and delivers it", async () => {
     let finish: (reply: JobReply) => void = () => {};
     const { admin } = await connected({ handle: (job) => new Promise((resolve) => { finish = resolve; void job; }) });
-    admin.send({ id: "slow-1", type: "update", args: { image: `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"b".repeat(64)}` } });
+    admin.send({ id: "slow-1", type: "update", args: { image: `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${"b".repeat(64)}` } });
     await new Promise((resolve) => setTimeout(resolve, 50));
     admin.drop();
     await until(() => !admin.connected);
@@ -119,11 +119,11 @@ describe("the connector's connection to MausBot", () => {
   });
 
   it("connects to the Admin's own origin over wss, and to a test Admin on loopback over ws only", () => {
-    expect(connectUrl("https://cloud.openmausbot.com")).toBe("wss://cloud.openmausbot.com/api/cloud/servers/agent/connect");
+    expect(connectUrl("https://cloud.mausclaw.com")).toBe("wss://cloud.mausclaw.com/api/cloud/servers/agent/connect");
     expect(connectUrl("http://127.0.0.1:9000")).toBe("ws://127.0.0.1:9000/api/cloud/servers/agent/connect");
-    expect(adminOrigin("https://cloud.openmausbot.com/")).toBe("https://cloud.openmausbot.com");
+    expect(adminOrigin("https://cloud.mausclaw.com/")).toBe("https://cloud.mausclaw.com");
     expect(adminOrigin("http://127.0.0.1:9000")).toBe("http://127.0.0.1:9000");
-    for (const bad of ["http://cloud.openmausbot.com", "https://user:pw@cloud.openmausbot.com", "ftp://x", undefined]) expect(() => adminOrigin(bad)).toThrow();
+    for (const bad of ["http://cloud.mausclaw.com", "https://user:pw@cloud.mausclaw.com", "ftp://x", undefined]) expect(() => adminOrigin(bad)).toThrow();
   });
 
   it("says plainly when MausBot cannot be reached at enrolment", async () => {

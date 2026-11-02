@@ -9,7 +9,7 @@ without a real Google account, a model or the Electron app.
 pnpm exec vitest run server/proactive-routines.e2e.test.ts
 ```
 
-It launches the same isolated fixture as `control-omb launch`: a temporary home
+It launches the same isolated fixture as `control-mausclaw launch`: a temporary home
 and data directory and the fake Claude CLI. It points the fixture at
 `server/testing/fake-connected-apps.ts`, a loopback stand-in for the
 connected-apps service that answers Composio's Gmail and Calendar tools from
@@ -44,7 +44,7 @@ Expected:
   draft to a stranger, draft twice and read. Only one reply draft to the
   thread's sender and the read reach the service. No card is shown, and the
   refusals are in the decision log. The run mounts only `agents`, `composio`
-  and OpenMausBot's answerer, and Gmail's answer reaches it as records. A later
+  and MausClaw's answerer, and Gmail's answer reaches it as records. A later
   ordinary turn's conversation search does not find the run.
 
 ## MausBot as the owner
@@ -102,12 +102,12 @@ cap, busy bots, and Run now. The others:
 ## Looking at it in the real renderer
 
 1. Start the fixture from a script that starts the fake connected-apps service
-   and calls `launchVerificationServer` with `OMB_COMPOSIO_BROKER_URL` and
-   `OMB_COMPOSIO_BROKER_TOKEN` set to it (the launcher passes a loopback
+   and calls `launchVerificationServer` with `MAUSCLAW_COMPOSIO_BROKER_URL` and
+   `MAUSCLAW_COMPOSIO_BROKER_TOKEN` set to it (the launcher passes a loopback
    `http://127.0.0.1:PORT` through). Drive it as the end-to-end test does:
    `POST /api/presence/active`, then `POST /api/routines/<watch>/run`.
 2. Serve the renderer against it:
-   `OMB_PORT=<fixture port> pnpm exec vite --port 19872 --strictPort`.
+   `MAUSCLAW_PORT=<fixture port> pnpm exec vite --port 19872 --strictPort`.
 3. Open `http://127.0.0.1:19872/` in a headless Chromium. Dismiss the welcome
    tour, then open MausBot's chat and Automations. In the chat, the cards are
    `[data-widget]` elements.

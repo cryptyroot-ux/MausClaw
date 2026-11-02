@@ -1,4 +1,4 @@
-// Email sign-in through the OpenMausBot control plane: the code exchange is server-side, so a browser only talks to this
+// Email sign-in through the MausClaw control plane: the code exchange is server-side, so a browser only talks to this
 // server, and a server with an empty allow-list does not expose the routes. The result is an ordinary local session.
 import { resolveCompanionControlPlaneURL } from "../electron/companion-account-service.mjs";
 import { ControlPlaneError, createControlPlaneClient, normalizeAccountEmail, type ControlPlaneClient } from "../electron/control-plane-client.mjs";
@@ -53,7 +53,7 @@ export function createEmailSignIn(options: {
   const controlPlane = (): ControlPlaneClient => {
     if (client) return client;
     const url = resolveCompanionControlPlaneURL({ isPackaged: true, environment: env });
-    if (!url) throw new Error("OMB_CONTROL_PLANE_URL is set but is not an https address");
+    if (!url) throw new Error("MAUSCLAW_CONTROL_PLANE_URL is set but is not an https address");
     client = createControlPlaneClient({ baseURL: url, fetchImpl: options.fetchImpl });
     return client;
   };

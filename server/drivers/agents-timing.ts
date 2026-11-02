@@ -1,4 +1,4 @@
-// OMB's own timing of each agents tool call, sent to the harness before the call's answer goes back to the engine, so the
+// MausClaw's own timing of each agents tool call, sent to the harness before the call's answer goes back to the engine, so the
 // receipt is in the turn before the engine can end it and the trace shows the server's measure on every engine. A lost
 // receipt costs only the timing, never the call.
 import { errorLine, toolDetail } from "../usage-trace/detail.ts";

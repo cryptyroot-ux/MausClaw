@@ -34,7 +34,7 @@ function routes(options: { team?: typeof team | null } = {}) {
   const handle = createCloudSignedRoutes({ secret, sessions, health, now, team: options.team === undefined ? team : options.team, teamAdmin: { summary: async () => summary } });
   const sign = (method: string, body = "", key = secret) => {
     const timestamp = String(Math.floor(now() / 1000)), nonce = `nonce-${String(++counter).padStart(12, "0")}`;
-    return { "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce, "x-omb-cloud-signature": `v1=${cloudRequestSignature(key, timestamp, nonce, method, CLOUD_TEAM_ADMIN_PATH, body)}` };
+    return { "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce, "x-mausclaw-cloud-signature": `v1=${cloudRequestSignature(key, timestamp, nonce, method, CLOUD_TEAM_ADMIN_PATH, body)}` };
   };
   const send = async (method: string, headers: Record<string, string>, body = "") => {
     const req = Object.assign(new PassThrough(), { method, url: CLOUD_TEAM_ADMIN_PATH, headers, socket: { remoteAddress: "127.0.0.1" } }) as unknown as IncomingMessage;

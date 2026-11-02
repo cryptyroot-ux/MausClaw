@@ -47,7 +47,7 @@ const subscriberCount = (channel) => listeners.get(channel)?.size ?? 0;
 test("exposes the full local-shell bridge on window.ogb", () => {
   assert.equal(exposed.name, "ogb");
   assert.equal(typeof exposed.api, "object");
-  // The settings channel is local-shell only, and this page is local (no --omb-local-origin in argv here).
+  // The settings channel is local-shell only, and this page is local (no --mausclaw-local-origin in argv here).
   assert.equal(typeof exposed.api.onOpenAppSettings, "function");
 });
 
@@ -131,7 +131,7 @@ test("native Settings requests accept only the fixed organisation section, Cloud
   emit("app:open-settings", "cloud-settings");
   emit("app:open-settings", "https://other.example");
   emit("app:open-settings", "cloudAccount");
-  emit("app:open-settings", "openmausbot://cloud");
+  emit("app:open-settings", "mausclaw://cloud");
   emit("app:open-settings", { section: "organization", url: "https://other.example" });
   emit("app:open-settings", ["cloud"]);
   assert.deepEqual(calls, ["organization", "cloud", "cloud-settings", undefined, undefined, undefined, undefined, undefined]);

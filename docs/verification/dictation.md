@@ -17,12 +17,12 @@ pnpm exec vitest run scripts/testing/dictation.e2e.test.ts --maxWorkers=1
 Launch the isolated fake-engine browser fixture:
 
 ```sh
-node --experimental-strip-types scripts/control-omb.ts ui launch --entry dictation
+node --experimental-strip-types scripts/control-mausclaw.ts ui launch --entry dictation
 ```
 
 Use its printed `ui` handle for every command. Click `Start dictation` with
-`control-omb ui click --ui HANDLE --name ...`. This fixture never opens a microphone.
-With `control-omb ui eval --ui HANDLE --js ...`, call:
+`control-mausclaw ui click --ui HANDLE --name ...`. This fixture never opens a microphone.
+With `control-mausclaw ui eval --ui HANDLE --js ...`, call:
 
 ```js
 window.dictationFixture.hear({ text: "架空の一文目。", partial: true, utteranceFinal: true, speechStart: 0 });

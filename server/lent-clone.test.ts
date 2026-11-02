@@ -11,7 +11,7 @@ describe.skipIf(process.platform === "win32")("cloning a lent GitHub repository"
   const sh = (cwd: string, ...args: string[]) => execFileSync("git", ["-C", cwd, "-c", "user.name=t", "-c", "user.email=t@example.test", ...args], { encoding: "utf8" }).trim();
 
   beforeEach(() => {
-    dir = realpathSync(mkdtempSync(join(tmpdir(), "omb-lent-clone-")));
+    dir = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-lent-clone-")));
     // A repository standing in for GitHub: a bare one with two commits on main.
     const work = join(dir, "work");
     mkdirSync(work);

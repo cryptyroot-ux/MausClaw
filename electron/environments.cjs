@@ -82,12 +82,12 @@ function workspaceSummary(state) {
 /** Native identity must not depend on a hosted renderer's version/title. `homeOrigin`: My Cloud once it is the person's
  * home: alone, it is simply the app; with a team or another place besides, the window names the place it shows. */
 function workspaceWindowTitle(state, companion, homeOrigin = null) {
-  if (companion) return `OpenMausBot — Connected to: ${companion.serverName} (${new URL(companion.endpoint).host})`;
+  if (companion) return `MausClaw — Connected to: ${companion.serverName} (${new URL(companion.endpoint).host})`;
   const active = activeEnvironment(state);
-  if (listedPlace(active)) return `OpenMausBot — ${active.name}`;
-  if (active && active.kind !== "local" && active.origin !== homeOrigin) return `OpenMausBot — Hosted: ${active.name} (${new URL(active.origin).host})`;
-  if (active && homeOrigin && active.origin === homeOrigin && otherPlaces(state, homeOrigin) > 0) return `OpenMausBot — ${active.name}`;
-  return "OpenMausBot";
+  if (listedPlace(active)) return `MausClaw — ${active.name}`;
+  if (active && active.kind !== "local" && active.origin !== homeOrigin) return `MausClaw — Hosted: ${active.name} (${new URL(active.origin).host})`;
+  if (active && homeOrigin && active.origin === homeOrigin && otherPlaces(state, homeOrigin) > 0) return `MausClaw — ${active.name}`;
+  return "MausClaw";
 }
 
 /** Switching is a main-process action; a cloud page must not navigate itself onto the local bridge. */

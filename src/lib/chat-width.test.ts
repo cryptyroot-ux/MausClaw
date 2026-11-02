@@ -82,18 +82,18 @@ describe("chat width", () => {
   });
 
   it("ignores an unknown stored value", () => {
-    localStorage.setItem("omb-chat-width", "huge");
+    localStorage.setItem("mausclaw-chat-width", "huge");
     expect(readChatWidth()).toBe("standard");
   });
 
   it.each(CHAT_WIDTH_IDS)("restores %s before paint without changing other appearance preferences", (id) => {
-    localStorage.setItem("omb-chat-width", id);
-    localStorage.setItem("omb-color-user-bubbles", "1");
+    localStorage.setItem("mausclaw-chat-width", id);
+    localStorage.setItem("mausclaw-color-user-bubbles", "1");
     document.documentElement.dataset.skin = "midnight";
     applyChatWidth(readChatWidth());
     expect(document.documentElement.dataset.chatWidth).toBe(id === DEFAULT_CHAT_WIDTH ? undefined : id);
     expect(document.documentElement.dataset.skin).toBe("midnight");
-    expect(localStorage.getItem("omb-color-user-bubbles")).toBe("1");
+    expect(localStorage.getItem("mausclaw-color-user-bubbles")).toBe("1");
   });
 
   it("still applies a session choice when storage cannot be read or written", () => {

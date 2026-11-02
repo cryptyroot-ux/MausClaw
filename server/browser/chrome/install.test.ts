@@ -37,7 +37,7 @@ afterAll(async () => {
 afterEach(() => { routes.clear(); requests = 0; });
 
 const pin = (overrides: Partial<ChromeForTestingPin> = {}): ChromeForTestingPin => ({ version: "153.0.8010.47", platform: "mac-arm64", bytes: ARCHIVE.length, sha256: SHA256, ...overrides });
-const dataDir = () => { const folder = mkdtempSync(join(tmpdir(), "omb-cft-")); folders.push(folder); return folder; };
+const dataDir = () => { const folder = mkdtempSync(join(tmpdir(), "mausclaw-cft-")); folders.push(folder); return folder; };
 /** Unpacks only after reading the whole archive, as unzip does. */
 const extract: Extract = async (archive, directory) => {
   expect(readFileSync(archive).equals(ARCHIVE)).toBe(true);

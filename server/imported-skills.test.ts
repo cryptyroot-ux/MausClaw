@@ -125,7 +125,7 @@ describe("skills brought in from this computer", () => {
     // "Also use my Claude Code skills" already hands Claude ~/.claude/skills: the copy would be a second pdf.
     expect(claude(true)).toEqual(["review"]);
     expect(claude(false)).toEqual(["pdf", "review"]);
-    expect(claude(false, { OMB_CLAUDE_INHERIT_USER_CONFIG: "1" })).toEqual(["review"]);
+    expect(claude(false, { MAUSCLAW_CLAUDE_INHERIT_USER_CONFIG: "1" })).toEqual(["review"]);
     // Codex loads $CODEX_HOME/skills from the person's own home; a ChatGPT-plan or company home does not.
     expect(codex()).toEqual(["pdf"]);
     expect(codex({ authMode: "chatgpt-plan" })).toEqual(["pdf", "review"]);

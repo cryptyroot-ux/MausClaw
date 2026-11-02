@@ -7,7 +7,7 @@ export const TURN_TIMEOUT_NOTICE = /\bexceeded \d+ minutes?\b/i;
 const PERSON_STOPS = new Set(["interrupted", "cancelled"]);
 /** Settled ok, but out of budget rather than done. */
 const BUDGET_STOPS = new Set(["max_tokens", "max_turns"]);
-/** The provider or the account, not OpenMausBot. */
+/** The provider or the account, not MausClaw. */
 const ACCOUNT_STOPS = new Set(["auth_required", "quota", "update_required", "setup_required", "provider_safety"]);
 
 export const turnStop: Detector = {

@@ -49,7 +49,7 @@ linuxBox("the harness gate", () => {
       });
     });
     await new Promise<void>((resolve) => upstream.listen(0, "127.0.0.1", resolve));
-    dir = mkdtempSync(join(tmpdir(), "omb-harness-"));
+    dir = mkdtempSync(join(tmpdir(), "mausclaw-harness-"));
     gate = await openHarnessGate({ socketPath: join(dir, "h.sock"), port: (upstream.address() as { port: number }).port });
   }
 

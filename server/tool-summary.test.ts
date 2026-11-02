@@ -45,14 +45,14 @@ describe("toolDetailPreview", () => {
 
 describe("commandSummary", () => {
   it("is the shell command, cut at 200", () => {
-    expect(commandSummary({ command: "pnpm control:omb doctor --url http://127.0.0.1:1", url: "x" }))
-      .toBe("pnpm control:omb doctor --url http://127.0.0.1:1");
+    expect(commandSummary({ command: "pnpm control:mausclaw doctor --url http://127.0.0.1:1", url: "x" }))
+      .toBe("pnpm control:mausclaw doctor --url http://127.0.0.1:1");
     expect(commandSummary({ command: "x".repeat(260) })).toBe("x".repeat(200));
   });
 
   it("says nothing for a call that runs no command — a Read, an Edit, a fetch", () => {
     expect(commandSummary({ file_path: "/tmp/notes.md" })).toBeUndefined();
-    expect(commandSummary({ file_path: "scripts/control-omb.ts", old_string: "a", new_string: "b" })).toBeUndefined();
+    expect(commandSummary({ file_path: "scripts/control-mausclaw.ts", old_string: "a", new_string: "b" })).toBeUndefined();
     expect(commandSummary({ url: "https://example.com/docs" })).toBeUndefined();
     expect(commandSummary({ question: "Which one?" })).toBeUndefined();
     expect(commandSummary({})).toBeUndefined();

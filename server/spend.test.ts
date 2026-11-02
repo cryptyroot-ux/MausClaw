@@ -32,7 +32,7 @@ describe("prices", () => {
 describe("spend against a monthly cap", () => {
   let dataDir: string;
   const now = new Date("2026-09-15T12:00:00Z");
-  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "omb-spend-")); resetSpendCacheForTests(); resetSpendAlertsForTests(); });
+  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "mausclaw-spend-")); resetSpendCacheForTests(); resetSpendAlertsForTests(); });
   afterEach(async () => { await removeTempDir(dataDir); });
 
   const row = (at: string, costUsd: number | null) => ({
@@ -121,7 +121,7 @@ describe("spend against a monthly cap", () => {
 
 describe("spend notices", () => {
   let dataDir: string;
-  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "omb-spend-alerts-")); resetSpendAlertsForTests(); });
+  beforeEach(() => { dataDir = mkdtempSync(join(tmpdir(), "mausclaw-spend-alerts-")); resetSpendAlertsForTests(); });
   afterEach(async () => { await removeTempDir(dataDir); });
 
   const state = (over: Partial<SpendState>): SpendState => ({

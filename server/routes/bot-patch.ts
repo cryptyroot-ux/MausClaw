@@ -92,7 +92,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return json(res, 400, { error: "body must be a JSON object" });
       }
-      const pairedDevice = req.headers["x-openmausbot-companion"] === "1";
+      const pairedDevice = req.headers["x-mausclaw-companion"] === "1";
       if ((auth.kind === "session" && !auth.scopes.includes("admin")) || pairedDevice) {
         const field = clientBotPatchViolation(body, ownsDefaultBot(store.bot(m[1]), auth.kind === "session" ? auth.session.email : undefined));
         if (field) {

@@ -2,14 +2,14 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import type { WireBot, WireMessage } from "../shared/wire.ts";
 import { SKILL_REVIEW_MARKER } from "./skill-review.ts";
 
 const SKILL_MD = "---\nname: weekly-report\ndescription: Writes the weekly status report.\n---\n\n# Weekly report\n\nWrites the weekly status report from the project notes.\n\n## When to Use\n- \"write the weekly report\"\n\n## Procedure\n1. Read notes/status.md.\n2. Keep it to five bullets.\n\n## Pitfalls\n- Ask which week when the notes span two.\n\n## Verification\n- The report has at most five bullets.\n";
 
 it("reviews a conversation in the background once its tool steps reach the threshold", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-skill-review-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-skill-review-"));
   const routes = join(scratch, "routes.json");
   writeFileSync(routes, JSON.stringify({
     [SKILL_REVIEW_MARKER]: JSON.stringify({ changes: [{ action: "create", skill_md: SKILL_MD, gist: "Five-bullet weekly report." }], note: "one lesson" }),
@@ -34,8 +34,8 @@ it("reviews a conversation in the background once its tool steps reach the thres
     return response.json() as Promise<T>;
   };
   const turn = async (bot: WireBot, text: string) => {
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", url]);
-    expect(await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", url]);
+    expect(await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
   };
   const messages = async (bot: WireBot) =>
     ((await api<{ bots: Array<WireBot & { messages: WireMessage[] }> }>("/api/bots")).bots.find((candidate) => candidate.id === bot.id)?.messages ?? []);
@@ -66,9 +66,9 @@ it("reviews a conversation in the background once its tool steps reach the thres
   }
 }, 90_000);
 
-// On Codex, OMB's default engine, the review is Codex's own tool-free `codex exec` call.
+// On Codex, MausClaw's default engine, the review is Codex's own tool-free `codex exec` call.
 it("reviews a Codex bot's conversation through Codex's own background call", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-skill-review-codex-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-skill-review-codex-"));
   const routes = join(scratch, "routes.json");
   const textLog = join(scratch, "codex-exec.jsonl");
   writeFileSync(routes, JSON.stringify({
@@ -87,8 +87,8 @@ it("reviews a Codex bot's conversation through Codex's own background call", asy
     return response.json() as Promise<T>;
   };
   const turn = async (bot: WireBot, text: string) => {
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", url]);
-    expect(await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", text, "--url", url]);
+    expect(await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
   };
   const messages = async (bot: WireBot) =>
     ((await api<{ bots: Array<WireBot & { messages: WireMessage[] }> }>("/api/bots")).bots.find((candidate) => candidate.id === bot.id)?.messages ?? []);

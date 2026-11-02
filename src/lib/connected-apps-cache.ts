@@ -6,7 +6,7 @@ export interface CachedInventory {
   services: Record<string, ConnectorStatus>;
 }
 
-export const CONNECTED_APPS_CACHE_KEY = "omb-connected-apps";
+export const CONNECTED_APPS_CACHE_KEY = "mausclaw-connected-apps";
 
 /** A private window or blocked site data throws on localStorage access. */
 function store(explicit?: Storage): Storage | undefined {

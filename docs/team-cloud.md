@@ -62,17 +62,17 @@ keeps people apart on it. The bot box ([bot-box.md](bot-box.md)) is what makes t
 
 ## The role
 
-`OMB_CLOUD_ROLE=team` with `OMB_CLOUD_TEAM_ID` (the Admin's id) and `OMB_CLOUD_TEAM_NAME` (1 to 80 characters), beside
-the usual Cloud home contract (`OMB_CLOUD_MACHINE_ID`, `OMB_CLOUD_ADMIN_URL`, `OMB_CLOUD_BOOTSTRAP_SECRET`,
-`OMB_PUBLIC_URL`). Everything else is a Cloud home: the signed routes (`/api/cloud/pairing`, `/api/cloud/health`,
-`/api/cloud/power`, `/api/cloud/box`), the launcher, the box, the broker, `OMB_CLOUD_EXPORT_ONLY=1`.
+`MAUSCLAW_CLOUD_ROLE=team` with `MAUSCLAW_CLOUD_TEAM_ID` (the Admin's id) and `MAUSCLAW_CLOUD_TEAM_NAME` (1 to 80 characters), beside
+the usual Cloud home contract (`MAUSCLAW_CLOUD_MACHINE_ID`, `MAUSCLAW_CLOUD_ADMIN_URL`, `MAUSCLAW_CLOUD_BOOTSTRAP_SECRET`,
+`MAUSCLAW_PUBLIC_URL`). Everything else is a Cloud home: the signed routes (`/api/cloud/pairing`, `/api/cloud/health`,
+`/api/cloud/power`, `/api/cloud/box`), the launcher, the box, the broker, `MAUSCLAW_CLOUD_EXPORT_ONLY=1`.
 
 What the role turns off: the personal settlement (`cloud-owner.ts`: no session is revoked at boot, no owner key, no
 earlier-owner adoption), lending a Mac (nobody's Mac serves a team), the guest confinement of a My Cloud (a member's turn
 runs at the bot's own level inside the box; only what came in from outside, a webhook, runs confined), and the "only the
 owner" card rule (whoever started a conversation, or an Admin, answers its cards, as on a hosted workspace).
 
-`OMB_CLOUD_TEAM_LANGUAGE` (optional, one of the app's locales: `de`, `pt-br`…) is the team's default language, set on
+`MAUSCLAW_CLOUD_TEAM_LANGUAGE` (optional, one of the app's locales: `de`, `pt-br`…) is the team's default language, set on
 the Admin's Team admin → Settings. It is this server's language while its own settings set none (the app's words and the
 language new bots start in); a value that isn't a locale is ignored, never refused.
 
@@ -141,7 +141,7 @@ mcp: { <name>: [address] } }`: who has connected each, never with what.
 The Admin signs the usual pairing body with two more fields:
 
 ```json
-{ "label": "OpenMausBot app (Team Cloud)", "ttlSeconds": 300,
+{ "label": "MausClaw app (Team Cloud)", "ttlSeconds": 300,
   "team": { "id": "<team id>", "name": "Acme" },
   "member": { "email": "mira@example.com", "role": "owner" | "admin" | "member" } }
 ```
@@ -265,7 +265,7 @@ routes.
 **Each Chrome in a box.** On a Team Cloud with the bot box on, the Chrome launcher agent-browser runs starts every
 Chrome inside bubblewrap (`net: "shared"`, as the browser's own gate filters its traffic): the system read-only, private
 `/tmp` (its HOME), the seccomp filter, and of the disk only the profile it was started on (`--user-data-dir`). A file a
-turn uploads is linked into that profile's `omb-uploads/` first. The agent-browser daemon itself stays outside: it
+turn uploads is linked into that profile's `mausclaw-uploads/` first. The agent-browser daemon itself stays outside: it
 holds the session's saved-state key and talks to the server's runtime by its own socket and pid files.
 
 On a My Cloud and on a desktop there is one person: every audience is the team's, every layer is the bot's own folder,
@@ -412,8 +412,8 @@ person as before, and `message_person` and the inbox do not exist.
   there); an engine that does not then write in place keeps a refreshed token for that process only.
 - **What a bot keeps per bot, not per audience.** Its data sheet, the skills it stages and its own profile are the bot's
   (the team's), whichever chat wrote them; so are a routine's definition and schedule (its runs and results are the
-  conversation's). The Owner's whole-machine export (`OMB_CLOUD_EXPORT_ONLY`, the workspace backup) still carries every
+  conversation's). The Owner's whole-machine export (`MAUSCLAW_CLOUD_EXPORT_ONLY`, the workspace backup) still carries every
   member's private chats.
-- **Own apps with the team's own Composio project.** A member's own apps always use OpenMausBot's connected-apps
+- **Own apps with the team's own Composio project.** A member's own apps always use MausClaw's connected-apps
   service, even when the team connected a Composio project key of its own; an app that needs the project's own auth
   config can't be connected by each person.

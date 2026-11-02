@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { request } from "../scripts/mcp-server.ts";
 import type { WireMessage } from "../shared/wire.ts";
 import { withoutTurnClock } from "./testing/turn-clock-text.ts";
@@ -19,7 +19,7 @@ it("names earlier tool calls in a rebuilt session only when switched on", async 
   }, undefined, undefined, undefined, undefined, undefined, ["codex"]);
   const evidence: unknown[] = [{ fixture: fixture.info }];
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", fixture.info.url]) as any;
+    const result = await runControlMausclaw([...args, "--url", fixture.info.url]) as any;
     evidence.push({ command: args, result });
     return result;
   };

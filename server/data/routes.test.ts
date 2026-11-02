@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 async function serve(overrides: Partial<DataRouteDeps> = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-data-routes-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-data-routes-"));
   dirs.push(dir);
   const database = new FakeDataDatabase("bot-1");
   database.tables.set("orders", { columns: [{ name: "id", type: "INTEGER" }, { name: "total", type: "DOUBLE" }], rows: [[1, 9.5], [2, 3.25], [3, 7]] });
@@ -105,7 +105,7 @@ describe("the Data routes", () => {
     const page = await call("POST", "/api/bots/bot-1/data/page", { cardId: "c_1", offset: 0, limit: 10 });
     expect(page.status).toBe(200);
     expect(page.body).toMatchObject({ rowCount: 2, offset: 0, rows: [[1], [2]] });
-    expect(database.calls.at(-1)).toMatchObject({ method: "page", target: 'omb_results."c_1"' });
+    expect(database.calls.at(-1)).toMatchObject({ method: "page", target: 'mausclaw_results."c_1"' });
 
     const chart = await call("POST", "/api/bots/bot-1/data/run", { sql: "SELECT * FROM orders", chart: { type: "bar", x: "id" }, cardId: "c_1" });
     expect(chart.status).toBe(200);
@@ -128,7 +128,7 @@ describe("the Data routes", () => {
   });
 
   it("pages column-filtered results through real DuckDB and rejects stale column names even with no text", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-data-column-filter-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-data-column-filter-"));
     dirs.push(dir);
     const engine = createDataEngine({ dataDir: dir, botFolder: (id) => join(dir, id) });
     try {
@@ -200,7 +200,7 @@ describe("the Data routes", () => {
   });
 
   it("cancels superseded native queries and disconnected edits while preserving the last committed result", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-data-live-native-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-data-live-native-"));
     dirs.push(dir);
     const engine = createDataEngine({ dataDir: dir, botFolder: (id) => join(dir, id) });
     try {
@@ -235,7 +235,7 @@ describe("the Data routes", () => {
       // The queued health query can finish only after the abandoned native query is interrupted.
       await database.run("SELECT 1", { connection: "panel", timeoutMs: 1_000 });
       expect(sheets.for("bot-1").card("c_1")).toBe(good);
-      await expect.poll(async () => (await database.run("SELECT table_name FROM information_schema.tables WHERE table_schema = 'omb_results'", { connection: "bot" })).rows).toEqual([[good!.result]]);
+      await expect.poll(async () => (await database.run("SELECT table_name FROM information_schema.tables WHERE table_schema = 'mausclaw_results'", { connection: "bot" })).rows).toEqual([[good!.result]]);
     } finally {
       await engine.closeAll();
     }

@@ -49,12 +49,12 @@ function harness(options: { quiet?: boolean; speaker?: { botId: string; name: st
 
 beforeEach(() => {
   vi.useFakeTimers();
-  delete process.env.OMB_FIRST_REPLY_NOTICE_MS;
+  delete process.env.MAUSCLAW_FIRST_REPLY_NOTICE_MS;
 });
 
 afterEach(() => {
   vi.useRealTimers();
-  delete process.env.OMB_FIRST_REPLY_NOTICE_MS;
+  delete process.env.MAUSCLAW_FIRST_REPLY_NOTICE_MS;
 });
 
 describe("first-reply rescue", () => {
@@ -183,8 +183,8 @@ describe("first-reply rescue", () => {
     expect(DEFAULT_FIRST_REPLY_NOTICE_MS).toBe(20_000);
   });
 
-  it("takes its delay from OMB_FIRST_REPLY_NOTICE_MS", () => {
-    process.env.OMB_FIRST_REPLY_NOTICE_MS = "5000";
+  it("takes its delay from MAUSCLAW_FIRST_REPLY_NOTICE_MS", () => {
+    process.env.MAUSCLAW_FIRST_REPLY_NOTICE_MS = "5000";
     const { rescue, rows } = harness();
     rescue.onEvent(started());
     vi.advanceTimersByTime(4_999);
@@ -193,8 +193,8 @@ describe("first-reply rescue", () => {
     expect(rows()).toHaveLength(1);
   });
 
-  it("is off when OMB_FIRST_REPLY_NOTICE_MS is 0", () => {
-    process.env.OMB_FIRST_REPLY_NOTICE_MS = "0";
+  it("is off when MAUSCLAW_FIRST_REPLY_NOTICE_MS is 0", () => {
+    process.env.MAUSCLAW_FIRST_REPLY_NOTICE_MS = "0";
     const { rescue, rows } = harness();
     rescue.onEvent(started());
     vi.advanceTimersByTime(10 * 60_000);

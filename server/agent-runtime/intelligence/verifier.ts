@@ -1,6 +1,6 @@
 // Verifier: LLM-based step verification. After a step produces output, the verifier
 // checks whether the actual result satisfies its success criteria.
-// Additive port of OpenMausBot-Pivot's server/intelligence/verifier.ts.
+// Additive port of MausClaw-Pivot's server/intelligence/verifier.ts.
 import type { PlanStep, VerificationResult } from "./types.ts";
 import { extractJson } from "../extract-json.ts";
 

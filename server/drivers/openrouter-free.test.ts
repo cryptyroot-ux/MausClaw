@@ -60,8 +60,8 @@ function stubOpenRouter(options: {
 
 const createOpenRouter = (key: string, config: Record<string, unknown> = {}) => OpenAICompatDriver.create({
   instanceId: "openrouter", displayName: "OpenRouter", enabled: true,
-  config: OpenAICompatDriver.decodeConfig({ url: OPENROUTER, apiKeyEnv: "OMB_OPENROUTER_API_KEY", ...config }),
-  environment: { OMB_OPENROUTER_API_KEY: key },
+  config: OpenAICompatDriver.decodeConfig({ url: OPENROUTER, apiKeyEnv: "MAUSCLAW_OPENROUTER_API_KEY", ...config }),
+  environment: { MAUSCLAW_OPENROUTER_API_KEY: key },
 });
 
 async function openRouterInstance(key: string, config: Record<string, unknown> = {}) {

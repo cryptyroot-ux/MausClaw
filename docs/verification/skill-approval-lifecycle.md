@@ -25,7 +25,7 @@ The recipe asserts:
    receives a fake-provider reply in both windows without reopening the app.
 
 Screenshots and assertion results are saved in
-`.omb-scratch/verify-evidence/skill-approval/`. Windows, server and temporary
+`.mausclaw-scratch/verify-evidence/skill-approval/`. Windows, server and temporary
 data are cleaned up after the run; the evidence remains.
 
 ## Ordering regressions

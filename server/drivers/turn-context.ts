@@ -14,9 +14,9 @@ export function turnContextSettings(fromTurn: TurnContextSettings | undefined): 
   };
   return {
     ...fromTurn,
-    compactAt: fromTurn?.compactAt ?? envNumber("OMB_TURN_COMPACT_AT"),
-    offloadBytes: fromTurn?.offloadBytes ?? envNumber("OMB_TOOL_OFFLOAD_BYTES"),
-    offloadDir: fromTurn?.offloadDir ?? (process.env.OMB_TOOL_OFFLOAD_DIR || undefined),
+    compactAt: fromTurn?.compactAt ?? envNumber("MAUSCLAW_TURN_COMPACT_AT"),
+    offloadBytes: fromTurn?.offloadBytes ?? envNumber("MAUSCLAW_TOOL_OFFLOAD_BYTES"),
+    offloadDir: fromTurn?.offloadDir ?? (process.env.MAUSCLAW_TOOL_OFFLOAD_DIR || undefined),
   };
 }
 

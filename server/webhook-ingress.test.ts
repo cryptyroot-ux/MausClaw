@@ -30,7 +30,7 @@ let manager: WebhookManager;
 const queued: Array<Record<string, unknown>> = [];
 
 beforeAll(async () => {
-  dir = mkdtempSync(join(tmpdir(), "omb-webhook-ingress-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-webhook-ingress-"));
   manager = new WebhookManager({
     file: join(dir, "webhooks.json"),
     botState: () => "ready",
@@ -67,10 +67,10 @@ describe("webhook-only ingress", () => {
       await new Promise<void>((resolve) => guarded.server.close(() => resolve()));
     }
   });
-  it("exposes health but nothing from the main OpenMausBot API", async () => {
+  it("exposes health but nothing from the main MausClaw API", async () => {
     const health = await fetch(`${ingress.baseUrl}/health`);
     expect(health.status).toBe(200);
-    expect(await health.json()).toEqual({ app: "openmausbot-webhooks", ready: true });
+    expect(await health.json()).toEqual({ app: "mausclaw-webhooks", ready: true });
     expect((await fetch(`${ingress.baseUrl}/api/bots`)).status).toBe(404);
   });
 
@@ -104,7 +104,7 @@ describe("webhook-only ingress", () => {
   it("awaits a room delivery and answers 202 only after the post lands; a failing sink is not 2xx", async () => {
     let finish: () => void = () => {};
     let gate = new Promise<void>((resolve) => (finish = resolve));
-    const roomDir = mkdtempSync(join(tmpdir(), "omb-webhook-room-"));
+    const roomDir = mkdtempSync(join(tmpdir(), "mausclaw-webhook-room-"));
     const roomQueued: unknown[] = [];
     const posts: Array<{ payload: Record<string, unknown> }> = [];
     let sinkFails = true;
@@ -241,7 +241,7 @@ describe("requests with a wrong secret", () => {
   });
 
   it("neither evicts real deliveries nor rewrites the file for each request", async () => {
-    const floodDir = mkdtempSync(join(tmpdir(), "omb-webhook-flood-"));
+    const floodDir = mkdtempSync(join(tmpdir(), "mausclaw-webhook-flood-"));
     const file = join(floodDir, "webhooks.json");
     const emitted = new Set<string>();
     let runs = 0;

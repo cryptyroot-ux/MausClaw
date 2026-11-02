@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { fixtureApi } from "../scripts/testing/preview-fixture.ts";
 import { openSse } from "./testing/sse.ts";
 
@@ -35,7 +35,7 @@ it("a key the provider rejects stops showing Ready until it changes or works aga
   const fixture = await launchVerificationServer();
   const api = fixtureApi(fixture.info.url);
   const sse = await openSse(`${fixture.info.url}/api/events`);
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const snapshot = async () => (await api("GET", "/api/instances")).instances
     .find((instance: { instanceId: string }) => instance.instanceId === "openaiCompat").snapshot;
   try {

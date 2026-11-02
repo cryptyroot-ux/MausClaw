@@ -6,7 +6,7 @@ import test from "node:test";
 import { openSyncState } from "./cloud-sync-state.mjs";
 
 test("keeps the base, PC places, failures and flags across a reopen, and forgets them on reset", (t) => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-sync-state-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-sync-state-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const file = join(dir, "cloud-sync", "state.db");
   let state = openSyncState(file);

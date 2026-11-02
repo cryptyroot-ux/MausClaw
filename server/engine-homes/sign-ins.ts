@@ -20,7 +20,7 @@ const whole = (path: string, bytes: Buffer): boolean => {
 
 function copyInto(target: string, bytes: Buffer, from: Stats): void {
   mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
-  const temporary = join(dirname(target), `.${basename(target)}.${process.pid}.omb`);
+  const temporary = join(dirname(target), `.${basename(target)}.${process.pid}.mausclaw`);
   writeFileSync(temporary, bytes, { mode: 0o600 });
   utimesSync(temporary, from.atime, from.mtime);
   renameSync(temporary, target);

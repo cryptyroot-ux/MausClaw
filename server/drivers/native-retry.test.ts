@@ -17,8 +17,8 @@ import {
 const sse = (body: string) => new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
 const OK = 'data: {"choices":[{"delta":{"content":"hello"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n';
 
-beforeEach(() => { process.env.OMB_RETRY_SCALE = "0.001"; vi.spyOn(console, "warn").mockImplementation(() => {}); });
-afterEach(() => { delete process.env.OMB_RETRY_SCALE; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+beforeEach(() => { process.env.MAUSCLAW_RETRY_SCALE = "0.001"; vi.spyOn(console, "warn").mockImplementation(() => {}); });
+afterEach(() => { delete process.env.MAUSCLAW_RETRY_SCALE; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("retry helper", () => {
   it("parses Retry-After seconds and HTTP-date, capped", () => {

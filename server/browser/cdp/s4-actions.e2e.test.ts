@@ -25,7 +25,7 @@ suite("S4 snapshot, refs and actions on real Chrome", () => {
     fx = await FixtureServer.start();
     run = await startChrome("actions");
     page = await run.browser.waitForPage();
-    files = mkdtempSync(join(testRoot(), "omb-cdp-files-"));
+    files = mkdtempSync(join(testRoot(), "mausclaw-cdp-files-"));
   }, hostTimeout(180_000));
 
   afterAll(async () => {

@@ -12,7 +12,7 @@ import { daysBetween, flushSpans, readSpans } from "./spans.ts";
 const T0 = Date.UTC(2026, 9, 22, 9, 0, 0);
 const dirs: string[] = [];
 const dataDir = () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-trace-recorder-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-trace-recorder-"));
   dirs.push(dir);
   return dir;
 };
@@ -107,7 +107,7 @@ describe("trace recorder", () => {
     expect(tools[1]).toMatchObject({ status: "ended", endedAt: T0 + 1_200, detail: "example.com/pricing" });
   });
 
-  it("takes OMB's own timing for the tools it serves, and keeps a served call the engine never reported", async () => {
+  it("takes MausClaw's own timing for the tools it serves, and keeps a served call the engine never reported", async () => {
     const dir = dataDir();
     const recorder = createTraceRecorder({ dataDir: dir });
     recorder.observe(started("bot", "t1", 0));
@@ -120,12 +120,12 @@ describe("trace recorder", () => {
     await flushSpans(dir);
     const spans = (await readSpans(dir, daysBetween(T0, T0), new Set(["bot:t1"]))).get("bot:t1")!;
     expect(spans.filter((span) => span.kind === "tool").map((span) => span.kind === "tool" && [span.name, span.startedAt - T0, span.endedAt! - T0, span.timedBy, span.status]))
-      .toEqual([["mcp__agents__coordinate_bots", 1_150, 1_900, "omb", "ok"], ["list_room_targets", 3_000, 3_400, "omb", "error"]]);
+      .toEqual([["mcp__agents__coordinate_bots", 1_150, 1_900, "mausclaw", "ok"], ["list_room_targets", 3_000, 3_400, "mausclaw", "error"]]);
     expect(spans.filter((span) => span.kind === "step").map((span) => [span.startedAt - T0, span.endedAt! - T0]))
       .toEqual([[0, 1_000], [2_000, 3_000], [3_400, 5_000]]);
   });
 
-  it("times the browser, computer and app calls OMB answers itself, and reads their failure from the answer", async () => {
+  it("times the browser, computer and app calls MausClaw answers itself, and reads their failure from the answer", async () => {
     const recorder = createTraceRecorder({ dataDir: dataDir() });
     recorder.observe(event("bot", "t1", Date.now() - T0, { type: "turn.started" }));
     const server = createServer(async (req, res) => {
@@ -143,8 +143,8 @@ describe("trace recorder", () => {
     server.close();
     const tools = recorder.liveTurns()[0]!.spans.filter((span) => span.kind === "tool");
     expect(tools.map((tool) => tool.kind === "tool" && [tool.name, tool.status, tool.timedBy, tool.detail, tool.error])).toEqual([
-      ["agent_browser_open", "ok", "omb", "figma.com/pricing", undefined],
-      ["agent_browser_click", "error", "omb", undefined, "Element @e12 is not visible"],
+      ["agent_browser_open", "ok", "mausclaw", "figma.com/pricing", undefined],
+      ["agent_browser_click", "error", "mausclaw", undefined, "Element @e12 is not visible"],
     ]);
     expect(tools.every((tool) => tool.endedAt! - tool.startedAt >= 25)).toBe(true);
   });

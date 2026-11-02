@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 import { parseWebPanels, type WebPanel } from "./web-panels";
 
-export const WEB_PANELS_KEY = "omb-web-panels";
+export const WEB_PANELS_KEY = "mausclaw-web-panels";
 
 // Same shape as thread-preferences: a renderer preference that survives
 // blocked storage for this session and follows other windows' edits.

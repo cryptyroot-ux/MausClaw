@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // config.ts resolves DATA_DIR at import time; isolate before importing.
-process.env.OMB_DATA_DIR = mkdtempSync(join(tmpdir(), "omb-skill-share-"));
+process.env.MAUSCLAW_DATA_DIR = mkdtempSync(join(tmpdir(), "mausclaw-skill-share-"));
 
 const library = await import("./skill-library.ts");
 const skills = await import("./skills.ts");
@@ -37,7 +37,7 @@ function learn(botId: string, name: string, body?: string) {
 }
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "omb-skill-share-lib-"));
+  root = mkdtempSync(join(tmpdir(), "mausclaw-skill-share-lib-"));
   author = { id: id("author"), name: "Cutter", section: "Editing", assignedSkills: [] };
   mate = { id: id("mate"), name: "Colorist", section: " Editing ", assignedSkills: ["existing-skill"] };
   other = { id: id("other"), name: "Accountant", section: "Finance" };

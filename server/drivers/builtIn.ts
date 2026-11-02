@@ -10,9 +10,9 @@ import { MinimaxDriver } from "./minimax.ts";
 import { MistralDriver } from "./mistral.ts";
 import { CerebrasDriver } from "./cerebras.ts";
 
-// Hanya driver API native yang dijalankan di atas OMB-native agent engine.
+// Hanya driver API native yang dijalankan di atas MausClaw-native agent engine.
 // Semua driver agen eksternal (CLI/ACP: Claude, Codex, Hermes, Pi, Antigravity,
-// OpenCode, Qwen, Cursor, dll.) telah dihapus total. OMB adalah platform agen
+// OpenCode, Qwen, Cursor, dll.) telah dihapus total. MausClaw adalah platform agen
 // mandiri: provider/model dihubungkan melalui ModelAdapter, bukan melalui CLI eksternal.
 export const BUILT_IN_DRIVERS: readonly AnyProviderDriver[] = [
   AnthropicDriver,

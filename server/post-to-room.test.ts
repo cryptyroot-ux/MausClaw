@@ -42,7 +42,7 @@ const api = async (method: string, path: string, body?: unknown): Promise<ApiRes
 const startTurn = async (botId: string, threadId: string): Promise<string> => {
   const minted = await fetch(`${BASE}/api/testing/internal-capability`, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-openmausbot-test-capability": TEST_CAPABILITY_KEY },
+    headers: { "content-type": "application/json", "x-mausclaw-test-capability": TEST_CAPABILITY_KEY },
     body: JSON.stringify({ botId, threadId, kind: "agents", skillAuthoring: true }),
   });
   return (await minted.json() as { token: string }).token;
@@ -185,12 +185,12 @@ beforeAll(async () => {
   PORT = base;
   WEBHOOK_PORT = base + 1;
   BASE = `http://127.0.0.1:${PORT}`;
-  home = mkdtempSync(join(tmpdir(), "omb-post-to-room-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-post-to-room-"));
   fakeClaudeDump = join(home, "fake-claude-dump.json");
   mentionerDump = join(home, "mentioner-dump.json");
-  mkdirSync(join(home, ".openmausbot"), { recursive: true });
+  mkdirSync(join(home, ".mausclaw"), { recursive: true });
   writeFileSync(
-    join(home, ".openmausbot", "config.json"),
+    join(home, ".mausclaw", "config.json"),
     JSON.stringify({
       instances: {
         claude: { driver: "claudeAgent", displayName: "Fixture Claude", config: { cli: FAKE_CLAUDE_CLI } },
@@ -213,10 +213,10 @@ beforeAll(async () => {
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       HOME: home,
       USERPROFILE: home,
-      OMB_PORT: String(PORT),
-      OMB_WEBHOOK_PORT: String(WEBHOOK_PORT),
+      MAUSCLAW_PORT: String(PORT),
+      MAUSCLAW_WEBHOOK_PORT: String(WEBHOOK_PORT),
       FAKE_CLAUDE_DUMP: fakeClaudeDump,
-      OMB_TEST_INTERNAL_CAPABILITY_KEY: TEST_CAPABILITY_KEY,
+      MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: TEST_CAPABILITY_KEY,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -282,7 +282,7 @@ describe("peer comms from a room turn", () => {
     expect(receipts[0]).toMatchObject({ botId: helper.id, outcome: "queued" });
     const requestId = str(field(receipts[0] as Record<string, unknown>, "requestId"));
 
-    const rows = readHandoffs(join(home, ".openmausbot"));
+    const rows = readHandoffs(join(home, ".mausclaw"));
     expect(rows.find((node) => node.id === requestId)).toMatchObject({
       botId: helper.id, groupId: room.id, threadId: room.threadId, mode: "consult", reply: "resume", text: "what is the status?", status: "queued",
     });
@@ -410,8 +410,8 @@ describe("list_rooms discovery", () => {
     });
     expect(asked.status, JSON.stringify(asked.body)).toBe(200);
     const requestId = str(field((Array.isArray(asked.body.receipts) ? asked.body.receipts : [])[0] as Record<string, unknown>, "requestId"));
-    await expect.poll(() => readHandoffs(join(home, ".openmausbot")).find((node) => node.id === requestId)?.status, { timeout: 15_000 }).toBe("completed");
-    expect(readHandoffs(join(home, ".openmausbot")).find((node) => node.id === requestId)?.threadId).not.toBe(b.threadId);
+    await expect.poll(() => readHandoffs(join(home, ".mausclaw")).find((node) => node.id === requestId)?.status, { timeout: 15_000 }).toBe("completed");
+    expect(readHandoffs(join(home, ".mausclaw")).find((node) => node.id === requestId)?.threadId).not.toBe(b.threadId);
 
     const listed = await internal("GET", `/api/internal/rooms?fromBotId=${a.id}&fromThreadId=${a.threadId}`);
     const rooms = Array.isArray(listed.body.rooms) ? listed.body.rooms : [];

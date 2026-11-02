@@ -16,10 +16,10 @@ afterEach(() => vi.unstubAllGlobals());
 describe("the Simple mode popup's seen flag", () => {
   it("is unset in a browser that never closed it, and set for good once it is closed", async () => {
     const prompt = await load();
-    expect(prompt.SIMPLE_MODE_PROMPT_KEY).toBe("omb-simple-mode-prompt");
+    expect(prompt.SIMPLE_MODE_PROMPT_KEY).toBe("mausclaw-simple-mode-prompt");
     expect(prompt.simpleModePromptSeen()).toBe(false);
     prompt.markSimpleModePromptSeen();
-    expect(storage.get("omb-simple-mode-prompt")).toBe("1");
+    expect(storage.get("mausclaw-simple-mode-prompt")).toBe("1");
     expect((await load()).simpleModePromptSeen(), "a later launch reads it back").toBe(true);
   });
 

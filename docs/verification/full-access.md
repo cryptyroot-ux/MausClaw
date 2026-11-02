@@ -50,7 +50,7 @@ Grok and Antigravity providers. Other bots and per-thread model choices stay
 unchanged. The real composer and settings selectors are driven in a hidden
 fixture window: picking Full access applies at once, with no confirmation
 dialog, and the committed result is checked.
-Screenshots are saved under `.omb-scratch/verify-evidence/provider-fixes/`.
+Screenshots are saved under `.mausclaw-scratch/verify-evidence/provider-fixes/`.
 Provider processes are fake; this does not test live account access.
 
 The fixture retains `<server-log>.full-access.json` beside its server log.

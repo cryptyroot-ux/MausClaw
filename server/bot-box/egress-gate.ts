@@ -103,7 +103,7 @@ export function openBoxEgressGate(options: EgressGateOptions): Promise<BoxEgress
     if (!target) { client.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"); return; }
     const verdict = await check(target);
     if (client.destroyed) return;
-    if ("refused" in verdict) { client.end(`HTTP/1.1 403 Forbidden\r\nX-Omb-Blocked: ${verdict.refused}\r\nConnection: close\r\n\r\n`); return; }
+    if ("refused" in verdict) { client.end(`HTTP/1.1 403 Forbidden\r\nX-Mausclaw-Blocked: ${verdict.refused}\r\nConnection: close\r\n\r\n`); return; }
     if ("unresolved" in verdict) { client.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n"); return; }
     const upstream = track(connect({ host: target.host, port: target.port, autoSelectFamily: true, lookup: pinnedLookup(verdict.addresses) as never }));
     let connected = false;

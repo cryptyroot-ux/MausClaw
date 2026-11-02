@@ -4,12 +4,12 @@ import { createServer } from "node:http";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 // Deliberate opt-in: never discover the user's CLI. The supplied OpenCode 2 binary reaches only an owned loopback
 // stand-in for the Copilot API, through a synthetic credential imported into the disposable home.
-const cli = process.env.OMB_OPENCODE2_E2E_CLI;
+const cli = process.env.MAUSCLAW_OPENCODE2_E2E_CLI;
 const test = cli ? it : it.skip;
 
 type Receipt = { endpoint: string; model?: string; marker?: string; effort?: string };
@@ -98,18 +98,18 @@ test("offers Copilot models' efforts through OpenCode 2 and sends each turn's ch
     return result;
   };
   const control = async (args: string[]) => {
-    const result = await runControlOmb([...args, "--url", url]) as any;
+    const result = await runControlMausclaw([...args, "--url", url]) as any;
     evidence.push({ command: args, result });
     return result;
   };
   const isolatedEnv: NodeJS.ProcessEnv = {
-    HOME: dataDir, USERPROFILE: dataDir, OMB_DATA_DIR: dataDir,
+    HOME: dataDir, USERPROFILE: dataDir, MAUSCLAW_DATA_DIR: dataDir,
     APPDATA: join(dataDir, "AppData", "Roaming"), LOCALAPPDATA: join(dataDir, "AppData", "Local"),
     XDG_CONFIG_HOME: join(dataDir, ".config"), XDG_CACHE_HOME: join(dataDir, ".cache"),
     XDG_DATA_HOME: join(dataDir, ".local", "share"), XDG_STATE_HOME: join(dataDir, ".local", "state"),
     HERMES_HOME: join(dataDir, ".hermes"),
     TEMP: join(dataDir, "tmp"), TMP: join(dataDir, "tmp"), TMPDIR: join(dataDir, "tmp"),
-    OMB_PORT: new URL(url).port, OMB_WEBHOOK_PORT: String(Number(new URL(url).port) + 1),
+    MAUSCLAW_PORT: new URL(url).port, MAUSCLAW_WEBHOOK_PORT: String(Number(new URL(url).port) + 1),
     PATH: dirname(process.execPath), FAKE_CLAUDE_MODE: "happy",
   };
   for (const key of ["SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "LANG", "LC_ALL", "TZ"]) {

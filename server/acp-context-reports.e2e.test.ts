@@ -3,7 +3,7 @@ import { closeSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
 const MODEL = "fixture/context";
@@ -16,7 +16,7 @@ let url = "";
 let usageFile = "";
 let updatesFile = "";
 
-const control = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+const control = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
 const api = async (method: string, path: string, body?: unknown) => {
   const response = await fetch(url + path, {
     method, headers: { "content-type": "application/json", origin: url },

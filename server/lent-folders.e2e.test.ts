@@ -19,7 +19,7 @@ import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0123456789ab.fly.dev";
+const HOST = "mausclaw-t-0123456789ab.fly.dev";
 const PC_ORIGIN = `https://${HOST}`;
 const secret = randomBytes(32).toString("base64url");
 const sha = (text: string) => createHash("sha256").update(text).digest("hex");
@@ -50,18 +50,18 @@ async function api(method: string, path: string, options: { body?: unknown; remo
 }
 
 async function ownerPairing(): Promise<string> {
-  const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+  const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString("base64url");
   const granted = await api("POST", "/api/cloud/pairing", { remote: true, headers: {
-    "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-    "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
+    "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+    "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`,
   }, body: JSON.parse(body) });
   return (await api("POST", "/api/auth/pair", { remote: true, body: { code: granted.body.code } })).body.token as string;
 }
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-lent-e2e-"));
-  const dataDir = join(home, ".openmausbot");
+  home = mkdtempSync(join(tmpdir(), "mausclaw-lent-e2e-"));
+  const dataDir = join(home, ".mausclaw");
   mkdirSync(dataDir, { recursive: true });
   const cli = join(home, "fixture-claude.mjs");
   writeFileSync(cli, `#!/usr/bin/env node
@@ -78,7 +78,7 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
     },
   }));
   mkdirSync(join(home, "web"));
-  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>OpenMausBot</title>");
+  writeFileSync(join(home, "web", "index.html"), "<!doctype html><title>MausClaw</title>");
   const port = await freePortBlock([0, 1]);
   base = `http://127.0.0.1:${port}`;
   const offlinePrelude = `data:text/javascript,${encodeURIComponent('globalThis.fetch = async () => new Response("offline fixture", { status: 503 });')}`;
@@ -88,9 +88,9 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
       PATH: process.env.PATH,
       ...(process.env.PATHEXT ? { PATHEXT: process.env.PATHEXT } : {}),
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-      HOME: home, USERPROFILE: home, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: join(home, "web"),
-      OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-      OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`, OMB_SYNC_ROOT: join(home, "Synced"),
+      HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_STATIC_DIR: join(home, "web"),
+      MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+      MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`, MAUSCLAW_SYNC_ROOT: join(home, "Synced"),
       // The bot's turn stays open, so its agents tools stay usable; the dump says how to reach them.
       FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_DUMP: join(home, "fake-claude-dump.json"),
     },
@@ -143,7 +143,7 @@ async function botTools(botId: string) {
 }
 
 it("a lent folder keeps working while the Mac is away: read from the copy, changes saved and applied when it's back, both kept on a conflict", async () => {
-  const pc = realpathSync(mkdtempSync(join(tmpdir(), "omb-lent-pc-")));
+  const pc = realpathSync(mkdtempSync(join(tmpdir(), "mausclaw-lent-pc-")));
   const notes = join(pc, "Notes");
   mkdirSync(notes);
   writeFileSync(join(notes, "plan.md"), "the plan");
@@ -158,7 +158,7 @@ it("a lent folder keeps working while the Mac is away: read from the copy, chang
   });
   const files = createCloudFilesService({
     settingsFile: join(pc, "user", "files.json"), stateFile: join(pc, "user", "state.db"),
-    documentsDir: join(pc, "Documents"), localDataDir: join(pc, ".openmausbot"), homeDir: join(pc, "home"), platform: process.platform, hostname: hostname(),
+    documentsDir: join(pc, "Documents"), localDataDir: join(pc, ".mausclaw"), homeDir: join(pc, "home"), platform: process.platform, hostname: hostname(),
     cloudOrigin: () => PC_ORIGIN, fetch: desktopFetch as typeof fetch, markDownloaded: async () => {}, watch: () => () => {}, now: () => Date.now() + 60_000,
     trashItem: async (file: string) => renameSync(file, join(trash, `${readdirSync(trash).length}-${file.split(/[\\/]/).at(-1)}`)),
     lending: lendingForFiles({ environment: () => env, sharing: () => connector, validate: validateSharedFolders }),
@@ -171,7 +171,7 @@ it("a lent folder keeps working while the Mac is away: read from the copy, chang
     await files.pass();
     expect(files.state().shared).toMatchObject([{ name: "Notes", lent: true, status: "synced" }]);
     // The copy is in the data folder, which no bot's box shows: only shared_computer, with lending's rules, reaches it.
-    const copy = join(home, ".openmausbot", "sync", "lent");
+    const copy = join(home, ".mausclaw", "sync", "lent");
     const [computerDir] = readdirSync(copy);
     expect(readFileSync(join(copy, computerDir!, "Notes", "plan.md"), "utf8")).toBe("the plan");
     expect(existsSync(join(home, "Synced", computerDir!, "Notes"))).toBe(false);

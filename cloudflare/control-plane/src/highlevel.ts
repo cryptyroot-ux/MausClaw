@@ -33,7 +33,7 @@ const CODE = /^[\x21-\x7e]{1,1024}$/;
 const REFRESH_TOKEN = /^[\x21-\x7e]{1,8192}$/;
 const CLIENT_ID = /^[\x21-\x7e]{1,256}$/;
 const SCOPES = /^[A-Za-z0-9_./-]+(?: [A-Za-z0-9_./-]+)*$/;
-const HKDF_SALT = "openmausbot-highlevel-relay-v1";
+const HKDF_SALT = "mausclaw-highlevel-relay-v1";
 const encoder = new TextEncoder();
 
 export interface HighLevelConfig {
@@ -292,11 +292,11 @@ function page(title: string, text: string, status = 200): Response {
 }
 
 const PAGES = {
-  connected: () => page("Connected", "Close this tab and go back to OpenMausBot."),
-  cancelled: () => page("Connection cancelled", "Go back to OpenMausBot and try again when you are ready."),
-  expired: () => page("Connection expired", "This link is no longer valid. Go back to OpenMausBot and try again.", 400),
-  failed: () => page("Connection failed", "Go back to OpenMausBot and try again.", 502),
-  unavailable: () => page("Connection failed", "Go back to OpenMausBot and try again.", 503),
+  connected: () => page("Connected", "Close this tab and go back to MausClaw."),
+  cancelled: () => page("Connection cancelled", "Go back to MausClaw and try again when you are ready."),
+  expired: () => page("Connection expired", "This link is no longer valid. Go back to MausClaw and try again.", 400),
+  failed: () => page("Connection failed", "Go back to MausClaw and try again.", 502),
+  unavailable: () => page("Connection failed", "Go back to MausClaw and try again.", 503),
 };
 
 interface FlowRow {

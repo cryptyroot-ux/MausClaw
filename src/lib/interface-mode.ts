@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 import { hasPriorRun } from "./prior-run";
 
-export const ADVANCED_MODE_KEY = "omb-advanced-mode";
+export const ADVANCED_MODE_KEY = "mausclaw-advanced-mode";
 
 let sessionChoice: boolean | undefined;
 const listeners = new Set<() => void>();

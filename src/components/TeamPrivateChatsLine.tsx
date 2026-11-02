@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Lock, Users } from "lucide-react";
 import { t } from "@/lib/i18n";
 
-const SEEN_KEY = (teamId: string) => `omb.team-private-chats.${teamId}`;
+const SEEN_KEY = (teamId: string) => `mausclaw.team-private-chats.${teamId}`;
 
 /** Whether this team's sentence is still to be said here; saying it marks it said, so it shows in one private chat only. */
 export function teamPrivateChatsLineDue(teamId: string, storage: Pick<Storage, "getItem" | "setItem"> | null): boolean {

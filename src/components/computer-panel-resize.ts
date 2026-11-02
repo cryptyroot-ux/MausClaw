@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
-const PANEL_WIDTH_KEY = "omb-computer-panel-width";
+const PANEL_WIDTH_KEY = "mausclaw-computer-panel-width";
 export const PANEL_MIN_WIDTH = 360;
 export const PANEL_MAX_WIDTH = 960;
 const PANEL_DEFAULT_WIDTH = 400;

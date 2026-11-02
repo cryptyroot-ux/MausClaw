@@ -44,7 +44,7 @@ export const MODELS_DEV_URL = "https://models.dev/api.json";
 export const CATALOG_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const CATALOG_FETCH_TIMEOUT_MS = 10_000;
 export const CATALOG_MAX_BYTES = 20 * 1024 * 1024;
-export const CATALOG_DISABLE_ENV = "OMB_DISABLE_MODEL_CATALOG_FETCH";
+export const CATALOG_DISABLE_ENV = "MAUSCLAW_DISABLE_MODEL_CATALOG_FETCH";
 export const SNAPSHOT_FILE = "models-dev.snapshot.json";
 
 export type CatalogOrigin = "cache" | "opencode" | "snapshot" | "empty";
@@ -264,7 +264,7 @@ export class ModelCatalogStore {
     const timer = setTimeout(() => controller.abort(), this.options.timeoutMs ?? CATALOG_FETCH_TIMEOUT_MS);
     try {
       const response = await (this.options.fetch ?? fetch)(MODELS_DEV_URL, {
-        headers: { accept: "application/json", "user-agent": "OpenMausBot", ...(etag ? { "if-none-match": etag } : {}) },
+        headers: { accept: "application/json", "user-agent": "MausClaw", ...(etag ? { "if-none-match": etag } : {}) },
         // The catalog comes from models.dev only.
         redirect: "error",
         signal: controller.signal,

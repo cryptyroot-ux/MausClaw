@@ -35,7 +35,7 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 
 type Call = { url: string; init: RequestInit };
 function harness(answer: (call: Call) => Response | Promise<Response>, start = 1_800_000_000_000) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-cursor-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-cursor-"));
   dirs.push(dataDir);
   const calls: Call[] = [];
   let clock = start;

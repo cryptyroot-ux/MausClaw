@@ -53,7 +53,7 @@ describe("/setup connects an app through a Connect card, against the real server
   };
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-setup-connect-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-setup-connect-"));
     data = join(home, "data");
     dump = join(home, "fake-claude-dump.json");
     mkdirSync(data);
@@ -77,11 +77,11 @@ describe("/setup connects an app through a Connect card, against the real server
     const proc = spawn(process.execPath, [join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
-        TEMP: home, TMP: home, TMPDIR: home, OMB_TEST_SEALED_PATH: "1",
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_USER_DATA: join(home, "user-data"),
-        OMB_COMPOSIO_BROKER_URL: brokerUrl, OMB_COMPOSIO_BROKER_TOKEN: "c".repeat(64),
+        TEMP: home, TMP: home, TMPDIR: home, MAUSCLAW_TEST_SEALED_PATH: "1",
+        MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1), MAUSCLAW_USER_DATA: join(home, "user-data"),
+        MAUSCLAW_COMPOSIO_BROKER_URL: brokerUrl, MAUSCLAW_COMPOSIO_BROKER_TOKEN: "c".repeat(64),
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;

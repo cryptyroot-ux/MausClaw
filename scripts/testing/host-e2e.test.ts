@@ -44,8 +44,8 @@ describe("the e2e files every host runs", () => {
   });
 
   it("apply only when CI asks for them", () => {
-    expect(hostE2eOnly({ OMB_VITEST_E2E: "host" })).toBe(true);
-    expect(hostE2eOnly({ OMB_VITEST_E2E: "all" })).toBe(false);
+    expect(hostE2eOnly({ MAUSCLAW_VITEST_E2E: "host" })).toBe(true);
+    expect(hostE2eOnly({ MAUSCLAW_VITEST_E2E: "all" })).toBe(false);
     expect(hostE2eOnly({})).toBe(false);
   });
 });

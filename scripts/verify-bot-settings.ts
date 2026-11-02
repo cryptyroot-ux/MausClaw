@@ -2,14 +2,14 @@
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { mountPreview, parkUntilSignal, REPO_ROOT, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const fixture = await launchVerificationServer();
 let ui: MountedPreview | undefined;
 try {
   for (const name of ["Settings Atlas", "Settings Juniper"]) {
-    await runControlOmb(["new-bot", "--name", name, "--url", fixture.info.url]);
+    await runControlMausclaw(["new-bot", "--name", name, "--url", fixture.info.url]);
   }
   const { bots } = await fetch(`${fixture.info.url}/api/bots`).then((r) => r.json()) as { bots: Array<{ id: string; name: string }> };
   const ids = new Set(bots.map((bot) => bot.id));
@@ -26,7 +26,7 @@ try {
     const result = installSkill(${JSON.stringify(atlas.id)}, 'fixture:settings', [{path:'SKILL.md',content:'---\\nname: fixture-check\\ndescription: Check fixture settings reliably\\n---\\nRead the fixture state and summarize it.\\n'}]);
     if ('error' in result) throw new Error(result.error);
     setSkillEnabled(${JSON.stringify(atlas.id)}, 'fixture-check', true);
-  `], { cwd: REPO_ROOT, env: { ...process.env, OMB_DATA_DIR: fixture.info.dataDir } });
+  `], { cwd: REPO_ROOT, env: { ...process.env, MAUSCLAW_DATA_DIR: fixture.info.dataDir } });
 
   ui = await mountPreview(fixture, {
     entry: "/src/testing/bot-settings.tsx", route: "/__bot-settings.html", title: "Isolated Bot Settings",

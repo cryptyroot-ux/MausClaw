@@ -11,8 +11,8 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 OUT=${OUT:-$(mktemp -d)}
 mkdir -p "$OUT"
 # Two published homes with the same 32-check bot box (v0.1.129 and v0.1.130).
-HOME_A=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:2909b6a9e02565f524db94d9ea5759f0290c8c90fc9d6e753d7f284ca5e5ba75
-HOME_B=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:495c1bd14a5677a1f9e8b6f8560e4971093e64bb07934fb8e8920de9f66da9d6
+HOME_A=ghcr.io/milind-soni/mausclaw-cloud-home@sha256:2909b6a9e02565f524db94d9ea5759f0290c8c90fc9d6e753d7f284ca5e5ba75
+HOME_B=ghcr.io/milind-soni/mausclaw-cloud-home@sha256:495c1bd14a5677a1f9e8b6f8560e4971093e64bb07934fb8e8920de9f66da9d6
 CONNECTOR_IMAGE=mausbot-connector:e2e
 PORT=18990
 ADMIN="http://127.0.0.1:$PORT"
@@ -92,9 +92,9 @@ done
 expect '.heartbeats >= 1 and .lastHeartbeat.host.arch == "x86_64" and ([.lastHeartbeat.host.checks[] | select(.ok | not)] | length) == 0 and (.lastHeartbeat.host.checks | any(.id == "box" and .ok))' "$(control state)" "the heartbeat"
 
 ENV_JSON=$(jq -cn --arg secret "$SECRET" '{
-  OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "e2e-connector-home", OMB_CLOUD_ADMIN_URL: "https://admin.e2e.invalid",
-  OMB_PUBLIC_URL: "https://home.e2e.invalid", OMB_CLOUD_BOOTSTRAP_SECRET: $secret,
-  OMB_COMPOSIO_BROKER_URL: "http://127.0.0.1:9", OMB_HIGHLEVEL_RELAY_URL: "off"
+  MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "e2e-connector-home", MAUSCLAW_CLOUD_ADMIN_URL: "https://admin.e2e.invalid",
+  MAUSCLAW_PUBLIC_URL: "https://home.e2e.invalid", MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: $secret,
+  MAUSCLAW_COMPOSIO_BROKER_URL: "http://127.0.0.1:9", MAUSCLAW_HIGHLEVEL_RELAY_URL: "off"
 }')
 
 step "start: the home runs with the bot box's settings, and the box passes every check"
@@ -106,12 +106,12 @@ printf '%s\n' "$status" >"$OUT/status-start.json"
 expect '.result.home.health.box | .box == "bwrap" and .checks == "32/32" and .failed == []' "$status" "the box passes 32/32"
 settings=$(home_settings)
 printf '%s\n' "$settings" >"$OUT/home-settings.json"
-expect '.apparmor == "omb-home-narrow" and .stopTimeout == 30' "$settings" "the home's AppArmor profile and stop timeout"
+expect '.apparmor == "mausclaw-home-narrow" and .stopTimeout == 30' "$settings" "the home's AppArmor profile and stop timeout"
 expect '.host | .Init and .ShmSize == 536870912 and (.MaskedPaths // [] | length) == 0 and (.ReadonlyPaths // [] | length) == 0 and (.Privileged | not) and .OomScoreAdj == -800 and .RestartPolicy.Name == "no"' "$settings" "the home's container settings"
 expect '.host | (.CapDrop | map(sub("^CAP_"; ""))) == ["ALL"] and (.CapAdd | map(sub("^CAP_"; "")) | sort) == ["CHOWN", "KILL", "SETGID", "SETUID"]' "$settings" "the home's capabilities"
 expect '.host | .PortBindings["8080/tcp"] == [{"HostIp": "127.0.0.1", "HostPort": "8080"}] and (.SecurityOpt | any(startswith("seccomp="))) and (.SecurityOpt | any(. == "no-new-privileges=true" or . == "no-new-privileges"))' "$settings" "the home's port and seccomp"
-docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' mausbot-home | grep -qx "OMB_COMPOSIO_BROKER_URL=http://127.0.0.1:9" || fail "the home could reach the production connected-apps broker"
-docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' mausbot-home | grep -qx "OMB_HIGHLEVEL_RELAY_URL=off" || fail "the home could reach the production HighLevel relay"
+docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' mausbot-home | grep -qx "MAUSCLAW_COMPOSIO_BROKER_URL=http://127.0.0.1:9" || fail "the home could reach the production connected-apps broker"
+docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' mausbot-home | grep -qx "MAUSCLAW_HIGHLEVEL_RELAY_URL=off" || fail "the home could reach the production HighLevel relay"
 docker exec -u maus mausbot-home sh -c 'echo kept > /data/e2e-marker'
 
 step "update to another digest: a safety copy, a swap, and the new image's health"
@@ -176,7 +176,7 @@ sudo env "${INSTALL_ENV[@]}" sh "$ROOT/connector/install.sh" uninstall | tee "$O
 for container in mausbot-connector mausbot-home; do
   if docker inspect "$container" >/dev/null 2>&1; then fail "$container is still there after uninstall"; fi
 done
-[ ! -e /etc/apparmor.d/omb-home-narrow ] || fail "the AppArmor profile is still installed"
+[ ! -e /etc/apparmor.d/mausclaw-home-narrow ] || fail "the AppArmor profile is still installed"
 [ "$(docker run --rm -v mausbot-data:/data --entrypoint cat "$HOME_B" /data/e2e-marker)" = kept ] || fail "uninstall did not keep the data"
 docker volume inspect mausbot-snapshot >/dev/null || fail "uninstall did not keep the safety copy"
 sudo env "${INSTALL_ENV[@]}" sh "$ROOT/connector/install.sh" uninstall --delete-data | tee -a "$OUT/uninstall.txt"

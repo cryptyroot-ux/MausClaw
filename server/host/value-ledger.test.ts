@@ -11,7 +11,7 @@ afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: tru
 
 describe("what the Chief did, counted as it happens", () => {
   it("keeps totals and dated counts across a restart, and says what was done since a time", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-value-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-value-"));
     dirs.push(dir);
     let now = Date.parse("2026-10-27T20:00:00Z");
     const ledger = createValueLedger({ dataDir: dir, now: () => now });

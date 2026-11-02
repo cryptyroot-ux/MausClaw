@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 it("writes what the save delay still holds when the process exits cleanly, once", () => {
-  dir = mkdtempSync(join(tmpdir(), "omb-engine-status-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-engine-status-"));
   const file = join(dir, "providers", "engine-status.json");
   const status = engineStatusFile(file);
   const row = { instanceId: "work", driverKind: "antigravityAgent", cli: "agy", snapshot: { state: "available" as const, authenticated: true } };
@@ -28,7 +28,7 @@ it("writes what the save delay still holds when the process exits cleanly, once"
 });
 
 it("keeps the marks the welcome and the AI tests read: a ChatGPT plan and OpenCode's free backup", () => {
-  dir = mkdtempSync(join(tmpdir(), "omb-engine-status-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-engine-status-"));
   const file = join(dir, "providers", "engine-status.json");
   const status = engineStatusFile(file);
   const free = { state: "available" as const, authenticated: true, freeFallback: true };

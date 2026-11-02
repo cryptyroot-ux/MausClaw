@@ -228,12 +228,12 @@ it("minimizes to its progress on this device, and opens again", async () => {
   expect(html).toContain("1 of 3 done");
   expect(html).not.toContain("Give it a first job");
   expect(button("Hide setup")).toBeUndefined();
-  expect(setItem).toHaveBeenLastCalledWith("omb.cloudSetup.collapsed", "1");
+  expect(setItem).toHaveBeenLastCalledWith("mausclaw.cloudSetup.collapsed", "1");
   expect(api).not.toHaveBeenCalledWith("/api/config", expect.anything());
   toggle();
   ({ html } = render());
   expect(html).toContain("Give it a first job");
-  expect(setItem).toHaveBeenLastCalledWith("omb.cloudSetup.collapsed", "0");
+  expect(setItem).toHaveBeenLastCalledWith("mausclaw.cloudSetup.collapsed", "0");
 });
 
 it("says the Cloud is ready once, in the session that finished it", async () => {

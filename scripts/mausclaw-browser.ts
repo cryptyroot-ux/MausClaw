@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --experimental-strip-types
-// A small command line over the omb-cdp driver, with a throwaway profile and no
+// A small command line over the mausclaw-cdp driver, with a throwaway profile and no
 // gate. `bot-tests` visits the four public bot-detection pages read-only (no
 // sign-in, no form submit) while the driver acts on each, and prints their
 // verdicts; it exits non-zero unless all four pass.
@@ -17,10 +17,10 @@ import { sandboxDisabled } from "../server/browser/chrome/host-setup.ts";
 import { launchChrome } from "../server/browser/chrome/launch.ts";
 
 const USAGE = `usage:
-  node --experimental-strip-types scripts/omb-browser.ts bot-tests --chrome PATH [--screen 1512x982@2:30] [--host desktop|server|container] [--out DIR] [--label NAME]
-  node --experimental-strip-types scripts/omb-browser.ts snapshot URL --chrome PATH
-  node --experimental-strip-types scripts/omb-browser.ts calibrate --chrome PATH
-The Chrome path may also come from OMB_CHROME_PATH. OMB_BROWSER_SANDBOX=0 is an operator's explicit opt-out of Chrome's sandbox.`;
+  node --experimental-strip-types scripts/mausclaw-browser.ts bot-tests --chrome PATH [--screen 1512x982@2:30] [--host desktop|server|container] [--out DIR] [--label NAME]
+  node --experimental-strip-types scripts/mausclaw-browser.ts snapshot URL --chrome PATH
+  node --experimental-strip-types scripts/mausclaw-browser.ts calibrate --chrome PATH
+The Chrome path may also come from MAUSCLAW_CHROME_PATH. MAUSCLAW_BROWSER_SANDBOX=0 is an operator's explicit opt-out of Chrome's sandbox.`;
 
 interface Site {
   name: "sannysoft" | "creepjs" | "browserscan" | "deviceandbrowserinfo";
@@ -145,7 +145,7 @@ const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
 async function botTests(chrome: string, options: { host: HostKind; screen: ScreenSpec; out: string; label: string }): Promise<boolean> {
   mkdirSync(options.out, { recursive: true });
-  const workDir = mkdtempSync(join(tmpdir(), "omb-browser-"));
+  const workDir = mkdtempSync(join(tmpdir(), "mausclaw-browser-"));
   try {
     const identity = await calibrateIdentity({ executablePath: chrome, host: options.host, tmpRoot: workDir, sandbox: !sandboxDisabled(process.env) });
     console.log(`identity: ${identity.userAgent}\n  ${identity.userAgentMetadata.fullVersionList.map((brand) => `${brand.brand} ${brand.version}`).join(", ")}; ${identity.userAgentMetadata.platform} ${identity.userAgentMetadata.platformVersion} ${identity.userAgentMetadata.architecture}`);
@@ -187,7 +187,7 @@ async function botTests(chrome: string, options: { host: HostKind; screen: Scree
 }
 
 async function snapshot(chrome: string, url: string, host: HostKind): Promise<void> {
-  const workDir = mkdtempSync(join(tmpdir(), "omb-browser-"));
+  const workDir = mkdtempSync(join(tmpdir(), "mausclaw-browser-"));
   try {
     const session = await start(chrome, host, SERVER_SCREEN, null, workDir);
     try {
@@ -217,14 +217,14 @@ async function main(argv: string[]): Promise<number> {
     },
   });
   const [command, url] = positionals;
-  const chrome = values.chrome ?? process.env.OMB_CHROME_PATH;
+  const chrome = values.chrome ?? process.env.MAUSCLAW_CHROME_PATH;
   if (values.help || !command || !chrome) {
     console.log(USAGE);
     return values.help ? 0 : 2;
   }
   const host: HostKind = values.host === "server" || values.host === "container" ? values.host : "desktop";
   if (command === "bot-tests") {
-    const ok = await botTests(chrome, { host, screen: parseScreen(values.screen), out: values.out ?? join(process.cwd(), ".omb-scratch", "bot-tests"), label: values.label ?? "omb-cdp" });
+    const ok = await botTests(chrome, { host, screen: parseScreen(values.screen), out: values.out ?? join(process.cwd(), ".mausclaw-scratch", "bot-tests"), label: values.label ?? "mausclaw-cdp" });
     return ok ? 0 : 1;
   }
   if (command === "snapshot" && url) {
@@ -232,7 +232,7 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (command === "calibrate") {
-    const workDir = mkdtempSync(join(tmpdir(), "omb-browser-"));
+    const workDir = mkdtempSync(join(tmpdir(), "mausclaw-browser-"));
     try {
       console.log(JSON.stringify(await calibrateIdentity({ executablePath: chrome, host, tmpRoot: workDir, sandbox: !sandboxDisabled(process.env) }), null, 2));
     } finally {

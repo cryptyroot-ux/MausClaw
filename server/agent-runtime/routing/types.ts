@@ -1,5 +1,5 @@
-// Routing types for the OMB-native intelligence layer.
-// Additive to OMB-Claw's existing contracts; no existing types are modified.
+// Routing types for the MausClaw-native intelligence layer.
+// Additive to MausClaw's existing contracts; no existing types are modified.
 export interface ModelCost {
   readonly input: number;
   readonly output: number;

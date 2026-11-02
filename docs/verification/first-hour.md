@@ -10,7 +10,7 @@ a model or the Electron app.
 pnpm exec vitest run server/first-hour.e2e.test.ts
 ```
 
-It starts a real Cloud home (`OMB_CLOUD_ROLE=home`) in a temporary home with
+It starts a real Cloud home (`MAUSCLAW_CLOUD_ROLE=home`) in a temporary home with
 the fake Claude CLI, and the connected-apps service from
 `server/testing/broker-fake.ts`, which the Cloud registers with by itself as
 its plan includes it. The fake CLI answers by a marker in its prompt

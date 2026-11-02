@@ -6,7 +6,7 @@ MCP server that can write exactly one file in the fixture's disposable home.
 It needs no provider account, API key, browser, or desktop access.
 
 OpenAI-compatible, Groq, Meta, MiniMax, Mistral, Cerebras and xAI API turns all
-run the OMB-owned native loop, so the assertions are behavior-level rather than
+run the MausClaw-owned native loop, so the assertions are behavior-level rather than
 legacy request-count checks. Request counters are scoped to the bot under test:
 a failed run also reports an incident to the Chief, whose turn lands on the same
 loopback provider.
@@ -18,7 +18,7 @@ pnpm exec vitest run server/openai-tools.e2e.test.ts
 ```
 
 `server/openai-tools.e2e.test.ts` launches its own server with
-`launchVerificationServer`, then uses `runControlOmb` with the launcher's exact
+`launchVerificationServer`, then uses `runControlMausclaw` with the launcher's exact
 URL for `new-bot`, `set-model`, `send`, `wait`, `messages`, and `interrupt`.
 Configuration and approval go through the fixture's existing HTTP routes;
 approval uses `/api/bots/ID/respond`. The fixture explicitly enables each MCP
@@ -164,7 +164,7 @@ Content-Type: application/json
 {"tools": false}
 ```
 
-Use the exact instance ID from `pnpm control:omb models --url URL`, and direct
+Use the exact instance ID from `pnpm control:mausclaw models --url URL`, and direct
 the request only to that explicitly selected server. The route accepts this
 setting for OpenAI-compatible, Grok API, and MiniMax API instances, refuses
 changes while the instance is busy, and stores `config.tools` on that instance.

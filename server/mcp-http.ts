@@ -40,7 +40,7 @@ const PROTOCOL_VERSION = "2025-06-18";
 export const REMOTE_MCP_STARTUP_MS = 30_000;
 
 /** Only this name reaches argv, never the address or a header value. */
-export const REMOTE_MCP_CONFIG_ENV = /^OMB_REMOTE_MCP_CONFIG_[a-f0-9]{64}$/;
+export const REMOTE_MCP_CONFIG_ENV = /^MAUSCLAW_REMOTE_MCP_CONFIG_[a-f0-9]{64}$/;
 
 interface JsonRpcMessage {
   jsonrpc?: unknown;

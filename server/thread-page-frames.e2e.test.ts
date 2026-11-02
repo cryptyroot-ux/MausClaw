@@ -63,8 +63,8 @@ describe("transcript pages on bot and room frames", () => {
   const newestPage = Array.from({ length: 50 }, (_, i) => `message ${LONG - 50 + i}`);
 
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-thread-page-frames-"));
-    const data = join(home, ".openmausbot");
+    home = mkdtempSync(join(tmpdir(), "mausclaw-thread-page-frames-"));
+    const data = join(home, ".mausclaw");
     mkdirSync(data, { recursive: true });
     // one deliberately unknown driver: no engine CLI runs, nothing answers
     writeFileSync(join(data, "config.json"), JSON.stringify({
@@ -78,7 +78,7 @@ describe("transcript pages on bot and room frames", () => {
       env: {
         ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
         ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
+        HOME: home, USERPROFILE: home, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 import { FakeLoginPage } from "./testing/fake-login-page.ts";
 import { freePortBlock } from "./testing/ports.ts";
@@ -24,7 +24,7 @@ const VERIFY = `<h1>Check your email</h1><p>We sent a 6-digit code to alice@exam
 const ACCOUNT = `<h1>Your account</h1><p>Signed in as alice@example.com</p><button id="cancel">Cancel subscription</button>`;
 
 async function fixtureWorld() {
-  const tools = mkdtempSync(join(tmpdir(), "omb-sign-in-code-e2e-"));
+  const tools = mkdtempSync(join(tmpdir(), "mausclaw-sign-in-code-e2e-"));
   const inbox = join(tools, "inbox.txt");
   writeFileSync(inbox, "No new email.");
   const page = new FakeLoginPage(`${SHOP}/sign-in`, SIGN_IN);
@@ -139,7 +139,7 @@ it.skipIf(process.platform === "win32")("a bot asked to sign in reads the emaile
       reply: "I'm signed in to the shop and on your account page, ready to cancel the subscription.",
     }] } }));
 
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Sign in to shop.example.test with alice@example.com and cancel my subscription. The code goes to my email.", "--url", world.base]);
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "Sign in to shop.example.test with alice@example.com and cancel my subscription. The code goes to my email.", "--url", world.base]);
     await expect.poll(() => evidence().length, { timeout: 30_000 }).toBe(1);
     const [turn] = evidence();
     const steps = turn.evidence.filter((entry: any) => entry.step);

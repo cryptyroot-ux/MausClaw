@@ -12,7 +12,7 @@ describe("where a conversation works", () => {
     expect(effectivePlace({ computer: undefined }, undefined)).toBe("auto");
   });
 
-  it("offers every place on a desktop or self-hosted server, and no this computer or Local VM on an OMB Cloud home", () => {
+  it("offers every place on a desktop or self-hosted server, and no this computer or Local VM on an MausClaw Cloud home", () => {
     for (const config of [null, undefined, {}, { cloudHome: false }]) {
       expect(PLACES.filter((place) => placeOffered(place, config))).toEqual(["cloud", "vm", "local", "browser"]);
     }

@@ -33,13 +33,13 @@ describe("a lent screen's answers carry the fix", () => {
   });
 
   it("replaces an older desktop's raw failure with the fix, and never passes its path on", () => {
-    const quarantined = lentScreenResult(call("get_desktop_state"), failed("spawn C:\\Users\\Ana\\AppData\\Local\\Programs\\OpenMausBot\\resources\\cua-driver.exe ENOENT"));
+    const quarantined = lentScreenResult(call("get_desktop_state"), failed("spawn C:\\Users\\Ana\\AppData\\Local\\Programs\\MausClaw\\resources\\cua-driver.exe ENOENT"));
     expect(texts(quarantined)).toHaveLength(1);
     expect(texts(quarantined)[0]).toMatch(/^Computer control could not start on this computer: its helper, cua-driver, is missing or blocked\. .*Protection history/);
     expect(JSON.stringify(quarantined)).not.toContain("Ana");
     expect(texts(lentScreenResult(call("click"), failed("Computer-control transport closed")))[0]).toMatch(/^Computer control stopped on this computer: .*Try the action once more/);
     expect(texts(lentScreenResult(call("click"), failed("Computer control is unavailable. Enable it in the local app and grant OS permissions first.")))[0]).toMatch(/^Computer control is not running on this computer\./);
-    expect(texts(lentScreenResult(call("click"), failed("fetch failed")))[0]).toMatch(/restart OpenMausBot on that computer/);
+    expect(texts(lentScreenResult(call("click"), failed("fetch failed")))[0]).toMatch(/restart MausClaw on that computer/);
   });
   it("passes a lent screen's error on as text only, and its successful screenshots unchanged", () => {
     const image = { type: "image", data: "iVBORw0KGgo=", mimeType: "image/png" };

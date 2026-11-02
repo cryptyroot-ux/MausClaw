@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { writeFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { fixtureApi } from "../scripts/testing/preview-fixture.ts";
 
 it("sends history once through the real OpenAI-compatible server route after a rewind", async () => {
@@ -27,7 +27,7 @@ it("sends history once through the real OpenAI-compatible server route after a r
     fixture = await launchVerificationServer();
     const api = fixtureApi(fixture.info.url);
     const cli = async (...args: string[]) => {
-      const result = await runControlOmb([...args, "--url", fixture!.info.url]) as any;
+      const result = await runControlMausclaw([...args, "--url", fixture!.info.url]) as any;
       evidence.push({ command: args, result });
       return result;
     };

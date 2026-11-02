@@ -2,7 +2,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -10,7 +10,7 @@ const fixture = await launchVerificationServer();
 let ui: MountedPreview | undefined;
 try {
   const api = fixtureApi(fixture.info.url);
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]);
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]);
   await control(["new-bot", "--name", "File reviewer"]);
   const { bots } = await api("GET", "/api/bots?messages=0");
   const bot = bots.find((item: { name: string }) => item.name === "File reviewer");
@@ -41,7 +41,7 @@ try {
   }
   rmSync(join(workspace, "missing.txt"));
   ui = await mountPreview(fixture, {
-    entry: "/scripts/testing/computer-files-preview.tsx", route: "/__computer-files.html", title: "Isolated OMB files",
+    entry: "/scripts/testing/computer-files-preview.tsx", route: "/__computer-files.html", title: "Isolated MausClaw files",
     extraRoutes: [{ path: "/__computer-files-fixture", handler: async (_req, res) => {
       const current = await api("GET", "/api/bots");
       const shown = current.bots.find((item: { id: string }) => item.id === bot.id);

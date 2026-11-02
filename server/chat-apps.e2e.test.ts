@@ -3,14 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import { BOT_HTML_CSP } from "../shared/app-frame/csp.ts";
 import { CSP_META_PREFIX } from "../shared/app-frame/document.ts";
 import { APP_SAMPLES } from "../shared/app-samples.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
 it("shows, replaces and serves a bot's page, and carries its context and its message to the engine", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-chat-apps-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-chat-apps-"));
   const gate = join(gates, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate, FAKE_CLAUDE_VERSION: "2.1.270" });
   const evidence: unknown[] = [];
@@ -39,7 +39,7 @@ it("shows, replaces and serves a bot's page, and carries its context and its mes
     await api("POST", `/api/bots/${bot.id}/messages`, { threadId: bot.threadId, text: "Count my coffees", sendId: "apps-e2e-send-000000001" }, 202);
     let token = "";
     await expect.poll(() => {
-      try { token = dump().mcpConfig.mcpServers.agents.env.OMB_COMMS_TOKEN; } catch { return false; }
+      try { token = dump().mcpConfig.mcpServers.agents.env.MAUSCLAW_COMMS_TOKEN; } catch { return false; }
       return Boolean(token);
     }, { timeout: 15_000 }).toBe(true);
     expect(await card({ tool: "show_html", html: "", title: "Empty" }, 400, token)).toMatchObject({ error: expect.stringMatching(/^html:/) });

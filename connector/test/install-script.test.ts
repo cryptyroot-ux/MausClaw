@@ -16,7 +16,7 @@ afterEach(() => {
 
 /** Runs install.sh with stand-ins for docker, id and apparmor_parser that record what they were asked to do. */
 function run(args: string[], options: { uid?: number; env?: Record<string, string> } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-install-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-install-"));
   dirs.push(dir);
   const bin = join(dir, "bin");
   mkdirSync(bin);

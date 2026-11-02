@@ -27,7 +27,7 @@ export function envDigest(env: Record<string, string>): string {
 
 /** The home container, with exactly the settings its bot box needs on a stock Docker host, and nothing more. */
 export function homeSpec(image: string, env: Record<string, string>, seccomp: string): ContainerSpec {
-  const environment = { ...env, OMB_CLOUD_IMAGE: image };
+  const environment = { ...env, MAUSCLAW_CLOUD_IMAGE: image };
   return {
     Image: image,
     Env: Object.entries(environment).map(([name, value]) => `${name}=${value}`),
@@ -168,7 +168,7 @@ export class Home {
     const env = this.state.homeEnv();
     const info = await this.docker.containerInspect(NAMES.home);
     if (!env || !info?.State.Running) return this.lastHealth;
-    const { status, report } = await this.options.readHealth({ port: HOME_PORT, publicHost: publicHost(env), secret: env.OMB_CLOUD_BOOTSTRAP_SECRET });
+    const { status, report } = await this.options.readHealth({ port: HOME_PORT, publicHost: publicHost(env), secret: env.MAUSCLAW_CLOUD_BOOTSTRAP_SECRET });
     this.lastHealth = summarizeHealth(status, report, info.Config.Image, this.now());
     return this.lastHealth;
   }
@@ -494,7 +494,7 @@ export class Home {
   /** Keeps a container made from the same image and environment; anything else is made again. */
   private async ensureContainer(image: string, env: Record<string, string>): Promise<void> {
     const info = await this.docker.containerInspect(NAMES.home);
-    const wanted = envDigest({ ...env, OMB_CLOUD_IMAGE: image });
+    const wanted = envDigest({ ...env, MAUSCLAW_CLOUD_IMAGE: image });
     if (info && info.Config.Image === image && info.Config.Labels?.[LABELS.env] === wanted) return;
     await this.createContainer(image, env);
   }
@@ -532,7 +532,7 @@ export class Home {
     if ((await this.docker.containersUsing(NAMES.dataVolume)).some((container) => container.State === "running" || container.State === "paused")) return;
     const cleared = await this.helper(image, [DATA], [
       "find", "/data", "-maxdepth", "3", "(",
-      "-path", "/data/.openmausbot/openmausbot-server.lease*", "-o", "-path", "/data/.openmausbot/.openmausbot-server-child/openmausbot-server.lease",
+      "-path", "/data/.mausclaw/mausclaw-server.lease*", "-o", "-path", "/data/.mausclaw/.mausclaw-server-child/mausclaw-server.lease",
       ")", "-print", "-delete",
     ], DELETE_CAPS);
     const paths = cleared.output.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("/data/"));
@@ -549,7 +549,7 @@ export class Home {
         const why = info ? await this.startupFailure(info.State.ExitCode) : "its container is gone";
         return { ok: false, reason: `the home stopped: ${why}` };
       }
-      const { status, report } = await this.options.readHealth({ port: HOME_PORT, publicHost: publicHost(env), secret: env.OMB_CLOUD_BOOTSTRAP_SECRET });
+      const { status, report } = await this.options.readHealth({ port: HOME_PORT, publicHost: publicHost(env), secret: env.MAUSCLAW_CLOUD_BOOTSTRAP_SECRET });
       this.lastHealth = summarizeHealth(status, report, image, this.now());
       if (this.lastHealth.ok) return { ok: true };
       if (this.now() >= deadline) return { ok: false, reason: `it did not report ${image} within ${spoken(windowMs)}` };

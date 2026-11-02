@@ -32,7 +32,7 @@ module.exports = async function verifySidebarAttentionUi({ root, url, api, until
   });
   const window = new BrowserWindow({ show: false, width: 900, height: 700 });
   const evaluate = (js) => window.webContents.executeJavaScript(js).catch((error) => { throw new Error(`${error.message}: ${js}`); });
-  const evidence = join(root, ".omb-scratch/verify-evidence/sidebar-attention");
+  const evidence = join(root, ".mausclaw-scratch/verify-evidence/sidebar-attention");
   mkdirSync(evidence, { recursive: true });
   const attentionButton = `[...document.querySelectorAll('button[aria-label]')].find((button) => button.getAttribute('aria-label') === 'Active Threads')`;
   const sidebarAtWidth = (width) => `(() => { const sidebar = document.querySelector('[data-sidebar]'); return sidebar ? Math.abs(sidebar.getBoundingClientRect().width - ${width}) < 1 : false; })()`;

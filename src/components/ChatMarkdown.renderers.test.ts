@@ -65,7 +65,7 @@ describe("ChatMarkdown element renderers", () => {
 
     vi.mocked(React.use).mockClear();
     vi.mocked(React.useContext).mockClear();
-    markdownProps(before, "Done in [QA](OpenMausBot://thread/qa-245?bot=scout).");
+    markdownProps(before, "Done in [QA](MausClaw://thread/qa-245?bot=scout).");
     expect(threadListReads()).toBe(1);
   });
 });

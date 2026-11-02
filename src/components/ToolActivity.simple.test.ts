@@ -16,11 +16,11 @@ afterEach(() => {
 
 describe("ToolActivity in Simple mode", () => {
   it("names the step in plain words and keeps the tool's own name in the details", () => {
-    const html = render({ name: "mcp__omb__computer_batch", ok: true, input: '{"actions":[]}' });
+    const html = render({ name: "mcp__mausclaw__computer_batch", ok: true, input: '{"actions":[]}' });
     expect(html).toContain("Use the screen · Completed · Tool details");
     expect(html).toMatch(/<span class="min-w-0 max-w-\[30rem\] truncate leading-5 font-medium">Use the screen<\/span>/);
     expect(html).toContain('data-testid="tool-name"');
-    expect(html).toContain("mcp__omb__computer_batch");
+    expect(html).toContain("mcp__mausclaw__computer_batch");
   });
 
   it("keeps a command off the row, where it reads as a plain step", () => {
@@ -49,7 +49,7 @@ describe("ActivityRun", () => {
   const steps = [
     { id: "a", at: 1, role: "bot" as const, kind: "activity" as const, tool: { name: "Bash", ok: true, summary: "ls" } },
     { id: "b", at: 2, role: "bot" as const, kind: "activity" as const, tool: { name: "ls -la /tmp", ok: true, summary: "ls -la /tmp" } },
-    { id: "c", at: 3, role: "bot" as const, kind: "activity" as const, tool: { name: "mcp__omb__screenshot", ok: true } },
+    { id: "c", at: 3, role: "bot" as const, kind: "activity" as const, tool: { name: "mcp__mausclaw__screenshot", ok: true } },
   ];
 
   it("sums a folded run up in plain words in Simple mode", () => {
@@ -60,7 +60,7 @@ describe("ActivityRun", () => {
   it("keeps the tool names in Advanced mode", () => {
     mode.advanced = true;
     const html = renderToStaticMarkup(createElement(ActivityRun, { messages: steps, children: null }));
-    expect(html).toContain("3 steps · Bash, ls -la /tmp, mcp__omb__screenshot");
+    expect(html).toContain("3 steps · Bash, ls -la /tmp, mcp__mausclaw__screenshot");
   });
 });
 
@@ -68,7 +68,7 @@ describe("ActivityRun at narrow widths", () => {
   it("lets the run's row shrink and truncate its summary instead of running off the screen", () => {
     const steps = [
       { id: "a", at: 1, role: "bot" as const, kind: "activity" as const, tool: { name: "Read", ok: true } },
-      { id: "b", at: 2, role: "bot" as const, kind: "activity" as const, tool: { name: "mcp__omb__screenshot", ok: true } },
+      { id: "b", at: 2, role: "bot" as const, kind: "activity" as const, tool: { name: "mcp__mausclaw__screenshot", ok: true } },
     ];
     const html = renderToStaticMarkup(createElement(ActivityRun, { messages: steps, children: null }));
     expect(html).toMatch(/<button[^>]*class="flex min-w-0 max-w-full /);

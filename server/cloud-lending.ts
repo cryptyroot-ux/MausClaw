@@ -1,4 +1,4 @@
-// Who may use a Mac lent to an OMB Cloud home: only a turn the harness can prove acts for the owner (a conversation they
+// Who may use a Mac lent to an MausClaw Cloud home: only a turn the harness can prove acts for the owner (a conversation they
 // started from their own admin-scoped device, a room member answering their own line there, or a routine they wrote or
 // started by hand), in a conversation they opened that has never held anybody else's words, since a resumed session
 // carries everything said in it. Webhooks, guests, work handed in from elsewhere and anything unprovable never can.

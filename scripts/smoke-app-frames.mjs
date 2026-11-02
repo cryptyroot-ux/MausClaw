@@ -116,7 +116,7 @@ if (!process.versions.electron) {
   await new Promise((resolve) => sink.listen(0, "127.0.0.1", resolve));
   const sinkOrigin = `http://127.0.0.1:${sink.address().port}`;
 
-  const data = mkdtempSync(join(tmpdir(), "omb-app-frame-smoke-"));
+  const data = mkdtempSync(join(tmpdir(), "mausclaw-app-frame-smoke-"));
   let code = 1;
   try {
     const rows = new Map();

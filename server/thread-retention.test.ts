@@ -7,7 +7,7 @@ import type { ThreadLogRetentionCandidate } from "./thread-retention.ts";
 let home: string;
 
 async function freshSweep() {
-  home = mkdtempSync(join(tmpdir(), "omb-retention-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-retention-"));
   vi.resetModules();
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);

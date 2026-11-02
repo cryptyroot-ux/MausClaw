@@ -60,7 +60,7 @@ async function passDirect(threadId: string, to: string, message: string) {
 }
 
 beforeAll(async () => {
-  fx = await launchCloudSendFixture({ onePasswordToken: `ops_fake-team-${randomBytes(8).toString("hex")}`, cloudEnv: { OMB_TEST_INTERNAL_CAPABILITY_KEY: CLOUD_CAPABILITY_KEY },
+  fx = await launchCloudSendFixture({ onePasswordToken: `ops_fake-team-${randomBytes(8).toString("hex")}`, cloudEnv: { MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: CLOUD_CAPABILITY_KEY },
     team: { id: "team-acme-1", name: "Acme", engine: ENGINE } });
   team = fx.team!;
   olive = (await team.pair(OLIVE)).token!;
@@ -85,7 +85,7 @@ it("lists the team's people for the @ menu and mounts message_person on a team's
   expect(people.map((person) => person.name).sort()).toEqual(["Ada", "Bob", "Carl", "Olive"]);
   script(null);
   const dump = await turn(ada, adaThread, "Hello Scout, my salary review is on Monday.");
-  expect(dump.mcpConfig.mcpServers.agents?.env?.OMB_TEAM_PEOPLE).toBe("1");
+  expect(dump.mcpConfig.mcpServers.agents?.env?.MAUSCLAW_TEAM_PEOPLE).toBe("1");
   expect(dump.systemPrompt).toContain('The people in Acme (the names they chose): "Bob", "Carl", "Olive" (owner).');
   expect(dump.systemPrompt).toContain("message_person");
 }, hostTimeout(90_000));
@@ -105,7 +105,7 @@ it("refuses someone who left in plain words, and caps passes per conversation", 
 it("has none of it on a My Cloud: no tool route, no tags by name, nothing new in Needs you", async () => {
   const solo = (await fx.onCloud("POST", "/api/bots", { name: "Solo" })).body.bot as { id: string; threadId: string };
   const minted = await fetch(`${fx.cloudBase}/api/testing/internal-capability`, { method: "POST",
-    headers: { "content-type": "application/json", "x-openmausbot-test-capability": CLOUD_CAPABILITY_KEY }, body: JSON.stringify({ botId: solo.id, threadId: solo.threadId }) });
+    headers: { "content-type": "application/json", "x-mausclaw-test-capability": CLOUD_CAPABILITY_KEY }, body: JSON.stringify({ botId: solo.id, threadId: solo.threadId }) });
   expect(minted.status).toBe(201);
   const { token } = await minted.json() as { token: string };
   const answer = await fetch(`${fx.cloudBase}/api/internal/people/message`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ to: "Bob", message: "Hi" }) });

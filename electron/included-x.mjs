@@ -82,7 +82,7 @@ export function createDesktopIncludedX({ account, server, log }) {
     send: (access, note) => {
       const proc = server();
       if (!proc) return;
-      try { proc.postMessage({ type: "openmausbot:included-x", access, ...(note?.offered === false ? { offered: false } : {}) }); }
+      try { proc.postMessage({ type: "mausclaw:included-x", access, ...(note?.offered === false ? { offered: false } : {}) }); }
       catch (error) { log(`X research access sync failed: ${error?.message ?? error}`); }
     },
   });

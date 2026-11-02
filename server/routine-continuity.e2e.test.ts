@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 it("passes the previous report to the real fake-engine turn only when continuity is enabled", async () => {
   const fixture = await launchVerificationServer();
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
+  const env = { MAUSCLAW_URL: fixture.info.url };
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(`${fixture.info.url}${path}`, {
       method,
@@ -16,8 +16,8 @@ it("passes the previous report to the real fake-engine turn only when continuity
     return result as any;
   };
   try {
-    expect((await runControlOmb(["doctor"], { env }) as any).ok).toBe(true);
-    const { bot } = await runControlOmb(["new-bot", "--name", "Continuity fixture"], { env }) as any;
+    expect((await runControlMausclaw(["doctor"], { env }) as any).ok).toBe(true);
+    const { bot } = await runControlMausclaw(["new-bot", "--name", "Continuity fixture"], { env }) as any;
     const { routine } = await api("POST", "/api/routines", {
       name: "Continuity fixture",
       prompt: "Report the current fixture state.",

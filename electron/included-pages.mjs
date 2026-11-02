@@ -17,7 +17,7 @@ export function createDesktopIncludedPages({ account, server, log }) {
       const proc = server();
       if (!proc) return;
       // `offered: false`: signed in, but the Admin has no pages for this sign-in yet (not "sign in").
-      try { proc.postMessage({ type: "openmausbot:included-pages", access, ...(note?.offered === false ? { offered: false } : {}) }); }
+      try { proc.postMessage({ type: "mausclaw:included-pages", access, ...(note?.offered === false ? { offered: false } : {}) }); }
       catch (error) { log(`Pages access sync failed: ${error?.message ?? error}`); }
     },
   });

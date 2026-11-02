@@ -8,8 +8,8 @@ import type { LoginStore } from "./login-store.ts";
 import { ONE_PASSWORD_MALFORMED, ONE_PASSWORD_REFUSED } from "./onepassword.ts";
 import type { TotpKey } from "./totp.ts";
 
-export const LOGIN_HANDOFF_REQUEST = "openmausbot:login-handoff";
-export const LOGIN_HANDOFF_RESULT = "openmausbot:login-handoff-result";
+export const LOGIN_HANDOFF_REQUEST = "mausclaw:login-handoff";
+export const LOGIN_HANDOFF_RESULT = "mausclaw:login-handoff-result";
 
 export type LoginHandoffWhat = { kind: "1password" } | { kind: "login"; id: string } | { kind: "verify-secrets"; nonce: string };
 /** For a move to the person's own Cloud: one connection's secrets, a code for that Cloud to act as this computer's
@@ -51,7 +51,7 @@ const DIGEST = /^[0-9a-f]{64}$/u;
 
 export function totpAddress(key: TotpKey): string {
   const query = new URLSearchParams({ secret: key.secret, algorithm: key.algorithm, digits: String(key.digits), period: String(key.period) });
-  return `otpauth://totp/OpenMausBot?${query}`;
+  return `otpauth://totp/MausClaw?${query}`;
 }
 
 /** What main may ask: a connection's fingerprints are asked only on its behalf, by a check of the credentials. */

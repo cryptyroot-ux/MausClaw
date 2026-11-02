@@ -8,12 +8,12 @@ import { prepareVpsSsh as prepare, vpsSshConfigText } from "./vps-ssh.ts";
 
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
-const scratch = () => { const dir = mkdtempSync(join(tmpdir(), "omb-vps-ssh-")); dirs.push(dir); return dir; };
+const scratch = () => { const dir = mkdtempSync(join(tmpdir(), "mausclaw-vps-ssh-")); dirs.push(dir); return dir; };
 function prepareVpsSsh(...args: Parameters<typeof prepare>) {
   const result = prepare(...args);
   if (result.configPath) {
     const dir = dirname(JSON.parse(readFileSync(result.configPath, "utf8").match(/^  ControlPath (.+)$/m)![1]!));
-    if (dir.startsWith("/tmp/omb-ssh-") && !dirs.includes(dir)) dirs.push(dir);
+    if (dir.startsWith("/tmp/mausclaw-ssh-") && !dirs.includes(dir)) dirs.push(dir);
   }
   return result;
 }
@@ -94,7 +94,7 @@ describe.skipIf(process.platform === "win32")("VPS SSH connection sharing on POS
   it("does not follow a pre-existing symlink for the short control directory", () => {
     const data = join(scratch(), "long-data-path-".repeat(10));
     const id = createHash("sha256").update(resolve(data, "ssh")).digest("hex").slice(0, 12);
-    const controlDir = `/tmp/omb-ssh-${process.getuid!()}-${id}`;
+    const controlDir = `/tmp/mausclaw-ssh-${process.getuid!()}-${id}`;
     dirs.push(controlDir);
     const target = scratch();
     symlinkSync(target, controlDir);

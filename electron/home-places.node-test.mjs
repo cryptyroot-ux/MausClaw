@@ -4,7 +4,7 @@ import test from "node:test";
 import environments from "./environments.cjs";
 import { createHomePlaces } from "./home-places.mjs";
 
-const HOME = "https://omb-t-1.fly.dev", TEAM = "https://omb-u-acme.fly.dev", OTHER = "https://omb-u-beta.fly.dev";
+const HOME = "https://mausclaw-t-1.fly.dev", TEAM = "https://mausclaw-u-acme.fly.dev", OTHER = "https://mausclaw-u-beta.fly.dev";
 const acme = { id: "team-acme", name: "Acme", role: "admin", machine: { status: "ready", origin: TEAM } };
 const beta = { id: "team-beta", name: "Beta", role: "member", machine: { status: "ready", origin: OTHER } };
 const connected = (teams) => ({ status: "connected", account: { id: "acct-1" }, teams });

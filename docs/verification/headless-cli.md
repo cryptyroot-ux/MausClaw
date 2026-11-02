@@ -1,7 +1,7 @@
 # The headless command line
 
 Use an isolated fixture, never the live app or workspace. The end-to-end test
-runs the published `openmausbot` entry as a child process against its own
+runs the published `mausclaw` entry as a child process against its own
 fake-engine server (ports 19975-19999): a team file makes a Chief, two
 teammates and a room, and a second apply sends no write; `run --wait job`
 waits until the Chief and both teammates are done, and the export holds the
@@ -13,23 +13,23 @@ stopped, teammate included, by `--on-timeout stop`.
 
 ```sh
 pnpm exec vitest run server/headless-cli.e2e.test.ts
-pnpm exec vitest run server/headless/ server/job-view.test.ts server/routes/jobs.test.ts server/mcp-server.test.ts server/control-omb.test.ts
+pnpm exec vitest run server/headless/ server/job-view.test.ts server/routes/jobs.test.ts server/mcp-server.test.ts server/control-mausclaw.test.ts
 pnpm typecheck
 pnpm lint
 ```
 
-By hand, against a fixture (`OMB_TEST_PORTS` keeps it in a range):
+By hand, against a fixture (`MAUSCLAW_TEST_PORTS` keeps it in a range):
 
 ```sh
-OMB_TEST_PORTS=19975-19999 node --experimental-strip-types scripts/control-omb.ts launch
-pnpm control:omb doctor --url http://127.0.0.1:PORT
-pnpm control:omb team apply team.yaml --dry-run --url http://127.0.0.1:PORT
-pnpm control:omb team apply team.yaml --url http://127.0.0.1:PORT
-pnpm control:omb run --bot ID --text "Say hello" --url http://127.0.0.1:PORT
-pnpm control:omb export --thread THREAD_ID --out /tmp/omb-export --url http://127.0.0.1:PORT
+MAUSCLAW_TEST_PORTS=19975-19999 node --experimental-strip-types scripts/control-mausclaw.ts launch
+pnpm control:mausclaw doctor --url http://127.0.0.1:PORT
+pnpm control:mausclaw team apply team.yaml --dry-run --url http://127.0.0.1:PORT
+pnpm control:mausclaw team apply team.yaml --url http://127.0.0.1:PORT
+pnpm control:mausclaw run --bot ID --text "Say hello" --url http://127.0.0.1:PORT
+pnpm control:mausclaw export --thread THREAD_ID --out /tmp/mausclaw-export --url http://127.0.0.1:PORT
 ```
 
-`control-omb` runs the same verbs as `openmausbot` (docs/headless-cli.md) and
+`control-mausclaw` runs the same verbs as `mausclaw` (docs/headless-cli.md) and
 prints each JSON result; a verb that changes something needs the explicit
 `--url`. The job a wait watches is the server's own read,
 `GET /api/threads/:id/job`; keep its JSON with the run's result as evidence.

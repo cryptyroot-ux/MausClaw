@@ -32,7 +32,7 @@ const AUTH: Record<string, RequestAuth> = {
 
 /** A fixture home with one skill and one MCP server; never the real one. */
 function fixtureHome() {
-  const home = mkdtempSync(join(tmpdir(), "omb-setup-route-home-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-setup-route-home-"));
   homes.push(home);
   const put = (path: string, text: string) => {
     mkdirSync(dirname(join(home, path)), { recursive: true });

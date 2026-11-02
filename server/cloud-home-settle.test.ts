@@ -22,7 +22,7 @@ const line = (id: string, person?: string) => ({ id, role: "user", kind: "text",
 /** A Cloud home's records: conversations by id, routines, their writers, and the people who have sessions. */
 function cloudHome(threads: Record<string, any[]>, routines: Array<{ id: string; sourceThreadId?: string }>, writers: Record<string, string>,
   options: { sessions?: Array<{ id: string; scopes: string[] }>; webhookRuns?: string[] } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-cloud-home-settle-")); dirs.push(dir);
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-cloud-home-settle-")); dirs.push(dir);
   writeFileSync(join(dir, "lending-routines.json"), JSON.stringify({ version: 1, routines: {}, writers }));
   writeFileSync(join(dir, "thread-starters.json"), "{}");
   const authors = createCloudRoutineAuthors(join(dir, "lending-routines.json"));

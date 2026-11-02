@@ -1,4 +1,4 @@
-// The upstream handshake is OMB's own, never the engine's: an engine's client adds capability fields a strict server
+// The upstream handshake is MausClaw's own, never the engine's: an engine's client adds capability fields a strict server
 // refuses. stdout carries only protocol frames.
 import { createInterface } from "node:readline";
 import { redactSecretsInText } from "../shared/redact.ts";
@@ -50,7 +50,7 @@ function fail(message: string): never {
 }
 
 const CREDENTIALS_REFUSED = "This MCP server refused its credentials (HTTP 401). If it uses a sign-in, send the message again: "
-  + "OpenMausBot refreshes sign-ins when a message starts. If it still fails, open Plugins → MCP servers and sign in to it again, "
+  + "MausClaw refreshes sign-ins when a message starts. If it still fails, open Plugins → MCP servers and sign in to it again, "
   + "or check its header values.";
 
 /** A refusal of our own: its words carry nothing remote, so they are relayed. */
@@ -62,7 +62,7 @@ class Refusal extends Error {
   }
 }
 
-const SETTINGS = ["OMB_REMOTE_MCP_SERVER", "OMB_REMOTE_MCP_DIRECTORY", REMOTE_MCP_APPS_ENV];
+const SETTINGS = ["MAUSCLAW_REMOTE_MCP_SERVER", "MAUSCLAW_REMOTE_MCP_DIRECTORY", REMOTE_MCP_APPS_ENV];
 /** Codex hands every MCP child one shared environment, so a mount names its own record; settings leave this env once read. */
 function privateSettings(): Record<string, string | undefined> {
   if (process.argv.length === 2) {
@@ -85,7 +85,7 @@ function privateSettings(): Record<string, string | undefined> {
 
 const settings = privateSettings();
 let spec;
-try { spec = remoteMcpSpec(JSON.parse(settings.OMB_REMOTE_MCP_SERVER ?? "")); } catch {}
+try { spec = remoteMcpSpec(JSON.parse(settings.MAUSCLAW_REMOTE_MCP_SERVER ?? "")); } catch {}
 if (!spec) fail("invalid remote MCP configuration");
 
 /** A selection that cannot be read must never widen to all tools. */
@@ -101,7 +101,7 @@ function directorySettings(raw: string | undefined): { server: string; scope: To
   } catch {}
   return fail("invalid tool directory configuration");
 }
-const directory = directorySettings(settings.OMB_REMOTE_MCP_DIRECTORY);
+const directory = directorySettings(settings.MAUSCLAW_REMOTE_MCP_DIRECTORY);
 const observer = (() => {
   try {
     const mount = parseAppMount(settings[REMOTE_MCP_APPS_ENV]);
@@ -184,7 +184,7 @@ let closing = false;
 /** A tool only an MCP app's view may call is never listed to the engine, and a call to it is refused. */
 async function upstream(method: string, params: unknown, signal: AbortSignal): Promise<unknown> {
   if (method === "initialize") {
-    const result = await client.initialize("OpenMausBot tool proxy", signal, HANDSHAKE);
+    const result = await client.initialize("MausClaw tool proxy", signal, HANDSHAKE);
     if (client.extensions === "refused") process.stderr.write("mcp-remote-proxy: the server refused the MCP Apps extension; connected without it\n");
     observer?.initialized(result);
     return result;

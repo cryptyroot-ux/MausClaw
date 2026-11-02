@@ -56,7 +56,7 @@ The park-and-resume cases prove:
   re-run queue are gone. A parked root waits through the runtime's admission
   (the host's busy hook holds it until the seat frees).
 
-Waiting is bounded by the computer wait ceiling (`OMB_COMPUTER_WAIT_MAX_MS`,
+Waiting is bounded by the computer wait ceiling (`MAUSCLAW_COMPUTER_WAIT_MAX_MS`,
 30 minutes by default). At the ceiling the turn parks instead of failing, and
 its root continues on its own when the computer is free. Cancellation checks
 the exact turn generation.

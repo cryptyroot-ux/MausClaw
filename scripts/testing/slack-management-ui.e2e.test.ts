@@ -7,15 +7,15 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
-const forced = process.env.OMB_UI_E2E === "1";
+const forced = process.env.MAUSCLAW_UI_E2E === "1";
 const enabled = forced || Boolean(binary);
 const launchTimeout = forced && !binary ? 600_000 : 180_000;
-if (!enabled) console.log("skipping Slack settings UI e2e: no agent-browser; set OMB_UI_E2E=1 to install the pinned release");
+if (!enabled) console.log("skipping Slack settings UI e2e: no agent-browser; set MAUSCLAW_UI_E2E=1 to install the pinned release");
 
 describe("Slack management in agent settings", () => {
   let child: ChildProcess | undefined;
@@ -25,7 +25,7 @@ describe("Slack management in agent settings", () => {
     let output = "";
     let errors = "";
     let info: { ui: string; url: string; botId: string; dataDir: string; logPath: string } | undefined;
-    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-omb.ts"), "ui", "launch"], {
+    child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "scripts/control-mausclaw.ts"), "ui", "launch"], {
       cwd: ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"],
     });
     child.stdout!.on("data", (chunk: Buffer) => { output += String(chunk); });
@@ -36,7 +36,7 @@ describe("Slack management in agent settings", () => {
       try { info = JSON.parse(output); return Boolean(info?.ui); } catch { return false; }
     }, { timeout: launchTimeout, interval: 250 }).toBe(true);
     const fixture = info!;
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const snapshot = async () => (await ui("snapshot")).snapshot as string;
     const click = (name: string) => ui("click", "--name", name);
@@ -110,7 +110,7 @@ describe("Slack management in agent settings", () => {
     await expect.poll(() => evaluate("window.slackFixture.pending.length"), { timeout: 10_000 }).toBe(1);
     expect(await row()).toBe(false);
     await click("Close settings");
-    await runControlOmb(["new-bot", "--name", "Slack Juniper", "--url", fixture.url]);
+    await runControlMausclaw(["new-bot", "--name", "Slack Juniper", "--url", fixture.url]);
     const saved = await fetch(`${fixture.url}/api/bots?messages=0`).then((response) => response.json()) as { bots: Array<{ id: string; name: string }> };
     const second = saved.bots.find((bot) => bot.name === "Slack Juniper")!;
     expect(second).toBeDefined();

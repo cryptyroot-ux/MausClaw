@@ -20,7 +20,7 @@ import { removeTempDir } from "./testing/cleanup.ts";
 import { startFakeHttpMcp, type FakeHttpMcp, type FakeHttpMcpTool } from "./testing/fake-http-mcp-server.ts";
 
 const FAKE_APP = fileURLToPath(new URL("./testing/fake-stdio-app-server.ts", import.meta.url));
-const TOKEN = "omb-comms-token-fixture";
+const TOKEN = "mausclaw-comms-token-fixture";
 const BOARD_URI = "ui://fake-app/board.html";
 
 const HTTP_TOOLS: FakeHttpMcpTool[] = [
@@ -144,10 +144,10 @@ describe("the observer in a process", () => {
 
   it("gate: advertises the extension in the CLI's own handshake, hides app-only tools, and reports a UI call before trimming it", async () => {
     harness = await fakeHarness();
-    scratch = mkdtempSync(join(tmpdir(), "omb-app-observer-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-app-observer-"));
     const log = join(scratch, "frames.jsonl");
     const gated = gateServer({ name: "board", server: appServer({ FAKE_APP_LOG: log }), threadId: "t-observer", budget: 2_000, apps: mountFor("board") })!;
-    expect(gated.env.OMB_GATE_APPS).toBeDefined();
+    expect(gated.env.MAUSCLAW_GATE_APPS).toBeDefined();
     const { ask, notify } = start(gated);
 
     const cli = { protocolVersion: "2025-11-25", capabilities: { roots: { listChanged: true } }, clientInfo: { name: "claude-code", version: "2.1.288" } };
@@ -186,7 +186,7 @@ describe("the observer in a process", () => {
 
   it("gate: a server that refuses the extension gets the CLI's own handshake, and the CLI that answer", async () => {
     harness = await fakeHarness();
-    scratch = mkdtempSync(join(tmpdir(), "omb-app-observer-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-app-observer-"));
     const log = join(scratch, "frames.jsonl");
     const { ask } = start(gateServer({ name: "board", server: appServer({ FAKE_APP_LOG: log, FAKE_APP_STRICT: "1" }), threadId: "t-strict", budget: 0, apps: mountFor("board") })!);
     const cli = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "codex-mcp-client", version: "0.153.4" } };
@@ -196,10 +196,10 @@ describe("the observer in a process", () => {
   }, 30_000);
 
   it("gate without apps: still hides app-only tools, observes nothing, rewrites nothing", async () => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-app-observer-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-app-observer-"));
     const log = join(scratch, "frames.jsonl");
     const gated = gateServer({ name: "board", server: appServer({ FAKE_APP_LOG: log }), threadId: "t-plain", budget: 1_000 })!;
-    expect(gated.env).not.toHaveProperty("OMB_GATE_APPS");
+    expect(gated.env).not.toHaveProperty("MAUSCLAW_GATE_APPS");
     const { ask } = start(gated);
     const cli = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "codex-mcp-client", version: "1" } };
     await ask(1, "initialize", cli);
@@ -213,10 +213,10 @@ describe("the observer in a process", () => {
     fake = await startFakeHttpMcp({ tools: HTTP_TOOLS, resources: HTTP_RESOURCES, serverTitle: "Draw",
       callResult: () => ({ content: [{ type: "text", text: "drawn" }], structuredContent: { elements: 2 }, _meta: { viewUUID: "v-1" } }) });
     const proxy = mcpStdioServer({ type: "http", url: fake.url, headers: {} }, { apps: mountFor("draw") })!;
-    expect(JSON.parse(proxy.env!.OMB_REMOTE_MCP_APPS!)).toEqual(mountFor("draw"));
+    expect(JSON.parse(proxy.env!.MAUSCLAW_REMOTE_MCP_APPS!)).toEqual(mountFor("draw"));
     const { ask } = start(proxy);
     await ask(1, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "gemini", version: "1" } });
-    expect(fake.initializes).toEqual([{ protocolVersion: "2025-06-18", capabilities: { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } }, clientInfo: { name: "OpenMausBot tool proxy", version: "1" } }]);
+    expect(fake.initializes).toEqual([{ protocolVersion: "2025-06-18", capabilities: { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } }, clientInfo: { name: "MausClaw tool proxy", version: "1" } }]);
     expect((await ask(2, "tools/list")).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["create_view", "list_notes"]);
     expect((await ask(3, "tools/call", { name: "save_checkpoint", arguments: {} })).error).toEqual({ code: -32602, message: APP_ONLY_REFUSAL });
     expect((await ask(4, "tools/call", { name: "create_view", arguments: { elements: "[]" } })).result.structuredContent).toEqual({ elements: 2 });
@@ -236,7 +236,7 @@ describe("the observer in a process", () => {
     const { ask } = start(mcpStdioServer({ type: "http", url: fake.url, headers: {} }, { apps: mountFor("strict") })!);
     expect((await ask(1, "initialize", {})).result.serverInfo.name).toBe("fake-http-mcp");
     expect((await ask(2, "tools/list")).result.tools).toHaveLength(2);
-    const plain = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "OpenMausBot tool proxy", version: "1" } };
+    const plain = { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "MausClaw tool proxy", version: "1" } };
     expect(fake.initializes).toEqual([{ ...plain, capabilities: { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } } }, plain]);
   }, 30_000);
 
@@ -244,7 +244,7 @@ describe("the observer in a process", () => {
     fake = await startFakeHttpMcp({ tools: HTTP_TOOLS });
     const plain = start(mcpStdioServer({ type: "http", url: fake.url, headers: {} })!);
     await plain.ask(1, "initialize", {});
-    expect(fake.initializes).toEqual([{ protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "OpenMausBot tool proxy", version: "1" } }]);
+    expect(fake.initializes).toEqual([{ protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "MausClaw tool proxy", version: "1" } }]);
     expect((await plain.ask(2, "tools/list")).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["create_view", "list_notes"]);
     const closed = once(child!, "close"); child!.kill(); await closed;
     const searched = start(mcpStdioServer({ type: "http", url: fake.url, headers: {} }, { directory: { name: "draw" } })!);
@@ -258,10 +258,10 @@ describe("the observer in a process", () => {
     fake = await startFakeHttpMcp({ tools: HTTP_TOOLS, resources: HTTP_RESOURCES });
     const gated = gateServer({ name: "draw", server: { type: "http", url: fake.url, headers: {} }, threadId: "t-both", budget: 0,
       toolScope: { allow: ["mcp:draw:*"] }, apps: mountFor("draw") })!;
-    expect(gated.env).not.toHaveProperty("OMB_GATE_APPS");
-    const upstream = JSON.parse(gated.env.OMB_GATE_UPSTREAM!);
+    expect(gated.env).not.toHaveProperty("MAUSCLAW_GATE_APPS");
+    const upstream = JSON.parse(gated.env.MAUSCLAW_GATE_UPSTREAM!);
     expect(upstream.args[0]).toContain("mcp-remote-proxy");
-    expect(JSON.parse(upstream.env.OMB_REMOTE_MCP_APPS)).toEqual(mountFor("draw"));
+    expect(JSON.parse(upstream.env.MAUSCLAW_REMOTE_MCP_APPS)).toEqual(mountFor("draw"));
     const { ask } = start(gated);
     await ask(1, "initialize", {});
     expect((await ask(2, "tools/list")).result.tools.map((tool: { name: string }) => tool.name)).toEqual(["create_view", "list_notes"]);
@@ -311,17 +311,17 @@ describe("the observer object", () => {
   });
 });
 
-describe("OMB's own client and the UI extension", () => {
+describe("MausClaw's own client and the UI extension", () => {
   it("advertises it, and against a strict server falls back to the plain handshake once and says refused", async () => {
     for (const strictInitialize of ["http-400", "jsonrpc-error"] as const) {
       const fake = await startFakeHttpMcp({ strictInitialize, tools: HTTP_TOOLS });
       try {
         const client = new RemoteMcpClient({ type: "http", url: fake.url, headers: {} });
-        await client.initialize("OpenMausBot", AbortSignal.timeout(5_000), { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } });
+        await client.initialize("MausClaw", AbortSignal.timeout(5_000), { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } });
         expect(client.extensions).toBe("refused");
         expect((await client.request("tools/list", {}, AbortSignal.timeout(5_000)) as { tools: unknown[] }).tools).toHaveLength(3);
         expect(fake.initializes).toHaveLength(2);
-        expect(fake.initializes[1]).toEqual({ protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "OpenMausBot", version: "1" } });
+        expect(fake.initializes[1]).toEqual({ protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "MausClaw", version: "1" } });
         await client.close();
       } finally {
         await fake.close();
@@ -330,7 +330,7 @@ describe("OMB's own client and the UI extension", () => {
     const lenient = await startFakeHttpMcp({ tools: HTTP_TOOLS });
     try {
       const client = new RemoteMcpClient({ type: "http", url: lenient.url, headers: {} });
-      await client.initialize("OpenMausBot", AbortSignal.timeout(5_000), { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } });
+      await client.initialize("MausClaw", AbortSignal.timeout(5_000), { extensions: { [APP_EXTENSION_KEY]: { mimeTypes: [APP_MIME] } } });
       expect(client.extensions).toBe("ok");
       expect(lenient.initializes).toHaveLength(1);
       await client.close();
@@ -342,7 +342,7 @@ describe("OMB's own client and the UI extension", () => {
 
 // Keep the scratch helpers honest: a write the gate's fake logs is readable.
 it("the fake app server logs every frame it is sent", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-app-observer-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-app-observer-"));
   try {
     const log = join(scratch, "frames.jsonl");
     writeFileSync(log, "");

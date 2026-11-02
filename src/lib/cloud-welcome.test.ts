@@ -138,7 +138,7 @@ describe("the welcome's progress", () => {
       stored.clear();
       resetCloudWelcome();
       expect(await saveWelcomeHints(undefined, [end], vi.fn(), async () => {})).toBe(false);
-      expect(stored.get("omb.cloudWelcome.done")).toBe("1");
+      expect(stored.get("mausclaw.cloudWelcome.done")).toBe("1");
       resetCloudWelcome();
       const next = await read();
       expect(next).toMatchObject({ ended: true, doneHere: true });
@@ -150,7 +150,7 @@ describe("the welcome's progress", () => {
   it("keeps nothing for a step it could not save: the welcome opens on that step again", async () => {
     vi.mocked(api).mockRejectedValue(new Error("offline"));
     expect(await saveWelcomeHints(undefined, [welcomeStepHint("bring")], vi.fn(), async () => {})).toBe(false);
-    expect(stored.has("omb.cloudWelcome.done")).toBe(false);
+    expect(stored.has("mausclaw.cloudWelcome.done")).toBe(false);
     expect((await read()).doneHere).toBe(false);
   });
 });

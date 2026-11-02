@@ -3,8 +3,8 @@
 import { DEVS_REPORT_LIMITS, withoutContact, type DevsReportPayload } from "./devs-report.ts";
 
 export const BUG_REPORT_PATH = "/api/bug-reports";
-export const PRODUCTION_CLOUD_ORIGIN = "https://cloud.openmausbot.com";
-export const STAGING_CLOUD_ORIGIN = "https://omb-cloud-staging.fly.dev";
+export const PRODUCTION_CLOUD_ORIGIN = "https://cloud.mausclaw.com";
+export const STAGING_CLOUD_ORIGIN = "https://mausclaw-cloud-staging.fly.dev";
 const SEND_TIMEOUT_MS = 20_000;
 const ANSWER_MAX_BYTES = 16 * 1024;
 
@@ -15,10 +15,10 @@ export type SendOutcome =
   /** The endpoint refused this report; sending it again would be refused again. */
   | { ok: false; retry: false; why: "refused"; detail: string };
 
-/** OMB_BUG_REPORT_URL (an https address, or http on this machine's loopback, for fixtures), else a Cloud home's own
+/** MAUSCLAW_BUG_REPORT_URL (an https address, or http on this machine's loopback, for fixtures), else a Cloud home's own
  * Admin origin, else the staging or production Cloud. */
 export function bugReportEndpoint(env: NodeJS.ProcessEnv, cloudOrigin?: string | null): string {
-  const explicit = env.OMB_BUG_REPORT_URL?.trim();
+  const explicit = env.MAUSCLAW_BUG_REPORT_URL?.trim();
   if (explicit) {
     try {
       const url = new URL(explicit);
@@ -26,7 +26,7 @@ export function bugReportEndpoint(env: NodeJS.ProcessEnv, cloudOrigin?: string |
       if ((url.protocol === "https:" || loopback) && !url.username && !url.password) return url.href;
     } catch { /* not an address: the default below */ }
   }
-  const origin = cloudOrigin ?? (env.OMB_CLOUD_STAGING === "1" ? STAGING_CLOUD_ORIGIN : PRODUCTION_CLOUD_ORIGIN);
+  const origin = cloudOrigin ?? (env.MAUSCLAW_CLOUD_STAGING === "1" ? STAGING_CLOUD_ORIGIN : PRODUCTION_CLOUD_ORIGIN);
   return `${origin.replace(/\/+$/, "")}${BUG_REPORT_PATH}`;
 }
 

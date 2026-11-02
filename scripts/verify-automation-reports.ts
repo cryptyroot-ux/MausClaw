@@ -3,7 +3,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { connect, type Socket } from "node:net";
 import { join } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const RUNS = 5;
@@ -16,7 +16,7 @@ let ui: MountedPreview | undefined;
 let broker: Socket | undefined;
 const evidence: unknown[] = [];
 const api = fixtureApi(fixture.info.url, { headers: { origin: fixture.info.url }, observe: (call) => { if (call.method !== "GET") evidence.push(call); } });
-const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
 const say = (line: Record<string, unknown>) => console.log(JSON.stringify({ at: new Date().toISOString(), ...line }));
 async function until<T>(check: () => T | Promise<T>, timeoutMs = 120_000): Promise<NonNullable<T>> {
   const deadline = Date.now() + timeoutMs;
@@ -68,7 +68,7 @@ try {
         const current = (await runsOf())[3];
         if (current?.status !== "running" || !existsSync(fixture.fixtureDumpPath)) return null;
         const launch = JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8"));
-        return launch.mcpConfig?.mcpServers?.agents?.env?.OMB_THREAD_ID === current.threadId ? launch.mcpConfig.mcpServers.ogb.args.at(-1) as string : null;
+        return launch.mcpConfig?.mcpServers?.agents?.env?.MAUSCLAW_THREAD_ID === current.threadId ? launch.mcpConfig.mcpServers.ogb.args.at(-1) as string : null;
       });
       broker = connect(started);
       broker.on("error", () => {});

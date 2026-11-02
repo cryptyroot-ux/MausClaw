@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
-import { launchVerificationServer, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
 
 const KEY = `sk-ant-${"k".repeat(40)}`;
@@ -61,11 +61,11 @@ beforeAll(async () => {
     });
   });
   await new Promise<void>((resolve) => endpoint.listen(0, "127.0.0.1", resolve));
-  script = mkdtempSync(join(tmpdir(), "omb-devs-e2e-"));
+  script = mkdtempSync(join(tmpdir(), "mausclaw-devs-e2e-"));
   plan([], "Hello.");
   fixture = await launchVerificationServer({
     ...process.env,
-    OMB_BUG_REPORT_URL: `http://127.0.0.1:${(endpoint.address() as AddressInfo).port}/api/bug-reports`,
+    MAUSCLAW_BUG_REPORT_URL: `http://127.0.0.1:${(endpoint.address() as AddressInfo).port}/api/bug-reports`,
     FAKE_CLAUDE_TOOL_CALLS_FILE: join(script, "tool-calls.json"),
     FAKE_CLAUDE_REPLY_FILE: join(script, "reply.txt"),
   });

@@ -155,7 +155,7 @@ describe("notification feed preference", () => {
     expect(preference.useNotificationFeed()).toBe(false);
     expect(hook.serverSnapshot?.()).toBe(false);
     preference.setNotificationFeed(true);
-    expect(local.setItem).toHaveBeenCalledWith("omb-notification-feed", "1");
+    expect(local.setItem).toHaveBeenCalledWith("mausclaw-notification-feed", "1");
     expect(preference.notificationSoundsEnabled()).toBe(true);
     vi.resetModules();
     preference = await import("./notification-preferences");
@@ -167,8 +167,8 @@ describe("notification feed preference", () => {
     const listener = vi.fn();
     expect(preference.useNotificationFeed()).toBe(false);
     const unsubscribe = hook.subscribe!(listener);
-    local.setItem("omb-notification-feed", "1");
-    storageEvent("omb-notification-feed");
+    local.setItem("mausclaw-notification-feed", "1");
+    storageEvent("mausclaw-notification-feed");
     expect(listener).toHaveBeenCalledTimes(1);
     expect(preference.notificationFeedEnabled()).toBe(true);
     unsubscribe();

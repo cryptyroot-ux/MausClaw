@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 it("keeps the selected API model for direct, group and scheduled Boat turns and preserves human control", async () => {
   const rows: Array<{ id: string; name: string; state: string }> = [];
@@ -66,7 +66,7 @@ it("keeps the selected API model for direct, group and scheduled Boat turns and 
     expect(response.ok, JSON.stringify(result)).toBe(true);
     return result;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   try {
     await api("PATCH", "/api/config", { openaiCompat: { key: "synthetic-model-key", url: origin + "/v1", model: "other-default" } });
     const { bot } = await control(["new-bot", "--name", "Boat API fixture"]);

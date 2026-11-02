@@ -240,7 +240,7 @@ export async function startFakeOpenAiLive(options: { port?: number; closeOnReque
 }
 
 // `node --experimental-strip-types server/testing/fake-openai-live.ts [port]`
-// prints the base URL for OMB_OPENAI_LIVE_URL and runs until killed.
+// prints the base URL for MAUSCLAW_OPENAI_LIVE_URL and runs until killed.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const fake = await startFakeOpenAiLive({ port: Number(process.argv[2]) || 0 });
   process.stdout.write(`${fake.url}\n`);

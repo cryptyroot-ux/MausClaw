@@ -6,7 +6,7 @@ import { createCloudSend, sendNotice } from "./cloud-send.mjs";
 import { manifestGaps, noGaps } from "./cloud-send-check.mjs";
 import { installCloudSend, openOwnerSession } from "./cloud-send-main.mjs";
 
-const CLOUD = "https://omb-u-1.fly.dev";
+const CLOUD = "https://mausclaw-u-1.fly.dev";
 const LOCAL = "http://127.0.0.1:4100";
 const summary = (items, extra = {}) => ({ v: 1, appVersion: "0.1.120", items, chats: 1, ...extra });
 const bot = (id, parts) => ({ key: itemKey.bot(id), kind: "bot", label: id, id, parts });
@@ -28,7 +28,7 @@ function sides({ here = [], bots = {}, there = [], connections = [], secrets = {
       calls.push(`${method} ${route}`);
       const intercepted = await onCall(method, route, body, cloud);
       if (intercepted) return intercepted;
-      if (route === "/.well-known/openmausbot/environment") return reply(200, { capabilities: takesMove ? { cloudHome: true, move: 1 } : { cloudHome: true } });
+      if (route === "/.well-known/mausclaw/environment") return reply(200, { capabilities: takesMove ? { cloudHome: true, move: 1 } : { cloudHome: true } });
       if (route.startsWith("/api/cloud-send?item=")) {
         const key = decodeURIComponent(route.slice("/api/cloud-send?item=".length).replace(/&move=1$/u, ""));
         return reply(200, summary([...cloud.values()].filter((item) => item.key === key || (item.kind === "skill" && key === itemKey.bot(item.bot)))));
@@ -62,14 +62,14 @@ function sides({ here = [], bots = {}, there = [], connections = [], secrets = {
       if (route.startsWith("/api/cloud-send/memory?bot=")) return json({ v: 1, files: [], journal: [] });
       if (route === "/api/cloud-send/memory") return json({ v: 1, about: { learned: [], removed: [] }, teams: [] });
       if (route === "/api/cloud-send/files") return json({ v: 1, files: [] });
-      if (route.startsWith("/api/cloud-send/kind?key=")) return json({ v: 1, dataDir: "/desk/.openmausbot", record: route.includes("routine") ? { enabled: true } : route.includes("app-event") ? { enabled: false } : {} });
-      if (route === "/api/cloud-send/chats?attachments=1") return json({ v: 1, dataDir: "/desk/.openmausbot", conversations, attachments: [] });
+      if (route.startsWith("/api/cloud-send/kind?key=")) return json({ v: 1, dataDir: "/desk/.mausclaw", record: route.includes("routine") ? { enabled: true } : route.includes("app-event") ? { enabled: false } : {} });
+      if (route === "/api/cloud-send/chats?attachments=1") return json({ v: 1, dataDir: "/desk/.mausclaw", conversations, attachments: [] });
       if (route === "/api/bots?messages=0") return json({ bots: Object.entries(bots).map(([id, fields]) => ({ id, threadId: `t-${id}`, name: id, ...fields })) });
       if (/^\/api\/bots\/[\w-]+\/skills$/u.test(route)) return json({ skills: [] });
       if (/^\/api\/bots\/[\w-]+\/memory$/u.test(route)) return json({ topics: [] });
       if (route.includes("/memory/file")) return json({ exists: false, text: "" });
       if (route === "/api/cloud-connections") return json({ computer: { environmentId: "env-desk", label: "Amit's Mac" }, connections, engines: [], commands: [] });
-      if (route === "/api/cloud-send/chats") return json({ v: 1, dataDir: "/desk/.openmausbot", conversations });
+      if (route === "/api/cloud-send/chats") return json({ v: 1, dataDir: "/desk/.mausclaw", conversations });
       const listed = /^\/api\/cloud-send\/chats\/ids\?thread=([\w-]+)&from=(\d+)$/u.exec(route);
       if (listed) {
         const all = Array.from({ length: rowIds[listed[1]] ?? 1 }, (_, i) => `${listed[1]}-${i + 1}`), from = Number(listed[2]);
@@ -229,7 +229,7 @@ test("Settings learns how many conversations are still to go, and a pass says ho
 
 test("a move's session counts as someone using My Cloud, so it stays awake; any other session main opens never does", async () => {
   const headers = [];
-  const fetchImpl = async (url, init) => { headers.push([String(url).replace(CLOUD, ""), init.headers["x-omb-background"] ?? null, init.body]); return json({ token: "omb_sess_fake" }); };
+  const fetchImpl = async (url, init) => { headers.push([String(url).replace(CLOUD, ""), init.headers["x-mausclaw-background"] ?? null, init.body]); return json({ token: "mausclaw_sess_fake" }); };
   const target = { origin: CLOUD, grant: async () => ({ origin: CLOUD, code: "C" }) };
   const moving = await openOwnerSession(target, fetchImpl, { label: "Move to My Cloud", background: false });
   await moving.call("GET", "/api/cloud-send");
@@ -251,8 +251,8 @@ test("a move's session counts as someone using My Cloud, so it stays awake; any 
     file: () => "/nonexistent/cloud-send.json", window: () => null, localOrigin: () => LOCAL,
     fetch: async (url, init) => {
       const route = String(url).replace(CLOUD, "");
-      if (route === "/api/auth/pair") { paired.push([JSON.parse(init.body).label, init.headers["x-omb-background"] ?? null]); return json({ token: "omb_sess_fake" }); }
-      return json(route === "/api/cloud-send" || route === "/api/cloud-send?move=1" ? summary([]) : route === "/.well-known/openmausbot/environment" ? { capabilities: { move: 1 } } : route === "/api/cloud-connections" ? listing : {});
+      if (route === "/api/auth/pair") { paired.push([JSON.parse(init.body).label, init.headers["x-mausclaw-background"] ?? null]); return json({ token: "mausclaw_sess_fake" }); }
+      return json(route === "/api/cloud-send" || route === "/api/cloud-send?move=1" ? summary([]) : route === "/.well-known/mausclaw/environment" ? { capabilities: { move: 1 } } : route === "/api/cloud-connections" ? listing : {});
     },
   });
   assert.equal((await main.move()).reason, "move");

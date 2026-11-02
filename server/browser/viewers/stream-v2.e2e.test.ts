@@ -73,7 +73,7 @@ suite("the v2 stream on real Chrome", () => {
         download: (_browser, id) => real.service.download(target.session, id),
       },
       audience: () => "team",
-      browser: async (botId) => ({ botId, session: target.session, spec: { command: "omb-cdp", args: [target.key], env: {} } }),
+      browser: async (botId) => ({ botId, session: target.session, spec: { command: "mausclaw-cdp", args: [target.key], env: {} } }),
       authorize: async () => null,
       current: () => true,
       restartRefusal: () => null,

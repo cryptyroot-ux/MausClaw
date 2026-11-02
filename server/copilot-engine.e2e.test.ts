@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 it("moves one bot and one conversation between Claude, GitHub Copilot and a custom ACP agent through the picker's routes", async () => {
   const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["copilot", "customAcp"]);
@@ -13,7 +13,7 @@ it("moves one bot and one conversation between Claude, GitHub Copilot and a cust
     expect(response.status, `${method} ${path}: ${JSON.stringify(result)}`).toBe(status);
     return result;
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const prompts = (file: string) => {
     const path = join(dataDir, `${file}.prompts.jsonl`);
     return existsSync(path) ? readFileSync(path, "utf8").trim().split("\n").filter(Boolean).map((line) => JSON.parse(line)) : [];

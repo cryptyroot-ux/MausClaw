@@ -21,7 +21,7 @@ function relay(answers: Record<string, (args: Record<string, unknown>) => { succ
       if (frame.method !== "tools/call") return { status: 202, bytes: new Uint8Array() };
       const response = answers[String(item!.tool_slug)]!(item!.arguments as Record<string, unknown>);
       const text = JSON.stringify({ successful: true, data: { results: [{ tool_slug: item!.tool_slug, response }] } });
-      return { status: 200, bytes: new TextEncoder().encode(JSON.stringify({ jsonrpc: "2.0", id: "omb-check-call", result: { content: [{ type: "text", text }] } })) };
+      return { status: 200, bytes: new TextEncoder().encode(JSON.stringify({ jsonrpc: "2.0", id: "mausclaw-check-call", result: { content: [{ type: "text", text }] } })) };
     },
   };
   return { deps, frames };

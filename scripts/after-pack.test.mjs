@@ -9,7 +9,7 @@ import { LICENSE_FILES } from "./cua-linux-release.mjs";
 const temporaryDirectories = [];
 
 function fixture() {
-  const appOutDir = fs.mkdtempSync(path.join(os.tmpdir(), "omb-after-pack-"));
+  const appOutDir = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-after-pack-"));
   temporaryDirectories.push(appOutDir);
   const resources = path.join(appOutDir, "resources");
   const cua = path.join(resources, "cua-linux-x64");
@@ -102,7 +102,7 @@ describe.skipIf(!canBuildMachO)("macOS afterPack platform-tools slices", () => {
   const archs = (file) => execFileSync("/usr/bin/lipo", ["-archs", file], { encoding: "utf8" }).trim();
 
   beforeAll(() => {
-    directory = fs.mkdtempSync(path.join(os.tmpdir(), "omb-macho-"));
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-macho-"));
     fs.writeFileSync(path.join(directory, "main.c"), "int main(void) { return 0; }\n");
     for (const arch of ["arm64", "x86_64"]) {
       binaries[arch] = path.join(directory, arch);
@@ -114,9 +114,9 @@ describe.skipIf(!canBuildMachO)("macOS afterPack platform-tools slices", () => {
   afterAll(() => fs.rmSync(directory, { recursive: true, force: true }));
 
   function macApp() {
-    const appOutDir = fs.mkdtempSync(path.join(os.tmpdir(), "omb-after-pack-mac-"));
+    const appOutDir = fs.mkdtempSync(path.join(os.tmpdir(), "mausclaw-after-pack-mac-"));
     temporaryDirectories.push(appOutDir);
-    const tools = path.join(appOutDir, "OpenMausBot.app", "Contents", "Resources", "android-platform-tools", "darwin");
+    const tools = path.join(appOutDir, "MausClaw.app", "Contents", "Resources", "android-platform-tools", "darwin");
     fs.mkdirSync(path.join(tools, "lib64"), { recursive: true });
     fs.copyFileSync(binaries.fat, path.join(tools, "adb"));
     fs.copyFileSync(binaries.fat, path.join(tools, "lib64", "libc++.dylib"));

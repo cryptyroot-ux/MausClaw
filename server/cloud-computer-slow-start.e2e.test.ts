@@ -13,7 +13,7 @@ import { freePortBlock } from "./testing/ports.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const FAKE_CLAUDE = join(ROOT, "server/testing/fake-claude-cli.ts");
-const INCLUDED = `box_omb_${randomUUID()}`;
+const INCLUDED = `box_mausclaw_${randomUUID()}`;
 const FRAME = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==", "base64");
 /** One computer call waits this long on a start; the whole start, this long. */
 const CALL_WAIT_MS = 1_500;
@@ -68,9 +68,9 @@ describe("a slow cloud computer start", () => {
   };
   const screenshot = async (sent: any) => {
     const env = sent.mcpConfig.mcpServers.computer.env;
-    const response = await fetch(new URL("/api/internal/computer/mcp", env.OMB_HARNESS_URL), {
+    const response = await fetch(new URL("/api/internal/computer/mcp", env.MAUSCLAW_HARNESS_URL), {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${env.OMB_MCP_TOKEN_COMPUTER}` },
+      headers: { "content-type": "application/json", authorization: `Bearer ${env.MAUSCLAW_MCP_TOKEN_COMPUTER}` },
       body: JSON.stringify({ method: "tools/call", params: { name: "screenshot", arguments: {} } }),
     });
     const body = await response.json() as any;
@@ -131,7 +131,7 @@ describe("a slow cloud computer start", () => {
     await new Promise<void>(resolve => relay.listen(0, "127.0.0.1", resolve));
     const relayBase = `http://127.0.0.1:${(relay.address() as { port: number }).port}`;
 
-    home = mkdtempSync(join(tmpdir(), "omb-cloud-slow-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-cloud-slow-"));
     const data = join(home, "data");
     dumpFile = join(home, "dump.json");
     finishFile = join(home, "finish");
@@ -148,13 +148,13 @@ describe("a slow cloud computer start", () => {
       cwd: ROOT,
       env: {
         PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-        HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-        OMB_BOAT_API: `${relayBase}/own-key-must-not-be-used`,
-        OMB_CLOUD_BOAT_URL: `${relayBase}/relay/api/box/v1`,
-        OMB_CLOUD_BOAT_TOKEN: INCLUDED,
-        OMB_COMPUTER_CALL_WAIT_MS: String(CALL_WAIT_MS),
-        OMB_CLOUD_COMPUTER_START_BUDGET_MS: String(START_BUDGET_MS),
+        HOME: home, USERPROFILE: home, MAUSCLAW_DATA_DIR: data, TEMP: home, TMP: home, TMPDIR: home,
+        MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+        MAUSCLAW_BOAT_API: `${relayBase}/own-key-must-not-be-used`,
+        MAUSCLAW_CLOUD_BOAT_URL: `${relayBase}/relay/api/box/v1`,
+        MAUSCLAW_CLOUD_BOAT_TOKEN: INCLUDED,
+        MAUSCLAW_COMPUTER_CALL_WAIT_MS: String(CALL_WAIT_MS),
+        MAUSCLAW_CLOUD_COMPUTER_START_BUDGET_MS: String(START_BUDGET_MS),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

@@ -3,7 +3,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { launchVerificationServer, runControlOmb } from "../../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../../scripts/control-mausclaw.ts";
 
 const ROOT = new URL("../..", import.meta.url).pathname.replace(/\/$/, "");
 const TASKS_DIR = join(ROOT, "evals", "tasks");
@@ -61,7 +61,7 @@ async function runTask(task: Task): Promise<TaskResult> {
     });
     return response.json() as Promise<any>;
   };
-  const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
 
   const started = Date.now();
   try {

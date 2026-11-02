@@ -19,7 +19,7 @@ At the next start (the runtime's restart policy, `server/runtime/runtime.ts` `op
   cut review, "Resumed with … results after a restart, reviewing"), and a
   direct requester's chat shows "Mira was cut off by a restart; resuming".
 - Never a second automatic run. A restart that cuts that rerun too ends it,
-  failed: "Interrupted by another OpenMausBot restart after resuming once; not
+  failed: "Interrupted by another MausClaw restart after resuming once; not
   resumed again. Some of its steps may already have taken effect." The
   requester gets that result like any other; a Chief's own review ended that
   way says so in the Chief's conversation.
@@ -42,13 +42,13 @@ At the next start (the runtime's restart policy, `server/runtime/runtime.ts` `op
   rerun already running is left alone like any teammate mid-turn, and so is
   one the person left working by a Stop before the restart.
 - A routine run still going at a restart fails, as before, and its
-  teammates' work ends with it, "OpenMausBot restarted while this routine was
+  teammates' work ends with it, "MausClaw restarted while this routine was
   running": none of it runs again, so no result lands after the person was
   told the routine failed.
 - On a quit or update, shutdown dispatches nothing more and leaves the turns
   it tears down cut for the next start, so a quit ends where a crash does,
   whatever the engine. Each conversation with a turn still running gets
-  "error: turn interrupted — OpenMausBot restarted", as a provider reload's
+  "error: turn interrupted — MausClaw restarted", as a provider reload's
   does, and nothing more (no unread mark, no notification), unless the next
   start goes on with that turn: a cut teammate turn, or a requester's turn
   that had sent work, says what happened when it resumes instead (a failed
@@ -70,7 +70,7 @@ pnpm exec vitest run server/runtime/ server/runtime-coordinator.test.ts server/d
 pnpm exec vitest run server/delta-context.e2e.test.ts -t "restart"
 pnpm exec vitest run server/full-access-workflows.e2e.test.ts server/room-recovery.e2e.test.ts
 pnpm exec vitest run server/room-roots.e2e.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/direct-coordination-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/direct-coordination-ui.e2e.test.ts
 ```
 
 The long-running Chief suite plays one Chief of Staff job per scenario through
@@ -269,7 +269,7 @@ room or posted in one.
 pnpm exec vitest run server/peer-roster.test.ts server/post-to-room.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/runtime-coordinator.test.ts server/peer-allowlist.e2e.test.ts server/cloud-team-open-reach.e2e.test.ts
 ```
 
-The coordination suites use `launchVerificationServer`, `control-omb`, and the
+The coordination suites use `launchVerificationServer`, `control-mausclaw`, and the
 actual agents MCP proxy with a scripted provider and disposable HOME/data.
 They assert discovered targets, accepted or refused tool calls, durable
 handoff state, the destination conversation, and absence of dispatch after
@@ -328,7 +328,7 @@ pnpm exec vitest run server/direct-coordination.e2e.test.ts --maxWorkers=1
 pnpm exec vitest run server/turn-dispatch-guard.test.ts
 pnpm exec vitest run server/comms.test.ts server/thread-aware-bots.e2e.test.ts server/routine-delegation.e2e.test.ts server/independent-threads-api.test.ts server/peer-allowlist.e2e.test.ts server/steer-queue.test.ts
 pnpm exec vitest run server/runtime-paths.e2e.test.ts server/notification-routing.e2e.test.ts server/post-to-room.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/direct-coordination-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/direct-coordination-ui.e2e.test.ts
 ```
 
 The integration suite launches the disposable control fixture and drives the
@@ -393,7 +393,7 @@ from a completed routine back to a normal user conversation.
 
 Use an isolated home and data directory, never the running app. Create Maya,
 Eli (developer) and Nora (reviewer), set an explicit shared working folder, and
-create Launch and Delivery rooms through `control-omb`. Send through
+create Launch and Delivery rooms through `control-mausclaw`. Send through
 `send-channel`, wait on the source channel, and retain `messages` plus the
 actual files and executed tool evidence. Follow [channels](channels.md) and
 [chat UI](chat-ui.md) for the common launch/control paths.
@@ -447,7 +447,7 @@ nodes were completed and reported. Nora actually executed the tests. The exact
 CSV output, a rerun of the generated test, and two independent held-out cases
 all passed. The actual renderer also passed receipt navigation and Chief grant
 checks. Evidence (fixture and temporary auth copy removed):
-`/tmp/omb-live-team-0913.MwRY2k/nested-gpt-5.6-sol-1789255210986/result.json`
+`/tmp/mausclaw-live-team-0913.MwRY2k/nested-gpt-5.6-sol-1789255210986/result.json`
 and `independent-checks.json` beside it.
 
 Two isolated `gpt-5.6-sol` trials used temporary work folders and real tools:
@@ -455,16 +455,16 @@ Two isolated `gpt-5.6-sol` trials used temporary work folders and real tools:
 - Delivery: Clive consulted Mira, assigned Patch, requested Nora's independent
   checks and then Quill's launch copy. The actual CSV exporter and tests passed;
   no deployment or publishing was requested. Evidence:
-  `/tmp/omb-live-team-0913.MwRY2k/delivery-gpt-5.6-sol-1789253057867/result.json`
+  `/tmp/mausclaw-live-team-0913.MwRY2k/delivery-gpt-5.6-sol-1789253057867/result.json`
   and `transcripts.json` beside it.
 - Nested: Clive could reach only Patch; Patch could reach only Nora. The durable
   tree was Clive → Patch → Nora, all completed and reported. Nora executed the
   unittest suite, exact export command and schema/email checks. Patch then
   resumed, followed by Clive, in about 146 seconds. Evidence:
-  `/tmp/omb-live-team-0913.MwRY2k/nested-gpt-5.6-sol-1789253398198/result.json`.
+  `/tmp/mausclaw-live-team-0913.MwRY2k/nested-gpt-5.6-sol-1789253398198/result.json`.
 
 The first run also exposed a model-quality limitation: Patch claimed Nora had
-verified its work without a corresponding OMB handoff. Clive correctly treated
+verified its work without a corresponding MausClaw handoff. Clive correctly treated
 that claim as insufficient and requested an actual independent check. Prompts
 now explicitly require real coordination receipts for named-bot participation;
 this is guidance, not a guarantee that every model report is truthful. The

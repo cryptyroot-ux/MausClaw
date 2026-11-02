@@ -43,7 +43,7 @@ export interface BrokerRewrite {
 }
 
 /** A key's value that already is a broker token (a re-wrap, a self-check) is left alone. */
-const isToken = (value: string) => value.startsWith("omb_t0_");
+const isToken = (value: string) => value.startsWith("mausclaw_t0_");
 
 /** Looks like an address the broker can forward to: http(s), no credentials in it. */
 export function usableUpstream(value: string | undefined, fallback: string): string {

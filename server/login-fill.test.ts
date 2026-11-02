@@ -76,7 +76,7 @@ describe("fill_login fills and submits in one call", () => {
     expect(outcome).toMatchObject({ ok: true, filled: ["username", "password"] });
     expect(page.pressed).toEqual(["Enter"]);
     expect(page.clicked).toHaveLength(1);
-    expect(page.clicked[0]).toMatch(/^\[data-omb-login="[0-9a-f]{24}:0:submit"\]$/u);
+    expect(page.clicked[0]).toMatch(/^\[data-mausclaw-login="[0-9a-f]{24}:0:submit"\]$/u);
     expect(outcome.text).toContain("the page is now https://example.com/dashboard");
   });
 
@@ -224,7 +224,7 @@ describe("a login the site refuses is cleared from the page", () => {
     expect(page.sent).toHaveLength(1);
     expect(page.field("#password").value).toBe("");
     expect(page.field("#email").value).toBe("alice@example.com");
-    expect(page.window.document.querySelectorAll("[data-omb-login]")).toHaveLength(0);
+    expect(page.window.document.querySelectorAll("[data-mausclaw-login]")).toHaveLength(0);
   });
 
   it("never submits twice when the site answers with its login form again", async () => {
@@ -291,7 +291,7 @@ describe("filling without submitting", () => {
     expect(page.field("#password").value).toBe(PASSWORD);
     await outcome.held!.clear!();
     expect(page.field("#password").value).toBe("");
-    expect(page.window.document.querySelectorAll("[data-omb-login]")).toHaveLength(0);
+    expect(page.window.document.querySelectorAll("[data-mausclaw-login]")).toHaveLength(0);
   });
 
   it("leaves it to the bot when Enter sends nothing and the page has no sign-in button", async () => {

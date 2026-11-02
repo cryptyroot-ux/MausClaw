@@ -11,9 +11,9 @@ import type { ProviderAdapter } from "./contracts.ts";
 import { appendDecision } from "./decision-log.ts";
 import { floorReading, type FloorRule } from "./safety-floor.ts";
 
-/** Off by default. config.json `safetyFloor.enabled` or OMB_SAFETY_FLOOR=1 turns it on; the variable cannot turn it off. */
+/** Off by default. config.json `safetyFloor.enabled` or MAUSCLAW_SAFETY_FLOOR=1 turns it on; the variable cannot turn it off. */
 export function safetyFloorEnabled(cfg: AppConfig, env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.OMB_SAFETY_FLOOR?.trim() === "1" || cfg.safetyFloor?.enabled === true;
+  return env.MAUSCLAW_SAFETY_FLOOR?.trim() === "1" || cfg.safetyFloor?.enabled === true;
 }
 
 /** Read per request, so a settings save applies to the next one. */

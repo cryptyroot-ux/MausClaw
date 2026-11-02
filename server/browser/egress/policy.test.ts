@@ -75,10 +75,10 @@ describe("what each host lets a bot's browser reach", () => {
     }
   });
 
-  it("never reaches OpenMausBot's own ports, on loopback or on this machine's own addresses", async () => {
+  it("never reaches MausClaw's own ports, on loopback or on this machine's own addresses", async () => {
     for (const host of ["desktop", "server", "cloud"] as const) {
       for (const [target, address] of [["127.0.0.1:8799", "127.0.0.1"], ["localhost:8799", "::1"], ["::ffff:7f00:1:8799", "::ffff:7f00:1"], ["192.168.1.5:8799", "192.168.1.5"], ["198.51.100.7:8799", "198.51.100.7"]]) {
-        expect(await decide(host, target!, [address!], { allowed: () => true, botPort: async () => true }), `${host} ${target}`).toBe("omb");
+        expect(await decide(host, target!, [address!], { allowed: () => true, botPort: async () => true }), `${host} ${target}`).toBe("mausclaw");
       }
     }
   });

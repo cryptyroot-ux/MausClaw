@@ -136,7 +136,7 @@ interface RuntimeOptions<Config> {
   /** Smaller models announce a step and end the turn without calling a tool; such a reply gets a nudge, at most three
    * per turn and each only after tool progress since the last. */
   nudgeAnnouncedAction?: boolean;
-  /** Test/rollout hook: run this turn through the OMB-owned Agent Runtime. */
+  /** Test/rollout hook: run this turn through the MausClaw-owned Agent Runtime. */
   nativeAgentEngine?: AgentEngine;
   /** Optional protocol adapter for text-only helpers (titles/summaries). Defaults to OpenAI chat-completions via complete(). */
   modelAdapter?: ModelAdapter;
@@ -203,7 +203,7 @@ function replayDelivered(
   return { content, matched: found.map(({ record }) => record), volatile };
 }
 
-const CORRECTIVE_ROUND = "[OpenMausBot: a tool call in this turn failed (its result is marked ok:false). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]";
+const CORRECTIVE_ROUND = "[MausClaw: a tool call in this turn failed (its result is marked ok:false). Re-run the failed operations with corrected inputs where possible, check the results, then give your final answer. Do not report results you did not get.]";
 
 export { announcesAction };
 
@@ -274,7 +274,7 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
     approval: ReturnType<typeof createChatToolApproval>;
     /** Mid-turn input parked by adapter.steer, spliced in at the next round, never mid-tool-batch. */
     asides: string[];
-    /** This turn runs the OMB Agent Runtime; steering is forwarded to the live run. */
+    /** This turn runs the MausClaw Agent Runtime; steering is forwarded to the live run. */
     native?: boolean;
     /** Native steering lands here once the run exists; before that, text is queued. */
     nativeSteer?: (text: string) => Promise<"steered" | "refused">;
@@ -590,7 +590,7 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
     emit({ ...base(turn.threadId, turnId), type: "turn.started" });
     emit({ ...base(turn.threadId, turnId), type: "session.started", sessionId: null, model });
 
-    if (options.nativeAgentEngine && turn.agentEngine === "omb-native") {
+    if (options.nativeAgentEngine && turn.agentEngine === "mausclaw-native") {
       const nativeEngine = options.nativeAgentEngine;
       turnEntry.native = true;
       const steerState: NativeSteerState = { queue: [] };
@@ -680,7 +680,7 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
           root: turn.cwd,
           readRoots: [...(turn.workspaceTools?.readRoots ?? []), ...skillReadRoots(turn.system, turn.systemStable, turn.text)],
           writeRoots: turn.workspaceTools?.writeRoots,
-          unrestricted: turn.workspaceTools?.unrestricted === true || process.env.OMB_WORKSPACE_UNRESTRICTED === "1",
+          unrestricted: turn.workspaceTools?.unrestricted === true || process.env.MAUSCLAW_WORKSPACE_UNRESTRICTED === "1",
         } : undefined;
         const workspaceNames = new Set<string>();
         if (workspace) {
@@ -783,7 +783,7 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
                 tools.definitions.length = 0;
                 continue;
               }
-              const retryScale = options.retryScale ?? Number(process.env.OMB_RETRY_SCALE ?? "1");
+              const retryScale = options.retryScale ?? Number(process.env.MAUSCLAW_RETRY_SCALE ?? "1");
               // Once a call has been handled, never replay it through a turn retry.
               if (abort.signal.aborted || streamed || seenCalls.size ||
                   error instanceof ChatProtocolError || !verdict.transient) throw error;

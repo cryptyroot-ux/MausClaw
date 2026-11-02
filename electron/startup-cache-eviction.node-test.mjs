@@ -19,7 +19,7 @@ test("the cache is evicted when the persisted version is not this build's, and o
 });
 
 test("the last-run version survives a reread, and unknown files read as null", () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-startup-cache-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-startup-cache-"));
   try {
     assert.equal(readLastRunVersion(dir), null);
     assert.equal(rememberLastRunVersion(dir, "0.1.85"), true);
@@ -34,7 +34,7 @@ test("the last-run version survives a reread, and unknown files read as null", (
 });
 
 test("the eviction runs once per version: first launch clears, relaunch does not, an upgrade clears again", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-startup-cache-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-startup-cache-"));
   const clears = [];
   const deps = (currentVersion) => ({
     userData: dir,
@@ -57,7 +57,7 @@ test("the eviction runs once per version: first launch clears, relaunch does not
 
 test("the production wiring shape works without injected persistence (regression)", async () => {
   // main.mjs passes only userData, currentVersion, clearCache and log, so this shape must boot on the file-backed defaults.
-  const dir = mkdtempSync(join(tmpdir(), "omb-startup-cache-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-startup-cache-"));
   const clears = [];
   const productionShape = (currentVersion) => ({
     userData: dir,
@@ -76,7 +76,7 @@ test("the production wiring shape works without injected persistence (regression
 });
 
 test("a failed clear is retried on the next launch, not recorded as done", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-startup-cache-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-startup-cache-"));
   const logs = [];
   let fail = true;
   try {

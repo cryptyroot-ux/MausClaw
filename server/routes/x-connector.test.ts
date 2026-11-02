@@ -4,7 +4,7 @@ import type { ServiceCredential } from "../included-services.ts";
 import { PASS, type RouteContext } from "./table.ts";
 import { createXConnectorRoutes, type XConnectorDeps } from "./x-connector.ts";
 
-const PLAN: ServiceCredential = { token: "omb_xd_plan_token", api: "https://cloud.example.test/api/cloud/services/x", included: true };
+const PLAN: ServiceCredential = { token: "mausclaw_xd_plan_token", api: "https://cloud.example.test/api/cloud/services/x", included: true };
 const OWN: ServiceCredential = { token: "treg_own_key", api: "https://treg.to", included: false };
 const USAGE: XIncludedUsage = { calls: 312, max: 5_000, resetsAt: "2026-11-01T00:00:00.000Z" };
 
@@ -76,7 +76,7 @@ describe("GET /api/x/status", () => {
     clock += 31_000;
     await get(handler);
     expect(usage).toHaveBeenCalledTimes(3);
-    plan = { ...PLAN, token: "omb_xd_new_token" };
+    plan = { ...PLAN, token: "mausclaw_xd_new_token" };
     usage.mockResolvedValueOnce(null);
     expect((await get(handler)).body).toEqual({ using: "included", ownKey: false, included: true });
     expect(usage).toHaveBeenCalledTimes(4);

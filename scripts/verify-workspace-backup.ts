@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "./control-mausclaw.ts";
 import { waitForExit } from "../server/testing/cleanup.ts";
 import { escapeAttribute } from "../src/lib/composer-attachments.ts";
 
@@ -32,8 +32,8 @@ async function restartFixture(fixture: VerificationServer): Promise<ChildProcess
     LOCALAPPDATA: join(home, "AppData", "Local"), XDG_CONFIG_HOME: join(home, ".config"),
     XDG_CACHE_HOME: join(home, ".cache"), XDG_DATA_HOME: join(home, ".local", "share"),
     TEMP: temp, TMP: temp, TMPDIR: temp, HERMES_HOME: join(home, ".hermes"),
-    OMB_DATA_DIR: dataDir, OMB_PORT: new URL(fixture.info.url).port,
-    OMB_WEBHOOK_PORT: String(Number(new URL(fixture.info.url).port) + 1),
+    MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: new URL(fixture.info.url).port,
+    MAUSCLAW_WEBHOOK_PORT: String(Number(new URL(fixture.info.url).port) + 1),
     FAKE_CLAUDE_MODE: "happy", FAKE_CLAUDE_DUMP: fixture.fixtureDumpPath,
     PATH: dirname(process.execPath),
   });
@@ -49,7 +49,7 @@ async function restartFixture(fixture: VerificationServer): Promise<ChildProcess
       try {
         const response = await fetch(`${fixture.info.url}/api/health`, { signal: AbortSignal.timeout(1_000) });
         const health = await response.json() as { app?: string; pid?: number };
-        if (response.ok && health.app === "openmausbot" && health.pid === child.pid) return child;
+        if (response.ok && health.app === "mausclaw" && health.pid === child.pid) return child;
       } catch { /* Only this owned child can satisfy the PID handshake. */ }
       if (Date.now() >= deadline) throw new Error(`Restored fixture did not start; see ${fixture.info.logPath}`);
       await new Promise((done) => setTimeout(done, 100));
@@ -82,7 +82,7 @@ export async function verifyWorkspaceBackup(report: (event: unknown) => void = (
   const evidencePath = `${source.info.logPath}.workspace-backup.json`;
   record({ source: source.info });
   const control = async (fixture: VerificationServer, ...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", fixture.info.url]);
+    const result = await runControlMausclaw([...args, "--url", fixture.info.url]);
     record({ command: [...args, "--url", fixture.info.url], result });
     return result;
   };
@@ -149,7 +149,7 @@ export async function verifyWorkspaceBackup(report: (event: unknown) => void = (
     const original = before.bots.find((candidate: { id: string }) => candidate.id === bot.id);
     assert.ok(original.messages.some((message: { text?: string }) => message.text?.includes("hello from fake claude")));
     const oldBytes = readFileSync(join(destination.info.dataDir, "bots.json"));
-    const clientState = { "omb-skin": "default", "omb-drafts": JSON.stringify({ [bot.threadId]: "Keep draft" }), "omb-webhook-credentials": "private-source-webhook-url", "unrelated-auth-token": "must-not-transfer" };
+    const clientState = { "mausclaw-skin": "default", "mausclaw-drafts": JSON.stringify({ [bot.threadId]: "Keep draft" }), "mausclaw-webhook-credentials": "private-source-webhook-url", "unrelated-auth-token": "must-not-transfer" };
     const exported = await api(source, "POST", "/api/workspace-backup/export", { password: PASSWORD, clientState });
     assert.equal(exported.status, 200, JSON.stringify(exported.body));
     assert.equal(exported.body.summary.bots, before.bots.length);
@@ -219,7 +219,7 @@ export async function verifyWorkspaceBackup(report: (event: unknown) => void = (
     assert.ok(status.safetyCopyPath.startsWith(join(destination.info.dataDir, ".backups")));
     assert.deepEqual(readFileSync(join(status.safetyCopyPath, "data", "bots.json")), oldBytes);
     const preferences = await api(destination, "POST", "/api/workspace-backup/client-state", { restoreId: preview.body.id });
-    assert.deepEqual(preferences.body.clientState, { "omb-skin": "default", "omb-drafts": clientState["omb-drafts"] });
+    assert.deepEqual(preferences.body.clientState, { "mausclaw-skin": "default", "mausclaw-drafts": clientState["mausclaw-drafts"] });
     await control(destination, "send", "--bot", bot.id, "--text", "Continue this restored conversation. Reply once.");
     assert.equal((await control(destination, "wait", "--bot", bot.id, "--timeout", "30") as { status: string }).status, "settled");
     await control(destination, "messages", "--bot", bot.id, "--limit", "20");

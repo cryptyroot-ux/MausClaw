@@ -52,7 +52,7 @@ function documents(url: string): FakeDocument {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function setup(options: Partial<BrowserServiceOptions> = {}, startUrls?: string[]) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-browser-service-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-browser-service-"));
   folders.push(dataDir);
   const backend = new FakeBackend(() => new FakeChrome({ documents, ...(startUrls ? { startUrls } : {}) }));
   backends.push(backend);
@@ -66,7 +66,7 @@ function setup(options: Partial<BrowserServiceOptions> = {}, startUrls?: string[
 }
 
 describe("the bots' browser tools", () => {
-  it("advertises 21 tools and restart_browser, with OpenMausBot's names and no launch settings", async () => {
+  it("advertises 21 tools and restart_browser, with MausClaw's names and no launch settings", async () => {
     const { service, target } = setup();
     const listed = await service.agentRpc(target, "tools/list", {}) as { tools: Array<{ name: string; inputSchema: { properties?: Record<string, unknown> } }> };
     expect(listed.tools.map((tool) => tool.name)).toEqual(TOOL_LIST.map((tool) => tool.name));

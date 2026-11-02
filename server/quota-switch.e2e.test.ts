@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { runControlOmb, verificationServerArgs, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { runControlMausclaw, verificationServerArgs, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
 import { freePortBlock } from "./testing/ports.ts";
@@ -28,9 +28,9 @@ async function withQuotaFixture(
 ) {
   const port = await freePortBlock([0, 1]);
   const url = `http://127.0.0.1:${port}`;
-  const dataDir = mkdtempSync(join(tmpdir(), "openmausbot-quota-switch-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-quota-switch-"));
   mkdirSync(join(dataDir, "tmp"), { recursive: true });
-  const evidenceDir = join(tmpdir(), "openmausbot-verification-evidence");
+  const evidenceDir = join(tmpdir(), "mausclaw-verification-evidence");
   mkdirSync(evidenceDir, { recursive: true });
   const logPath = join(evidenceDir, `quota-switch-${Date.now()}-${process.pid}.log`);
   const backupFile = join(dataDir, "backup-prompts.jsonl");
@@ -54,7 +54,7 @@ async function withQuotaFixture(
     return result;
   };
   const control = async (...args: string[]) => {
-    const result = await runControlOmb([...args, "--url", url]) as any;
+    const result = await runControlMausclaw([...args, "--url", url]) as any;
     evidence.push({ command: args, result });
     return result;
   };
@@ -176,7 +176,7 @@ it("offers the working engine once, and on the person's answer switches this con
 it.each([
   { name: "Not now", behavior: "answer", message: "Not now", outcome: "answered" },
   { name: "typed words that name no offered engine", behavior: "answer", message: "use whichever is fastest", outcome: "answered" },
-  // Decline-only service trust (hosted, Cloud home, OMB_LOOPBACK_TRUST=service): a decline naming an engine chooses nothing.
+  // Decline-only service trust (hosted, Cloud home, MAUSCLAW_LOOPBACK_TRUST=service): a decline naming an engine chooses nothing.
   { name: "a decline that carries the offered engine's label", behavior: "deny", message: BACKUP, outcome: "rejected" },
   { name: "an allow that carries the offered engine's label", behavior: "allow", message: BACKUP, outcome: "rejected" },
 ])("changes nothing on $name", async ({ behavior, message, outcome }) => {
@@ -205,8 +205,8 @@ it.each([
   });
 }, 240_000);
 
-it("raises no card when OMB_QUOTA_SWITCH=0 switches it off", async () => {
-  await withQuotaFixture({ env: { OMB_QUOTA_SWITCH: "0" } }, async ({ api, control, backupPrompts }) => {
+it("raises no card when MAUSCLAW_QUOTA_SWITCH=0 switches it off", async () => {
+  await withQuotaFixture({ env: { MAUSCLAW_QUOTA_SWITCH: "0" } }, async ({ api, control, backupPrompts }) => {
     const { bot, threadId, messages } = await meetTheLimit(api, control, "NO_OFFER_WHEN_OFF_2B");
     // A second failed turn is the event that proves the first one's offer was never coming.
     await control("send", "--bot", bot.id, "--task", threadId, "--text", "STILL_NO_OFFER_3C");

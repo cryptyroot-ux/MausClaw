@@ -12,9 +12,9 @@ import { recordEvents } from "../../server/testing/events.ts";
 import { removeTempDir } from "../../server/testing/cleanup.ts";
 import type { ProviderInstance } from "../../server/contracts.ts";
 
-const cli = process.env.OMB_CLINE_NATIVE_PATH;
+const cli = process.env.MAUSCLAW_CLINE_NATIVE_PATH;
 (cli ? it : it.skip)("runs the native Cline CLI with its saved custom model and provider", async () => {
-  const home = mkdtempSync(join(tmpdir(), "omb-cline-native-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-cline-native-"));
   const requests: Array<{ path: string; model?: string; tools?: string[] }> = [];
   const callFile = join(home, "mcp-call.json");
   const server = createServer(async (req, res) => {
@@ -66,7 +66,7 @@ const cli = process.env.OMB_CLINE_NATIVE_PATH;
     expect(requests[0].tools?.some((name) => name.includes("read_notes"))).toBe(true);
     expect(JSON.parse(readFileSync(callFile, "utf8"))).toMatchObject({ name: "read_notes", arguments: {} });
     expect(readFileSync(path, "utf8")).toBe(before);
-    const evidence = join(process.cwd(), ".omb-scratch", "verify-evidence");
+    const evidence = join(process.cwd(), ".mausclaw-scratch", "verify-evidence");
     mkdirSync(evidence, { recursive: true });
     writeFileSync(join(evidence, "cline-native.json"), JSON.stringify({ platform: process.platform, snapshot: await instance.snapshot(), requests }, null, 2));
     recorder.stop();
@@ -79,7 +79,7 @@ const cli = process.env.OMB_CLINE_NATIVE_PATH;
 }, 90_000);
 
 (cli ? it : it.skip)("keeps native command execution behind approvals across Full and Ask turns", async () => {
-  const home = mkdtempSync(join(tmpdir(), "omb-cline-native-permissions-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-cline-native-permissions-"));
   let marker = "", calls = 0;
   const permissions: string[] = [];
   const server = createServer(async (req, res) => {
@@ -134,7 +134,7 @@ const cli = process.env.OMB_CLINE_NATIVE_PATH;
       if (mode === "full") expect(readFileSync(marker, "utf8")).toBe("fixture");
     }
     expect(permissions).toEqual(["ask", "full", "ask"]);
-    const evidence = join(process.cwd(), ".omb-scratch", "verify-evidence");
+    const evidence = join(process.cwd(), ".mausclaw-scratch", "verify-evidence");
     mkdirSync(evidence, { recursive: true });
     writeFileSync(join(evidence, "cline-native-permissions.json"), JSON.stringify({ platform: process.platform,
       version: (await instance.snapshot()).version, permissions, executed: [false, true, false] }, null, 2));

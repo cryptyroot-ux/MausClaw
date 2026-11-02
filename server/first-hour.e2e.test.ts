@@ -17,7 +17,7 @@ import { startBrokerFake, type BrokerFake } from "./testing/broker-fake.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const HOST = "omb-t-0f1e2d3c4b5a.fly.dev";
+const HOST = "mausclaw-t-0f1e2d3c4b5a.fly.dev";
 const MACHINE = "7d2c9e4a-1b3f-4a6e-8c5d-0e9f8a7b6c51";
 const ZONE = "America/New_York";
 const MINUTE = 60_000;
@@ -53,7 +53,7 @@ async function signed(path: string, method = "GET", body = "") {
   const signature = method === "POST" && path === "/api/cloud/pairing" ? cloudPairingSignature(secret, timestamp, nonce, body) : cloudRequestSignature(secret, timestamp, nonce, method, path, body);
   const response = await fetch(`${base}${path}`, { method, headers: {
     host: HOST, "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https", ...(body ? { "content-type": "application/json" } : {}),
-    "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce, "x-omb-cloud-signature": `v1=${signature}`,
+    "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce, "x-mausclaw-cloud-signature": `v1=${signature}`,
   }, ...(body ? { body } : {}) });
   return response.json() as Promise<any>;
 }
@@ -76,12 +76,12 @@ describe("a new Cloud's first hour", () => {
 
   beforeAll(async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    home = mkdtempSync(join(tmpdir(), "omb-first-hour-"));
-    dataDir = join(home, ".openmausbot");
+    home = mkdtempSync(join(tmpdir(), "mausclaw-first-hour-"));
+    dataDir = join(home, ".mausclaw");
     mkdirSync(dataDir, { recursive: true });
     broker = await startBrokerFake();
     const markers = join(home, "markers.json");
-    writeFileSync(markers, JSON.stringify({ "OpenMausBot first look": LOOK_REPLY, "inbox is a mess": FIRST_REPLY }));
+    writeFileSync(markers, JSON.stringify({ "MausClaw first look": LOOK_REPLY, "inbox is a mess": FIRST_REPLY }));
     writeFileSync(toolCalls(), "[]");
     const cli = join(home, "fake-claude.mjs");
     writeFileSync(cli, `#!/usr/bin/env node
@@ -105,10 +105,10 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
     child = spawn(process.execPath, ["--import", offline, join(SERVER_DIR, "index.ts")], {
       cwd: join(SERVER_DIR, ".."),
       env: {
-        PATH: process.env.PATH, HOME: home, USERPROFILE: home, TZ: ZONE, OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-        OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: MACHINE, OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-        OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_PUBLIC_URL: `https://${HOST}`,
-        OMB_COMPOSIO_BROKER_URL: broker.url, OMB_CLOUD_CONNECTED_APPS_GRANT: broker.cloudGrant(MACHINE),
+        PATH: process.env.PATH, HOME: home, USERPROFILE: home, TZ: ZONE, MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+        MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: MACHINE, MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+        MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_PUBLIC_URL: `https://${HOST}`,
+        MAUSCLAW_COMPOSIO_BROKER_URL: broker.url, MAUSCLAW_CLOUD_CONNECTED_APPS_GRANT: broker.cloudGrant(MACHINE),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -129,7 +129,7 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     person = broker.userFor(installation);
-    const pairing = await signed("/api/cloud/pairing", "POST", JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 }));
+    const pairing = await signed("/api/cloud/pairing", "POST", JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 }));
     token = (await api("POST", "/api/auth/pair", { code: pairing.code })).token;
     const bots = (await api("GET", "/api/bots")).bots as any[];
     const found = bots.find((bot) => bot.defaultBot && !bot.defaultBot.person);
@@ -190,10 +190,10 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
     expect(tools).not.toContain(SEND);
     expect(tools).not.toContain(DELETE);
     const rows = await messages();
-    expect(rows.some((row) => row.role === "user" && String(row.text).includes("OpenMausBot first look")), "the first look's prompt is never the person's message").toBe(false);
+    expect(rows.some((row) => row.role === "user" && String(row.text).includes("MausClaw first look")), "the first look's prompt is never the person's message").toBe(false);
     expect(rows.find((row) => row.id === gmail.id).connector).toMatchObject({ status: "connected", resumed: true });
     const dump = JSON.parse(readFileSync(dumpFile(), "utf8"));
-    expect(JSON.stringify(dump.prompt)).toContain("OpenMausBot first look: Sam just connected Gmail.");
+    expect(JSON.stringify(dump.prompt)).toContain("MausClaw first look: Sam just connected Gmail.");
     const month = new Date().toISOString().slice(0, 7);
     const decisions = existsSync(join(dataDir, "decisions")) ? readdirSync(join(dataDir, "decisions")).filter((name) => name.startsWith(month)).map((name) => readFileSync(join(dataDir, "decisions", name), "utf8")).join("") : "";
     expect(decisions).toContain(`"tool":"${SEND}"`);

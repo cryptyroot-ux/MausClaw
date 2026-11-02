@@ -124,25 +124,25 @@ describe("the helper setting", () => {
     }
   });
 
-  it("is read from config.json, with OMB_HELPER_INSTANCE and OMB_HELPER_MODEL winning", () => {
+  it("is read from config.json, with MAUSCLAW_HELPER_INSTANCE and MAUSCLAW_HELPER_MODEL winning", () => {
     expect(helperSelection(loadConfig())).toBeNull();
     writeFileSync(file, JSON.stringify({ helper: { instanceId: "claude", model: "claude-haiku-4-5" } }));
     expect(helperSelection(loadConfig())).toEqual({ instanceId: "claude", model: "claude-haiku-4-5" });
-    vi.stubEnv("OMB_HELPER_INSTANCE", "openrouter");
-    vi.stubEnv("OMB_HELPER_MODEL", "openai/gpt-5.4-mini");
+    vi.stubEnv("MAUSCLAW_HELPER_INSTANCE", "openrouter");
+    vi.stubEnv("MAUSCLAW_HELPER_MODEL", "openai/gpt-5.4-mini");
     expect(helperSelection(loadConfig())).toEqual({ instanceId: "openrouter", model: "openai/gpt-5.4-mini" });
     // an empty value switches a saved helper off without editing the file
-    vi.stubEnv("OMB_HELPER_INSTANCE", "");
+    vi.stubEnv("MAUSCLAW_HELPER_INSTANCE", "");
     expect(helperSelection(loadConfig())).toBeNull();
   });
 
   it("can be set from the environment alone", () => {
-    vi.stubEnv("OMB_HELPER_INSTANCE", "claude");
+    vi.stubEnv("MAUSCLAW_HELPER_INSTANCE", "claude");
     expect(helperSelection(loadConfig())).toEqual({ instanceId: "claude" });
-    expect(helperSelection({}, { OMB_HELPER_INSTANCE: "openrouter", OMB_HELPER_MODEL: "openai/gpt-5.4-mini" })).toEqual({ instanceId: "openrouter", model: "openai/gpt-5.4-mini" });
+    expect(helperSelection({}, { MAUSCLAW_HELPER_INSTANCE: "openrouter", MAUSCLAW_HELPER_MODEL: "openai/gpt-5.4-mini" })).toEqual({ instanceId: "openrouter", model: "openai/gpt-5.4-mini" });
     // a model alone names no helper, and a model that could not be a model id switches it off, from the environment too
-    expect(helperSelection({}, { OMB_HELPER_MODEL: "claude-haiku-4-5" })).toBeNull();
-    expect(helperSelection({ helper: { instanceId: "claude" } }, { OMB_HELPER_MODEL: "--print" })).toBeNull();
+    expect(helperSelection({}, { MAUSCLAW_HELPER_MODEL: "claude-haiku-4-5" })).toBeNull();
+    expect(helperSelection({ helper: { instanceId: "claude" } }, { MAUSCLAW_HELPER_MODEL: "--print" })).toBeNull();
   });
 
   it("is not something a settings request can switch on, and a mistyped entry never costs the rest of the file", () => {

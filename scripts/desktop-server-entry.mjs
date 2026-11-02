@@ -6,11 +6,11 @@ import module from "node:module";
 import { lstatSync, readdirSync, rmSync, utimesSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
-const cacheRoot = process.env.OMB_SERVER_COMPILE_CACHE;
+const cacheRoot = process.env.MAUSCLAW_SERVER_COMPILE_CACHE;
 // Engine CLIs, MCP servers and terminals the server spawns must not inherit
 // it. enableCompileCache does not set NODE_COMPILE_CACHE, so they inherit
 // nothing from this.
-delete process.env.OMB_SERVER_COMPILE_CACHE;
+delete process.env.MAUSCLAW_SERVER_COMPILE_CACHE;
 
 let enabled = false;
 if (cacheRoot) {

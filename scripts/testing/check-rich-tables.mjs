@@ -5,9 +5,9 @@ import { join } from "node:path";
 const url = new URL(process.argv[2]);
 assert.equal(url.hostname, "127.0.0.1");
 assert.equal(url.pathname, "/__rich-tables.html");
-const { chromium } = await import(process.env.OMB_VERIFY_PLAYWRIGHT || "playwright");
-const browser = await chromium.launch({ executablePath: process.env.OMB_VERIFY_BROWSER_CHROME || undefined, headless: true });
-const output = process.env.OMB_TABLE_EVIDENCE || "/tmp/omb-rich-tables-evidence";
+const { chromium } = await import(process.env.MAUSCLAW_VERIFY_PLAYWRIGHT || "playwright");
+const browser = await chromium.launch({ executablePath: process.env.MAUSCLAW_VERIFY_BROWSER_CHROME || undefined, headless: true });
+const output = process.env.MAUSCLAW_TABLE_EVIDENCE || "/tmp/mausclaw-rich-tables-evidence";
 await mkdir(output, { recursive: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, permissions: ["clipboard-read", "clipboard-write"] });

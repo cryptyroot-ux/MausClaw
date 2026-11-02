@@ -104,8 +104,8 @@ let localPort = 0;
 let socketDir = "";
 
 beforeAll(async () => {
-  socketDir = mkdtempSync(join(tmpdir(), "omb-gzip-"));
-  tunnelPath = process.platform === "win32" ? `\\\\.\\pipe\\omb-gzip-test-${process.pid}-${Date.now()}` : join(socketDir, "t.sock");
+  socketDir = mkdtempSync(join(tmpdir(), "mausclaw-gzip-"));
+  tunnelPath = process.platform === "win32" ? `\\\\.\\pipe\\mausclaw-gzip-test-${process.pid}-${Date.now()}` : join(socketDir, "t.sock");
   tunnel = upgradeWith(createServer(gzipTunnelReplies(handler)));
   local = upgradeWith(createServer(handler));
   await new Promise<void>((resolve) => tunnel.listen(tunnelPath, resolve));

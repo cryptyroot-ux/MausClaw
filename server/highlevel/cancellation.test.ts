@@ -27,7 +27,7 @@ function deferred<T>() {
 }
 
 function harness() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-cancel-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-cancel-"));
   dirs.push(dir);
   const store = new HighLevelStore({ dataDir: dir });
   store.put({ kind: "token", accessToken: "hl_access_seed", locationId: FAKE_LOCATION_ID, scopes: "" });

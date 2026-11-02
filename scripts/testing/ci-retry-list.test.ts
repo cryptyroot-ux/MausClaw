@@ -86,7 +86,7 @@ describe("the job summary", () => {
 describe("the runner", () => {
   /** A one-file vitest project: a listed test that fails its first attempt. */
   function project() {
-    const directory = mkdtempSync(join(tmpdir(), "omb-ci-retry-"));
+    const directory = mkdtempSync(join(tmpdir(), "mausclaw-ci-retry-"));
     scratch.push(directory);
     writeFileSync(join(directory, "flaky.test.mjs"), [
       'import { existsSync, writeFileSync } from "node:fs";',
@@ -103,7 +103,7 @@ describe("the runner", () => {
   }
 
   async function vitest(directory: string, env: Record<string, string | undefined>) {
-    const childEnv: Record<string, string | undefined> = { ...process.env, OMB_VITEST_RETRY_LIST: join(directory, "list.json"), OMB_VITEST_RETRY_LOG: join(directory, "retries.jsonl"), ...env };
+    const childEnv: Record<string, string | undefined> = { ...process.env, MAUSCLAW_VITEST_RETRY_LIST: join(directory, "list.json"), MAUSCLAW_VITEST_RETRY_LOG: join(directory, "retries.jsonl"), ...env };
     for (const [key, value] of Object.entries(childEnv)) if (value === undefined) delete childEnv[key];
     return new Promise<{ code: number; output: string }>((resolve) => {
       execFile(process.execPath, [VITEST, "run", "--config", join(directory, "vitest.config.mjs"), "--reporter=json"], { cwd: directory, env: childEnv as NodeJS.ProcessEnv, encoding: "utf8", timeout: 60_000 },
@@ -127,7 +127,7 @@ describe("the runner", () => {
   it("stops retrying a file's listed tests once one of them fails every attempt", async () => {
     // A broken fixture, not a flake: three attempts of every listed test
     // would multiply the shard's time past its job cap.
-    const directory = mkdtempSync(join(tmpdir(), "omb-ci-retry-"));
+    const directory = mkdtempSync(join(tmpdir(), "mausclaw-ci-retry-"));
     scratch.push(directory);
     writeFileSync(join(directory, "broken.test.mjs"), [
       'import { appendFileSync } from "node:fs";',
@@ -146,11 +146,11 @@ describe("the runner", () => {
   it("reads its own list in a happy-dom test file, where the global URL is the DOM's", async () => {
     // A jsdom/happy-dom file must still load the default list. Beside
     // node_modules so happy-dom resolves, outside Vitest's excluded dependency tree.
-    const directory = mkdtempSync(join(ROOT, ".omb-ci-retry-"));
+    const directory = mkdtempSync(join(ROOT, ".mausclaw-ci-retry-"));
     scratch.push(directory);
     writeFileSync(join(directory, "dom.test.mjs"), 'it("runs in a DOM", () => { expect(typeof document).toBe("object"); });\n');
     writeFileSync(join(directory, "vitest.config.mjs"), `export default { test: { globals: true, environment: "happy-dom", include: ["dom.test.mjs"], runner: ${JSON.stringify(RUNNER)} } };\n`);
-    const { code, output } = await vitest(directory, { CI: "true", OMB_VITEST_RETRY_LIST: undefined });
+    const { code, output } = await vitest(directory, { CI: "true", MAUSCLAW_VITEST_RETRY_LIST: undefined });
     expect(output).not.toContain("Unhandled");
     expect(results(output)).toEqual({ "runs in a DOM": "passed" });
     expect(code).toBe(0);
@@ -160,7 +160,7 @@ describe("the runner", () => {
 
   it("runs every test without retries when the list cannot be read", async () => {
     const directory = project();
-    const { output } = await vitest(directory, { CI: "true", OMB_VITEST_RETRY_LIST: join(directory, "missing.json") });
+    const { output } = await vitest(directory, { CI: "true", MAUSCLAW_VITEST_RETRY_LIST: join(directory, "missing.json") });
     expect(output).not.toContain("Unhandled");
     expect(results(output)).toEqual({ "fails once": "failed", "fails always": "failed" });
     const logged = readFileSync(join(directory, "retries.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line));

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, expect, it } from "vitest";
 
-import { launchVerificationServer, runControlOmb, verificationServerArgs, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerArgs, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
@@ -51,7 +51,7 @@ async function server(env: NodeJS.ProcessEnv = {}) {
   // its own on the same engine. Stepped down, what these runs tell the owner is theirs alone.
   const starter = (await api("GET", "/api/bots")).bots.find((candidate: any) => candidate.chiefOfStaff);
   await api("PATCH", `/api/bots/${starter.id}`, { chiefOfStaff: false });
-  const bot = (await runControlOmb(["new-bot", "--name", "Inbox bot", "--url", url]) as any).bot;
+  const bot = (await runControlMausclaw(["new-bot", "--name", "Inbox bot", "--url", url]) as any).bot;
   events = await openSse(`${url}/api/events`, { origin: url });
   const routine = async (name = "Inbox brief") => (await api("POST", "/api/routines", {
     name, prompt: "Summarise my inbox.", botId: bot.id, schedule: { type: "cron", expression: "0 7 * * *", timeZone: "Europe/London" },
@@ -80,7 +80,7 @@ async function server(env: NodeJS.ProcessEnv = {}) {
 }
 
 it("never starts a routine again that the turn watchdog stopped as stalled: it fails at once, and its owner hears once", async () => {
-  const s = await server({ OMB_TEST_STALL_CLOCK: "1" });
+  const s = await server({ MAUSCLAW_TEST_STALL_CLOCK: "1" });
   s.engine("hang");
   const { id } = await s.runNow((await s.routine()).id);
   await s.engineHas();
@@ -146,7 +146,7 @@ it("picks a run that a restart cut off up again once on the next start, and neve
   await expect.poll(async () => (await s.run(id))?.retried, { timeout: hostTimeout(20_000) }).toBe("restarted");
   await expect.poll(async () => (await s.run(id))?.status, { timeout: hostTimeout(60_000) }).toBe("completed");
   expect(await s.runs()).toMatchObject([{ id, threadId, retried: "restarted", status: "completed" }]);
-  expect(JSON.stringify(JSON.parse(readFileSync(s.dump, "utf8")).prompt)).toContain("this run's first start was cut off when OpenMausBot restarted");
+  expect(JSON.stringify(JSON.parse(readFileSync(s.dump, "utf8")).prompt)).toContain("this run's first start was cut off when MausClaw restarted");
   await new Promise((resolve) => setTimeout(resolve, 3_000));
   const sent = await s.prompts(threadId);
   expect(sent.filter((text) => text.includes(ROUTINE_HEADER))).toHaveLength(2);
@@ -173,7 +173,7 @@ it("keeps an ACP engine's run that a graceful shutdown cut off, and starts it on
     closeSync(log);
     await expect.poll(async () => { try { return (await fetch(`${url}/api/health`)).ok; } catch { return false; } }, { timeout: hostTimeout(30_000) }).toBe(true);
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
   const api = async (method: string, path: string, body?: unknown) => (await fetch(url + path, {
     method, headers: { "content-type": "application/json", origin: url }, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   })).json() as Promise<any>;
@@ -200,7 +200,7 @@ it("keeps an ACP engine's run that a graceful shutdown cut off, and starts it on
 it("waits for the conversation it joins to be free instead of failing, then runs there", async () => {
   const s = await server();
   s.engine("hang", { FAKE_CLAUDE_RELEASE: join(s.dataDir, "release") });
-  await runControlOmb(["send", "--bot", s.bot.id, "--task", s.bot.activeTaskId, "--text", "Draft the weekly update.", "--url", s.url]);
+  await runControlMausclaw(["send", "--bot", s.bot.id, "--task", s.bot.activeTaskId, "--text", "Draft the weekly update.", "--url", s.url]);
   await expect.poll(async () => (await s.api("GET", "/api/bots")).bots.find((bot: any) => bot.id === s.bot.id)?.busy, { timeout: hostTimeout(15_000) }).toBe(true);
 
   const { routine } = await s.api("POST", "/api/routines", {

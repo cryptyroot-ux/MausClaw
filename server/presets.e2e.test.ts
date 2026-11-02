@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import { canonicalJson, parsePackageDocument } from "../shared/package-format.ts";
 import { NO_PRESETS_MESSAGE } from "./package-import.ts";
 import { ORG_PRESET_REMOVE_MESSAGE, PRESET_UNAVAILABLE_MESSAGE } from "./presets.ts";
@@ -118,7 +118,7 @@ it("shares New bot defaults as a preset, imports it, and creates bots from file 
 it("offers an organization library's presets in New bot until the publisher withdraws the release", async () => {
   const sha = (value: string) => createHash("sha256").update(value).digest("hex");
   const key = randomBytes(32).toString("hex");
-  const fixture = await launchVerificationServer({ ...process.env, OMB_TEST_ORG_LIBRARY_KEY: key });
+  const fixture = await launchVerificationServer({ ...process.env, MAUSCLAW_TEST_ORG_LIBRARY_KEY: key });
   console.log(JSON.stringify({ fixture: fixture.info }));
   const call = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
     const response = await fetch(`${fixture.info.url}${path}`, {
@@ -148,7 +148,7 @@ it("offers an organization library's presets in New bot until the publisher with
     });
     const relay = (body: string) => call("POST", "/api/testing/org-library", {
       library: { adminOrigin: "https://admin.example.com", organizationId: "11111111-1111-4111-8111-111111111111", organizationName: "Customer Co", digest: sha(body), catalog: body },
-    }, { "x-openmausbot-test-org-library": key });
+    }, { "x-mausclaw-test-org-library": key });
     expect((await relay(catalog(false))).status).toBe(200);
     const added = await call("POST", "/api/org-library/add", { packageId });
     expect(added.status).toBe(201);

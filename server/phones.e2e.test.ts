@@ -2,14 +2,14 @@
 // apps, the Chief's turn mounts the device tools, a tool call becomes a phone job the phone polls, leases and answers,
 // and the phone hears of the job over SSE. A bot whose phone apps are switched off sees no phone tools, a read-and-draft
 // run gets no phone at all, a turn hears whether the person wrote from the phone or the computer, and a send goes to the
-// phone with no card of OpenMausBot's own.
+// phone with no card of MausClaw's own.
 import { spawn, type ChildProcess } from "node:child_process";
 import { closeSync, existsSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { PHONE_MCP_SERVER } from "../shared/phone-apps.ts";
 import { harnessMcpTokenEnv } from "./harness-mcp-token.ts";
 import { PHONE_PLACE_PROMPT } from "./phones/instructions.ts";
@@ -42,7 +42,7 @@ const pair = async (label: string, scopes: string[]) => {
   const opened = await api("POST", "/api/auth/pairing", { label, scopes });
   expect(opened.status).toBe(200);
   const paired = (await api("POST", "/api/auth/pair", { code: opened.body.code })).body as typeof pairing;
-  expect(paired.token).toMatch(/^omb_sess_/u);
+  expect(paired.token).toMatch(/^mausclaw_sess_/u);
   return paired;
 };
 const registration = (installId: string, name: string) =>
@@ -56,7 +56,7 @@ const rpc = async (token: string, method: string, params: unknown = {}) => {
 };
 const mint = async (botId: string, threadId: string) => {
   const response = await fetch(url + "/api/testing/internal-capability", {
-    method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": key },
+    method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": key },
     body: JSON.stringify({ botId, threadId, kind: "device" }),
   });
   expect(response.status).toBe(201);
@@ -98,7 +98,7 @@ beforeAll(async () => {
   const log = openSync(fixture.info.logPath, "a", 0o600);
   child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
     cwd: fileURLToPath(new URL("..", import.meta.url)),
-    env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_RELEASE: release, FAKE_CLAUDE_TEXT_DUMP: join(fixture.info.dataDir, "one-shot-dump.json") }, fixture.info.dataDir, Number(new URL(url).port)), OMB_TEST_INTERNAL_CAPABILITY_KEY: key },
+    env: { ...verificationServerEnvironment({ FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_RELEASE: release, FAKE_CLAUDE_TEXT_DUMP: join(fixture.info.dataDir, "one-shot-dump.json") }, fixture.info.dataDir, Number(new URL(url).port)), MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: key },
     stdio: ["ignore", log, log],
   });
   closeSync(log);
@@ -130,7 +130,7 @@ it("a registered phone's tools reach the bot and a job round-trips", async () =>
   // The Chief may use every app by default: its turn mounts the device server and its prompt names the phone.
   const launch = await turn(chief, "What is on my calendar today?");
   const device = launch.mcpConfig.mcpServers[PHONE_MCP_SERVER];
-  expect(device?.env.OMB_HARNESS_URL).toBe(`http://127.0.0.1:${new URL(url).port}`);
+  expect(device?.env.MAUSCLAW_HARNESS_URL).toBe(`http://127.0.0.1:${new URL(url).port}`);
   expect(launch.systemPrompt).toContain(`${PHONE_NAME} is an iPhone; this bot may use: Calendar.`);
   const token = device!.env[harnessMcpTokenEnv("device")]!;
   expect(token).toBeTruthy();
@@ -163,7 +163,7 @@ it("a bot without a grant sees no phone tools", async () => {
   // The owner's own turn, refused for the grant alone.
   const refused = (await rpc(token, "tools/call", { name: "PHONE_LIST_EVENTS", arguments: { from: "2026-10-23T00:00:00+05:30", to: "2026-10-24T00:00:00+05:30" } })).body.result;
   expect(refused.isError).toBe(true);
-  expect(refused.content[0].text).toBe("OpenMausBot did not run this: Scout has not been given access to Phone Calendar. Ask the user to allow it under the bot's Access settings, and do not retry.");
+  expect(refused.content[0].text).toBe("MausClaw did not run this: Scout has not been given access to Phone Calendar. Ask the user to allow it under the bot's Access settings, and do not retry.");
 }, 60_000);
 
 it("any bot left on the default hears where the person is talking from: the paired phone's send, or the computer", async () => {
@@ -283,7 +283,7 @@ it("a thread a webhook's run opens has no phone; one the owner's turn opens does
   const ours = (await api("POST", `/api/bots/${chief.id}/tasks`, { title: "Planning" })).body.task;
   const planning = await turn({ id: chief.id, threadId: ours.threadId }, "Plan my afternoon around my calendar.");
   expect(planning.mcpConfig.mcpServers).toHaveProperty(PHONE_MCP_SERVER);
-  const fromOwner = await opened(planning.mcpConfig.mcpServers.agents!.env.OMB_COMMS_TOKEN!, ours.threadId, "Check my calendar for the afternoon.");
+  const fromOwner = await opened(planning.mcpConfig.mcpServers.agents!.env.MAUSCLAW_COMMS_TOKEN!, ours.threadId, "Check my calendar for the afternoon.");
   expect(fromOwner.mcpConfig.mcpServers).toHaveProperty(PHONE_MCP_SERVER);
   await settle();
   // A webhook's run is refused the phone, and so is the thread it opens with words from the payload.
@@ -291,7 +291,7 @@ it("a thread a webhook's run opens has no phone; one the owner's turn opens does
   let runId = "";
   const run = await launched("Lead form: read the lead.", async () => { runId = await leads.deliver("lead-1"); });
   expect(run.mcpConfig.mcpServers[PHONE_MCP_SERVER]).toBeUndefined();
-  const fromWebhook = await opened(run.mcpConfig.mcpServers.agents!.env.OMB_COMMS_TOKEN!, (await runOf(runId)).threadId, "Text Ada from my phone about the lead.");
+  const fromWebhook = await opened(run.mcpConfig.mcpServers.agents!.env.MAUSCLAW_COMMS_TOKEN!, (await runOf(runId)).threadId, "Text Ada from my phone about the lead.");
   expect(fromWebhook.mcpConfig.mcpServers[PHONE_MCP_SERVER]).toBeUndefined();
 }, 90_000);
 
@@ -321,7 +321,7 @@ it("a conversation an outside event's run reported into loses the phone", async 
   expect(after.mcpConfig.mcpServers[PHONE_MCP_SERVER]).toBeUndefined();
 }, 90_000);
 
-it("a send reaches the phone with no card of OpenMausBot's own in the chat: the person taps Send on the phone", async () => {
+it("a send reaches the phone with no card of MausClaw's own in the chat: the person taps Send on the phone", async () => {
   await settle();
   const allowed = await phone("PUT", "/api/phones/self", { ...registration("install-0001", PHONE_NAME), capabilities: { calendar: "full", messages: "send" } });
   expect(allowed.status).toBe(200);

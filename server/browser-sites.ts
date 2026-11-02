@@ -306,7 +306,7 @@ function keptProfile(target: BrowserSitesTarget): boolean {
 }
 
 async function runningState(target: BrowserSitesTarget, deps: BrowserSitesDeps): Promise<SavedState | null> {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-browser-state-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-browser-state-"));
   try {
     const path = join(scratch, "state.json");
     const answer = await (deps.engine ?? defaultEngine)(target, ["state", "save", path]);

@@ -74,7 +74,7 @@ describe("steer-queue module", () => {
   it("keeps readable citation prompts byte-for-byte through queue, hold, and drain", () => {
     const bot = fakeBot("bot-citation-queue", "thread-citation-queue", true);
     const store = fakeStore([bot]);
-    const prompt = '<!--omb-citation-v1:fixture-->\n> Quoted message:\n> const café = "🐭";\n\nComment:\nExplain this';
+    const prompt = '<!--mausclaw-citation-v1:fixture-->\n> Quoted message:\n> const café = "🐭";\n\nComment:\nExplain this';
     const queued = queueSteeredMessage(bot.id, bot.threadId, prompt);
     const held = holdSteeredQueue(bot.id, bot.threadId, queued.id)!;
     expect(held.items[0]).toMatchObject({ text: prompt, prompt });
@@ -733,8 +733,8 @@ describe("steer-queue e2e (fake ACP fleet)", () => {
 
   beforeAll(async () => {
     chmodSync(FAKE_CLI, 0o755);
-    home = mkdtempSync(join(tmpdir(), "omb-steer-test-"));
-    mkdirSync(join(home, ".openmausbot"), { recursive: true });
+    home = mkdtempSync(join(tmpdir(), "mausclaw-steer-test-"));
+    mkdirSync(join(home, ".mausclaw"), { recursive: true });
     mkdirSync(join(home, "gates"), { recursive: true });
     drainGate = join(home, "gates", "drain.gate");
     stopGate = join(home, "gates", "stop.gate");
@@ -744,7 +744,7 @@ describe("steer-queue e2e (fake ACP fleet)", () => {
     dispatchGate = join(home, "gates", "early-dispatch.gate");
     roomGate = join(home, "gates", "room.gate");
     roomRpcAppend = join(home, "gates", "room.rpc-append");
-    evidencePath = join(tmpdir(), `omb-steer-evidence-${Date.now()}-${process.pid}.json`);
+    evidencePath = join(tmpdir(), `mausclaw-steer-evidence-${Date.now()}-${process.pid}.json`);
     // Delay only the adapter's returned acknowledgment, reproducing completion before sendTurn resolves.
     const prelude = join(home, "delayed-dispatch.mjs");
     writeFileSync(prelude, [
@@ -789,7 +789,7 @@ describe("steer-queue e2e (fake ACP fleet)", () => {
       '};',
     ].join("\n"));
     writeFileSync(
-      join(home, ".openmausbot", "config.json"),
+      join(home, ".mausclaw", "config.json"),
       JSON.stringify({
         instances: {
           steer: {
@@ -832,7 +832,7 @@ describe("steer-queue e2e (fake ACP fleet)", () => {
     const env: NodeJS.ProcessEnv = {
       HOME: home,
       USERPROFILE: home,
-      OMB_PORT: String(port),
+      MAUSCLAW_PORT: String(port),
     };
     if (process.env.PATH) env.PATH = process.env.PATH;
     // Without SystemRoot, winsock fails to initialize in the child.
@@ -894,7 +894,7 @@ describe("steer-queue e2e (fake ACP fleet)", () => {
     const queued = await api("POST", `/api/bots/${bot.id}/messages`, body);
     expect(queued.body).toMatchObject({ queued: true, queueId: expect.any(String) });
     const receipt = () => {
-      const database = new DatabaseSync(join(home, ".openmausbot", "messages.db"), { readOnly: true });
+      const database = new DatabaseSync(join(home, ".mausclaw", "messages.db"), { readOnly: true });
       try { return database.prepare("SELECT status FROM chat_followups WHERE id = ?").get(queued.body.queueId); }
       finally { database.close(); }
     };

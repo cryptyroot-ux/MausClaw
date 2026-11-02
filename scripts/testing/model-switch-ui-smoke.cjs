@@ -40,7 +40,7 @@ module.exports = async function verifyModelSwitch({ root, url, api, until, grant
     await evaluate("[...document.querySelectorAll('[data-model-picker-content] button')].find(b => b.textContent.startsWith('Claude Sonnet 5')).click(); true");
     await until(async () => (await text()).includes("Switch model with Ask permissions?"));
   };
-  const evidence = join(root, ".omb-scratch/verify-evidence/model-switch");
+  const evidence = join(root, ".mausclaw-scratch/verify-evidence/model-switch");
   mkdirSync(evidence, { recursive: true });
   try {
     await window.loadURL(`${preview.previewUrl}?bot=${bot.id}&model-switch=1`);

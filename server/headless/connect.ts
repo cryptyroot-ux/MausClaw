@@ -13,7 +13,7 @@ const isLoopback = (origin: string) => /^https?:\/\/(?:127\.0\.0\.1|localhost|\[
 async function call(origin: string, path: string, init: RequestInit = {}): Promise<{ status: number; body: Rec }> {
   const response = await fetch(`${origin}${path}`, {
     ...init, redirect: "error", signal: AbortSignal.timeout(15_000),
-    headers: { "content-type": "application/json", "x-openmausbot-cli": "1", ...(init.headers as Record<string, string> | undefined) },
+    headers: { "content-type": "application/json", "x-mausclaw-cli": "1", ...(init.headers as Record<string, string> | undefined) },
   });
   return { status: response.status, body: await response.json().catch(() => ({})) as Rec };
 }
@@ -46,10 +46,10 @@ export async function connectVerb(ctx: VerbContext): Promise<VerbOutcome> {
   }
   let code = flag(ctx.flags, "code")?.replace(/\s+/g, "");
   if (!code && !isLoopback(origin)) throw usageError("a workspace elsewhere needs a pairing code", "open Settings → Phone → Set up a phone there, then pass --code CODE");
-  const unreachable = () => new HeadlessError(`no OpenMausBot server answers at ${origin}`, EXIT.unreachable, "check the address, and that the server is running");
-  const described = await call(origin, "/.well-known/openmausbot/environment").catch(() => { throw unreachable(); });
+  const unreachable = () => new HeadlessError(`no MausClaw server answers at ${origin}`, EXIT.unreachable, "check the address, and that the server is running");
+  const described = await call(origin, "/.well-known/mausclaw/environment").catch(() => { throw unreachable(); });
   if (described.status !== 200 || typeof described.body.environmentId !== "string") throw unreachable();
-  const label = flag(ctx.flags, "label")?.trim() || "openmausbot CLI";
+  const label = flag(ctx.flags, "label")?.trim() || "mausclaw CLI";
   if (!code) {
     const minted = await call(origin, "/api/auth/pairing", { method: "POST", body: JSON.stringify({ label, ...(ctx.flags.client ? { scopes: ["client"] } : {}) }) });
     if (minted.status !== 200 || typeof minted.body.code !== "string") {
@@ -76,7 +76,7 @@ export async function connectVerb(ctx: VerbContext): Promise<VerbOutcome> {
     human: [
       `Connected to "${environment.label}" (${origin}, id ${environment.environmentId}).`,
       `Session "${session.label ?? label}", ${scope === "admin" ? "full access" : "chat and approvals only"}${typeof session.expiresAt === "number" ? `, until ${new Date(session.expiresAt).toISOString().slice(0, 10)}` : ""}.`,
-      `Token saved to ${out}. Use it with: openmausbot doctor --url ${origin} --token-file ${out}`,
+      `Token saved to ${out}. Use it with: mausclaw doctor --url ${origin} --token-file ${out}`,
     ],
   };
 }

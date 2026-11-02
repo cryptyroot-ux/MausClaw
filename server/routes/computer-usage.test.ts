@@ -32,9 +32,9 @@ beforeAll(async () => {
     res.writeHead(404).end(JSON.stringify({ ok: false }));
   });
   await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));
-  vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
-  vi.stubEnv("OMB_CLOUD_BOAT_URL", undefined);
-  vi.stubEnv("OMB_CLOUD_BOAT_TOKEN", undefined);
+  vi.stubEnv("MAUSCLAW_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
+  vi.stubEnv("MAUSCLAW_CLOUD_BOAT_URL", undefined);
+  vi.stubEnv("MAUSCLAW_CLOUD_BOAT_TOKEN", undefined);
   vi.resetModules();
   boat = await import("../boat.ts");
   journal = await import("../boat-create-idempotency.ts");
@@ -117,11 +117,11 @@ describe("GET /api/computers/usage", () => {
   });
 
   it("says it does not know when Boat cannot be reached", async () => {
-    vi.stubEnv("OMB_BOAT_API", "http://127.0.0.1:9/api/v1");
+    vi.stubEnv("MAUSCLAW_BOAT_API", "http://127.0.0.1:9/api/v1");
     try {
       expect((await usage({ box: { token: "box_usage" } } as AppConfig)).body).toEqual({ cloudComputers: null, teamComputers: 0 });
     } finally {
-      vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
+      vi.stubEnv("MAUSCLAW_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
     }
   });
 

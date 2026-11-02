@@ -10,12 +10,12 @@ import {
   HELP,
   HELP_UI,
   launchVerificationServer,
-  runControlOmb,
-} from "../scripts/control-omb.ts";
-import { installedChrome, UI_MUTATING } from "../scripts/testing/control-omb-ui.ts";
+  runControlMausclaw,
+} from "../scripts/control-mausclaw.ts";
+import { installedChrome, UI_MUTATING } from "../scripts/testing/control-mausclaw-ui.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
-describe("control-omb command mapping", () => {
+describe("control-mausclaw command mapping", () => {
   it("treats unhealthy doctor and non-settled waits as command failures", () => {
     expect(controlResultSucceeded("doctor", { ok: true })).toBe(true);
     expect(controlResultSucceeded("doctor", { ok: false })).toBe(false);
@@ -28,44 +28,44 @@ describe("control-omb command mapping", () => {
   });
 
   it("keeps every ui verb off discovery: the launch handle is required, whatever the environment says", async () => {
-    const env = { OPENMAUSBOT_URL: "http://127.0.0.1:19999", OMB_PORT: "19999" };
+    const env = { MAUSCLAW_URL: "http://127.0.0.1:19999", MAUSCLAW_PORT: "19999" };
     const verbs = [...UI_MUTATING, "snapshot", "screenshot", "console", "wait-settle"];
     expect(UI_MUTATING).toEqual(new Set(["click", "type", "press", "flag", "eval"]));
     for (const verb of verbs) {
-      await expect(runControlOmb(["ui", verb], { env })).rejects.toMatchObject({
+      await expect(runControlMausclaw(["ui", verb], { env })).rejects.toMatchObject({
         message: `ui ${verb} requires --ui HANDLE`,
         hint: expect.stringContaining("ui launch"),
       });
       expect(HELP_UI).toContain(`\n  ui ${verb} --ui HANDLE`);
     }
     expect(HELP).toContain(HELP_UI);
-    expect(await runControlOmb(["ui", "help"])).toBe(HELP_UI);
-    await expect(runControlOmb(["ui", "launch"])).rejects.toThrow("ui launch is available only from the executable CLI");
-    await expect(runControlOmb(["ui", "bogus"])).rejects.toThrow('unknown ui command "bogus"');
-    await expect(runControlOmb(["ui", "snapshot", "--ui", "/nowhere/ui.json"])).rejects.toThrow("could not read the ui handle");
+    expect(await runControlMausclaw(["ui", "help"])).toBe(HELP_UI);
+    await expect(runControlMausclaw(["ui", "launch"])).rejects.toThrow("ui launch is available only from the executable CLI");
+    await expect(runControlMausclaw(["ui", "bogus"])).rejects.toThrow('unknown ui command "bogus"');
+    await expect(runControlMausclaw(["ui", "snapshot", "--ui", "/nowhere/ui.json"])).rejects.toThrow("could not read the ui handle");
   });
 
   it("refuses a handle whose launch has already been stopped", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-ui-handle-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-ui-handle-"));
     try {
       const handle = join(dir, "ui.json");
       writeFileSync(handle, JSON.stringify({
-        url: "http://127.0.0.1:19999", previewUrl: "http://127.0.0.1:5199/__threads.html", session: "omb-ui-19999",
+        url: "http://127.0.0.1:19999", previewUrl: "http://127.0.0.1:5199/__threads.html", session: "mausclaw-ui-19999",
         binary: "/fixture/agent-browser", home: join(dir, "gone"), botId: "bot-1", logPath: "/fixture/server.log", chrome: null,
       }));
-      await expect(runControlOmb(["ui", "snapshot", "--ui", handle])).rejects.toMatchObject({
+      await expect(runControlMausclaw(["ui", "snapshot", "--ui", handle])).rejects.toMatchObject({
         message: expect.stringContaining("data directory is gone"),
         hint: expect.stringContaining("ui launch"),
       });
       writeFileSync(handle, JSON.stringify({ url: "http://127.0.0.1:19999" }));
-      await expect(runControlOmb(["ui", "snapshot", "--ui", handle])).rejects.toThrow("lacks previewUrl");
+      await expect(runControlMausclaw(["ui", "snapshot", "--ui", handle])).rejects.toThrow("lacks previewUrl");
     } finally {
       await removeTempDir(dir);
     }
   });
 
   it("finds the newest Chrome for Testing that agent-browser install unpacked", () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-ui-tools-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-ui-tools-"));
     try {
       expect(installedChrome(dir, "linux")).toBeNull();
       const browsers = join(dir, ".agent-browser", "browsers");
@@ -88,23 +88,23 @@ describe("control-omb command mapping", () => {
   it("runs directly under Node's strip-only TypeScript loader", () => {
     const result = spawnSync(process.execPath, [
       "--experimental-strip-types",
-      join(process.cwd(), "scripts", "control-omb.ts"),
+      join(process.cwd(), "scripts", "control-mausclaw.ts"),
       "help",
     ], { encoding: "utf8" });
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("control-omb");
+    expect(result.stdout).toContain("control-mausclaw");
   });
 
   it("composes doctor from the shared health and model tools", async () => {
     const callTool = vi.fn(async (name: string) => name === "get_system_health"
-      ? { status: "connected", app: "openmausbot" }
+      ? { status: "connected", app: "mausclaw" }
       : {
           instances: [
             { instanceId: "ready", snapshot: { state: "available" } },
             { instanceId: "missing", snapshot: { state: "unavailable" } },
           ],
         });
-    const result = await runControlOmb(["doctor", "--url", "http://127.0.0.1:19999"], {
+    const result = await runControlMausclaw(["doctor", "--url", "http://127.0.0.1:19999"], {
       callTool: callTool as any,
     }) as any;
     expect(callTool.mock.calls.map(([name]) => name)).toEqual(["get_system_health", "list_available_models"]);
@@ -115,12 +115,12 @@ describe("control-omb command mapping", () => {
     });
   });
 
-  it("rejects an available engine when the endpoint is not OpenMausBot", async () => {
+  it("rejects an available engine when the endpoint is not MausClaw", async () => {
     const callTool = vi.fn(async (name: string) => name === "get_system_health"
       ? { status: "connected", app: "another-app" }
       : { instances: [{ instanceId: "ready", snapshot: { state: "available" } }] });
 
-    const result = await runControlOmb(["doctor", "--url", "http://127.0.0.1:19999"], {
+    const result = await runControlMausclaw(["doctor", "--url", "http://127.0.0.1:19999"], {
       callTool: callTool as any,
     }) as any;
 
@@ -128,23 +128,23 @@ describe("control-omb command mapping", () => {
   });
 
   it("refuses to mutate a silently discovered live app", async () => {
-    await expect(runControlOmb(["new-bot", "--name", "Probe"], {
+    await expect(runControlMausclaw(["new-bot", "--name", "Probe"], {
       callTool: vi.fn() as any,
       env: {},
     })).rejects.toMatchObject({
-      message: "mutating commands require an explicit OpenMausBot instance",
+      message: "mutating commands require an explicit MausClaw instance",
     });
   });
 
   it("maps bounded reads and dry-run actions without reimplementing them", async () => {
     const callTool = vi.fn(async (name: string, args: Record<string, unknown>) => ({ name, args }));
-    const env = { OPENMAUSBOT_URL: "http://127.0.0.1:19999" };
-    await expect(runControlOmb(["messages", "--channel", "room-1", "--limit", "20"], {
+    const env = { MAUSCLAW_URL: "http://127.0.0.1:19999" };
+    await expect(runControlMausclaw(["messages", "--channel", "room-1", "--limit", "20"], {
       callTool: callTool as any,
       env,
     })).resolves.toEqual({ name: "get_channel_messages", args: { channel_id: "room-1", limit: 20 } });
 
-    await expect(runControlOmb(["send", "--bot", "bot-1", "--text", "hello", "--dry-run"], {
+    await expect(runControlMausclaw(["send", "--bot", "bot-1", "--text", "hello", "--dry-run"], {
       callTool: callTool as any,
       env: {},
     })).resolves.toMatchObject({
@@ -160,15 +160,15 @@ describe("control-omb command mapping", () => {
     // replay path, which is what compaction needs to be observable at all —
     // a cleanly resumed turn never compacts.
     const callTool = vi.fn(async (name: string, args: Record<string, unknown>) => ({ name, args }));
-    const env = { OPENMAUSBOT_URL: "http://127.0.0.1:19999" };
-    await expect(runControlOmb(
+    const env = { MAUSCLAW_URL: "http://127.0.0.1:19999" };
+    await expect(runControlMausclaw(
       ["edit", "--bot", "bot-1", "--message", "msg-9", "--text", "say that again"],
       { callTool: callTool as any, env },
     )).resolves.toEqual({
       name: "edit_bot_message",
       args: { bot_id: "bot-1", message_id: "msg-9", text: "say that again" },
     });
-    await expect(runControlOmb(
+    await expect(runControlMausclaw(
       ["edit", "--bot", "bot-1", "--message", "msg-9", "--text", "again", "--task", "task-2", "--dry-run"],
       { callTool: callTool as any, env: {} },
     )).resolves.toMatchObject({
@@ -180,41 +180,41 @@ describe("control-omb command mapping", () => {
   });
 
   it("treats edit as mutating, so it cannot reach a silently discovered app", async () => {
-    await expect(runControlOmb(["edit", "--bot", "b", "--message", "m", "--text", "x"], {
+    await expect(runControlMausclaw(["edit", "--bot", "b", "--message", "m", "--text", "x"], {
       callTool: vi.fn() as any,
       env: {},
     })).rejects.toMatchObject({
-      message: "mutating commands require an explicit OpenMausBot instance",
+      message: "mutating commands require an explicit MausClaw instance",
     });
   });
 
   it("requires every part of an edit before calling the shared tool", async () => {
     const callTool = vi.fn();
-    const env = { OPENMAUSBOT_URL: "http://127.0.0.1:19999" };
+    const env = { MAUSCLAW_URL: "http://127.0.0.1:19999" };
     for (const args of [
       ["edit", "--message", "m", "--text", "x"],
       ["edit", "--bot", "b", "--text", "x"],
       ["edit", "--bot", "b", "--message", "m"],
     ]) {
-      await expect(runControlOmb(args, { callTool: callTool as any, env })).rejects.toThrow(/is required/);
+      await expect(runControlMausclaw(args, { callTool: callTool as any, env })).rejects.toThrow(/is required/);
     }
     expect(callTool).not.toHaveBeenCalled();
   });
 
   it("rejects invalid bounds before the shared tool is called", async () => {
     const callTool = vi.fn();
-    await expect(runControlOmb(["wait", "--bot", "bot-1", "--timeout", "0"], {
+    await expect(runControlMausclaw(["wait", "--bot", "bot-1", "--timeout", "0"], {
       callTool: callTool as any,
       env: {},
     })).rejects.toThrow("--timeout must be a duration from 1s to 24h");
-    await expect(runControlOmb(["wait", "--bot", "bot-1", "--timeout", "25h"], { callTool: callTool as any, env: {} }))
+    await expect(runControlMausclaw(["wait", "--bot", "bot-1", "--timeout", "25h"], { callTool: callTool as any, env: {} }))
       .rejects.toThrow("--timeout must be a duration from 1s to 24h");
     expect(callTool).not.toHaveBeenCalled();
   });
 
   it("forwards pinned task IDs for sends, reads, waits, interrupts, and model changes", async () => {
     const callTool = vi.fn(async (name: string, args: Record<string, unknown>) => ({ name, args }));
-    const dependencies = { callTool: callTool as any, env: { OPENMAUSBOT_URL: "http://127.0.0.1:19999" } };
+    const dependencies = { callTool: callTool as any, env: { MAUSCLAW_URL: "http://127.0.0.1:19999" } };
     for (const [command, tool, extra] of [
       ["send", "send_bot_message", ["--text", "hello"]],
       ["messages", "get_bot_messages", []],
@@ -222,19 +222,19 @@ describe("control-omb command mapping", () => {
       ["interrupt", "interrupt_conversation", []],
       ["set-model", "set_bot_model", ["--instance", "claude", "--model", "model-b", "--effort", "high"]],
     ] as const) {
-      await expect(runControlOmb([command, "--bot", "bot-1", "--task", "task-a", ...extra], dependencies))
+      await expect(runControlMausclaw([command, "--bot", "bot-1", "--task", "task-a", ...extra], dependencies))
         .resolves.toMatchObject({ name: tool, args: { task_id: "task-a" } });
     }
     expect(callTool.mock.calls.at(-1)?.[1]).toEqual({
       bot_id: "bot-1", task_id: "task-a", instance_id: "claude", model: "model-b", effort: "high",
     });
-    await expect(runControlOmb(["set-model", "--bot", "bot-1", "--instance", "claude", "--model", "model-b"], {
+    await expect(runControlMausclaw(["set-model", "--bot", "bot-1", "--instance", "claude", "--model", "model-b"], {
       callTool: callTool as any, env: {},
-    })).rejects.toThrow("explicit OpenMausBot instance");
+    })).rejects.toThrow("explicit MausClaw instance");
   });
 });
 
-describe("control-omb isolated verification loop", () => {
+describe("control-mausclaw isolated verification loop", () => {
   it.each([
     "tcp://127.0.0.1:2375",
     "ssh://user@production.example/run/podman.sock",
@@ -249,27 +249,27 @@ describe("control-omb isolated verification loop", () => {
     const parentEnv = {
       ...process.env,
       COMPOSIO_API_KEY: "must-not-reach-the-fixture",
-      OMB_SKILLS_DIR: "/must/not/reach/the/fixture",
+      MAUSCLAW_SKILLS_DIR: "/must/not/reach/the/fixture",
       XAI_API_KEY: "must-not-reach-the-fixture",
       FAKE_CLAUDE_PROBE: "fixture-scripting-knob",
     };
     const session = await launchVerificationServer(parentEnv);
-    const env = { OPENMAUSBOT_URL: session.info.url };
+    const env = { MAUSCLAW_URL: session.info.url };
     try {
-      const doctor = await runControlOmb(["doctor"], { env }) as any;
+      const doctor = await runControlMausclaw(["doctor"], { env }) as any;
       expect(doctor.ok).toBe(true);
       expect(doctor.availableEngines).toEqual(["claude"]);
 
-      const created = await runControlOmb(["new-bot", "--name", "Verification Probe"], { env }) as any;
+      const created = await runControlMausclaw(["new-bot", "--name", "Verification Probe"], { env }) as any;
       const botId = created.bot.id as string;
-      await runControlOmb(["send", "--bot", botId, "--text", "hello from the verification test"], { env });
-      const settled = await runControlOmb(["wait", "--bot", botId, "--timeout", "20"], { env }) as any;
+      await runControlMausclaw(["send", "--bot", botId, "--text", "hello from the verification test"], { env });
+      const settled = await runControlMausclaw(["wait", "--bot", botId, "--timeout", "20"], { env }) as any;
       expect(settled.status).toBe("settled");
-      const transcript = await runControlOmb(["messages", "--bot", botId, "--limit", "10"], { env }) as any;
+      const transcript = await runControlMausclaw(["messages", "--bot", botId, "--limit", "10"], { env }) as any;
       expect(transcript.messages.some((message: { role?: string }) => message.role === "bot")).toBe(true);
       const fixtureEnv = JSON.parse(readFileSync(session.fixtureDumpPath, "utf8")).env as Record<string, string>;
       expect(fixtureEnv).not.toHaveProperty("COMPOSIO_API_KEY");
-      expect(fixtureEnv).not.toHaveProperty("OMB_SKILLS_DIR");
+      expect(fixtureEnv).not.toHaveProperty("MAUSCLAW_SKILLS_DIR");
       expect(fixtureEnv).not.toHaveProperty("XAI_API_KEY");
       expect(JSON.stringify(fixtureEnv)).not.toContain("must-not-reach-the-fixture");
       expect(fixtureEnv.FAKE_CLAUDE_PROBE).toBe("fixture-scripting-knob");
@@ -307,16 +307,16 @@ describe("control-omb isolated verification loop", () => {
   it("scripts the fake engine's tool calls from the launcher's environment", async () => {
     const session = await launchVerificationServer({
       ...process.env,
-      FAKE_CLAUDE_TOOL_CALLS: '[{"name":"Bash","input":{"command":"pnpm control:omb doctor","password":"fixture-secret"},"output":{"text":"fixture healthy","api_key":"fixture-output-secret"},"ok":true},{"name":"Bash","input":{"command":"false"},"output":"fixture command failed","ok":false}]',
+      FAKE_CLAUDE_TOOL_CALLS: '[{"name":"Bash","input":{"command":"pnpm control:mausclaw doctor","password":"fixture-secret"},"output":{"text":"fixture healthy","api_key":"fixture-output-secret"},"ok":true},{"name":"Bash","input":{"command":"false"},"output":"fixture command failed","ok":false}]',
     });
-    const env = { OPENMAUSBOT_URL: session.info.url };
+    const env = { MAUSCLAW_URL: session.info.url };
     try {
-      const created = await runControlOmb(["new-bot", "--name", "Tool Script Probe"], { env }) as any;
+      const created = await runControlMausclaw(["new-bot", "--name", "Tool Script Probe"], { env }) as any;
       const botId = created.bot.id as string;
-      await runControlOmb(["send", "--bot", botId, "--text", "run both commands"], { env });
-      const settled = await runControlOmb(["wait", "--bot", botId, "--timeout", "20"], { env }) as any;
+      await runControlMausclaw(["send", "--bot", botId, "--text", "run both commands"], { env });
+      const settled = await runControlMausclaw(["wait", "--bot", botId, "--timeout", "20"], { env }) as any;
       expect(settled.status).toBe("settled");
-      const transcript = await runControlOmb(["messages", "--bot", botId, "--limit", "10"], { env }) as any;
+      const transcript = await runControlMausclaw(["messages", "--bot", botId, "--limit", "10"], { env }) as any;
       const tools = transcript.messages
         .filter((message: { kind?: string }) => message.kind === "activity")
         .map((message: { tool?: { name?: string; ok?: boolean } }) => ({ name: message.tool?.name, ok: message.tool?.ok }));
@@ -329,7 +329,7 @@ describe("control-omb isolated verification loop", () => {
       expect(response.ok).toBe(true);
       const rendererTranscript = await response.json() as { messages: Array<{ kind: string; tool?: { input?: string; output?: string } }> };
       const recorded = rendererTranscript.messages.filter((message) => message.kind === "activity");
-      expect(recorded[0].tool?.input).toContain("pnpm control:omb doctor");
+      expect(recorded[0].tool?.input).toContain("pnpm control:mausclaw doctor");
       expect(recorded[0].tool?.output).toContain("fixture healthy");
       expect(recorded[1].tool?.output).toBe("fixture command failed");
       expect(JSON.stringify(recorded)).not.toContain("fixture-secret");

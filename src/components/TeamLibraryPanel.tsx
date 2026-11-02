@@ -21,7 +21,7 @@ import { OrgLibraryTab } from "./TeamLibraryPanelOrg";
 import { MAX_TEAM_BACKUP_BYTES } from "../../shared/team-backup";
 import { takeImportName } from "../../shared/import-name";
 import { isGrokLink } from "../../shared/grok-import";
-const COMMUNITY_TEAMS_REPOSITORY = "https://github.com/milind-soni/openmausbot-teams";
+const COMMUNITY_TEAMS_REPOSITORY = "https://github.com/milind-soni/mausclaw-teams";
 
 export { TeamImportDetails };
 

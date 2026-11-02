@@ -4,13 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { CAPTURE_MARKER } from "./memory-capture.ts";
 import type { TeamMemoryEntry } from "./team-memory.ts";
 
 it("preserves team identity, rejects stale writes and searches omitted shared notes", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-memory-integrity-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-memory-integrity-"));
   const routes = join(scratch, "routes.json");
   writeFileSync(routes, JSON.stringify({ [CAPTURE_MARKER]: JSON.stringify([{ kind: "decision", text: "Use amber for the fixture", teamName: "Fixture treatment", key: "fixture/treatment", sourceTurn: 0, sourceQuote: "Use amber for the fixture", confidence: 0.9 }]) }));
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_TEXT_ROUTES: routes });
@@ -28,7 +28,7 @@ it("preserves team identity, rejects stale writes and searches omitted shared no
     const log = openSync(fixture.info.logPath, "a", 0o600);
     child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
       cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: ["ignore", log, log],
-      env: { ...verificationServerEnvironment({ FAKE_CLAUDE_TEXT_ROUTES: routes }, fixture.info.dataDir, Number(new URL(fixture.info.url).port)), OMB_TEST_INTERNAL_CAPABILITY_KEY: capabilityKey },
+      env: { ...verificationServerEnvironment({ FAKE_CLAUDE_TEXT_ROUTES: routes }, fixture.info.dataDir, Number(new URL(fixture.info.url).port)), MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: capabilityKey },
     });
     closeSync(log);
     await expect.poll(async () => { try { return (await fetch(fixture.info.url + "/api/health")).ok; } catch { return false; } }, { timeout: 30_000 }).toBe(true);
@@ -49,7 +49,7 @@ it("preserves team identity, rejects stale writes and searches omitted shared no
     await api("/api/sidebar-sections", "POST", { name: "Editing" });
     expect((await api("/api/team-memory?section=Editing")).entries).toEqual([]);
     const minted = await fetch(fixture.info.url + "/api/testing/internal-capability", { method: "POST",
-      headers: { "content-type": "application/json", "x-openmausbot-test-capability": capabilityKey }, body: JSON.stringify({ botId: bot.id, threadId: bot.threadId, kind: "agents" }) });
+      headers: { "content-type": "application/json", "x-mausclaw-test-capability": capabilityKey }, body: JSON.stringify({ botId: bot.id, threadId: bot.threadId, kind: "agents" }) });
     expect(minted.status).toBe(201);
     const { token } = await minted.json() as { token: string };
     for (let i = 0; i < 16; i++) await api("/api/team-memory?section=Postproduction", "POST", { kind: "term", name: `Note ${i}`, detail: "Background notes. ".repeat(30) }, undefined, 201);

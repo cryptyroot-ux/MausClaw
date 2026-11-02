@@ -83,7 +83,7 @@ export function createUpdaterCoordinator(
       setState({
         status: "error",
         retryable: false,
-        message: `${updateErrorMessage(error)} Quit and reopen OpenMausBot before trying the update again.`,
+        message: `${updateErrorMessage(error)} Quit and reopen MausClaw before trying the update again.`,
       });
       return;
     }
@@ -259,7 +259,7 @@ export function createUpdaterCoordinator(
     operation.timer = setTimeout(() => {
       if (installOperation !== operation) return;
       updater.logger?.warn?.("Update restart handoff exceeded two minutes; keeping installation locked to prevent overlapping retries.");
-      setState({ status: "installing", message: "Restart is taking longer than expected. Quit and reopen OpenMausBot to finish the update." });
+      setState({ status: "installing", message: "Restart is taking longer than expected. Quit and reopen MausClaw to finish the update." });
     }, 2 * 60 * 1000);
     operation.timer.unref?.();
   }

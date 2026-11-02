@@ -27,7 +27,7 @@ describe("DeviceRegistry", () => {
     const registry = new DeviceRegistry();
     const { token, device } = pair(registry);
 
-    expect(token.startsWith("omb_")).toBe(true);
+    expect(token.startsWith("mausclaw_")).toBe(true);
     expect(registry.authenticate(token)?.id).toBe(device.id);
 
     const raw = readFileSync(join(DATA_DIR, "devices.json"), "utf8");
@@ -93,7 +93,7 @@ describe("DeviceRegistry", () => {
 
     expect(registry.authenticate(undefined)).toBeNull();
     expect(registry.authenticate("")).toBeNull();
-    expect(registry.authenticate("omb_nope")).toBeNull();
+    expect(registry.authenticate("mausclaw_nope")).toBeNull();
     expect(registry.authenticate(token.slice(0, -1))).toBeNull();
     expect(registry.authenticate(`${token}x`)).toBeNull();
   });
@@ -142,7 +142,7 @@ describe("DeviceRegistry", () => {
     expect(registry.redeem(credential, "iPhone", "different-request-id")).toMatchObject({
       error: expect.stringContaining("no pairing"),
     });
-    expect(registry.redeem("omb_pair_wrong", "iPhone", requestId)).toMatchObject({
+    expect(registry.redeem("mausclaw_pair_wrong", "iPhone", requestId)).toMatchObject({
       error: expect.stringContaining("no pairing"),
     });
   });
@@ -214,7 +214,7 @@ describe("DeviceRegistry", () => {
     const registry = new DeviceRegistry();
     const { code, token } = registry.openPairing();
 
-    expect(token).toMatch(/^omb_pair_[A-Za-z0-9_-]{43}$/);
+    expect(token).toMatch(/^mausclaw_pair_[A-Za-z0-9_-]{43}$/);
     expect(registry.redeem(token, "iPhone")).toHaveProperty("token");
     expect(registry.redeem(code, "iPad")).toMatchObject({
       error: expect.stringContaining("no pairing"),
@@ -370,21 +370,21 @@ describe("cleanDeviceName", () => {
 
 describe("bearerToken", () => {
   it("reads only a well-formed Bearer header", () => {
-    expect(bearerToken("Bearer omb_abc")).toBe("omb_abc");
-    expect(bearerToken("  Bearer omb_abc  ")).toBe("omb_abc");
-    expect(bearerToken("omb_abc")).toBeUndefined();
-    expect(bearerToken("Basic omb_abc")).toBeUndefined();
+    expect(bearerToken("Bearer mausclaw_abc")).toBe("mausclaw_abc");
+    expect(bearerToken("  Bearer mausclaw_abc  ")).toBe("mausclaw_abc");
+    expect(bearerToken("mausclaw_abc")).toBeUndefined();
+    expect(bearerToken("Basic mausclaw_abc")).toBeUndefined();
     expect(bearerToken(undefined)).toBeUndefined();
   });
 
   it("matches the scheme however it is cased", () => {
-    expect(bearerToken("bearer omb_abc")).toBe("omb_abc");
-    expect(bearerToken("BEARER omb_abc")).toBe("omb_abc");
-    expect(bearerToken("BeArEr omb_abc")).toBe("omb_abc");
-    expect(bearerToken("BeArEr\tomb_abc")).toBe("omb_abc");
+    expect(bearerToken("bearer mausclaw_abc")).toBe("mausclaw_abc");
+    expect(bearerToken("BEARER mausclaw_abc")).toBe("mausclaw_abc");
+    expect(bearerToken("BeArEr mausclaw_abc")).toBe("mausclaw_abc");
+    expect(bearerToken("BeArEr\tmausclaw_abc")).toBe("mausclaw_abc");
     expect(bearerToken("Bearer ")).toBeUndefined();
     expect(bearerToken("Bearer   ")).toBeUndefined();
-    expect(bearerToken("Beareromb_abc")).toBeUndefined();
+    expect(bearerToken("Bearermausclaw_abc")).toBeUndefined();
   });
 });
 

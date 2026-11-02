@@ -31,7 +31,7 @@ const READ = HIGHLEVEL_TOOL_NAMES.filter((name) => !isHighLevelWrite(name));
 const WRITE = HIGHLEVEL_TOOL_NAMES.filter((name) => isHighLevelWrite(name));
 
 function harness(bot: HighLevelBot, options: { connected?: boolean } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-rpc-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-rpc-"));
   dirs.push(dir);
   const store = new HighLevelStore({ dataDir: dir });
   if (options.connected !== false) store.put({ kind: "oauth", accessToken: "hl_access_seed", refreshToken: "r", expiresAt: Date.now() + 3_600_000, locationId: FAKE_LOCATION_ID, scopes: "" });
@@ -84,7 +84,7 @@ describe("per-bot access", () => {
     expect(verdict.ok).toBe(false);
     if (verdict.ok) throw new Error("unreachable");
     expect(verdict.text).toBe(connectorScopeRefusalText({ kind: "tools", invoked: "HIGHLEVEL_ADD_NOTE", names: ["HIGHLEVEL_ADD_NOTE"] }, "write", "Reader", "HighLevel", "Add note"));
-    expect(verdict.text).toBe("OpenMausBot did not run this: HighLevel is read-only for Reader, and Add note would write to it. Ask the user before trying again.");
+    expect(verdict.text).toBe("MausClaw did not run this: HighLevel is read-only for Reader, and Add note would write to it. Ask the user before trying again.");
     expect(verdict.rows).toEqual([{ tool: "HIGHLEVEL_ADD_NOTE", decision: "auto-denied", rule: "scope:highlevel:write" }]);
     expect(highlevelAccess(readOnly, "HIGHLEVEL_GET_CONTACT")).toMatchObject({ ok: true, rows: [{ decision: "auto-approved", rule: "scope:highlevel" }] });
   });
@@ -93,7 +93,7 @@ describe("per-bot access", () => {
     const verdict = highlevelAccess(contactsOnly, "HIGHLEVEL_LIST_PIPELINES");
     expect(verdict.ok).toBe(false);
     if (verdict.ok) throw new Error("unreachable");
-    expect(verdict.text).toBe('"HIGHLEVEL_LIST_PIPELINES" is not granted to this bot. This call was not performed. Ask the person to grant it in OpenMausBot if they want it run.');
+    expect(verdict.text).toBe('"HIGHLEVEL_LIST_PIPELINES" is not granted to this bot. This call was not performed. Ask the person to grant it in MausClaw if they want it run.');
     expect(verdict.text).not.toContain("HIGHLEVEL_GET_CONTACT");
     expect(verdict.rows[0]).toMatchObject({ decision: "auto-denied", rule: "connectorTools.highlevel", summary: "tool is not in this service's grant" });
     expect(highlevelAccess(contactsOnly, "HIGHLEVEL_ADD_NOTE")).toMatchObject({ ok: true, rows: [{ rule: "connectorTools.highlevel" }] });
@@ -170,7 +170,7 @@ describe("highlevelRpc", () => {
     const { deps, writes } = harness(readOnly);
     const refused = await highlevelRpc(call("HIGHLEVEL_ADD_TAGS", { contactId: "contact_1", tags: ["vip"] }), deps) as { isError?: boolean; content: Array<{ text: string }> };
     expect(refused.isError).toBe(true);
-    expect(refused.content[0].text).toBe("OpenMausBot did not run this: HighLevel is read-only for Reader, and Add tags would write to it. Ask the user before trying again.");
+    expect(refused.content[0].text).toBe("MausClaw did not run this: HighLevel is read-only for Reader, and Add tags would write to it. Ask the user before trying again.");
     expect(hl.calls).toEqual([]);
     expect(writes).toEqual([]);
     const allowed = await highlevelRpc(call("HIGHLEVEL_LIST_NOTES", { contactId: "contact_1" }), deps) as { isError?: boolean };
@@ -201,9 +201,9 @@ describe("highlevelRpc", () => {
 
 describe("host", () => {
   it("mounts only with a connection and an allowed bot, records writes as activity rows, and lists itself in health only while a connection is saved", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-host-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-highlevel-host-"));
     dirs.push(dir);
-    const service = createHighLevelService({ dataDir: dir, env: { OMB_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:9", OMB_HIGHLEVEL_API_URL: hl.url } });
+    const service = createHighLevelService({ dataDir: dir, env: { MAUSCLAW_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:9", MAUSCLAW_HIGHLEVEL_API_URL: hl.url } });
     const bots = new Map<string, HighLevelBot & { color?: string }>([["b1", { ...legacy, color: "#abc" }], ["b4", { id: "b4", name: "Off", composio: false }]]);
     const rows: Array<{ threadId: string; message: Record<string, unknown> }> = [];
     const host = createHighLevelHost({ service, dataDir: dir, bot: (id) => bots.get(id), inRoom: (threadId) => threadId.startsWith("room"), appendMessage: (threadId, message) => { rows.push({ threadId, message }); } });
@@ -217,7 +217,7 @@ describe("host", () => {
     expect(host.mounts({ id: "b4", name: "Off", composio: false })).toBe(false);
     const mounted = host.integration(legacy, () => "turn-token", "http://127.0.0.1:1")!;
     expect(mounted.args.at(-1)).toBe("highlevel");
-    expect(mounted.env).toMatchObject({ OMB_MCP_TOKEN_HIGHLEVEL: "turn-token", OMB_HARNESS_URL: "http://127.0.0.1:1" });
+    expect(mounted.env).toMatchObject({ MAUSCLAW_MCP_TOKEN_HIGHLEVEL: "turn-token", MAUSCLAW_HARNESS_URL: "http://127.0.0.1:1" });
     expect(await host.health(null)).toEqual({ highlevel: { connected: true } });
     expect(await host.health(Promise.resolve({ gmail: { connected: true } }))).toEqual({ gmail: { connected: true }, highlevel: { connected: true } });
     const result = await host.handle(call("HIGHLEVEL_ADD_NOTE", { contactId: "contact_1", body: "Secret body" }), { botId: "b1", threadId: "room-1" }, () => {}) as { isError?: boolean };

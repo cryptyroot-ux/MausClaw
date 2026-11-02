@@ -2,9 +2,9 @@
 // app's background work (Files, lending) never calls My Cloud while the Admin says it sleeps, nor after My Cloud
 // answered that it is going to sleep. Without the session's `cloud.power` and without such an answer, nothing here acts.
 
-export const CLOUD_POWER_HEADER = "x-omb-cloud-power";
+export const CLOUD_POWER_HEADER = "x-mausclaw-cloud-power";
 /** The home never counts a request with this header as the person using My Cloud. */
-export const BACKGROUND_HEADERS = Object.freeze({ "x-omb-background": "1" });
+export const BACKGROUND_HEADERS = Object.freeze({ "x-mausclaw-background": "1" });
 /** Longer than the home's own "going to sleep" state (120 s): a sleep that never came stops holding work back. */
 export const ASLEEP_HOLD_MS = 150_000;
 export const SIGNED_IN_MS = 5_000;

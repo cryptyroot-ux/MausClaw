@@ -10,7 +10,7 @@ const bridgeMethods = [...methods, "connectHome", "connectHomeForPhone"];
 function preload({ enabled = true, remote = false } = {}) {
   let bridge; const invoked = [];
   vm.runInNewContext(readFileSync(new URL("./preload.cjs", import.meta.url), "utf8"), {
-    process: { platform: "fixture", argv: [`--omb-local-origin=${origin}`, ...(enabled ? ["--omb-company-desktop=1"] : [])] },
+    process: { platform: "fixture", argv: [`--mausclaw-local-origin=${origin}`, ...(enabled ? ["--mausclaw-company-desktop=1"] : [])] },
     location: { origin: remote ? "https://remote.example.test" : origin }, TextEncoder, localStorage: { getItem: () => null },
     require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name, value) => { bridge = value; } },
       ipcRenderer: { on() {}, removeListener() {}, send() {}, invoke: (...args) => { invoked.push(args); return Promise.resolve({ status: "signed-out" }); } } }),
@@ -51,7 +51,7 @@ test("a team's Cloud opens from the page by its id alone: the team comes from th
   assert.deepEqual(f.invoked, [["cloud-account:openTeam", "team-acme"]]);
   const source = readFileSync(new URL("./main.mjs", import.meta.url), "utf8"), start = source.indexOf("const workspaceOnly ="), end = source.indexOf('ipcMain.handle("organization:settings-opened"', start);
   const handlers = new Map(), shown = [], frame = { url: `${origin}/` }, contents = { mainFrame: frame };
-  const acme = { id: "team-acme", name: "Acme", role: "member", machine: { status: "ready", origin: "https://omb-t-2.fly.dev" } };
+  const acme = { id: "team-acme", name: "Acme", role: "member", machine: { status: "ready", origin: "https://mausclaw-t-2.fly.dev" } };
   let state = { status: "connected", teams: [acme] };
   localOrigin.setLocalOrigin(origin);
   const context = vm.createContext({ ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },

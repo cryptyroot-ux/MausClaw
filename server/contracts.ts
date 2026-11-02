@@ -119,8 +119,8 @@ export interface SendTurnInput {
   /** Optional hard caps for this turn. Only honoured by the native loop. */
   budget?: { maxTokens?: number; maxCostUsd?: number; maxWallTimeMs?: number };
   model?: string;
-  /** Explicit opt-in to the OMB-owned API agent loop; absent means the legacy driver loop. */
-  agentEngine?: "omb-native";
+  /** Explicit opt-in to the MausClaw-owned API agent loop; absent means the legacy driver loop. */
+  agentEngine?: "mausclaw-native";
   effort?: EffortLevel;
   variant?: string;
   resumeCursor?: unknown;
@@ -521,7 +521,7 @@ export interface ProviderInstance {
   /** Remove the provider CLI's stored sign-in on this server; never touches another instance's home. */
   readonly signOut?: () => Promise<void>;
   readonly adapter: ProviderAdapter;
-  /** OMB-owned turn entry point for API drivers. Present on native API drivers; absent on external/legacy drivers. */
+  /** MausClaw-owned turn entry point for API drivers. Present on native API drivers; absent on external/legacy drivers. */
   readonly nativeTurnRuntime?: import("./agent-runtime/native-turn-runtime.ts").NativeTurnRuntime;
   snapshot(): Promise<ProviderSnapshot>;
   /** Cheap one-shot text call (titles, summaries); the signal is a best-effort cap. */

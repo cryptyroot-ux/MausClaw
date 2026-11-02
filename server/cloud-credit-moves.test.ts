@@ -50,7 +50,7 @@ describe("which engine a Cloud home's bots run on while it has the trial credit"
   });
 
   beforeEach(() => {
-    data = mkdtempSync(join(tmpdir(), "omb-credit-moves-"));
+    data = mkdtempSync(join(tmpdir(), "mausclaw-credit-moves-"));
     busy = new Set(); status = "active"; saved = {}; notices = [];
     bots = [
       bot("seeded", { instanceId: CREDIT, model: "claude-sonnet-5" }),

@@ -3,7 +3,7 @@ import { closeSync, mkdirSync, mkdtempSync, openSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { verificationServerEnvironment } from "../../scripts/control-omb.ts";
+import { verificationServerEnvironment } from "../../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "../../server/testing/cleanup.ts";
 import { freePortBlock } from "../../server/testing/ports.ts";
 import type { LiveInstance } from "./types.ts";
@@ -38,7 +38,7 @@ export async function spawnLiveServer(
   passEnvNames: string[],
 ): Promise<LiveServerSession> {
   const port = await freePortBlock([0, 1]);
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-live-eval-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-live-eval-"));
   const fixtureTemp = join(dataDir, "tmp");
   mkdirSync(fixtureTemp, { recursive: true });
   const environment = resolveLiveEnvironment(instance, parentEnv);
@@ -78,7 +78,7 @@ export async function spawnLiveServer(
     try {
       const response = await fetch(url + "/api/health", { signal: AbortSignal.timeout(1_000) });
       const body = response.ok ? await response.json() as { app?: string } : null;
-      if (body?.app === "openmausbot") break;
+      if (body?.app === "mausclaw") break;
     } catch {
     }
     if (Date.now() >= deadline) {

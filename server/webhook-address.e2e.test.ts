@@ -4,7 +4,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 type Entry = { step?: { tool: string }; response: any };
 
@@ -23,7 +23,7 @@ it("gives the address to the owning bot and its Chief, never to a teammate, anot
     expect(response.status, `${method} ${path}: ${JSON.stringify(value)}`).toBe(status);
     return value;
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const plans: Record<string, unknown> = {};
   /** One turn of `bot` in its main conversation; resolves with that turn's tool results. */
   const turn = async (bot: { id: string; activeTaskId: string }, text: string, steps: unknown[], reply = "Done."): Promise<Entry[]> => {

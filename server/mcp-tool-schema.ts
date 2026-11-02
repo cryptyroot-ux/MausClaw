@@ -60,7 +60,7 @@ function toolName(tool: JsonObject): string {
 
 /** The note a shortened tool carries, so the model fills in what its schema no longer spells out. */
 export function shortenedToolNote(provider: string): string {
-  return `(OpenMausBot shortened this tool's parameters to fit ${provider}'s size limit for one tool: give any field it no longer lists `
+  return `(MausClaw shortened this tool's parameters to fit ${provider}'s size limit for one tool: give any field it no longer lists `
     + "as this description says. The tool still checks every call against its full schema.)";
 }
 

@@ -13,7 +13,7 @@ export const ENGINE_HOMES_DIR = "engine-homes";
 /** Unmatched engine state from before the split; nothing serves it, no box binds it, and it is deleted after HELD_DAYS. */
 export const HELD_DIR = ".held";
 export const HELD_DAYS = 30;
-const MOVED_FOLDERS = ".omb-folders";
+const MOVED_FOLDERS = ".mausclaw-folders";
 
 /** `team`, `room-<16 hex>` or `member-<16 hex>`: the browsers' keys, short enough for a socket path inside the home. */
 export function audienceHomeKey(audience: Audience): string {

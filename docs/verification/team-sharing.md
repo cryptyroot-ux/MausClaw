@@ -80,7 +80,7 @@ pnpm exec vitest run shared/package-format.test.ts server/package-export.test.ts
 
 ```sh
 pnpm exec vitest run src/components/ShareTeamDialog.test.ts src/lib/team-share.test.ts src/lib/team-import.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-share-ui.e2e.test.ts --silent=false
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/team-share-ui.e2e.test.ts --silent=false
 ```
 
 The first command renders the team menu, the dialog's contents list (with
@@ -91,7 +91,7 @@ functions: starter notes and pictures ticked by default with the matching
 line, an answer setting the starting ticks only on the first look, and a
 refusal dropping the counts (so Save is off) while keeping every skill box.
 The second command also runs in CI, in the advisory `ui-smoke` job.
-The second owns a disposable `control-omb ui` app whose Scout has 31 skills,
+The second owns a disposable `control-mausclaw ui` app whose Scout has 31 skills,
 17 of them long enough that the file passes 4 MB: Templates → Share →
 **Share the Sales desk team** shows the refusal with every skill box and Save
 disabled; unticking one long skill brings the counts back; starter notes are
@@ -99,7 +99,7 @@ in by default and unticking takes them out; ticking a 31st skill is refused with
 and unticking another fits again. Then **Save file** (the download is
 captured in the page), and the captured file is imported through the Import
 tab's file input as "Sales desk 2" with skills off. Screenshots go to
-`.omb-scratch/verify-evidence/share-team-*.png`.
+`.mausclaw-scratch/verify-evidence/share-team-*.png`.
 
 ## 2026-09-24: what was actually run
 
@@ -123,7 +123,7 @@ save dialog or packaged app was involved, and the organization channel
 
 On macOS (arm64) against disposable fixtures only: `pnpm typecheck`,
 `pnpm lint`, `pnpm i18n:check`, the commands above (including the
-headless-renderer run with `OMB_UI_E2E=1`), `server/index.test.ts`, and the
+headless-renderer run with `MAUSCLAW_UI_E2E=1`), `server/index.test.ts`, and the
 neighbouring team, package, backup, visibility, store and sign-in test files
 all passed. Each of these was mutation-checked (broken, the named test seen
 failing, restored): the route never asking for "all"; the per-bot fit
@@ -147,7 +147,7 @@ On macOS (arm64) against disposable fixtures only: `pnpm typecheck`,
 `pnpm lint`, `pnpm i18n:check`, `server/package-export.test.ts`,
 `server/team-share.e2e.test.ts`, `src/components/ShareTeamDialog.test.ts`,
 `src/lib/team-share.test.ts`, `src/state/store.test.ts`, and the
-headless-renderer run with `OMB_UI_E2E=1` all passed. Each of these was
+headless-renderer run with `MAUSCLAW_UI_E2E=1` all passed. Each of these was
 mutation-checked (broken, the named test seen failing, restored): host labels
 not tested; whole segments matched instead of runs inside them; the
 words-with-a-year exemption removed; `%XX` not decoded; the 24-in-a-row rule

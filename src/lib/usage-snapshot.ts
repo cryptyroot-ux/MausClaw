@@ -15,7 +15,7 @@ import type { AppState, Bot, ConfigStatus, Group, InstanceInfo } from "@/state/s
 
 export const SNAPSHOT_CHECK_MS = 60 * 60 * 1_000;
 const SOURCE_TIMEOUT_MS = 60_000;
-const DAY_KEY = "omb-analytics-snapshot-day";
+const DAY_KEY = "mausclaw-analytics-snapshot-day";
 
 export type CloudPlanFacts = { plan: "starter" | "personal" | "pro" | "max" | "other" | "none" | "unknown"; trial?: boolean };
 

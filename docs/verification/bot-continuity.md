@@ -2,12 +2,12 @@
 
 ```sh
 pnpm exec vitest run server/setup-mode.test.ts server/bot-setup.e2e.test.ts server/bot-continuity.e2e.test.ts server/independent-threads-api.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/control-omb-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/control-mausclaw-ui.e2e.test.ts
 pnpm exec electron scripts/smoke-approval-modes.cjs --model-ui-only
 ```
 
 The server recipe launches the real app in a temporary home with only the
-offline CLI. It sends actual messages through `control-omb`, waits for settled
+offline CLI. It sends actual messages through `control-mausclaw`, waits for settled
 turns, and checks the prompt and model delivered to the provider boundary:
 
 - A named bot with no description or SOUL can receive a normal work request
@@ -38,7 +38,7 @@ default without changing another existing Custom thread. HTTP cannot bypass
 Custom; ordinary Full switches may use the atomic HTTP downgrade. A fresh
 thread adopts the new default, and a sample engineering-handoff request sent
 through the composer completes with the fake provider reply. Screenshots stay
-in `.omb-scratch/verify-evidence/model-switch/`. This proves settings and turn
+in `.mausclaw-scratch/verify-evidence/model-switch/`. This proves settings and turn
 dispatch, not the quality of a real model's engineering output. The store test
 also simulates a failed disk write and confirms neither scope changes.
 
@@ -61,11 +61,11 @@ reopens the picker, and checks that the selected local model is visible again.
 ### Signed-out Claude in the picker — 2026-09-26
 
 After a Discord report that Claude could no longer be selected, the picker was
-checked in the headless renderer (`control-omb ui launch`, a Vite preview and
+checked in the headless renderer (`control-mausclaw ui launch`, a Vite preview and
 a headless browser on a disposable fixture; no Electron, no real account):
 
 ```sh
-FAKE_CLAUDE_AUTH=out node --experimental-strip-types scripts/control-omb.ts ui launch --mode not-logged-in
+FAKE_CLAUDE_AUTH=out node --experimental-strip-types scripts/control-mausclaw.ts ui launch --mode not-logged-in
 ```
 
 The fake CLI answers `auth status` with `loggedIn: false` and every prompt
@@ -118,6 +118,6 @@ only Read inside the disposable working directories.
 An arithmetic control using the old automatic-setup block also answered `42`.
 This does **not** reproduce every reported refusal, establish malicious intent,
 or prove every provider behaves identically. The verified regression is the
-unrequested coaching sent by OMB; live results confirm ordinary work, explicit
+unrequested coaching sent by MausClaw; live results confirm ordinary work, explicit
 setup and cross-folder reading on the tested Claude model. Group model routing
 and UI persistence use the offline provider. No real bots or files were moved.

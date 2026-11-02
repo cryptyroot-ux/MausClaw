@@ -4,11 +4,11 @@ import { cloudRequestSignature as homeSignature } from "../../server/cloud-home.
 import { cloudRequestSignature, summarizeHealth } from "../src/home-health.ts";
 import { checkEnrollCode, checkEnrollResponse, checkHomeEnv, checkJob, checkTransferUrl, JOB_TYPES, REQUIRED_HOME_ENV } from "../src/protocol.ts";
 
-const HOME = `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(64)}`;
+const HOME = `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${"a".repeat(64)}`;
 const CONNECTOR = `ghcr.io/milind-soni/mausbot-connector@sha256:${"b".repeat(64)}`;
 const env = {
-  OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-  OMB_PUBLIC_URL: "https://acme.example.test", OMB_CLOUD_BOOTSTRAP_SECRET: "S".repeat(43),
+  MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+  MAUSCLAW_PUBLIC_URL: "https://acme.example.test", MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: "S".repeat(43),
 };
 
 describe("the connector protocol", () => {
@@ -30,10 +30,10 @@ describe("the connector protocol", () => {
     expect(image("update", HOME)).toBe(true);
     expect(image("self-update", CONNECTOR)).toBe(true);
     for (const value of [
-      "ghcr.io/milind-soni/openmausbot-cloud-home:latest", "ghcr.io/milind-soni/openmausbot-cloud-home:v0.1.130",
-      `ghcr.io/someone-else/openmausbot-cloud-home@sha256:${"a".repeat(64)}`, `docker.io/library/ubuntu@sha256:${"a".repeat(64)}`,
-      `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"A".repeat(64)}`, `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(63)}`,
-      `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(64)} --privileged`, `ghcr.io/milind-soni/openmausbot@sha256:${"a".repeat(64)}`,
+      "ghcr.io/milind-soni/mausclaw-cloud-home:latest", "ghcr.io/milind-soni/mausclaw-cloud-home:v0.1.130",
+      `ghcr.io/someone-else/mausclaw-cloud-home@sha256:${"a".repeat(64)}`, `docker.io/library/ubuntu@sha256:${"a".repeat(64)}`,
+      `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${"A".repeat(64)}`, `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${"a".repeat(63)}`,
+      `ghcr.io/milind-soni/mausclaw-cloud-home@sha256:${"a".repeat(64)} --privileged`, `ghcr.io/milind-soni/mausclaw@sha256:${"a".repeat(64)}`,
     ]) {
       expect(image("start", value), value).toBe(false);
       expect(image("update", value), value).toBe(false);
@@ -42,28 +42,28 @@ describe("the connector protocol", () => {
     expect(image("self-update", HOME)).toBe(false);
   });
 
-  it("starts a home only with its contract, OMB_ settings the image does not own, and one-line values, and never echoes a value", () => {
+  it("starts a home only with its contract, MAUSCLAW_ settings the image does not own, and one-line values, and never echoes a value", () => {
     expect(checkHomeEnv(env)).toEqual({ ok: true, value: env });
-    expect(checkHomeEnv({ ...env, OMB_COMPOSIO_BROKER_URL: "http://127.0.0.1:9", OMB_HIGHLEVEL_RELAY_URL: "off", OMB_CLOUD_TEAM_ID: "t1" }).ok).toBe(true);
+    expect(checkHomeEnv({ ...env, MAUSCLAW_COMPOSIO_BROKER_URL: "http://127.0.0.1:9", MAUSCLAW_HIGHLEVEL_RELAY_URL: "off", MAUSCLAW_CLOUD_TEAM_ID: "t1" }).ok).toBe(true);
     for (const name of REQUIRED_HOME_ENV) {
       const { [name]: _dropped, ...rest } = env;
       expect(checkHomeEnv(rest), name).toMatchObject({ ok: false, message: `env must set ${name}` });
     }
     const refused = (extra: Record<string, unknown>) => checkHomeEnv({ ...env, ...extra });
-    for (const name of ["FLY_APP_NAME", "PATH", "NODE_OPTIONS", "HOME", "LD_PRELOAD", "omb_lower", "OMB_"]) expect(refused({ [name]: "x" }).ok, name).toBe(false);
-    for (const name of ["OMB_CLOUD_EDGE_HOLD", "OMB_CLOUD_EDGE_BIN", "OMB_CLOUD_HARDEN", "OMB_DATA_DIR", "OMB_PORT", "OMB_CLOUD_SECRETS_FD"]) {
+    for (const name of ["FLY_APP_NAME", "PATH", "NODE_OPTIONS", "HOME", "LD_PRELOAD", "mausclaw_lower", "MAUSCLAW_"]) expect(refused({ [name]: "x" }).ok, name).toBe(false);
+    for (const name of ["MAUSCLAW_CLOUD_EDGE_HOLD", "MAUSCLAW_CLOUD_EDGE_BIN", "MAUSCLAW_CLOUD_HARDEN", "MAUSCLAW_DATA_DIR", "MAUSCLAW_PORT", "MAUSCLAW_CLOUD_SECRETS_FD"]) {
       expect(refused({ [name]: "x" }), name).toMatchObject({ ok: false, message: `env name ${name} is the image's own setting` });
     }
     const secret = "T0P-SECRET-VALUE";
-    for (const value of [`${secret}\nOMB_CLOUD_HARDEN=0`, `${secret}\r`, `${secret}\0`, 42, null, "x".repeat(8193)]) {
-      const result = refused({ OMB_CLOUD_X_TOKEN: value });
+    for (const value of [`${secret}\nMAUSCLAW_CLOUD_HARDEN=0`, `${secret}\r`, `${secret}\0`, 42, null, "x".repeat(8193)]) {
+      const result = refused({ MAUSCLAW_CLOUD_X_TOKEN: value });
       expect(result.ok).toBe(false);
       expect(JSON.stringify(result)).not.toContain(secret);
     }
-    expect(refused({ OMB_CLOUD_ROLE: "admin" }).ok).toBe(false);
-    expect(refused({ OMB_PUBLIC_URL: "http://acme.example.test" }).ok).toBe(false);
-    expect(refused({ OMB_PUBLIC_URL: "https://acme.example.test/path" }).ok).toBe(false);
-    expect(checkHomeEnv(Object.fromEntries(Array.from({ length: 65 }, (_, i) => [`OMB_X${i}`, "v"]))).ok).toBe(false);
+    expect(refused({ MAUSCLAW_CLOUD_ROLE: "admin" }).ok).toBe(false);
+    expect(refused({ MAUSCLAW_PUBLIC_URL: "http://acme.example.test" }).ok).toBe(false);
+    expect(refused({ MAUSCLAW_PUBLIC_URL: "https://acme.example.test/path" }).ok).toBe(false);
+    expect(checkHomeEnv(Object.fromEntries(Array.from({ length: 65 }, (_, i) => [`MAUSCLAW_X${i}`, "v"]))).ok).toBe(false);
     expect(checkHomeEnv([]).ok).toBe(false);
   });
 

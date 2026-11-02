@@ -16,7 +16,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 const clock = (ms: number, zone: string) => new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(ms));
 
 function setup(options: { zone: string; start: string; morning?: string; overnight?: string }) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-brief-morning-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-brief-morning-"));
   dirs.push(dir);
   let now = Date.parse(options.start);
   const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }));

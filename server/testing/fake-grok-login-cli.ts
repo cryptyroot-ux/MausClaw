@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Offline stand-in for xAI's `grok` CLI sign-in (`--version`, `login --device-auth` printing grok 1.0.25's
 // device instructions): no network, no real credential; needs explicit opt-in and a disposable HOME.
-//   FAKE_GROK_MODE  success | approve (once HOME/.omb-fake-grok-approved exists) | waiting | complete |
+//   FAKE_GROK_MODE  success | approve (once HOME/.mausclaw-fake-grok-approved exists) | waiting | complete |
 //     evil (a page on another host) | expired | denied | crash | no-credential | old (no --device-auth) | ignore-term
 import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 
 const home = process.env.HOME;
-if (process.env.OMB_DEVICE_AUTH_FIXTURE !== "1" || !home || !isAbsolute(home)) {
-  process.stderr.write("This fake CLI requires OMB_DEVICE_AUTH_FIXTURE=1 and an isolated HOME.\n");
+if (process.env.MAUSCLAW_DEVICE_AUTH_FIXTURE !== "1" || !home || !isAbsolute(home)) {
+  process.stderr.write("This fake CLI requires MAUSCLAW_DEVICE_AUTH_FIXTURE=1 and an isolated HOME.\n");
   process.exit(2);
 }
 const grokHome = process.env.GROK_HOME || join(home, ".grok");
@@ -40,7 +40,7 @@ if (args.join(" ") === "--version") {
   process.stderr.write("\u001b[90mOnly continue with a code you requested. Don't share it with anyone.\u001b[0m\nWaiting for authorization...\n");
   const later = (then: () => void) => setTimeout(then, 80);
   if (mode === "success" || mode === "complete") later(signIn);
-  else if (mode === "approve") setInterval(() => { if (existsSync(join(home, ".omb-fake-grok-approved"))) signIn(); }, 100);
+  else if (mode === "approve") setInterval(() => { if (existsSync(join(home, ".mausclaw-fake-grok-approved"))) signIn(); }, 100);
   else if (mode === "no-credential") later(() => process.exit(0));
   else if (mode === "expired") later(() => { process.stderr.write("Device code expired. Run `grok login --device-auth` again. secret-token\n"); process.exit(1); });
   else if (mode === "denied") later(() => { process.stderr.write("Authorization denied. The user rejected the request. secret-token\n"); process.exit(1); });

@@ -11,7 +11,7 @@ window and uses the same workspace, conversations and pairing as the browser.
 3. On iPhone, open Safari's **Share** menu, choose **Add to Home Screen**, keep
    **Open as Web App** enabled if Safari offers it, then tap **Add**. On Android,
    open Chrome's menu and choose **Install app** or **Add to Home screen**.
-4. Open **OpenMausBot** from the Home Screen. If that browser keeps Home Screen
+4. Open **MausClaw** from the Home Screen. If that browser keeps Home Screen
    apps in separate storage, pair this new window too. Installation does not
    grant access to a workspace by itself.
 

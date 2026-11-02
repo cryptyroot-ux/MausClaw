@@ -86,7 +86,7 @@ describe("companion status refresh", () => {
   });
 
   it("does not let a pre-mutation poll overwrite a newly opened pairing", async () => {
-    const pairingToken = `omb_pair_${"a".repeat(43)}`;
+    const pairingToken = `mausclaw_pair_${"a".repeat(43)}`;
     const staleState: CompanionState = {
       enabled: true,
       keepAwake: false,
@@ -148,7 +148,7 @@ describe("manual pairing code placement", () => {
   });
 
   it("keeps the code in troubleshooting details when a QR is available", () => {
-    expect(phonePairingManualCodeMode(true, "openmausbot://pair?token=example")).toBe("details");
+    expect(phonePairingManualCodeMode(true, "mausclaw://pair?token=example")).toBe("details");
     expect(phonePairingManualCodeMode(false, null)).toBe("hidden");
   });
 });

@@ -30,7 +30,7 @@ module.exports = async function verifyApprovalUi({ root, url, api, until, grant 
     await until(() => evaluate("[...document.querySelectorAll('[role=menuitemradio]')].some(b => b.textContent.trim().startsWith('Full access'))"));
     await evaluate("[...document.querySelectorAll('[role=menuitemradio]')].find(b => b.textContent.trim().startsWith('Full access')).click(); true");
   };
-  const evidence = join(root, ".omb-scratch/verify-evidence/provider-fixes");
+  const evidence = join(root, ".mausclaw-scratch/verify-evidence/provider-fixes");
   mkdirSync(evidence, { recursive: true });
   try {
     await window.loadURL(`${preview.previewUrl}?bot=${bot.id}`);

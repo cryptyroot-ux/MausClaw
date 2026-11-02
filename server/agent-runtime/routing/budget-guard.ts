@@ -1,5 +1,5 @@
 // Budget guard: enforces per-thread and per-run cost limits.
-// Additive port of OpenMausBot-Pivot's server/routing/budget-guard.ts.
+// Additive port of MausClaw-Pivot's server/routing/budget-guard.ts.
 import type { Budget } from "./types.ts";
 
 export interface BudgetGuardLimits {

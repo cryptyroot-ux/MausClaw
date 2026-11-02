@@ -46,7 +46,7 @@ const { desktopCapabilities } = createRequire(import.meta.url)("../../electron/c
 };
 const PRELOAD = readFileSync(join(process.cwd(), "electron", "preload.cjs"), "utf8");
 const LOCAL_ORIGIN = "http://127.0.0.1:8799";
-const CLOUD_ORIGIN = "https://omb-t-0123456789ab.fly.dev";
+const CLOUD_ORIGIN = "https://mausclaw-t-0123456789ab.fly.dev";
 
 type Bridge = NonNullable<Window["ogb"]>;
 type Platform = "darwin" | "win32" | "linux";
@@ -58,7 +58,7 @@ let microphone: "allowed" | "refused";
 function desktopApp(platform: Platform, page: "this-computer" | "my-cloud"): { bridge: Bridge; desktop: Desktop } {
   let bridge: Bridge | undefined;
   runInNewContext(PRELOAD, {
-    process: { platform, argv: [`--omb-local-origin=${LOCAL_ORIGIN}`] },
+    process: { platform, argv: [`--mausclaw-local-origin=${LOCAL_ORIGIN}`] },
     location: { origin: page === "this-computer" ? LOCAL_ORIGIN : CLOUD_ORIGIN },
     TextEncoder,
     localStorage: { getItem: () => null },

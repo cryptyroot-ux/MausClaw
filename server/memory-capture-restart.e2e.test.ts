@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import type { WireBot } from "../shared/wire.ts";
 import { CAPTURE_MARKER } from "./memory-capture.ts";
 import { waitForExit } from "./testing/cleanup.ts";
@@ -13,7 +13,7 @@ import { waitForExit } from "./testing/cleanup.ts";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 it.skipIf(process.platform === "win32")("captures a turn that was still waiting when the server stopped, after the next start", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-capture-restart-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-capture-restart-"));
   const routes = join(scratch, "routes.json");
   writeFileSync(routes, JSON.stringify({
     [CAPTURE_MARKER]: JSON.stringify([{ text: "The person plays the cello on Sundays", kind: "fact", evidence: "I play the cello every Sunday morning", confidence: 0.9 }]),
@@ -36,8 +36,8 @@ it.skipIf(process.platform === "win32")("captures a turn that was still waiting 
     const { bot } = await api<{ bot: WireBot }>("/api/bots", "POST", { name: "Cellist" }, 201);
     // a quiet spell far longer than this test: the turn is still waiting at the stop
     await api("/api/config", "PUT", { memory: { captureQuietMs: 600_000 } });
-    await runControlOmb(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "I play the cello every Sunday morning.", "--url", url]);
-    expect(await runControlOmb(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
+    await runControlMausclaw(["send", "--bot", bot.id, "--task", bot.threadId, "--text", "I play the cello every Sunday morning.", "--url", url]);
+    expect(await runControlMausclaw(["wait", "--bot", bot.id, "--task", bot.threadId, "--timeout", "30", "--url", url])).toMatchObject({ status: "settled" });
 
     await waitForExit(fixture.child, { signal: "SIGTERM" });
     const saved = readFileSync(pending, "utf8");

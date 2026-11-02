@@ -6,7 +6,7 @@ import { join } from "node:path";
 import type { AppConfig } from "./config.ts";
 
 // config.ts resolves DATA_DIR at import time, so point this suite at a scratch dir before any module loads.
-process.env.OMB_DATA_DIR = mkdtempSync(join(tmpdir(), "omb-skills-library-"));
+process.env.MAUSCLAW_DATA_DIR = mkdtempSync(join(tmpdir(), "mausclaw-skills-library-"));
 
 const library = await import("./skill-library.ts");
 const skills = await import("./skills.ts");
@@ -45,7 +45,7 @@ describe("skills library store", () => {
 
   it("is idempotent for identical bytes and refuses a different skill under the same name", () => {
     // Fresh root: this suite shares one scratch DATA_DIR, and this test asserts the exact index contents.
-    const root = mkdtempSync(join(tmpdir(), "omb-skills-library-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-skills-library-"));
     const first = library.installLibrarySkill({ name: "deploy", instructions: SKILL("deploy"), source: "a", root });
     expect("error" in first).toBe(false);
     const again = library.installLibrarySkill({ name: "deploy", instructions: SKILL("deploy"), source: "b", root });
@@ -58,7 +58,7 @@ describe("skills library store", () => {
   });
 
   it("refuses to install over an unreadable or invalid index instead of resetting it", () => {
-    const root = mkdtempSync(join(tmpdir(), "omb-skills-library-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-skills-library-"));
     writeFileSync(join(root, "index.json"), "{not json");
     const unreadable = library.installLibrarySkill({ name: "deploy", instructions: SKILL("deploy"), source: "a", root });
     expect(unreadable).toEqual({ error: "the skills library index could not be read" });
@@ -72,7 +72,7 @@ describe("skills library store", () => {
   });
 
   it("stores frontmatter tags when the caller passes none, and prefers explicit tags", () => {
-    const root = mkdtempSync(join(tmpdir(), "omb-skills-library-"));
+    const root = mkdtempSync(join(tmpdir(), "mausclaw-skills-library-"));
     const parsed = library.installLibrarySkill({ name: "tag-me", instructions: TAGGED("tag-me", "deploy, ops"), source: "a", root });
     expect("error" in parsed).toBe(false);
     if ("error" in parsed) return;

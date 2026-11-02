@@ -24,10 +24,10 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); });
 const render = () => renderToStaticMarkup(createElement(SettingsModal));
 
-describe.each(["Simple", "Advanced"] as const)("%s Settings → OMB Cloud on a server open in the app's window", (mode) => {
+describe.each(["Simple", "Advanced"] as const)("%s Settings → MausClaw Cloud on a server open in the app's window", (mode) => {
   beforeEach(() => { fixture.advanced = mode === "Advanced"; });
   const reachable = () => fixture.advanced ? 'data-settings-section="cloudAccount"' : 'data-settings-block="cloudAccount"';
-  it("is not offered on a server that is not an OMB Cloud home", () => {
+  it("is not offered on a server that is not an MausClaw Cloud home", () => {
     vi.stubGlobal("window", { ogb: { cloudPlan: plan } });
     const html = render();
     expect(html).not.toContain("CLOUD_PLAN_MARKER"); expect(html).not.toContain(reachable());

@@ -23,7 +23,7 @@ export interface TeamConnectionsHostDeps {
   team: CloudTeam | null;
   dataDir: string;
   cfg: () => AppConfig;
-  /** The Admin's origin (OMB_CLOUD_ADMIN_URL): a member connects their own on their team's page there. */
+  /** The Admin's origin (MAUSCLAW_CLOUD_ADMIN_URL): a member connects their own on their team's page there. */
   adminOrigin: string | null;
   harnessUrl: string;
   audienceOf(threadId: string): Audience;

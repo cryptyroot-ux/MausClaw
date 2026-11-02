@@ -6,14 +6,14 @@ import test from "node:test";
 
 import { createHomeAgain } from "./one-home-again.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 const BUSY = "Wait for bot turns, approvals, sign-ins, and computer actions to finish before backing up or restoring.";
 
 /** My Cloud's export and this computer's upload, preview and restore, each counted; `restores` is what each restore
  * answers in turn. */
 function world(restores) {
-  const tempRoot = mkdtempSync(join(tmpdir(), "omb-home-again-"));
+  const tempRoot = mkdtempSync(join(tmpdir(), "mausclaw-home-again-"));
   const w = { asked: 0, exports: 0, downloads: 0, uploads: 0, previews: 0, restored: [], tempRoot };
   w.again = createHomeAgain({
     async exportGrant() { w.asked++; return { grant: { origin: CLOUD, code: `code-${w.asked}`, expiresAt: Date.now() + 300_000 } }; },

@@ -1,4 +1,4 @@
-// OpenMausBot's own listening ports, which no bot's browser may reach, and one egress gate per running browser.
+// MausClaw's own listening ports, which no bot's browser may reach, and one egress gate per running browser.
 import { subscribe } from "node:diagnostics_channel";
 import type { Server } from "node:net";
 
@@ -19,7 +19,7 @@ const DEFAULT_PORTS = [8799, 18799, 28799, 8800, 8798, 18798, 28798, 8810, 8811,
 const FLEET_WORKSPACES = 100;
 /** A server's edge, Caddy's admin API, and the workspaces a fleet host runs side by side (server and webhooks). */
 const SERVER_PORTS = [8080, 2019, ...Array.from({ length: FLEET_WORKSPACES }, (_, n) => FLEET_FIRST_PORT + FLEET_PORT_STRIDE * n).flatMap((port) => [port, port + 1])];
-const PORT_ENV = ["OMB_PORT", "OMB_WEBHOOK_PORT", "OMB_COMPANION_PORT", "OMB_CONTROL_PORT"];
+const PORT_ENV = ["MAUSCLAW_PORT", "MAUSCLAW_WEBHOOK_PORT", "MAUSCLAW_COMPANION_PORT", "MAUSCLAW_CONTROL_PORT"];
 const DEVTOOLS_SCAN_MS = 2_000;
 const NOTICE_LIMIT = 20;
 const NOTICE_SHOWN = 3;
@@ -55,7 +55,7 @@ function hearDesktopReports(): void {
   hearingReports = true;
   parentPort.on("message", ({ data }) => {
     const message = data as { type?: unknown; ports?: unknown } | undefined;
-    if (message?.type !== "openmausbot:own-listeners" || !Array.isArray(message.ports) || message.ports.length > 256) return;
+    if (message?.type !== "mausclaw:own-listeners" || !Array.isArray(message.ports) || message.ports.length > 256) return;
     reportedPorts = new Set(message.ports.filter(validPort));
   });
 }
@@ -105,7 +105,7 @@ interface Blocked { target: string; reason: Refusal }
 export const awayNotice = (device: string) => `The person's ${device} is away, so sites that turn away data centres, such as Instagram, YouTube and Google sign-in, load from My Cloud's own connection for now and may refuse. They open through the ${device} again once it is back.`;
 
 /** What the bot reads once when those sites load from My Cloud's own connection because no computer shares one. */
-export const UNSHARED_NOTICE = `Sites that turn away data centres, such as Instagram, YouTube and Google sign-in, load from My Cloud's own connection and may refuse it with an error page or "too many requests". If one does and the person needs it, tell them they can share their computer's internet connection with My Cloud: ${useMyComputerLink("computer")} in OpenMausBot on that computer, and these sites then open through it while it is on.`;
+export const UNSHARED_NOTICE = `Sites that turn away data centres, such as Instagram, YouTube and Google sign-in, load from My Cloud's own connection and may refuse it with an error page or "too many requests". If one does and the person needs it, tell them they can share their computer's internet connection with My Cloud: ${useMyComputerLink("computer")} in MausClaw on that computer, and these sites then open through it while it is on.`;
 
 /** One gate per browser session for the life of the server, so a Chrome keeps the port it launched with. */
 export class BrowserEgress {

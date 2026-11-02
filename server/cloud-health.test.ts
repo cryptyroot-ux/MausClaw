@@ -32,7 +32,7 @@ function world(overrides: Partial<CloudHealthDeps> = {}) {
   const listeners = new Set<(event: RuntimeEvent) => void>();
   const bus = { subscribe: (listener: (event: RuntimeEvent) => void) => { listeners.add(listener); return () => listeners.delete(listener); } };
   const health = createCloudHealth({
-    store, bus, dataDir: DATA_DIR, eventsDir: EVENTS_DIR, version: "0.1.120", image: `registry.fly.io/omb-cloud-home@sha256:${"b".repeat(64)}`,
+    store, bus, dataDir: DATA_DIR, eventsDir: EVENTS_DIR, version: "0.1.120", image: `registry.fly.io/mausclaw-cloud-home@sha256:${"b".repeat(64)}`,
     engines: () => [{ instanceId: "claude", driverKind: "claudeAgent", snapshot: { state: "available", authenticated: true, version: "2.1.300" } }],
     connectors: () => null, browser: () => ({ available: true, installing: false, interrupted: 0 }), now, ...overrides,
   });
@@ -105,7 +105,7 @@ describe("the failure code a Cloud home reports", () => {
   it("names the failures the server writes itself, and a trial credit's refusal", () => {
     const w = world();
     w.fail("no activity for 20 minutes — the turn was stopped");
-    w.fail("turn interrupted — OpenMausBot restarted");
+    w.fail("turn interrupted — MausClaw restarted");
     w.fail("this thread could not start — the engine is not installed");
     w.fail("queued message could not start — the engine is not installed");
     w.fail(TRIAL_CREDIT_REFUSED.used_up);
@@ -138,12 +138,12 @@ describe("the failure code a Cloud home reports", () => {
 describe("the ledger", () => {
   it("dedupes by kind, code and engine, and a cursor reads only what changed since", () => {
     const w = world();
-    for (let i = 0; i < 3; i++) { w.fail("turn interrupted — OpenMausBot restarted"); w.advance(60_000); }
+    for (let i = 0; i < 3; i++) { w.fail("turn interrupted — MausClaw restarted"); w.advance(60_000); }
     const first = w.health.report(null);
     expect(first.incidents).toEqual([expect.objectContaining({ code: "restart", count: 3, firstAt: START, lastAt: START + 120_000, botId: w.bot.id, threadId: w.bot.threadId })]);
     expect(w.health.report(first.cursor).incidents).toEqual([]);
     w.fail("this thread could not start — no engine");
-    w.fail("turn interrupted — OpenMausBot restarted");
+    w.fail("turn interrupted — MausClaw restarted");
     const next = w.health.report(first.cursor);
     expect(next.incidents.map(({ code, count }) => ({ code, count }))).toEqual([{ code: "could_not_start", count: 1 }, { code: "restart", count: 4 }]);
     // Another boot's cursor, or one from the future, reads from the start.
@@ -157,7 +157,7 @@ describe("the ledger", () => {
     const ledger = createCloudHealthLedger({ now: () => clock });
     for (let i = 0; i <= HEALTH_BUCKET_CAP; i++) {
       ledger.noteEvent({ eventId: "e", provider: `engine${i}`, threadId: `thread-${i}`, createdAt: "", type: "turn.started" });
-      ledger.noteMessage(`thread-${i}`, { at: clock, tool: failedTurnTool("turn interrupted — OpenMausBot restarted") });
+      ledger.noteMessage(`thread-${i}`, { at: clock, tool: failedTurnTool("turn interrupted — MausClaw restarted") });
       clock += 1000;
     }
     const read = ledger.read(null);
@@ -169,7 +169,7 @@ describe("the ledger", () => {
   it("rates turns over 15 minutes and a day", () => {
     const w = world();
     for (let i = 0; i < 4; i++) w.emit(w.bot.threadId, { type: "turn.started" });
-    w.fail("turn interrupted — OpenMausBot restarted");
+    w.fail("turn interrupted — MausClaw restarted");
     w.advance(20 * 60_000);
     w.emit(w.bot.threadId, { type: "turn.started" });
     w.fail("no activity for 20 minutes — the turn was stopped");
@@ -261,8 +261,8 @@ function routes(w: ReturnType<typeof world>) {
   let counter = 0;
   const sign = (target: string, options: { method?: string; key?: string; at?: number; nonce?: string; body?: string } = {}) => {
     const timestamp = String(Math.floor((options.at ?? w.now()) / 1000)), nonce = options.nonce ?? `nonce-${String(++counter).padStart(12, "0")}`;
-    return { "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-      "x-omb-cloud-signature": `v1=${cloudRequestSignature(options.key ?? secret, timestamp, nonce, options.method ?? "GET", target, options.body ?? "")}` };
+    return { "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+      "x-mausclaw-cloud-signature": `v1=${cloudRequestSignature(options.key ?? secret, timestamp, nonce, options.method ?? "GET", target, options.body ?? "")}` };
   };
   const send = async (method: string, target: string, headers: Record<string, string>, body = "") => {
     const req = Object.assign(new PassThrough(), { method, url: target, headers, socket: { remoteAddress: "127.0.0.1" } }) as unknown as IncomingMessage;
@@ -280,7 +280,7 @@ function routes(w: ReturnType<typeof world>) {
 describe("GET /api/cloud/health", () => {
   it("answers the Admin's signed read with the report", async () => {
     const w = world();
-    w.fail("turn interrupted — OpenMausBot restarted");
+    w.fail("turn interrupted — MausClaw restarted");
     const { sign, send } = routes(w);
     const target = `${CLOUD_HEALTH_PATH}?after=0`;
     const answer = await send("GET", target, sign(target));
@@ -312,12 +312,12 @@ describe("GET /api/cloud/health", () => {
     const target = `${CLOUD_HEALTH_PATH}?after=0`;
     for (let i = 0; i < 20; i++) expect((await send("GET", target, sign(target, { key: "W".repeat(43) }))).status).toBe(401);
     expect(sessions.failureSources()).toEqual([]);
-    const body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 });
+    const body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 });
     const healthSigned = sign(target);
     expect((await send("POST", CLOUD_PAIRING_PATH, { ...healthSigned, "content-type": "application/json" }, body)).status).toBe(401);
     const timestamp = String(Math.floor(w.now() / 1000)), nonce = "nonce-pairing-000001";
-    const paired = await send("POST", CLOUD_PAIRING_PATH, { "content-type": "application/json", "x-omb-cloud-timestamp": timestamp, "x-omb-cloud-nonce": nonce,
-      "x-omb-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}` }, body);
+    const paired = await send("POST", CLOUD_PAIRING_PATH, { "content-type": "application/json", "x-mausclaw-cloud-timestamp": timestamp, "x-mausclaw-cloud-nonce": nonce,
+      "x-mausclaw-cloud-signature": `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}` }, body);
     expect(paired.status).toBe(200);
     expect(paired.body.code).toMatch(/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/);
   });

@@ -26,7 +26,7 @@ const dirs: string[] = [];
 afterEach(async () => { for (const dir of dirs.splice(0)) await removeTempDir(dir); });
 
 function world(overrides: Partial<PhonesDeps> = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-phones-host-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-phones-host-"));
   dirs.push(dir);
   // The owner's iPhone, paired as a session, allowing Calendar.
   writeFileSync(join(dir, "phones.json"), JSON.stringify({ version: 1, phones: [{
@@ -116,7 +116,7 @@ describe("whose phones", () => {
     expect(phones.turnOwner(TURN)).toBeNull();
     send(phones.sendIdFor(loopback));
     expect(phones.turnOwner(TURN)).toBe("owner");
-    expect(phones.integration(chief, TURN)).toMatchObject({ env: { OMB_MCP_TOKEN_DEVICE: "turn-token", OMB_HARNESS_URL: "http://127.0.0.1:1" } });
+    expect(phones.integration(chief, TURN)).toMatchObject({ env: { MAUSCLAW_MCP_TOKEN_DEVICE: "turn-token", MAUSCLAW_HARNESS_URL: "http://127.0.0.1:1" } });
     // A line from a person who holds no admin session here is not the owner's, nor is anything after it.
     send("guest-send-0000000001", { origin: { kind: "user" } }, "p_guest");
     expect(phones.turnOwner(TURN)).toBeNull();

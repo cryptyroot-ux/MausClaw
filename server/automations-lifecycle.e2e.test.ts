@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-import { runControlOmb } from "../scripts/control-omb.ts";
+import { runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { launchRestartableServer } from "./testing/restartable-server.ts";
 
 // Automations on a real server, through the calls the Automations page makes: switched off and back on, both kinds work
@@ -20,7 +20,7 @@ it("turns schedules and webhooks back on, removes a deleted bot's automations, a
     expect(response.status, `${method} ${path}: ${JSON.stringify(value)}`).toBe(status);
     return value;
   };
-  const newBot = async (name: string) => ((await runControlOmb(["new-bot", "--name", name, "--url", server.url])) as { bot: { id: string } }).bot.id;
+  const newBot = async (name: string) => ((await runControlMausclaw(["new-bot", "--name", name, "--url", server.url])) as { bot: { id: string } }).bot.id;
   const state = async () => ({ ...(await api("GET", "/api/routines")), ...(await api("GET", "/api/webhooks")) }) as { routines: any[]; runs: any[]; webhooks: any[] };
   const send = (address: string, body: unknown) => fetch(address, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   try {

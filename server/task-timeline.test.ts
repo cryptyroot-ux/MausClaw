@@ -40,10 +40,10 @@ describe("execution timeline", () => {
   it("shows recorded commands and redacts older unsanitized activity", () => {
     const events = timelineEvents([
       { id: "u", role: "user", kind: "text", text: "Private user instructions", at: 1 },
-      { id: "tool", role: "bot", kind: "activity", tool: { name: "Bash --password private-value", summary: "pnpm control:omb doctor --token fixture-secret", ok: false }, at: 2 },
+      { id: "tool", role: "bot", kind: "activity", tool: { name: "Bash --password private-value", summary: "pnpm control:mausclaw doctor --token fixture-secret", ok: false }, at: 2 },
       { id: "answer", role: "bot", kind: "text", text: "Private bot reply", at: 3 },
     ]);
-    expect(events[1]).toMatchObject({ state: "failed", command: "pnpm control:omb doctor --token «redacted 14 chars»" });
+    expect(events[1]).toMatchObject({ state: "failed", command: "pnpm control:mausclaw doctor --token «redacted 14 chars»" });
     const text = runLogText(events);
     expect(text).toContain("failed · Bash");
     expect(text).toContain("1970-01-01T00:00:00.002Z");

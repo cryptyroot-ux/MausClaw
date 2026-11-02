@@ -133,7 +133,7 @@ describe("the refs a bot holds", () => {
 /** `clock`: time moves only when the steps wait, or when a test moves it. */
 async function setup(options: { record?: boolean; stopped?: () => boolean; clock?: boolean } = {}) {
   const daemon = await new FakeRelay("bot-steps").start();
-  const root = join(mkdtempSync(join(tmpdir(), "omb-steps-")), "evidence");
+  const root = join(mkdtempSync(join(tmpdir(), "mausclaw-steps-")), "evidence");
   const evidence = new BrowserEvidence({ root, statfs: async () => ({ bavail: 1e9, bsize: 4096 }) });
   cleanup.push(() => daemon.close(), () => rmSync(join(root, ".."), { recursive: true, force: true }));
   const tick = { time: Date.now() };

@@ -7,16 +7,16 @@ export type SidebarToolsLayout = "rows" | "toolbar";
 export const SIDEBAR_DENSITIES: readonly SidebarDensity[] = ["comfortable", "compact", "icons"];
 export const SIDEBAR_TOOLS_LAYOUTS: readonly SidebarToolsLayout[] = ["rows", "toolbar"];
 
-export const SIDEBAR_DENSITY_KEY = "openmausbot.sidebarDensity";
-export const SIDEBAR_TOOLS_LAYOUT_KEY = "openmausbot.sidebarToolsLayout";
-export const SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth";
-export const SIMPLE_SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth.simple";
-export const SIDEBAR_ATTENTION_PINNED_KEY = "openmausbot.sidebarAttentionPinned.v1";
-export const SIDEBAR_COLLAPSED_SECTIONS_KEY = "openmausbot.sidebarCollapsedSections.v1";
-export const SIDEBAR_SECTION_ORDER_KEY = "openmausbot.sidebarSectionOrder.v1";
-export const PINNED_CIRCLES_KEY = "openmausbot.pinnedCircles";
-export const UNIVERSAL_PINS_KEY = "openmausbot.universalPins";
-export const PINNED_CIRCLE_ORDER_KEY = "openmausbot.pinnedCircleOrder.v1";
+export const SIDEBAR_DENSITY_KEY = "mausclaw.sidebarDensity";
+export const SIDEBAR_TOOLS_LAYOUT_KEY = "mausclaw.sidebarToolsLayout";
+export const SIDEBAR_WIDTH_KEY = "mausclaw.sidebarWidth";
+export const SIMPLE_SIDEBAR_WIDTH_KEY = "mausclaw.sidebarWidth.simple";
+export const SIDEBAR_ATTENTION_PINNED_KEY = "mausclaw.sidebarAttentionPinned.v1";
+export const SIDEBAR_COLLAPSED_SECTIONS_KEY = "mausclaw.sidebarCollapsedSections.v1";
+export const SIDEBAR_SECTION_ORDER_KEY = "mausclaw.sidebarSectionOrder.v1";
+export const PINNED_CIRCLES_KEY = "mausclaw.pinnedCircles";
+export const UNIVERSAL_PINS_KEY = "mausclaw.universalPins";
+export const PINNED_CIRCLE_ORDER_KEY = "mausclaw.pinnedCircleOrder.v1";
 
 export function parseSidebarDensity(value: string | null): SidebarDensity {
   switch (value) {

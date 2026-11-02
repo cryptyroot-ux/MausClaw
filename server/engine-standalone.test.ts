@@ -55,7 +55,7 @@ describe("explaining a file-system failure", () => {
   const asset: StandaloneAsset = { url: "https://downloads.example.test/a", sha256: "0".repeat(64), executableSha256: "1".repeat(64), archive: "raw", executable: "x", approxBytes: 1 };
   const failure = (code: string, syscall: string) => Object.assign(new Error(`${code}: operation failed, ${syscall}`), { code, syscall });
   const inUse = "Fake Engine is open in another window. Close it, then try again.";
-  const noPermission = "OpenMausBot can't write to its folder for Fake Engine. Check the folder's permissions, then try again.";
+  const noPermission = "MausClaw can't write to its folder for Fake Engine. Check the folder's permissions, then try again.";
 
   it.each([
     ["EBUSY", "rmdir", inUse],
@@ -190,7 +190,7 @@ describe.skipIf(process.platform === "win32")("installing a standalone engine", 
   let originalPath: string | undefined;
 
   beforeEach(() => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-standalone-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-standalone-"));
     base = join(scratch, "data");
     log = join(scratch, "runs.log");
     failFlag = join(scratch, "fail-for-this-machine");
@@ -361,7 +361,7 @@ describe.skipIf(process.platform === "win32")("installing a standalone engine", 
     chmodSync(engineDir(), 0o500);
     try {
       const error = await refusal(install(release));
-      expect(error.message).toBe("OpenMausBot can't write to its folder for Fake Engine. Check the folder's permissions, then try again.");
+      expect(error.message).toBe("MausClaw can't write to its folder for Fake Engine. Check the folder's permissions, then try again.");
     } finally {
       chmodSync(engineDir(), 0o700);
     }

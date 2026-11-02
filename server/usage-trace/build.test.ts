@@ -104,7 +104,7 @@ describe("trace service", () => {
   afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
   it("reads only the ledger lines added since the last read, once, however many requests overlap", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-trace-ledger-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-trace-ledger-"));
     dirs.push(dataDir);
     mkdirSync(join(dataDir, "usage"), { recursive: true });
     const ledger = join(dataDir, "usage", `${monthKey(new Date(T0))}.jsonl`);
@@ -122,7 +122,7 @@ describe("trace service", () => {
   });
 
   it("builds a 500-span trace from disk in well under 100 ms and pages the runs list", async () => {
-    const dataDir = mkdtempSync(join(tmpdir(), "omb-trace-service-"));
+    const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-trace-service-"));
     dirs.push(dataDir);
     const now = Date.UTC(2026, 9, 22, 12, 0, 0);
     mkdirSync(join(dataDir, "usage"), { recursive: true });

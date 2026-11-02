@@ -80,7 +80,7 @@ async function control(method, urlPath, body, { timeoutMs = 4_000 } = {}) {
   const options = {
     method,
     signal: AbortSignal.timeout(timeoutMs),
-    headers: { "x-openmausbot-control-token": controlToken },
+    headers: { "x-mausclaw-control-token": controlToken },
   };
   if (body !== undefined) {
     options.body = JSON.stringify(body);
@@ -160,13 +160,13 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
 
   // Never inherit an endpoint from the launch environment: main passes one only after verifying the connector.
   const childEnvironment = { ...process.env };
-  delete childEnvironment.OMB_COMPANION_HOSTED_URL;
-  delete childEnvironment.OMB_COMPANION_INTERNAL_ORIGIN;
-  delete childEnvironment.OMB_PHONE_SECRET_PUBLIC_KEY;
-  if (hostedUrl) childEnvironment.OMB_COMPANION_HOSTED_URL = hostedUrl;
-  childEnvironment.OMB_COMPANION_INTERNAL_ORIGIN = allocatedOrigin.socketPath;
+  delete childEnvironment.MAUSCLAW_COMPANION_HOSTED_URL;
+  delete childEnvironment.MAUSCLAW_COMPANION_INTERNAL_ORIGIN;
+  delete childEnvironment.MAUSCLAW_PHONE_SECRET_PUBLIC_KEY;
+  if (hostedUrl) childEnvironment.MAUSCLAW_COMPANION_HOSTED_URL = hostedUrl;
+  childEnvironment.MAUSCLAW_COMPANION_INTERNAL_ORIGIN = allocatedOrigin.socketPath;
   if (/^[A-Za-z0-9_-]{87}$/.test(String(secretPublicKey ?? ""))) {
-    childEnvironment.OMB_PHONE_SECRET_PUBLIC_KEY = secretPublicKey;
+    childEnvironment.MAUSCLAW_PHONE_SECRET_PUBLIC_KEY = secretPublicKey;
   }
 
   controlToken = randomBytes(32).toString("base64url");
@@ -175,9 +175,9 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
     child = utilityProcess.fork(resolved.entry, [], {
       env: {
         ...childEnvironment,
-        OMB_PORT: String(harnessPort),
-        OMB_COMPANION_PORT: String(COMPANION_PORT),
-        OMB_CONTROL_PORT: String(CONTROL_PORT),
+        MAUSCLAW_PORT: String(harnessPort),
+        MAUSCLAW_COMPANION_PORT: String(COMPANION_PORT),
+        MAUSCLAW_CONTROL_PORT: String(CONTROL_PORT),
       },
       execArgv: resolved.execArgv,
       stdio: ["ignore", "pipe", "pipe"],
@@ -190,7 +190,7 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
   child.once("spawn", () => {
     // Never expose this capability in argv, environment, logs or the renderer.
     try {
-      child.postMessage({ type: "openmausbot:companion-mutation-token", token: mutationToken, controlToken });
+      child.postMessage({ type: "mausclaw:companion-mutation-token", token: mutationToken, controlToken });
     } catch {
       log?.("companion authorization could not be initialized");
       child.kill();
@@ -344,7 +344,7 @@ export async function companionPairing(open, expectedToken) {
   if (!proc) return companionState();
   const conditionalClose = !open && expectedToken !== undefined;
   const candidate = String(expectedToken ?? "");
-  const token = /^omb_pair_[A-Za-z0-9_-]{43}$/.test(candidate)
+  const token = /^mausclaw_pair_[A-Za-z0-9_-]{43}$/.test(candidate)
     ? candidate
     : "invalid-pairing-token";
   const path = conditionalClose

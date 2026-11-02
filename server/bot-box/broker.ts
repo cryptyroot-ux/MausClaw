@@ -8,7 +8,7 @@ import { createServer, request as httpRequest, type IncomingMessage, type Server
 import { request as httpsRequest } from "node:https";
 import type { Socket } from "node:net";
 
-export const BROKER_TOKEN_PREFIX = "omb_t0_";
+export const BROKER_TOKEN_PREFIX = "mausclaw_t0_";
 /** A token minted for a process lives this long at most; the process's exit ends it sooner. */
 export const BROKER_PROCESS_TTL_MS = 24 * 60 * 60_000;
 /** A grant bound to a conversation (an MCP server's headers) slides this long past the last turn that used it. */
@@ -36,7 +36,7 @@ interface Stored { hash: Buffer; botId: string | null; threadId: string | null; 
 /** Credential headers a client may send; the broker never forwards them. */
 const CREDENTIAL_HEADERS = new Set(["authorization", "x-api-key", "x-goog-api-key", "proxy-authorization", "cookie"]);
 const HOP_BY_HOP = new Set(["connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "proxy-connection", "host"]);
-const TOKEN = /^omb_t0_[a-f0-9]{48}$/;
+const TOKEN = /^mausclaw_t0_[a-f0-9]{48}$/;
 const GRANT = /^[a-z][a-z0-9_-]{0,63}$/;
 
 export interface CredentialBrokerOptions {

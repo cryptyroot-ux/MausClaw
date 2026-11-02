@@ -174,7 +174,7 @@ bot ──tools/call──▶ agents-proxy (stdio)
   | profile | `treg.x.user.profile` `{username}` (routed; normalized output) | (routing is the fallback) |
   | Test | `GET /auth/me` → `org_id`, then `GET /orgs/{org_id}/balance` → `balance_micro` | none |
 
-- `OMB_TREG_URL` (environment only) points the client at a self-hosted treg
+- `MAUSCLAW_TREG_URL` (environment only) points the client at a self-hosted treg
   registry or a test's loopback stub instead of treg.to. The verification
   launcher lets it cross into a fixture only as `http://127.0.0.1:<port>`.
 - Every request carries `X-Treg-Token`; every `/call/` also carries
@@ -217,7 +217,7 @@ as the tool's error text unchanged.
 ### Gating in the catalog
 
 - `server/index.ts` `agentsIntegration()` sets
-  `OMB_X_RESEARCH: cfg.treg?.token && store.bot(botId)?.xResearch === true ? "1" : "0"`.
+  `MAUSCLAW_X_RESEARCH: cfg.treg?.token && store.bot(botId)?.xResearch === true ? "1" : "0"`.
 - `catalogProfileFromEnv` reads it into `profile.xResearch`; `catalogTools()`
   hides `X_TOOL_NAMES` unless it is true, the same way `VOICE_TOOL_NAMES` works.
 - The tools are not in `EXTERNAL_TOOL_NAMES`.
@@ -240,7 +240,7 @@ as the tool's error text unchanged.
 ## Token storage
 
 The token follows the xAI key everywhere it goes. Config section `treg`, field
-`token`, env `OMB_TREG_TOKEN` (the `OMB_` prefix every non-model key uses),
+`token`, env `MAUSCLAW_TREG_TOKEN` (the `MAUSCLAW_` prefix every non-model key uses),
 Electron credential name `tregToken`.
 
 - `server/config.ts`: schema, `AppConfig`, env override, `syncCredentialEnv`,
@@ -312,7 +312,7 @@ the Composio connector is only needed for posting.
   regenerated, `BUDGET_BASELINE` raised by hand for those profiles only; the
   existing profiles stay byte-identical.
 - `server/activity.test.ts`: the four labels.
-- `electron/diagnostics.test.mjs`: the mirror list includes `OMB_TREG_TOKEN`.
+- `electron/diagnostics.test.mjs`: the mirror list includes `MAUSCLAW_TREG_TOKEN`.
 - Config tests: the token is stripped from engine environments and follows a
   save.
 - Request-auth test: a phone token's `PATCH /api/bots/:id` with `xResearch` is

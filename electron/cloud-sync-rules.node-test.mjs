@@ -5,7 +5,7 @@ import { clashPath, cloudReserveBytes, foldKey, neverFromCloud, safeFolderName, 
 test("skips build folders, system litter, lock and temporary files, and sync's own downloads", () => {
   for (const dir of ["node_modules", ".git", ".venv", "venv", "__pycache__", ".next", ".cache"]) assert.equal(skipped(dir, true), true, dir);
   assert.equal(skipped("src", true), false);
-  for (const file of [".DS_Store", "Thumbs.db", "desktop.ini", "~$port.docx", "draft.tmp", "movie.crdownload", "a.part", ".~lock.sheet.ods#", ".Report.docx.omb-sync-1a2b3c4d"]) {
+  for (const file of [".DS_Store", "Thumbs.db", "desktop.ini", "~$port.docx", "draft.tmp", "movie.crdownload", "a.part", ".~lock.sheet.ods#", ".Report.docx.mausclaw-sync-1a2b3c4d"]) {
     assert.equal(skipped(file, false), true, file);
   }
   assert.equal(skipped("Report.docx", false), false);

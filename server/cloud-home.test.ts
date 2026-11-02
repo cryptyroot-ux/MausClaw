@@ -20,74 +20,74 @@ import { portableWorkspaceConfig, restoredWorkspaceConfig } from "./workspace-ba
 
 const directories: string[] = [];
 afterEach(async () => { for (const directory of directories.splice(0)) await removeTempDir(directory); });
-const directory = () => { const value = mkdtempSync(join(tmpdir(), "omb-cloud-home-")); directories.push(value); return value; };
+const directory = () => { const value = mkdtempSync(join(tmpdir(), "mausclaw-cloud-home-")); directories.push(value); return value; };
 
 // Shapes exactly as openmaus-cloud's provisioner writes them.
 const secret = "S".repeat(43);
 const machineId = "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93";
 const contract = (extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv => ({
-  OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: machineId, OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-  OMB_PUBLIC_URL: "https://omb-u-1a2b3c4d5e6f.fly.dev", OMB_CLOUD_BOOTSTRAP_SECRET: secret, ...extra,
+  MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: machineId, MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+  MAUSCLAW_PUBLIC_URL: "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, ...extra,
 });
 // A platform gateway's settings, as an Admin from before Cloud Pro dropped
 // included AI wrote them. A Cloud home ignores them.
-const token = `omb_cloudai_${"t".repeat(43)}`;
+const token = `mausclaw_cloudai_${"t".repeat(43)}`;
 const gatewayUrl = "https://cloud.example.test/api/cloud/gateway/g0123456789abcdef0123456789abcd";
-const withGateway = (extra: NodeJS.ProcessEnv = {}) => contract({ OMB_HOSTED_MODEL_URL: gatewayUrl, OMB_HOSTED_MODEL_TOKEN: token,
-  OMB_HOSTED_MODELS: JSON.stringify({ anthropic: ["claude-sonnet-5"], openai: ["gpt-5.6-sol"], openrouter: ["anthropic/claude-sonnet-5"] }), ...extra });
+const withGateway = (extra: NodeJS.ProcessEnv = {}) => contract({ MAUSCLAW_HOSTED_MODEL_URL: gatewayUrl, MAUSCLAW_HOSTED_MODEL_TOKEN: token,
+  MAUSCLAW_HOSTED_MODELS: JSON.stringify({ anthropic: ["claude-sonnet-5"], openai: ["gpt-5.6-sol"], openrouter: ["anthropic/claude-sonnet-5"] }), ...extra });
 
 
 it("is off on every ordinary server and desktop", () => {
   expect(cloudHomeConfigured({})).toBe(false);
   expect(cloudHomeConfiguration({})).toBeNull();
-  expect(cloudHomeConfiguration({ OMB_PUBLIC_URL: "https://selfhosted.example.test", OMB_HOSTED_MODELS: "{}" })).toBeNull();
+  expect(cloudHomeConfiguration({ MAUSCLAW_PUBLIC_URL: "https://selfhosted.example.test", MAUSCLAW_HOSTED_MODELS: "{}" })).toBeNull();
 });
 
 it("reads the Admin's contract", () => {
   expect(cloudHomeConfiguration(contract())).toEqual({
-    role: "home", team: null, machineId, adminOrigin: "https://cloud.example.test", publicOrigin: "https://omb-u-1a2b3c4d5e6f.fly.dev", bootstrapSecret: secret, warnings: [],
+    role: "home", team: null, machineId, adminOrigin: "https://cloud.example.test", publicOrigin: "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", bootstrapSecret: secret, warnings: [],
   });
-  expect(cloudHomeConfiguration(contract({ OMB_CLOUD_ADMIN_URL: "https://cloud.example.test/" }))!.adminOrigin).toBe("https://cloud.example.test");
+  expect(cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test/" }))!.adminOrigin).toBe("https://cloud.example.test");
 });
 
 it("ignores a platform gateway's settings with one warning, whatever they hold, and never serves them", () => {
   const all = cloudHomeConfiguration(withGateway())!;
   expect(Object.keys(all).sort()).toEqual(["adminOrigin", "bootstrapSecret", "machineId", "publicOrigin", "role", "team", "warnings"]);
-  expect(all.warnings).toEqual(["ignoring OMB_HOSTED_MODEL_URL, OMB_HOSTED_MODEL_TOKEN, OMB_HOSTED_MODELS: Cloud Pro includes no AI; people sign in with their own Claude or ChatGPT account, or an API key"]);
-  for (const stray of [{ OMB_HOSTED_MODEL_TOKEN: token }, { OMB_HOSTED_MODEL_TOKEN: "sk-ant-api03-platform-key" }, { OMB_HOSTED_MODELS: "{not json" },
-    { OMB_HOSTED_MODEL_URL: "https://gateway.attacker.test/v1" }, { OMB_HOSTED_MODELS: "" }]) {
+  expect(all.warnings).toEqual(["ignoring MAUSCLAW_HOSTED_MODEL_URL, MAUSCLAW_HOSTED_MODEL_TOKEN, MAUSCLAW_HOSTED_MODELS: Cloud Pro includes no AI; people sign in with their own Claude or ChatGPT account, or an API key"]);
+  for (const stray of [{ MAUSCLAW_HOSTED_MODEL_TOKEN: token }, { MAUSCLAW_HOSTED_MODEL_TOKEN: "sk-ant-api03-platform-key" }, { MAUSCLAW_HOSTED_MODELS: "{not json" },
+    { MAUSCLAW_HOSTED_MODEL_URL: "https://gateway.attacker.test/v1" }, { MAUSCLAW_HOSTED_MODELS: "" }]) {
     const config = cloudHomeConfiguration(contract(stray))!;
     expect(config.warnings).toEqual([expect.stringMatching(new RegExp(`^ignoring ${Object.keys(stray)[0]}: Cloud Pro includes no AI`))]);
     const value = Object.values(stray)[0];
     if (value) expect(JSON.stringify(config)).not.toContain(value);
   }
   expect(hostedModelPolicy(directory(), withGateway())).toBeNull();
-  expect(hostedModelPolicy(directory(), contract({ OMB_HOSTED_MODEL_TOKEN: `omb_workspace_${"t".repeat(43)}`, OMB_HOSTED_MODELS: "{}" }))).toBeNull();
+  expect(hostedModelPolicy(directory(), contract({ MAUSCLAW_HOSTED_MODEL_TOKEN: `mausclaw_workspace_${"t".repeat(43)}`, MAUSCLAW_HOSTED_MODELS: "{}" }))).toBeNull();
   expect(Object.keys(withoutIgnoredCloudKeys(withGateway())).filter((key) => (CLOUD_IGNORED_KEYS as readonly string[]).includes(key))).toEqual([]);
   expect(withoutIgnoredCloudKeys(withGateway())).toEqual(contract());
 });
 
 it.each<[string, NodeJS.ProcessEnv]>([
-  ["only one key", { OMB_CLOUD_MACHINE_ID: machineId }],
-  ["no role", { ...contract(), OMB_CLOUD_ROLE: undefined }],
-  ["the desktop role", contract({ OMB_CLOUD_ROLE: "desktop" })],
-  ["no public URL", { ...contract(), OMB_PUBLIC_URL: undefined }],
-  ["an http Admin", contract({ OMB_CLOUD_ADMIN_URL: "http://cloud.example.test" })],
-  ["an Admin URL with a path", contract({ OMB_CLOUD_ADMIN_URL: "https://cloud.example.test/api" })],
-  ["an Admin URL with credentials", contract({ OMB_CLOUD_ADMIN_URL: "https://user:pass@cloud.example.test" })],
-  ["an http public URL", contract({ OMB_PUBLIC_URL: "http://omb-u-1a2b3c4d5e6f.fly.dev" })],
-  ["a machine id with a slash", contract({ OMB_CLOUD_MACHINE_ID: "home/../x" })],
-  ["a short secret", contract({ OMB_CLOUD_BOOTSTRAP_SECRET: "S".repeat(42) })],
-  ["a secret with padding", contract({ OMB_CLOUD_BOOTSTRAP_SECRET: `${"S".repeat(42)}=` })],
-  ["the desktop app", contract({ OMB_DESKTOP_PARENT: "1" })],
-  ["a hosted team workspace too", contract({ OMB_ADMIN_URL: "https://cloud.example.test" })],
-  ["a hosted team workspace with a gateway", withGateway({ OMB_ADMIN_URL: "https://cloud.example.test", OMB_ADMIN_WORKSPACE: "acme", OMB_ADMIN_MEMBERSHIP: "portal" })],
+  ["only one key", { MAUSCLAW_CLOUD_MACHINE_ID: machineId }],
+  ["no role", { ...contract(), MAUSCLAW_CLOUD_ROLE: undefined }],
+  ["the desktop role", contract({ MAUSCLAW_CLOUD_ROLE: "desktop" })],
+  ["no public URL", { ...contract(), MAUSCLAW_PUBLIC_URL: undefined }],
+  ["an http Admin", contract({ MAUSCLAW_CLOUD_ADMIN_URL: "http://cloud.example.test" })],
+  ["an Admin URL with a path", contract({ MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test/api" })],
+  ["an Admin URL with credentials", contract({ MAUSCLAW_CLOUD_ADMIN_URL: "https://user:pass@cloud.example.test" })],
+  ["an http public URL", contract({ MAUSCLAW_PUBLIC_URL: "http://mausclaw-u-1a2b3c4d5e6f.fly.dev" })],
+  ["a machine id with a slash", contract({ MAUSCLAW_CLOUD_MACHINE_ID: "home/../x" })],
+  ["a short secret", contract({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: "S".repeat(42) })],
+  ["a secret with padding", contract({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: `${"S".repeat(42)}=` })],
+  ["the desktop app", contract({ MAUSCLAW_DESKTOP_PARENT: "1" })],
+  ["a hosted team workspace too", contract({ MAUSCLAW_ADMIN_URL: "https://cloud.example.test" })],
+  ["a hosted team workspace with a gateway", withGateway({ MAUSCLAW_ADMIN_URL: "https://cloud.example.test", MAUSCLAW_ADMIN_WORKSPACE: "acme", MAUSCLAW_ADMIN_MEMBERSHIP: "portal" })],
 ])("refuses to start with %s", (_why, env) => {
   expect(() => cloudHomeConfiguration(env)).toThrow(/Cloud home configuration is invalid/);
 });
 
 it("never echoes a secret or token in its refusal", () => {
-  for (const env of [contract({ OMB_CLOUD_BOOTSTRAP_SECRET: `${secret}!` }), withGateway({ OMB_CLOUD_BOOTSTRAP_SECRET: `${secret}!` })]) {
+  for (const env of [contract({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: `${secret}!` }), withGateway({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: `${secret}!` })]) {
     try { cloudHomeConfiguration(env); expect.unreachable(); }
     catch (error) { expect(String(error)).not.toContain(secret); expect(String(error)).not.toContain(token); }
   }
@@ -118,7 +118,7 @@ function fixture() {
   const sessions = new SessionRegistry({ file: join(root, "sessions.json"), now: () => now });
   const pairing = createCloudPairing({ secret, sessions, now: () => now });
   let counter = 0;
-  const sign = (body = JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 300 }), options: { key?: string; at?: number; nonce?: string } = {}) => {
+  const sign = (body = JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 300 }), options: { key?: string; at?: number; nonce?: string } = {}) => {
     const timestamp = String(Math.floor((options.at ?? now) / 1000)), nonce = options.nonce ?? `nonce-${String(++counter).padStart(12, "0")}`;
     return { timestamp, nonce, signature: `v1=${cloudPairingSignature(options.key ?? secret, timestamp, nonce, body)}`, body: Buffer.from(body) };
   };
@@ -133,10 +133,10 @@ it("opens one ordinary pairing window for a correctly signed request", () => {
   expect(granted.status).toBe(200);
   expect(Object.keys(granted.body).sort()).toEqual(["code", "credential", "expiresAt"]);
   expect(granted.body.code).toMatch(/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/);
-  expect(granted.body.credential).toMatch(/^omb_pair_[A-Za-z0-9_-]{43}$/);
+  expect(granted.body.credential).toMatch(/^mausclaw_pair_[A-Za-z0-9_-]{43}$/);
   expect(granted.body.expiresAt).toBe(f.now() + 300_000);
   const paired = f.exchange(granted.body.code as string);
-  expect(paired).toMatchObject({ ok: true, session: { label: "OpenMausBot app (Cloud)", scopes: ["admin", "client"] } });
+  expect(paired).toMatchObject({ ok: true, session: { label: "MausClaw app (Cloud)", scopes: ["admin", "client"] } });
 });
 
 it("matches the Admin's signature byte for byte", () => {
@@ -158,7 +158,7 @@ it("refuses a wrong key, a tampered request or a malformed signature, and counts
   const good = f.sign();
   const variants = [
     f.sign(undefined, { key: "W".repeat(43) }),
-    { ...good, body: Buffer.from(JSON.stringify({ label: "OpenMausBot app (Cloud)", ttlSeconds: 600 })) },
+    { ...good, body: Buffer.from(JSON.stringify({ label: "MausClaw app (Cloud)", ttlSeconds: 600 })) },
     { ...good, nonce: "nonce-tampered-000" },
     { ...good, timestamp: String(Number(good.timestamp) + 1) },
     { ...good, signature: good.signature.slice(3) },
@@ -220,7 +220,7 @@ it("opens a browser sign-in only a browser redeems, by credential alone, for at 
   expect(f.mint(f.sign(JSON.stringify({ purpose: "browser", owner: "ada.o'neil+cloud@example-mail.test" }))).status).toBe(200);
   expect(granted.status).toBe(200);
   expect(Object.keys(granted.body).sort()).toEqual(["credential", "expiresAt", "purpose"]);
-  expect(granted.body).toMatchObject({ credential: expect.stringMatching(/^omb_pair_[A-Za-z0-9_-]{43}$/), expiresAt: f.now() + 120_000, purpose: "browser" });
+  expect(granted.body).toMatchObject({ credential: expect.stringMatching(/^mausclaw_pair_[A-Za-z0-9_-]{43}$/), expiresAt: f.now() + 120_000, purpose: "browser" });
   const credential = granted.body.credential as string;
   expect(f.sessions.previewBrowserSignIn(credential)).toEqual({ owner: "ada@example.test", expiresAt: f.now() + 120_000 });
   expect(f.exchange(credential).ok).toBe(false);
@@ -262,7 +262,7 @@ it("treats a request the edge forwards as remote, whatever Host it claims", () =
     { host: "home-7f3k2.fly.dev", "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https" },
     { host: "localhost:8799", "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https" },
   ]) {
-    const result = resolveRequestAuth(request(headers), { sessions, cookieName: "omb_session_x", streamPath: "/api/events", url });
+    const result = resolveRequestAuth(request(headers), { sessions, cookieName: "mausclaw_session_x", streamPath: "/api/events", url });
     expect(result.auth).toBeNull();
     expect(result.status).toBe(403);
   }
@@ -286,16 +286,16 @@ it("binds a fresh volume to its machine and refuses anyone else's data", () => {
 it("a new home on a kept volume clears the data-directory lease the previous machine left, once the volume is confirmed its own, and never this machine's or another Cloud's (2026-10-23)", () => {
   const home = directory(), dataDir = cloudHomeDataDir({}, home);
   // The image runs on Linux, so the server is given a POSIX path; here only where it sits under the home is the point.
-  expect(relative(home, dataDir)).toBe(".openmausbot");
-  expect(cloudHomeDataDir({}, "/data")).toBe("/data/.openmausbot");
-  expect(cloudHomeDataDir({ OMB_DATA_DIR: "/elsewhere" }, home)).toBe("/elsewhere");
+  expect(relative(home, dataDir)).toBe(".mausclaw");
+  expect(cloudHomeDataDir({}, "/data")).toBe("/data/.mausclaw");
+  expect(cloudHomeDataDir({ MAUSCLAW_DATA_DIR: "/elsewhere" }, home)).toBe("/elsewhere");
   mkdirSync(join(home, "lost+found"));
   const locked: string[] = [];
   const lock = (volume: string) => { locked.push(volume); };
   expect(prepareCloudHomeData(home, dataDir, "home-7f3k2", lock)).toEqual({ volume: "new", cleared: [] });
   expect(locked).toEqual([home]);
   // The lease the home destroyed mid-boot left (its hostname is Fly's machine id), and the previous machine's own pid.
-  const lease = join(dataDir, "openmausbot-server.lease");
+  const lease = join(dataDir, "mausclaw-server.lease");
   mkdirSync(dataDir, { recursive: true });
   const left = (host: string) => writeFileSync(lease, `${JSON.stringify({ version: 1, pid: 613, host, token: "0f5e6c4a-1b2c-4d3e-8f9a-0b1c2d3e4f5a", createdAt: 1, boot: "boot-of-the-old-machine", uptime: 44_000 })}\n`);
   left("d8d9e0f1a2b3c4");
@@ -348,37 +348,37 @@ it.skipIf(!existsSync("/usr/bin/flock"))("a second home on a volume a live home 
 it("lets only the tunnel name the client on an own server, and only Fly's proxy on Fly, exactly as before", () => {
   const config = cloudHomeConfiguration(contract())!;
   const own = cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin" }, "/data").edge;
-  expect(own).toMatchObject({ OMB_CLOUD_EDGE_CLIENT_IP_HEADER: "Cf-Connecting-IP", OMB_CLOUD_EDGE_TRUSTED_PROXIES: "127.0.0.1/32 ::1/128" });
-  const fly = cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin", FLY_APP_NAME: "omb-u-1a2b3c4d5e6f" }, "/data").edge;
-  expect(fly).toMatchObject({ OMB_CLOUD_EDGE_CLIENT_IP_HEADER: "Fly-Client-IP", OMB_CLOUD_EDGE_TRUSTED_PROXIES: "private_ranges" });
+  expect(own).toMatchObject({ MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: "Cf-Connecting-IP", MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: "127.0.0.1/32 ::1/128" });
+  const fly = cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin", FLY_APP_NAME: "mausclaw-u-1a2b3c4d5e6f" }, "/data").edge;
+  expect(fly).toMatchObject({ MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: "Fly-Client-IP", MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: "private_ranges" });
   expect(edgeClientAddress({ FLY_APP_NAME: " " })).toEqual(edgeClientAddress({}));
   // Both values are written into the edge's config as they are, so neither may come from anywhere but here.
-  for (const env of [{}, { FLY_APP_NAME: "omb-u-1a2b3c4d5e6f" }, { OMB_CLOUD_EDGE_CLIENT_IP_HEADER: "X-Real-IP", OMB_CLOUD_EDGE_TRUSTED_PROXIES: "0.0.0.0/0" }]) {
+  for (const env of [{}, { FLY_APP_NAME: "mausclaw-u-1a2b3c4d5e6f" }, { MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER: "X-Real-IP", MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES: "0.0.0.0/0" }]) {
     const edge = cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin", ...env }, "/data").edge;
-    expect(edge.OMB_CLOUD_EDGE_CLIENT_IP_HEADER).toMatch(/^(?:Fly-Client-IP|Cf-Connecting-IP)$/);
-    expect(edge.OMB_CLOUD_EDGE_TRUSTED_PROXIES).toMatch(/^(?:private_ranges|127\.0\.0\.1\/32 ::1\/128)$/);
+    expect(edge.MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER).toMatch(/^(?:Fly-Client-IP|Cf-Connecting-IP)$/);
+    expect(edge.MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES).toMatch(/^(?:private_ranges|127\.0\.0\.1\/32 ::1\/128)$/);
   }
-  expect(cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin", FLY_APP_NAME: "omb-u-1a2b3c4d5e6f" }, "/data").server).not.toHaveProperty("OMB_CLOUD_EDGE_CLIENT_IP_HEADER");
+  expect(cloudHomeChildEnvironments(config, { ...contract(), PATH: "/usr/bin", FLY_APP_NAME: "mausclaw-u-1a2b3c4d5e6f" }, "/data").server).not.toHaveProperty("MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER");
 });
 
 it("gives the edge only its routing name and the server the contract, never a gateway's settings or a secret", () => {
-  const relay = { OMB_CLOUD_BOAT_TOKEN: `box_omb_${"b".repeat(43)}`, OMB_CLOUD_VOICE_TOKEN: `omb_voice_${"v".repeat(43)}`, OMB_CLOUD_DECIDER_TOKEN: `omb_decide_${"d".repeat(43)}`,
-    OMB_CLOUD_AI_TOKEN: `omb_ai_${"a".repeat(43)}` };
+  const relay = { MAUSCLAW_CLOUD_BOAT_TOKEN: `box_mausclaw_${"b".repeat(43)}`, MAUSCLAW_CLOUD_VOICE_TOKEN: `mausclaw_voice_${"v".repeat(43)}`, MAUSCLAW_CLOUD_DECIDER_TOKEN: `mausclaw_decide_${"d".repeat(43)}`,
+    MAUSCLAW_CLOUD_AI_TOKEN: `mausclaw_ai_${"a".repeat(43)}` };
   const config = cloudHomeConfiguration(withGateway())!;
   const { server, edge, secrets } = cloudHomeChildEnvironments(config, { ...withGateway(), ...relay, PATH: "/usr/bin" }, "/data");
-  expect(server).toMatchObject({ HOME: "/data", OMB_DATA_DIR: "/data/.openmausbot", NODE_COMPILE_CACHE: "/data/.openmausbot/cache/node-compile", OMB_PORT: "8799", OMB_WEBHOOK_PORT: "8800",
-    OMB_PUBLIC_URL: "https://omb-u-1a2b3c4d5e6f.fly.dev", OMB_WEBHOOK_PUBLIC_URL: "https://omb-u-1a2b3c4d5e6f.fly.dev", OMB_CLOUD_SECRETS_FD: "3" });
+  expect(server).toMatchObject({ HOME: "/data", MAUSCLAW_DATA_DIR: "/data/.mausclaw", NODE_COMPILE_CACHE: "/data/.mausclaw/cache/node-compile", MAUSCLAW_PORT: "8799", MAUSCLAW_WEBHOOK_PORT: "8800",
+    MAUSCLAW_PUBLIC_URL: "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", MAUSCLAW_WEBHOOK_PUBLIC_URL: "https://mausclaw-u-1a2b3c4d5e6f.fly.dev", MAUSCLAW_CLOUD_SECRETS_FD: "3" });
   for (const key of CLOUD_IGNORED_KEYS) expect(server).not.toHaveProperty(key);
   // The bot box switch reaches the server; an unknown name does not.
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", OMB_BOT_BOX: "0", OMB_SOMETHING_ELSE: "x" }, "/data").server).toMatchObject({ OMB_BOT_BOX: "0" });
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", OMB_SOMETHING_ELSE: "x" }, "/data").server).not.toHaveProperty("OMB_SOMETHING_ELSE");
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", MAUSCLAW_BOT_BOX: "0", MAUSCLAW_SOMETHING_ELSE: "x" }, "/data").server).toMatchObject({ MAUSCLAW_BOT_BOX: "0" });
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", MAUSCLAW_SOMETHING_ELSE: "x" }, "/data").server).not.toHaveProperty("MAUSCLAW_SOMETHING_ELSE");
   expect(JSON.stringify(server)).not.toContain(token);
-  expect(secrets).toEqual({ OMB_CLOUD_BOOTSTRAP_SECRET: secret, ...relay });
+  expect(secrets).toEqual({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, ...relay });
   for (const value of Object.values(secrets)) {
     expect(JSON.stringify(server)).not.toContain(value);
     expect(JSON.stringify(edge)).not.toContain(value);
   }
-  expect(edge.OMB_CLOUD_PUBLIC_HOST).toBe(cloudHomeHost(config));
+  expect(edge.MAUSCLAW_CLOUD_PUBLIC_HOST).toBe(cloudHomeHost(config));
   expect(JSON.stringify(edge)).not.toContain(token);
   expect(JSON.stringify(edge)).not.toContain(secret);
   expect(passwdIds("root:x:0:0::/root:/bin/sh\nmaus:x:1001:1002::/data:/bin/bash\n", "maus")).toEqual({ uid: 1001, gid: 1002 });
@@ -387,38 +387,38 @@ it("gives the edge only its routing name and the server the contract, never a ga
 
 it("holds requests at the edge while the server starts only when the Admin asked for it (a plan that sleeps)", () => {
   const config = cloudHomeConfiguration(withGateway())!;
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin" }, "/data").edge.OMB_CLOUD_EDGE_HOLD).toBe("0s");
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", OMB_CLOUD_EDGE_HOLD: "30s" }, "/data").edge.OMB_CLOUD_EDGE_HOLD).toBe("30s");
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", OMB_CLOUD_EDGE_HOLD: "30s" }, "/data").server).not.toHaveProperty("OMB_CLOUD_EDGE_HOLD");
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin" }, "/data").edge.MAUSCLAW_CLOUD_EDGE_HOLD).toBe("0s");
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", MAUSCLAW_CLOUD_EDGE_HOLD: "30s" }, "/data").edge.MAUSCLAW_CLOUD_EDGE_HOLD).toBe("30s");
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", MAUSCLAW_CLOUD_EDGE_HOLD: "30s" }, "/data").server).not.toHaveProperty("MAUSCLAW_CLOUD_EDGE_HOLD");
   for (const raw of [undefined, "", "30", "1m", "-5s", "121s", "30s; respond 200", "9999s"]) expect(edgeHold(raw), String(raw)).toBe("0s");
   expect(edgeHold(" 045s ")).toBe("45s");
 });
 
 it("hands the server the Admin's export-only switch, so an ended Cloud started for its owner's export runs frozen", () => {
-  // Seen on a real staging test Cloud on Oct 22: the Admin booted the held Cloud with OMB_CLOUD_EXPORT_ONLY=1, the log said
-  // "not passed to the server: … OMB_CLOUD_EXPORT_ONLY …", and it ran its routines every 5 minutes for the whole export
+  // Seen on a real staging test Cloud on Oct 22: the Admin booted the held Cloud with MAUSCLAW_CLOUD_EXPORT_ONLY=1, the log said
+  // "not passed to the server: … MAUSCLAW_CLOUD_EXPORT_ONLY …", and it ran its routines every 5 minutes for the whole export
   // window while the computers that came home ran the same ones.
   const config = cloudHomeConfiguration(withGateway())!;
-  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", OMB_CLOUD_EXPORT_ONLY: "1" }, "/data").server).toMatchObject({ OMB_CLOUD_EXPORT_ONLY: "1" });
+  expect(cloudHomeChildEnvironments(config, { ...withGateway(), PATH: "/usr/bin", MAUSCLAW_CLOUD_EXPORT_ONLY: "1" }, "/data").server).toMatchObject({ MAUSCLAW_CLOUD_EXPORT_ONLY: "1" });
 });
 
 it("gives the server only an allow-listed environment: a secret added later, a test's key or anything unknown never reaches it", () => {
   const config = cloudHomeConfiguration(contract())!;
-  const env = { ...contract(), PATH: "/usr/bin", LANG: "C.UTF-8", LC_ALL: "C.UTF-8", NODE_ENV: "production", OMB_STATIC_DIR: "/app/dist",
-    OMB_CLOUD_BOAT_URL: "https://cloud.example.test/boat", OMB_TTS_DEFAULT_VOICE: "alloy", OMB_CLOUD_AI_URL: "https://cloud.example.test/api/cloud/services/ai",
-    OMB_COMPOSIO_BROKER_URL: "https://broker.example.test", OMB_COMPOSIO_BROKER_TOKEN: "b".repeat(64),
-    OMB_CLOUD_FUTURE_SECRET: "later", OMB_TEST_CLOUD_LEFT_BEHIND_KEY: "k".repeat(43), FLY_API_TOKEN: "fly", SOME_TOKEN: "t", HOME: "/root" };
+  const env = { ...contract(), PATH: "/usr/bin", LANG: "C.UTF-8", LC_ALL: "C.UTF-8", NODE_ENV: "production", MAUSCLAW_STATIC_DIR: "/app/dist",
+    MAUSCLAW_CLOUD_BOAT_URL: "https://cloud.example.test/boat", MAUSCLAW_TTS_DEFAULT_VOICE: "alloy", MAUSCLAW_CLOUD_AI_URL: "https://cloud.example.test/api/cloud/services/ai",
+    MAUSCLAW_COMPOSIO_BROKER_URL: "https://broker.example.test", MAUSCLAW_COMPOSIO_BROKER_TOKEN: "b".repeat(64),
+    MAUSCLAW_CLOUD_FUTURE_SECRET: "later", MAUSCLAW_TEST_CLOUD_LEFT_BEHIND_KEY: "k".repeat(43), FLY_API_TOKEN: "fly", SOME_TOKEN: "t", HOME: "/root" };
   const { server, dropped } = cloudHomeChildEnvironments(config, env, "/data");
-  expect(server).toMatchObject({ PATH: "/usr/bin", LANG: "C.UTF-8", LC_ALL: "C.UTF-8", NODE_ENV: "production", OMB_STATIC_DIR: "/app/dist",
-    OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: machineId, OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
-    OMB_CLOUD_BOAT_URL: "https://cloud.example.test/boat", OMB_TTS_DEFAULT_VOICE: "alloy", OMB_CLOUD_AI_URL: "https://cloud.example.test/api/cloud/services/ai", HOME: "/data",
+  expect(server).toMatchObject({ PATH: "/usr/bin", LANG: "C.UTF-8", LC_ALL: "C.UTF-8", NODE_ENV: "production", MAUSCLAW_STATIC_DIR: "/app/dist",
+    MAUSCLAW_CLOUD_ROLE: "home", MAUSCLAW_CLOUD_MACHINE_ID: machineId, MAUSCLAW_CLOUD_ADMIN_URL: "https://cloud.example.test",
+    MAUSCLAW_CLOUD_BOAT_URL: "https://cloud.example.test/boat", MAUSCLAW_TTS_DEFAULT_VOICE: "alloy", MAUSCLAW_CLOUD_AI_URL: "https://cloud.example.test/api/cloud/services/ai", HOME: "/data",
     // A staging Cloud may name its connected-apps service; the Cloud registers its own token, never one from outside.
-    OMB_COMPOSIO_BROKER_URL: "https://broker.example.test" });
-  for (const name of ["OMB_CLOUD_FUTURE_SECRET", "OMB_TEST_CLOUD_LEFT_BEHIND_KEY", "FLY_API_TOKEN", "SOME_TOKEN", "OMB_COMPOSIO_BROKER_TOKEN"]) {
+    MAUSCLAW_COMPOSIO_BROKER_URL: "https://broker.example.test" });
+  for (const name of ["MAUSCLAW_CLOUD_FUTURE_SECRET", "MAUSCLAW_TEST_CLOUD_LEFT_BEHIND_KEY", "FLY_API_TOKEN", "SOME_TOKEN", "MAUSCLAW_COMPOSIO_BROKER_TOKEN"]) {
     expect(server).not.toHaveProperty(name);
     expect(dropped).toContain(name);
   }
-  expect(dropped).not.toContain("OMB_CLOUD_BOOTSTRAP_SECRET");
+  expect(dropped).not.toContain("MAUSCLAW_CLOUD_BOOTSTRAP_SECRET");
 });
 
 it("the root supervisor runs and trusts only root's code, never the volume's or anything maus could rewrite", () => {
@@ -449,7 +449,7 @@ it("ships an edge and a Fly template that keep the server private", () => {
   expect(caddy.match(/header_up X-Forwarded-For \{client_ip\}/g)).toHaveLength(upstreams.length);
   expect(caddy.match(/lb_try_interval 50ms/g)).toHaveLength(upstreams.length);
   // Who may name the client, and in which header, is the launcher's to say (edgeClientAddress); the file names neither.
-  expect(caddy).toMatch(/^\t\ttrusted_proxies static \{\$OMB_CLOUD_EDGE_TRUSTED_PROXIES\}\r?\n\t\ttrusted_proxies_strict\r?\n\t\tclient_ip_headers \{\$OMB_CLOUD_EDGE_CLIENT_IP_HEADER\}\r?\n/m);
+  expect(caddy).toMatch(/^\t\ttrusted_proxies static \{\$MAUSCLAW_CLOUD_EDGE_TRUSTED_PROXIES\}\r?\n\t\ttrusted_proxies_strict\r?\n\t\tclient_ip_headers \{\$MAUSCLAW_CLOUD_EDGE_CLIENT_IP_HEADER\}\r?\n/m);
   expect(caddy.match(/^\s*(?:trusted_proxies|client_ip_headers)\b/gm)).toHaveLength(2);
   // The root supervisor's code is root's, maus owns only the volume; the image's last step refuses to build otherwise.
   const dockerfile = readFileSync(join(import.meta.dirname, "../Dockerfile"), "utf8");
@@ -468,8 +468,8 @@ it("ships an edge and a Fly template that keep the server private", () => {
   expect(fly).toMatch(/destination = "\/data"/);
   expect(fly).toMatch(/path = "\/api\/health"/);
   const env = /\[env\]([\s\S]*?)\n\[/.exec(fly)![1];
-  for (const secretKey of ["OMB_CLOUD_BOOTSTRAP_SECRET", "OMB_CLOUD_ADMIN_URL"]) expect(env).not.toMatch(new RegExp(`^\\s*${secretKey}\\s*=`, "m"));
-  expect(fly).not.toContain("OMB_HOSTED_");
+  for (const secretKey of ["MAUSCLAW_CLOUD_BOOTSTRAP_SECRET", "MAUSCLAW_CLOUD_ADMIN_URL"]) expect(env).not.toMatch(new RegExp(`^\\s*${secretKey}\\s*=`, "m"));
+  expect(fly).not.toContain("MAUSCLAW_HOSTED_");
 });
 
 it("the Cloud launcher starts the server again only when it asks to after a restore, and only a few times in a row", () => {
@@ -501,7 +501,7 @@ it("records the first finished bot turn once, on a Cloud home only, and a moved 
 
 // The launcher only runs on Linux (the image); Windows passes descriptors differently.
 it.skipIf(process.platform === "win32")("hands the server its secrets over a pipe it reads once: never its environment, never a grandchild's", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-cloud-secrets-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-cloud-secrets-"));
   try {
     const script = join(dir, "server.mjs");
     const out = join(dir, "out.json");
@@ -518,17 +518,17 @@ const parentEnviron = (pid) => process.platform === "linux"
 const child = spawnSync(process.execPath, ["-e", "process.stdout.write(JSON.stringify(process.env))"], { encoding: "utf8" });
 writeFileSync(${JSON.stringify(out)}, JSON.stringify({ secrets, env: process.env, own: parentEnviron(process.pid), child: child.stdout }));
 `);
-    const env: NodeJS.ProcessEnv = { PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}), OMB_CLOUD_SECRETS_FD: "3", VISIBLE_PROBE: "visible" };
-    const child = spawnWithSecrets(process.execPath, [script], env, { OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_CLOUD_BOAT_TOKEN: "box_omb_probe-token" });
+    const env: NodeJS.ProcessEnv = { PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}), MAUSCLAW_CLOUD_SECRETS_FD: "3", VISIBLE_PROBE: "visible" };
+    const child = spawnWithSecrets(process.execPath, [script], env, { MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_CLOUD_BOAT_TOKEN: "box_mausclaw_probe-token" });
     await new Promise((resolve) => child.once("exit", resolve));
     const seen = JSON.parse(readFileSync(out, "utf8"));
-    expect(seen.secrets).toEqual({ OMB_CLOUD_BOOTSTRAP_SECRET: secret, OMB_CLOUD_BOAT_TOKEN: "box_omb_probe-token" });
+    expect(seen.secrets).toEqual({ MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret, MAUSCLAW_CLOUD_BOAT_TOKEN: "box_mausclaw_probe-token" });
     if (process.platform !== "win32") expect(seen.own).toContain("VISIBLE_PROBE=visible");
     for (const where of [seen.own, JSON.stringify(seen.env), seen.child]) {
       expect(where).not.toContain(secret);
-      expect(where).not.toContain("box_omb_probe-token");
+      expect(where).not.toContain("box_mausclaw_probe-token");
     }
-    expect(seen.child).not.toContain("OMB_CLOUD_SECRETS_FD");
+    expect(seen.child).not.toContain("MAUSCLAW_CLOUD_SECRETS_FD");
   } finally {
     await removeTempDir(dir);
   }
@@ -540,7 +540,7 @@ it("captures a child's stdout and stderr when asked, and shares this process's o
   writeFileSync(script, `process.stdout.write("stdout marker"); process.stderr.write("stderr marker");`);
   const env: NodeJS.ProcessEnv = { PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}) };
   const run = async (capture: boolean) => {
-    const child = spawnWithSecrets(process.execPath, [script], env, { OMB_CLOUD_BOOTSTRAP_SECRET: secret }, undefined, capture);
+    const child = spawnWithSecrets(process.execPath, [script], env, { MAUSCLAW_CLOUD_BOOTSTRAP_SECRET: secret }, undefined, capture);
     let out = "", err = "";
     child.stdout?.on("data", (chunk) => { out += chunk; });
     child.stderr?.on("data", (chunk) => { err += chunk; });
@@ -565,24 +565,24 @@ it("the Cloud supervisor hardens the host before anything runs as maus: hidepid 
   expect(hardenHost({}, run(0))).toEqual(["/proc: hidepid=invisible", "/.fly: root only"]);
   expect(calls).toEqual(["mount -o remount,hidepid=invisible /proc", "chmod 700 /.fly"]);
   expect(hardenHost({}, run(32, false))).toEqual(["/proc: hidepid not applied (mount: permission denied)"]);
-  expect(hardenHost({ OMB_CLOUD_HARDEN: "0" }, run(0))).toEqual(["hardening skipped (OMB_CLOUD_HARDEN=0)"]);
+  expect(hardenHost({ MAUSCLAW_CLOUD_HARDEN: "0" }, run(0))).toEqual(["hardening skipped (MAUSCLAW_CLOUD_HARDEN=0)"]);
   const failing = { ...run(0), chmod: () => { throw new Error("read-only"); } };
   expect(hardenHost({}, failing)).toEqual(["/proc: hidepid=invisible", "/.fly: left as is (read-only)"]);
 });
 
 it("boots as a Team Cloud with the Admin's team id and name, and refuses a team without them", () => {
-  const team = cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "team-7f3a", OMB_CLOUD_TEAM_NAME: " Acme " }))!;
+  const team = cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "team-7f3a", MAUSCLAW_CLOUD_TEAM_NAME: " Acme " }))!;
   expect(team).toMatchObject({ role: "team", team: { id: "team-7f3a", name: "Acme" } });
   expect(cloudHomeConfiguration(contract())).toMatchObject({ role: "home", team: null });
-  expect(() => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team" }))).toThrow(/OMB_CLOUD_TEAM_ID/);
-  expect(() => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "team-7f3a" }))).toThrow(/OMB_CLOUD_TEAM_NAME/);
-  expect(() => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "../x", OMB_CLOUD_TEAM_NAME: "Acme" }))).toThrow(/OMB_CLOUD_TEAM_ID/);
-  expect(() => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "t", OMB_CLOUD_TEAM_NAME: "a\nb" }))).toThrow(/OMB_CLOUD_TEAM_NAME/);
-  expect(() => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "t", OMB_CLOUD_TEAM_NAME: "x".repeat(81) }))).toThrow(/OMB_CLOUD_TEAM_NAME/);
+  expect(() => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team" }))).toThrow(/MAUSCLAW_CLOUD_TEAM_ID/);
+  expect(() => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "team-7f3a" }))).toThrow(/MAUSCLAW_CLOUD_TEAM_NAME/);
+  expect(() => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "../x", MAUSCLAW_CLOUD_TEAM_NAME: "Acme" }))).toThrow(/MAUSCLAW_CLOUD_TEAM_ID/);
+  expect(() => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "t", MAUSCLAW_CLOUD_TEAM_NAME: "a\nb" }))).toThrow(/MAUSCLAW_CLOUD_TEAM_NAME/);
+  expect(() => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "t", MAUSCLAW_CLOUD_TEAM_NAME: "x".repeat(81) }))).toThrow(/MAUSCLAW_CLOUD_TEAM_NAME/);
 });
 
 it("a Team Cloud takes the team's default language from the Admin, and boots in its own default when it is missing or unknown", () => {
-  const team = (language?: string) => cloudHomeConfiguration(contract({ OMB_CLOUD_ROLE: "team", OMB_CLOUD_TEAM_ID: "team-7f3a", OMB_CLOUD_TEAM_NAME: "Acme", ...(language === undefined ? {} : { OMB_CLOUD_TEAM_LANGUAGE: language }) }))!.team;
+  const team = (language?: string) => cloudHomeConfiguration(contract({ MAUSCLAW_CLOUD_ROLE: "team", MAUSCLAW_CLOUD_TEAM_ID: "team-7f3a", MAUSCLAW_CLOUD_TEAM_NAME: "Acme", ...(language === undefined ? {} : { MAUSCLAW_CLOUD_TEAM_LANGUAGE: language }) }))!.team;
   expect(team("de")).toEqual({ id: "team-7f3a", name: "Acme", language: "de" });
   expect(team(" PT-BR ")).toMatchObject({ language: "pt-br" });
   expect(team()).toEqual({ id: "team-7f3a", name: "Acme" });
@@ -596,7 +596,7 @@ it("a Team Cloud's pairing binds the Admin's member claim to the session it open
   const pairing = createCloudPairing({ secret, sessions, team: { id: "team-1", name: "Acme" }, now: () => now });
   let counter = 0;
   const mint = (claims: Record<string, unknown>) => {
-    const body = JSON.stringify({ label: "OpenMausBot app (Team Cloud)", ttlSeconds: 300, ...claims });
+    const body = JSON.stringify({ label: "MausClaw app (Team Cloud)", ttlSeconds: 300, ...claims });
     const timestamp = String(Math.floor(now / 1000)), nonce = `nonce-${String(++counter).padStart(12, "0")}`;
     return pairing.handle({ timestamp, nonce, signature: `v1=${cloudPairingSignature(secret, timestamp, nonce, body)}`, body: Buffer.from(body), source: "203.0.113.9" });
   };

@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 it("dispatches setup and canonical standing instructions through the real isolated app", async () => {
   const fixture = await launchVerificationServer();
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
+  const env = { MAUSCLAW_URL: fixture.info.url };
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(`${fixture.info.url}${path}`, {
       method, headers: { "content-type": "application/json" },
@@ -16,10 +16,10 @@ it("dispatches setup and canonical standing instructions through the real isolat
     return result;
   };
   try {
-    const { bot } = await runControlOmb(["new-bot", "--name", "Setup fixture"], { env }) as any;
+    const { bot } = await runControlMausclaw(["new-bot", "--name", "Setup fixture"], { env }) as any;
     const turn = async (text: string) => {
-      await runControlOmb(["send", "--bot", bot.id, "--text", text], { env });
-      await runControlOmb(["wait", "--bot", bot.id, "--timeout", "30"], { env });
+      await runControlMausclaw(["send", "--bot", bot.id, "--text", text], { env });
+      await runControlMausclaw(["wait", "--bot", bot.id, "--timeout", "30"], { env });
       return JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8"));
     };
     const setup = await turn("/setup Help me track garden watering");
@@ -39,7 +39,7 @@ it("dispatches setup and canonical standing instructions through the real isolat
     expect((await api("GET", `/api/bots/${bot.id}/history`)).rows).toEqual(expect.arrayContaining([
       expect.objectContaining({ field: "soul" }),
     ]));
-    const messages = await runControlOmb(["messages", "--bot", bot.id, "--limit", "10"], { env });
+    const messages = await runControlMausclaw(["messages", "--bot", bot.id, "--limit", "10"], { env });
     expect(JSON.stringify(messages)).toContain("hello from fake claude");
   } finally {
     await fixture.close();

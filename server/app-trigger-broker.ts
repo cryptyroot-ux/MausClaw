@@ -148,7 +148,7 @@ export function brokerClient(access: () => BrokerAccess | null, fetchImpl: typeo
     },
     async poll({ after, waitS, poller, signal }) {
       const query = new URLSearchParams({ after: String(after), wait: String(waitS), limit: "50" });
-      const response = await call(`/v1/events?${query}`, { headers: { "x-omb-poller": poller }, signal, timeoutMs: (waitS + 15) * 1000 });
+      const response = await call(`/v1/events?${query}`, { headers: { "x-mausclaw-poller": poller }, signal, timeoutMs: (waitS + 15) * 1000 });
       const body = pollSchema.parse(await json(response));
       // One malformed row must not stall the queue: it is skipped, and the cursor still moves past it.
       const events = body.events.flatMap((event) => {

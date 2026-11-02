@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 function dailyLogs(root: string): Array<{ path: string; text: string }> {
   const out: Array<{ path: string; text: string }> = [];
@@ -23,7 +23,7 @@ function dailyLogs(root: string): Array<{ path: string; text: string }> {
 
 it("carries a bot's recent 1:1 work into a room turn, tells the room, logs the turn, and carries the room back", async () => {
   const fixture = await launchVerificationServer();
-  const env = { OPENMAUSBOT_URL: fixture.info.url };
+  const env = { MAUSCLAW_URL: fixture.info.url };
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(`${fixture.info.url}${path}`, {
       method, headers: { "content-type": "application/json" },
@@ -50,13 +50,13 @@ it("carries a bot's recent 1:1 work into a room turn, tells the room, logs the t
     return `${sent?.systemPrompt ?? ""}\n${text}`;
   };
   try {
-    // SAFETY: control-omb returns the created bot record under `bot`
-    const { bot: lead } = await runControlOmb(["new-bot", "--name", "Lead"], { env }) as { bot: { id: string; threadId: string } };
+    // SAFETY: control-mausclaw returns the created bot record under `bot`
+    const { bot: lead } = await runControlMausclaw(["new-bot", "--name", "Lead"], { env }) as { bot: { id: string; threadId: string } };
     // SAFETY: same shape as above
-    const { bot: helper } = await runControlOmb(["new-bot", "--name", "Helper"], { env }) as { bot: { id: string } };
+    const { bot: helper } = await runControlMausclaw(["new-bot", "--name", "Helper"], { env }) as { bot: { id: string } };
 
-    await runControlOmb(["send", "--bot", lead.id, "--text", "Please reconcile the September invoices."], { env });
-    await runControlOmb(["wait", "--bot", lead.id, "--timeout", "30"], { env });
+    await runControlMausclaw(["send", "--bot", lead.id, "--text", "Please reconcile the September invoices."], { env });
+    await runControlMausclaw(["wait", "--bot", lead.id, "--timeout", "30"], { env });
     const first = given();
     expect(first).not.toContain("Your recent work");
 
@@ -74,7 +74,7 @@ it("carries a bot's recent 1:1 work into a room turn, tells the room, logs the t
       const text = dump()?.systemPrompt ?? "";
       return text.includes("Reply to the conversation above as") || JSON.stringify(dump()?.prompt ?? "").includes("Reply to the conversation above as");
     }, { timeout: 30_000 }).toBe(true);
-    await runControlOmb(["wait", "--bot", lead.id, "--timeout", "30"], { env });
+    await runControlMausclaw(["wait", "--bot", lead.id, "--timeout", "30"], { env });
     const room = given();
     expect(room).toContain("Your recent work");
     expect(room).toMatch(/- today \d{2}:\d{2} · 1:1 with User · (?:"[^"]*" · )?you said: "/);
@@ -83,8 +83,8 @@ it("carries a bot's recent 1:1 work into a room turn, tells the room, logs the t
     expect(chips).toHaveLength(1);
     expect(chips[0]!.tool!.name).toBe("Lead's recent-work brief covers 1 private chat with you");
 
-    await runControlOmb(["send", "--bot", lead.id, "--text", "And now?"], { env });
-    await runControlOmb(["wait", "--bot", lead.id, "--timeout", "30"], { env });
+    await runControlMausclaw(["send", "--bot", lead.id, "--text", "And now?"], { env });
+    await runControlMausclaw(["wait", "--bot", lead.id, "--timeout", "30"], { env });
     const second = given();
     expect(second).toContain("Your recent work");
     expect(second).toContain('room "Standup" · you said: "');

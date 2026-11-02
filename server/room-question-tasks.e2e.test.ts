@@ -8,12 +8,12 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { z } from "zod";
 
-import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import type { GroupTask, WireBot, WireGroup, WireMessage } from "../shared/wire.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 
 it("keeps live room questions fenced but allows task changes after their turn settles and restarts", async () => {
-  const gates = mkdtempSync(join(tmpdir(), "omb-room-question-gates-"));
+  const gates = mkdtempSync(join(tmpdir(), "mausclaw-room-question-gates-"));
   const finishGate = join(gates, "finish");
   const env = { FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_FINISH_GATE: finishGate };
   const fixture = await launchVerificationServer(env);

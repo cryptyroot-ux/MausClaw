@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 
 function alive(pid: number): boolean {
   try { process.kill(pid, 0); return true; } catch { return false; }
@@ -15,7 +15,7 @@ describe.skipIf(process.platform === "win32")("Stop through the isolated server"
     const pids: number[] = [];
     const control = async (args: string[]) => {
       const command = [...args, "--url", fixture.info.url];
-      const result = await runControlOmb(command) as any;
+      const result = await runControlMausclaw(command) as any;
       evidence.push({ command, result });
       return result;
     };

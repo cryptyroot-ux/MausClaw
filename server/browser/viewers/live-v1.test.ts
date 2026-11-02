@@ -21,7 +21,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const ORIGIN = "http://127.0.0.1:43210";
 
 function setup({ holdLimits }: { holdLimits?: HoldLimits } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-live-v1-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-live-v1-"));
   folders.push(dataDir);
   const backend = new FakeBackend(() => new FakeChrome({ documents: (url) => ({ title: url.endsWith("/b") ? "Page B" : url.endsWith("/a") ? "Page A" : "", text: url, elements: [{ role: "textbox", name: "Field", editable: true, box: [20, 20, 300, 40] }] }) }));
   const service = new BrowserService({ dataDir, backend: () => backend, maxRunning: 10, idleMs: () => 600_000, takeoverMs: 200, ...(holdLimits ? { holdLimits } : {}) });

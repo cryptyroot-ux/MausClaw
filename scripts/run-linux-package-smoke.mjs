@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const prefixName = "omb-linux-smoke-runtime-";
+const prefixName = "mausclaw-linux-smoke-runtime-";
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function cleanupRuntime(directory) {
@@ -29,11 +29,11 @@ if (appImages.length !== 1) {
 const [appImage] = appImages;
 
 const executables = [
-  path.join(root, "release", "linux-unpacked", "openmausbot"),
+  path.join(root, "release", "linux-unpacked", "mausclaw"),
   path.join(root, "release", appImage),
 ];
-if (process.env.OMB_SMOKE_INSTALLED_DEB === "1") {
-  executables.push("/opt/OpenMausBot/openmausbot");
+if (process.env.MAUSCLAW_SMOKE_INSTALLED_DEB === "1") {
+  executables.push("/opt/MausClaw/mausclaw");
 }
 
 for (const executable of executables) {
@@ -47,8 +47,8 @@ for (const executable of executables) {
       env: {
         ...process.env,
         XDG_RUNTIME_DIR: runtimeDirectory,
-        OMB_SMOKE_BUNDLED_CUA: "1",
-        OMB_SMOKE_EXECUTABLE: executable,
+        MAUSCLAW_SMOKE_BUNDLED_CUA: "1",
+        MAUSCLAW_SMOKE_EXECUTABLE: executable,
       },
       stdio: "inherit",
     },
@@ -76,9 +76,9 @@ if (process.exitCode === undefined) {
       env: {
         ...process.env,
         XDG_RUNTIME_DIR: runtimeDirectory,
-        OMB_SMOKE_BUNDLED_CUA: "1",
-        OMB_SMOKE_SIGNAL_SHUTDOWN: "1",
-        OMB_SMOKE_EXECUTABLE: path.join(root, "release", appImage),
+        MAUSCLAW_SMOKE_BUNDLED_CUA: "1",
+        MAUSCLAW_SMOKE_SIGNAL_SHUTDOWN: "1",
+        MAUSCLAW_SMOKE_EXECUTABLE: path.join(root, "release", appImage),
       },
       stdio: "inherit",
     },
@@ -105,8 +105,8 @@ if (process.exitCode === undefined) {
       env: {
         ...process.env,
         XDG_RUNTIME_DIR: runtimeDirectory,
-        OMB_SMOKE_HARD_DEATH: "1",
-        OMB_SMOKE_EXECUTABLE: path.join(root, "release", "linux-unpacked", "openmausbot"),
+        MAUSCLAW_SMOKE_HARD_DEATH: "1",
+        MAUSCLAW_SMOKE_EXECUTABLE: path.join(root, "release", "linux-unpacked", "mausclaw"),
       },
       stdio: "inherit",
     },
@@ -141,8 +141,8 @@ if (process.exitCode === undefined) for (const lane of [
       env: {
         ...process.env,
         XDG_RUNTIME_DIR: runtimeDirectory,
-        OMB_SMOKE_WAYLAND: lane.wayland ? "1" : "0",
-        OMB_SMOKE_LINUX_CUA_BLOCKED: lane.blocked ? "1" : "0",
+        MAUSCLAW_SMOKE_WAYLAND: lane.wayland ? "1" : "0",
+        MAUSCLAW_SMOKE_LINUX_CUA_BLOCKED: lane.blocked ? "1" : "0",
       },
       stdio: "inherit",
     },

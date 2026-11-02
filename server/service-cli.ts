@@ -50,7 +50,7 @@ export function runServiceCommand(input: ServiceInstallInput, io: ServiceIo): nu
   if (input.sentinel) return runSentinelService(input, platform, home, io);
   const plan = servicePlan(platform, input.dataDir, home);
   if (!plan) {
-    io.error("services are written for Linux (systemd) and macOS (launchd); on Windows, use Task Scheduler to run `openmausbot serve` at startup");
+    io.error("services are written for Linux (systemd) and macOS (launchd); on Windows, use Task Scheduler to run `mausclaw serve` at startup");
     return 1;
   }
   if (input.action === "uninstall") {
@@ -82,8 +82,8 @@ export function runServiceCommand(input: ServiceInstallInput, io: ServiceIo): nu
   for (const line of plan.activate) io.log(`  ${line}`);
   io.log("");
   if (input.domain && platform === "linux") io.log("the unit grants Caddy the capability for ports 80 and 443, so no setcap is needed under the service");
-  io.log(`logs: ${platform === "darwin" ? `${input.dataDir}/logs/service.log` : "journalctl -u openmausbot -f"}`);
-  io.log(`change options later by running \`openmausbot service install\` again with the new ones, then: ${platform === "darwin" ? plan.activate[1] : "sudo systemctl daemon-reload && sudo systemctl restart openmausbot"}`);
+  io.log(`logs: ${platform === "darwin" ? `${input.dataDir}/logs/service.log` : "journalctl -u mausclaw -f"}`);
+  io.log(`change options later by running \`mausclaw service install\` again with the new ones, then: ${platform === "darwin" ? plan.activate[1] : "sudo systemctl daemon-reload && sudo systemctl restart mausclaw"}`);
   return 0;
 }
 
@@ -103,7 +103,7 @@ function runSentinelService(input: ServiceInstallInput, platform: NodeJS.Platfor
     // command line as one argument, with its own quotes escaped
     const command = sentinelCommand({ ...input, out }).map((arg) => `\\"${arg}\\"`).join(" ");
     io.error("services are written for Linux (systemd) and macOS (launchd); on Windows, use Task Scheduler to run Sentinel every two minutes:");
-    io.error(`  schtasks /Create /SC MINUTE /MO 2 /TN "OpenMausBot Sentinel" /TR "${command}"`);
+    io.error(`  schtasks /Create /SC MINUTE /MO 2 /TN "MausClaw Sentinel" /TR "${command}"`);
     return 1;
   }
   if (input.action === "uninstall") {
@@ -148,7 +148,7 @@ function runSentinelService(input: ServiceInstallInput, platform: NodeJS.Platfor
   for (const line of plan.activate) io.log(`  ${line}`);
   io.log("");
   io.log(`issues: ${join(out, "issues.jsonl")}`);
-  io.log(`logs: ${platform === "darwin" ? join(out, "sentinel.log") : "journalctl --user -u openmausbot-sentinel"}`);
-  io.log("after an app update or a Node upgrade, check the schedule still points at both: openmausbot sentinel --check-install");
+  io.log(`logs: ${platform === "darwin" ? join(out, "sentinel.log") : "journalctl --user -u mausclaw-sentinel"}`);
+  io.log("after an app update or a Node upgrade, check the schedule still points at both: mausclaw sentinel --check-install");
   return 0;
 }

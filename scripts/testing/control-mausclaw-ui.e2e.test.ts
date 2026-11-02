@@ -1,6 +1,6 @@
-// Drives the real <App/> through `control-omb ui` and reads outcomes from the
+// Drives the real <App/> through `control-mausclaw ui` and reads outcomes from the
 // accessibility tree. Needs the pinned agent-browser binary: runs when one
-// resolves (tools directory, OMB_AGENT_BROWSER_PATH or PATH) or OMB_UI_E2E=1
+// resolves (tools directory, MAUSCLAW_AGENT_BROWSER_PATH or PATH) or MAUSCLAW_UI_E2E=1
 // asks for the verified download; otherwise skipped.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
@@ -11,17 +11,17 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { removeTempDir, waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 import { fixtureApi } from "./preview-fixture.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const CLI = join(ROOT, "scripts", "control-omb.ts");
-const forced = process.env.OMB_UI_E2E === "1";
+const CLI = join(ROOT, "scripts", "control-mausclaw.ts");
+const forced = process.env.MAUSCLAW_UI_E2E === "1";
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
 const enabled = forced || Boolean(binary);
 if (!enabled) {
-  console.log(`skipping control-omb ui e2e: no agent-browser binary resolves (looked in ${UI_TOOLS_DIR}, OMB_AGENT_BROWSER_PATH and PATH); set OMB_UI_E2E=1 to install the pinned release`);
+  console.log(`skipping control-mausclaw ui e2e: no agent-browser binary resolves (looked in ${UI_TOOLS_DIR}, MAUSCLAW_AGENT_BROWSER_PATH and PATH); set MAUSCLAW_UI_E2E=1 to install the pinned release`);
 }
 const run = enabled ? it : it.skip;
 // A forced run may still have Chrome for Testing to download even when
@@ -30,15 +30,15 @@ const LAUNCH_TIMEOUT_MS = forced ? 600_000 : 180_000;
 
 // Synthetic provider outcomes exercise the UI, not the commands themselves.
 const TOOL_CALLS = JSON.stringify([
-  { name: "Bash", input: { command: "pnpm control:omb doctor" }, ok: true },
-  { name: "Bash", input: { command: "pnpm control:omb ui click --name Missing" }, ok: false },
-  { name: "Bash", input: { command: "pnpm control:omb ui flag --set features.showToolCalls=true --dry-run" }, ok: true },
+  { name: "Bash", input: { command: "pnpm control:mausclaw doctor" }, ok: true },
+  { name: "Bash", input: { command: "pnpm control:mausclaw ui click --name Missing" }, ok: false },
+  { name: "Bash", input: { command: "pnpm control:mausclaw ui flag --set features.showToolCalls=true --dry-run" }, ok: true },
 ]);
 const REPLY = "hello from fake claude"; // the fake engine's default reply text
 const COMPOSER = `document.querySelector('textarea[aria-label="Message Pepper"]')`;
-// OMB_UI_EVIDENCE_DIR keeps the screenshot (CI uploads it); otherwise it is temporary.
-const evidenceDir = process.env.OMB_UI_EVIDENCE_DIR ? resolve(ROOT, process.env.OMB_UI_EVIDENCE_DIR) : mkdtempSync(join(tmpdir(), "omb-ui-evidence-"));
-const ownsEvidenceDir = !process.env.OMB_UI_EVIDENCE_DIR;
+// MAUSCLAW_UI_EVIDENCE_DIR keeps the screenshot (CI uploads it); otherwise it is temporary.
+const evidenceDir = process.env.MAUSCLAW_UI_EVIDENCE_DIR ? resolve(ROOT, process.env.MAUSCLAW_UI_EVIDENCE_DIR) : mkdtempSync(join(tmpdir(), "mausclaw-ui-evidence-"));
+const ownsEvidenceDir = !process.env.MAUSCLAW_UI_EVIDENCE_DIR;
 
 interface Launched {
   child: ReturnType<typeof spawn>;
@@ -94,7 +94,7 @@ function launch(args: string[]): Promise<Launched> {
 }
 
 const ui = (verb: string, handle: string, ...args: string[]) =>
-  runControlOmb(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
+  runControlMausclaw(["ui", verb, "--ui", handle, ...args]) as Promise<Record<string, any>>;
 
 /** Interactive refs by accessible name, from a snapshot's `refs` table. */
 const refsNamed = (snapshot: Record<string, any>, name: string, role?: string) =>
@@ -102,7 +102,7 @@ const refsNamed = (snapshot: Record<string, any>, name: string, role?: string) =
     .filter(([, element]) => element.name === name && (!role || element.role === role))
     .map(([id]) => `@${id}`);
 
-describe("control-omb ui drives the real renderer", () => {
+describe("control-mausclaw ui drives the real renderer", () => {
   let launched: Launched | undefined;
 
   afterAll(async () => {
@@ -245,7 +245,7 @@ describe("control-omb ui drives the real renderer", () => {
     expect(info.ui).toBe(join(info.dataDir, "ui.json"));
     expect(existsSync(info.ui)).toBe(true);
     const handle = JSON.parse(readFileSync(info.ui, "utf8"));
-    expect(handle).toMatchObject({ url: info.url, previewUrl: info.previewUrl, botId: info.botId, home: info.dataDir, session: `omb-ui-${new URL(info.url).port}` });
+    expect(handle).toMatchObject({ url: info.url, previewUrl: info.previewUrl, botId: info.botId, home: info.dataDir, session: `mausclaw-ui-${new URL(info.url).port}` });
     expect(existsSync(handle.binary)).toBe(true);
 
     const dry = await ui("flag", info.ui, "--set", "features.showToolCalls=true", "--dry-run");
@@ -257,7 +257,7 @@ describe("control-omb ui drives the real renderer", () => {
     const savedBot = async () => (await fetch(`${info.url}/api/bots`).then((response) => response.json())).bots.find((bot: any) => bot.id === info.botId);
     const originalBot = await savedBot();
     const originalModel = originalBot.modelSelection.model;
-    const models = await runControlOmb(["models", "--url", info.url]) as any;
+    const models = await runControlMausclaw(["models", "--url", info.url]) as any;
     const options = models.instances.find((instance: any) => instance.instanceId === originalBot.modelSelection.instanceId).models.options;
     const originalLabel = options.find((option: any) => option.id === originalModel).label;
     const nextModel = options.find((option: any) => option.id !== originalModel);
@@ -334,7 +334,7 @@ describe("control-omb ui drives the real renderer", () => {
     })()`);
     expect(hitTest).toMatchObject({ result: { blankReachesTranscript: true, cardInteractive: true, composerInteractive: true } });
 
-    expect(await runControlOmb(["doctor", "--url", info.url])).toMatchObject({ ok: true });
+    expect(await runControlMausclaw(["doctor", "--url", info.url])).toMatchObject({ ok: true });
     await expect(ui("click", info.ui, "--name", "Deliberately missing QA control")).rejects.toThrow("no element is named");
 
     // Planted with the same delay the real control has: a --name lookup that
@@ -367,9 +367,9 @@ describe("control-omb ui drives the real renderer", () => {
     expect(drafted.ok).toBe(true);
     const draft = drafted.result as string;
     expect(draft.startsWith("Create a verification skill from the run below.\nGoal: hello\n")).toBe(true);
-    expect(draft).toContain("✓ doctor — pnpm control:omb doctor (verified)\n");
-    expect(draft).toContain("✗ ui — pnpm control:omb ui click --name Missing (verified)\n");
-    expect(draft).toContain("[dry run] ui — pnpm control:omb ui flag --set features.showToolCalls=true --dry-run (verified)\n");
+    expect(draft).toContain("✓ doctor — pnpm control:mausclaw doctor (verified)\n");
+    expect(draft).toContain("✗ ui — pnpm control:mausclaw ui click --name Missing (verified)\n");
+    expect(draft).toContain("[dry run] ui — pnpm control:mausclaw ui flag --set features.showToolCalls=true --dry-run (verified)\n");
     expect(draft.endsWith("\n\n")).toBe(true);
     expect(await ui("eval", info.ui, "--js", `document.activeElement === ${COMPOSER}`)).toMatchObject({ ok: true, result: true });
     // The composer sits inside the conversation landmark, so its draft shows up
@@ -390,8 +390,8 @@ describe("control-omb ui drives the real renderer", () => {
     const inspected = await ui("snapshot", info.ui);
     const runLog = (inspected.snapshot as string).slice((inspected.snapshot as string).indexOf('complementary "Inspector"'));
     expect(runLog).toContain('tab "Run Log" [selected');
-    expect(runLog).toContain("pnpm control:omb doctor");
-    expect(runLog).toContain("pnpm control:omb ui click --name Missing");
+    expect(runLog).toContain("pnpm control:mausclaw doctor");
+    expect(runLog).toContain("pnpm control:mausclaw ui click --name Missing");
     expect(runLog).toContain('StaticText "Failed"');
     expect(runLog).toContain("Copy redacted run log");
     await ui("screenshot", info.ui, "--out", join(evidenceDir, "run-log.png"));

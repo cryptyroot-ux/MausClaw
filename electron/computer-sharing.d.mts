@@ -46,7 +46,7 @@ export interface CloudLendingState {
   stopped?: { reason: string; at: number };
 }
 export interface CloudLendingSnapshot {
-  /** Signed in to OMB Cloud with a known machine saved under Servers. */
+  /** Signed in to MausClaw Cloud with a known machine saved under Servers. */
   available: boolean;
   /** This app's local computer control (and OS permissions) is ready. */
   screenAvailable: boolean;

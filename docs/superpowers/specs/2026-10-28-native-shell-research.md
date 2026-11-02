@@ -2,12 +2,12 @@
 
 Date: 2026-10-28
 Status: research + implementation
-Scope: built-in shell execution capability for OMB native engine.
+Scope: built-in shell execution capability for MausClaw native engine.
 
 ## 1. Why native shell
 
-OMB has no built-in shell. Commands run only via MCP servers or computer-use MCP. Top agents (Claude
-Code, Codex, OpenCode, Hermes, Pi) all have a Bash/shell tool. Without it, OMB cannot run builds,
+MausClaw has no built-in shell. Commands run only via MCP servers or computer-use MCP. Top agents (Claude
+Code, Codex, OpenCode, Hermes, Pi) all have a Bash/shell tool. Without it, MausClaw cannot run builds,
 tests, git, or any CLI workflow natively. This is the second-biggest gap after file tools.
 
 ## 2. Design (Claude Code / Codex inspired)
@@ -24,7 +24,7 @@ tests, git, or any CLI workflow natively. This is the second-biggest gap after f
 
 ### 2.2 Security (Codex-style sandbox)
 - Default: workspace-write (cwd = workspace, can write inside workspace).
-- No network by default? (Codex has network toggle). OMB: allow network (too restrictive otherwise), but
+- No network by default? (Codex has network toggle). MausClaw: allow network (too restrictive otherwise), but
   document the risk.
 - Strip control-plane env (API keys, tokens) from child env (reuse stripControlPlaneEnv).
 - Timeout hard cap 10 min.

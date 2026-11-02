@@ -14,9 +14,9 @@ const DEFAULT_ROWS: Rows = [[1, "one"], [2, "two"], [3, "three"]];
 export class FakeDataDatabase implements BotDatabase {
   readonly botId: string;
   readonly calls: RecordedCall[] = [];
-  /** Source tables (outside omb_results). */
+  /** Source tables (outside mausclaw_results). */
   readonly tables = new Map<string, FakeTable>();
-  /** Result tables (omb_results). */
+  /** Result tables (mausclaw_results). */
   readonly results = new Map<string, FakeTable>();
   readonly interrupted: DataConnection[] = [];
   /** What the next materialise/run produces; cleared after use. */
@@ -51,7 +51,7 @@ export class FakeDataDatabase implements BotDatabase {
   }
 
   private relation(sql: string): FakeTable | undefined {
-    const result = /FROM omb_results\."([^"]+)"/.exec(sql) ?? /FROM omb_results\.(\w+)/.exec(sql);
+    const result = /FROM mausclaw_results\."([^"]+)"/.exec(sql) ?? /FROM mausclaw_results\.(\w+)/.exec(sql);
     if (result) return this.results.get(result[1]!);
     const table = /FROM "([^"]+)"/.exec(sql);
     return table ? this.tables.get(table[1]!) : undefined;
@@ -100,7 +100,7 @@ export class FakeDataDatabase implements BotDatabase {
     await this.settle(options);
     const next = this.take();
     this.results.set(name, { columns: next.columns, rows: next.rows });
-    return { table: `omb_results.${name}`, columns: next.columns, rowCount: next.rowCount, elapsedMs: 2 };
+    return { table: `mausclaw_results.${name}`, columns: next.columns, rowCount: next.rowCount, elapsedMs: 2 };
   }
 
   async dropResult(name: string, connection?: DataConnection): Promise<void> {
@@ -111,7 +111,7 @@ export class FakeDataDatabase implements BotDatabase {
   async page(target: string, options: { offset: number; limit: number; signal?: AbortSignal }): Promise<DataPage> {
     this.calls.push({ method: "page", target });
     await this.settle(options);
-    const table = this.results.get(target.replace(/^omb_results\./, "").replace(/"/g, "")) ?? this.tables.get(target.replace(/"/g, ""));
+    const table = this.results.get(target.replace(/^mausclaw_results\./, "").replace(/"/g, "")) ?? this.tables.get(target.replace(/"/g, ""));
     if (!table) throw new DataFailure({ code: "table_not_found", message: `Table ${target} does not exist` });
     return { columns: table.columns, rows: table.rows.slice(options.offset, options.offset + options.limit), rowCount: table.rows.length, offset: options.offset };
   }

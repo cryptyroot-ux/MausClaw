@@ -50,7 +50,7 @@ const api = async (method: string, path: string, body?: unknown): Promise<{ stat
 };
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-goal-run-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-goal-run-"));
   stopScopedWorkerFinishGate = join(home, "stop-scoped-worker-finish");
   busyWorkerFinishGate = join(home, "busy-worker-finish");
   busyGoalFinishGate = join(home, "busy-goal-finish");
@@ -58,7 +58,7 @@ beforeAll(async () => {
   queueFinishGate = join(home, "queue-finish");
   stopScopedLeadFinishGate = join(home, "stop-scoped-lead-finish");
   writeFileSync(stopScopedLeadFinishGate, "allow initial goal delegation");
-  const data = join(home, ".openmausbot");
+  const data = join(home, ".mausclaw");
   const staticDir = join(home, "static");
   mkdirSync(data, { recursive: true });
   mkdirSync(join(staticDir, "assets"), { recursive: true });
@@ -205,9 +205,9 @@ beforeAll(async () => {
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       HOME: home,
       USERPROFILE: home,
-      OMB_PORT: String(port),
-      OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_STATIC_DIR: staticDir,
+      MAUSCLAW_PORT: String(port),
+      MAUSCLAW_WEBHOOK_PORT: String(port + 1),
+      MAUSCLAW_STATIC_DIR: staticDir,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

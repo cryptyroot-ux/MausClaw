@@ -3,7 +3,7 @@ import { closeSync, existsSync, openSync, readFileSync, writeFileSync } from "no
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { handleToolCall, request } from "../scripts/mcp-server.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
@@ -13,7 +13,7 @@ it("boots, starts an interrupted routine once more, and reports it back to its s
   const { url, dataDir, logPath } = fixture.info;
   let restarted: ChildProcess | undefined;
   try {
-    const { bot } = await runControlOmb(["new-bot", "--name", "Recovery lead", "--url", url]) as any;
+    const { bot } = await runControlMausclaw(["new-bot", "--name", "Recovery lead", "--url", url]) as any;
     const { channel } = await handleToolCall("create_channel", { name: "Recovery room", member_ids: [bot.id] },
       (path, options) => request(path, options, url)) as any;
     await waitForExit(fixture.child, { signal: "SIGTERM" });
@@ -28,12 +28,12 @@ it("boots, starts an interrupted routine once more, and reports it back to its s
       if (process.env[key]) env[key] = process.env[key];
     }
     Object.assign(env, {
-      HOME: dataDir, USERPROFILE: dataDir, OMB_DATA_DIR: dataDir,
+      HOME: dataDir, USERPROFILE: dataDir, MAUSCLAW_DATA_DIR: dataDir,
       APPDATA: join(dataDir, "AppData", "Roaming"), LOCALAPPDATA: join(dataDir, "AppData", "Local"),
       XDG_CONFIG_HOME: join(dataDir, ".config"), XDG_CACHE_HOME: join(dataDir, ".cache"),
       XDG_DATA_HOME: join(dataDir, ".local", "share"), HERMES_HOME: join(dataDir, ".hermes"),
       TEMP: join(dataDir, "tmp"), TMP: join(dataDir, "tmp"), TMPDIR: join(dataDir, "tmp"),
-      OMB_PORT: new URL(url).port, OMB_WEBHOOK_PORT: String(Number(new URL(url).port) + 1),
+      MAUSCLAW_PORT: new URL(url).port, MAUSCLAW_WEBHOOK_PORT: String(Number(new URL(url).port) + 1),
       PATH: dirname(process.execPath), FAKE_CLAUDE_MODE: "happy",
     });
     const log = openSync(logPath, "a", 0o600);
@@ -67,7 +67,7 @@ it("keeps a routine waiting through a restart, reruns its cut teammate once, and
   const { url, dataDir, logPath } = fixture.info;
   let restarted: ChildProcess | undefined;
   try {
-    const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
+    const cli = (...args: string[]) => runControlMausclaw([...args, "--url", url]) as Promise<any>;
     const { bot: chief } = await cli("new-bot", "--name", "Clive", "--section", "Leadership");
     const { bot: mate } = await cli("new-bot", "--name", "Mira", "--section", "Engineering");
     await request(`/api/bots/${chief.id}`, { method: "PATCH", body: JSON.stringify({ chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true }) }, url);

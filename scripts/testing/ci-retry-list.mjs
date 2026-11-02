@@ -8,10 +8,10 @@ export const CI_RETRIES = 2;
 
 /** @typedef {{ file: string, test: string, owner: string, reason: string, since: string }} RetryEntry */
 
-/** The list; OMB_VITEST_RETRY_LIST points elsewhere only for this mechanism's own tests.
+/** The list; MAUSCLAW_VITEST_RETRY_LIST points elsewhere only for this mechanism's own tests.
  * @returns {RetryEntry[]} */
 export function loadRetryList(env = process.env) {
-  const path = env.OMB_VITEST_RETRY_LIST || DEFAULT_LIST;
+  const path = env.MAUSCLAW_VITEST_RETRY_LIST || DEFAULT_LIST;
   return JSON.parse(readFileSync(path, "utf8")).tests;
 }
 

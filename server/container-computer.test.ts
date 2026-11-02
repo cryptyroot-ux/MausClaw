@@ -57,7 +57,7 @@ function runner(responses: Record<string, string | Error>) {
 }
 
 it("recognizes only a durable VM workspace directory as prior provisioning evidence", () => {
-  const root = mkdtempSync(join(tmpdir(), "omb-vm-workspace-"));
+  const root = mkdtempSync(join(tmpdir(), "mausclaw-vm-workspace-"));
   const target = { ...perBotLocalVmTarget("workspace-fixture"), workspaceDir: join(root, "workspace") };
   try {
     expect(localVmWorkspaceExists(target)).toBe(false);
@@ -82,8 +82,8 @@ const statusProbe = `${driverExec} status --socket ${CUA_SOCKET}`;
 const healthProbe = `${driverExec} call health_report {} --socket ${CUA_SOCKET}`;
 const readinessProbe =
   `${driverExec} call get_desktop_state {} --socket ${CUA_SOCKET} ` +
-  "--screenshot-out-file /tmp/openmausbot-readiness.png";
-const readinessRead = `docker exec ${CONTAINER} base64 -w0 /tmp/openmausbot-readiness.png`;
+  "--screenshot-out-file /tmp/mausclaw-readiness.png";
+const readinessRead = `docker exec ${CONTAINER} base64 -w0 /tmp/mausclaw-readiness.png`;
 const validPng = Buffer.concat([
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   Buffer.alloc(600),
@@ -300,10 +300,10 @@ describe("containerComputerStatus", () => {
     const derived = perBotLocalVmTarget("bot-win");
     const target: LocalVmTarget = {
       ...derived,
-      workspaceDir: "C:\\Users\\light\\.openmausbot\\vm-homes\\win-target",
+      workspaceDir: "C:\\Users\\light\\.mausclaw\\vm-homes\\win-target",
     };
     const detail = JSON.parse(perBotReadyInspect("bot-win", 41629))[0];
-    detail.Mounts[0].Source = "/mnt/c/Users/light/.openmausbot/vm-homes/win-target";
+    detail.Mounts[0].Source = "/mnt/c/Users/light/.mausclaw/vm-homes/win-target";
     detail.HostConfig = {
       ...detail.HostConfig,
       CapDrop: ["CAP_CHOWN", "CAP_DAC_OVERRIDE"],
@@ -334,8 +334,8 @@ describe("containerComputerStatus", () => {
         overall: "ok",
         checks: [],
       }),
-      [`${targetDriverExec} call get_desktop_state {} --socket ${CUA_SOCKET} --screenshot-out-file /tmp/openmausbot-readiness.png`]: "{}\n",
-      [`podman exec ${target.containerName} base64 -w0 /tmp/openmausbot-readiness.png`]: validPng.toString("base64"),
+      [`${targetDriverExec} call get_desktop_state {} --socket ${CUA_SOCKET} --screenshot-out-file /tmp/mausclaw-readiness.png`]: "{}\n",
+      [`podman exec ${target.containerName} base64 -w0 /tmp/mausclaw-readiness.png`]: validPng.toString("base64"),
     });
 
     const status = await containerComputerStatus(fake.run, "win32", target);
@@ -440,8 +440,8 @@ describe("containerComputerStatus", () => {
         overall: "ok",
         checks: [],
       }),
-      [`${targetDriverExec} call get_desktop_state {} --socket ${CUA_SOCKET} --screenshot-out-file /tmp/openmausbot-readiness.png`]: "{}\n",
-      [`docker exec ${target.containerName} base64 -w0 /tmp/openmausbot-readiness.png`]: validPng.toString("base64"),
+      [`${targetDriverExec} call get_desktop_state {} --socket ${CUA_SOCKET} --screenshot-out-file /tmp/mausclaw-readiness.png`]: "{}\n",
+      [`docker exec ${target.containerName} base64 -w0 /tmp/mausclaw-readiness.png`]: validPng.toString("base64"),
     });
 
     const status = await containerComputerStatus(fake.run, "linux", target);
@@ -473,7 +473,7 @@ describe("containerComputerStatus", () => {
 
     expect(status.managed).toBe(false);
     expect(status.ready).toBe(false);
-    expect(status.problem).toContain("not created by OpenMausBot");
+    expect(status.problem).toContain("not created by MausClaw");
   });
 
   it("prefers a running runtime over an earlier installed but stopped one", async () => {
@@ -828,7 +828,7 @@ describe("Cua integration", () => {
     // for about 0.6 s before each pixel action; plain logs feed desktop_error.
     expect(dockerfile).toContain(`CUA_DRIVER_WINDOW_CHANGE_TIMEOUT_MS=200 NO_COLOR=1 ${CUA_EXECUTABLE} serve`);
     expect(dockerfile).toContain(`--permission-mode standard --cursor-reduced-motion on'`);
-    expect(dockerfile).toContain("prepare-openmausbot-workspace.sh");
+    expect(dockerfile).toContain("prepare-mausclaw-workspace.sh");
     expect(dockerfile).toContain('if ! chmod 0700 "$workspace"');
     expect(dockerfile).toContain('test -r "$directory" && test -w "$directory" && test -x "$directory"');
     expect(dockerfile).toContain('migrate_profile "$HOME/.config/google-chrome" google-chrome');
@@ -865,7 +865,7 @@ describe("Cua integration", () => {
   it("captures the preview through Cua Driver rather than xdotool or VNC", async () => {
     const screenshotCall =
       `${driverExec} call get_desktop_state {} --socket ${CUA_SOCKET} ` +
-      "--screenshot-out-file /tmp/openmausbot-preview.png";
+      "--screenshot-out-file /tmp/mausclaw-preview.png";
     const png = validPng;
     const fake = runner({
       "/usr/bin/which docker": "docker\n",
@@ -879,7 +879,7 @@ describe("Cua integration", () => {
       [readinessProbe]: "{}\n",
       [readinessRead]: png.toString("base64"),
       [screenshotCall]: "{}\n",
-      [`docker exec ${CONTAINER} base64 -w0 /tmp/openmausbot-preview.png`]: png.toString("base64"),
+      [`docker exec ${CONTAINER} base64 -w0 /tmp/mausclaw-preview.png`]: png.toString("base64"),
     });
 
     const image = await containerComputerScreenshot(fake.run, "linux");
@@ -906,8 +906,8 @@ describe("Cua integration", () => {
       [readinessProbe]: "{}\n",
       [readinessRead]: png.toString("base64"),
       [`${driverExec} call get_desktop_state {} --socket ${CUA_SOCKET} ` +
-        "--screenshot-out-file /tmp/openmausbot-preview.png"]: "{}\n",
-      [`docker exec ${CONTAINER} base64 -w0 /tmp/openmausbot-preview.png`]: png.toString("base64"),
+        "--screenshot-out-file /tmp/mausclaw-preview.png"]: "{}\n",
+      [`docker exec ${CONTAINER} base64 -w0 /tmp/mausclaw-preview.png`]: png.toString("base64"),
     });
 
     const frame = await containerComputerFrame(fake.run, "linux");
@@ -918,7 +918,7 @@ describe("Cua integration", () => {
 });
 
 describe("containerComputerAction", () => {
-  it("never removes an exact-name container without OpenMausBot ownership labels", async () => {
+  it("never removes an exact-name container without MausClaw ownership labels", async () => {
     const fake = runner({
       "/usr/bin/which docker": "docker\n",
       "/usr/bin/which podman": new Error("missing"),
@@ -930,12 +930,12 @@ describe("containerComputerAction", () => {
     });
 
     await expect(containerComputerAction("remove", fake.run, "linux")).rejects.toThrow(
-      /not created by OpenMausBot.*remove it manually/i,
+      /not created by MausClaw.*remove it manually/i,
     );
     expect(fake.calls).not.toContain(`docker rm -f ${CONTAINER}`);
   });
 
-  it("removes a verified OpenMausBot container even when its version labels are stale", async () => {
+  it("removes a verified MausClaw container even when its version labels are stale", async () => {
     const fake = runner({
       "/usr/bin/which docker": "docker\n",
       "/usr/bin/which podman": new Error("missing"),
@@ -1110,9 +1110,9 @@ describe("setupCommands", () => {
   });
 
   it("uses an explicit local image name so Podman never resolves the managed build on Docker Hub", () => {
-    expect(IMAGE).toMatch(/^localhost\/openmausbot\/cua-local-vm:/);
+    expect(IMAGE).toMatch(/^localhost\/mausclaw\/cua-local-vm:/);
     expect(setupCommands("podman", "darwin").run).toContain(IMAGE);
-    expect(setupCommands("podman", "darwin").run).not.toContain("docker.io/openmausbot");
+    expect(setupCommands("podman", "darwin").run).not.toContain("docker.io/mausclaw");
   });
 
   it("generates Apple container lifecycle commands without Docker-only flags", () => {

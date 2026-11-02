@@ -18,7 +18,7 @@ describe("turn image admission", () => {
   const temporary: string[] = [];
 
   const store = (suffix = "") => {
-    const root = mkdtempSync(join(tmpdir(), `omb-turn-images${suffix}-`));
+    const root = mkdtempSync(join(tmpdir(), `mausclaw-turn-images${suffix}-`));
     temporary.push(root);
     return root;
   };

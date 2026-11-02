@@ -113,7 +113,7 @@ function boundedData(data: Record<string, unknown>): Record<string, unknown> {
   const encoded = utf8(JSON.stringify(data));
   if (encoded.byteLength <= MAX_EVENT_DATA_BYTES) return data;
   return {
-    omb_truncated: true,
+    mausclaw_truncated: true,
     original_bytes: encoded.byteLength,
     preview: new TextDecoder().decode(encoded.slice(0, MAX_EVENT_DATA_BYTES)),
   };
@@ -204,7 +204,7 @@ export async function enqueue(
 }
 
 export function cloudWakeMessage(timestamp: number, machineId: string) {
-  return `omb-cloud-wake:v1\n${timestamp}\n${machineId}`;
+  return `mausclaw-cloud-wake:v1\n${timestamp}\n${machineId}`;
 }
 
 /** `v1=<base64url HMAC-SHA256(CLOUD_GRANT_SECRET, cloudWakeMessage(timestamp, machine id))>`, which the Cloud Admin
@@ -238,7 +238,7 @@ async function wakeCloud(env: Env, owner: Owner, now: number) {
     const timestamp = Math.floor(now / 1000);
     const response = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-omb-wake-timestamp": String(timestamp), "x-omb-wake-signature": await cloudWakeSignature(secret, timestamp, machineId) },
+      headers: { "content-type": "application/json", "x-mausclaw-wake-timestamp": String(timestamp), "x-mausclaw-wake-signature": await cloudWakeSignature(secret, timestamp, machineId) },
       body: JSON.stringify({ machineId }),
       signal: AbortSignal.timeout(WAKE_TIMEOUT_MS),
     });
@@ -433,11 +433,11 @@ async function resumeSweptTriggers(env: Env, installationId: string) {
   }
 }
 
-/** GET /v1/events?after=<seq>&wait=<0-25>&limit=<1-50>, with header x-omb-poller. */
+/** GET /v1/events?after=<seq>&wait=<0-25>&limit=<1-50>, with header x-mausclaw-poller. */
 export async function pollEvents(request: Request, url: URL, installation: EventInstallation, env: Env, ctx: ExecutionContext) {
   if (!(await env.EVENTS_LIMITER.limit({ key: installation.id })).success) return json({ error: "too many event requests" }, 429);
-  const poller = request.headers.get("x-omb-poller") ?? "";
-  if (!POLLER_ID.test(poller)) return json({ error: "x-omb-poller must be the server's stable id: 8-64 letters, digits, - or _" }, 400);
+  const poller = request.headers.get("x-mausclaw-poller") ?? "";
+  if (!POLLER_ID.test(poller)) return json({ error: "x-mausclaw-poller must be the server's stable id: 8-64 letters, digits, - or _" }, 400);
   const after = intParam(url, "after", 0, Number.MAX_SAFE_INTEGER);
   const wait = intParam(url, "wait", 0, POLL_MAX_WAIT_S);
   const limit = intParam(url, "limit", POLL_MAX_LIMIT, POLL_MAX_LIMIT);
@@ -483,7 +483,7 @@ export async function queueTestEvent(request: Request, installation: EventInstal
   const eventId = `test_${crypto.randomUUID()}`;
   const body = JSON.stringify({
     id: eventId,
-    type: "omb.test",
+    type: "mausclaw.test",
     timestamp: new Date(now).toISOString(),
     metadata: { trigger_slug: bound.trigger_slug, trigger_id: triggerId, connected_account_id: bound.connected_account_id, user_id: actingUser(installation) },
     data: boundedData(data),
@@ -603,7 +603,7 @@ export async function appEventStats(request: Request, url: URL, env: Env) {
 }
 
 export function cloudGrantMessage(machineId: string) {
-  return `omb-connected-apps-cloud:v1\n${machineId}`;
+  return `mausclaw-connected-apps-cloud:v1\n${machineId}`;
 }
 
 /** `v1.<machine id>.<base64url HMAC-SHA256(CLOUD_GRANT_SECRET, cloudGrantMessage(machine id))>`, minted by the Cloud

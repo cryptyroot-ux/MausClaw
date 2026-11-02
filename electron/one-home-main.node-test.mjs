@@ -61,7 +61,7 @@ test("the switch that keeps this computer's bots here: only on this app's pages,
   const ask = (channel, page, ...args) => handlers.get(channel)({ page }, ...args);
   const hidden = { shown: false, on: false, moved: false, coming: false };
   const account = { id: "acct-1", email: "person@example.test" };
-  const machine = { status: "ready", origin: "https://omb-t-1.fly.dev", moves: true };
+  const machine = { status: "ready", origin: "https://mausclaw-t-1.fly.dev", moves: true };
   try {
     for (const channel of ["one-home:keep", "one-home:keep-set"]) assert.throws(() => ask(channel, null, true), /only available/u, channel);
     assert.deepEqual(ask("one-home:keep", "local"), hidden, "signed out");

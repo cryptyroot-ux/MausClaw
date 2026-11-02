@@ -86,7 +86,7 @@ export function parsePrepareCloudflaredArgs(args = []) {
     if (argument === "--current" && !options.current) {
       options.current = true;
     } else if (argument === "--root" && !options.root && typeof next === "string" && next !== "") {
-      // `openmausbot serve --tunnel` stages into its data dir, not a checkout.
+      // `mausclaw serve --tunnel` stages into its data dir, not a checkout.
       options.root = next;
       index += 1;
     } else {
@@ -213,7 +213,7 @@ function extractionFailure(result) {
 
 /** Retry transient download failures; callers still verify the pinned digest. */
 export async function releaseBytes(asset) {
-  const cacheDirectory = process.env.OMB_CLOUDFLARED_ARCHIVE_DIR;
+  const cacheDirectory = process.env.MAUSCLAW_CLOUDFLARED_ARCHIVE_DIR;
   const cached = cacheDirectory ? join(cacheDirectory, asset.name) : "";
   if (cached && existsSync(cached)) return readFileSync(cached);
 

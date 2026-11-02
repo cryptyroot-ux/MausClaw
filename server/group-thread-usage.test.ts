@@ -9,7 +9,7 @@ let dir: string;
 const load = (path: string) => { const reader = new GroupUsageReader(path); reader.refresh(); return reader; };
 const row = (at: string, patch = {}) => ({ at, threadId: "room", botId: "one", botName: "One", input: 100, output: 10, cachedInput: 80, costUsd: 0.01, ...patch });
 const write = (month: string, rows: unknown[]) => writeFileSync(join(dir, "usage", `${month}.jsonl`), rows.map(item => JSON.stringify(item)).join("\n") + "\n");
-beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "omb-group-usage-")); mkdirSync(join(dir, "usage")); });
+beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "mausclaw-group-usage-")); mkdirSync(join(dir, "usage")); });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("group thread accounting", () => {

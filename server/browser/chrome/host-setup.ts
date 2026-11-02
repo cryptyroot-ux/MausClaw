@@ -1,29 +1,29 @@
 // Ported from T3 Code's apps/server/src/preview/PreviewBrowserHost.ts,
 // Copyright 2026 T3 Tools Inc., used under the MIT License
 // (third_party/t3-code/LICENSE). Modified: plain TypeScript instead of Effect,
-// OMB's command and environment names, and an AppArmor profile pinned to one
+// MausClaw's command and environment names, and an AppArmor profile pinned to one
 // exact executable instead of a wildcard path.
 //
-// OMB never turns Chrome's sandbox off by itself. A host that cannot give it one
+// MausClaw never turns Chrome's sandbox off by itself. A host that cannot give it one
 // gets the setup command instead, and only an operator's explicit
-// OMB_BROWSER_SANDBOX=0 launches without it.
+// MAUSCLAW_BROWSER_SANDBOX=0 launches without it.
 
 import { execFile } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute } from "node:path";
 
-export const SETUP_COMMAND = "sudo openmausbot browser setup";
+export const SETUP_COMMAND = "sudo mausclaw browser setup";
 
 /** What Chrome prints before aborting when it cannot sandbox itself. */
 export const NO_SANDBOX_SIGNATURE = "No usable sandbox";
 
 export function sandboxDisabled(env: Readonly<Record<string, string | undefined>>): boolean {
-  return env.OMB_BROWSER_SANDBOX === "0";
+  return env.MAUSCLAW_BROWSER_SANDBOX === "0";
 }
 
 /** Set on Ubuntu 23.10+: unprivileged user namespaces need an AppArmor profile. */
 export const USERNS_RESTRICTION = "/proc/sys/kernel/apparmor_restrict_unprivileged_userns";
-export const APPARMOR_PROFILE_NAME = "openmausbot-chrome";
+export const APPARMOR_PROFILE_NAME = "mausclaw-chrome";
 export const APPARMOR_PROFILE_PATH = `/etc/apparmor.d/${APPARMOR_PROFILE_NAME}`;
 
 /**
@@ -35,7 +35,7 @@ export function appArmorProfile(executable: string): string {
   if (!isAbsolute(executable) || /[\s*?[\]{}"'\\^]/.test(executable) || !executable.startsWith("/opt/")) {
     throw new Error(`The browser's AppArmor exemption is only for a root-owned path under /opt, not ${executable}.`);
   }
-  return `# Written by \`openmausbot browser setup\`: lets OpenMausBot's Chrome use its sandbox.
+  return `# Written by \`mausclaw browser setup\`: lets MausClaw's Chrome use its sandbox.
 abi <abi/4.0>,
 include <tunables/global>
 

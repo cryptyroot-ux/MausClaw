@@ -27,7 +27,7 @@ const standup: CalendarEvent = {
 
 function setup(options: { hosted?: boolean; needsYou?: NeedsYouItem[]; language?: string; ideas?: string[] } = {}) {
   let watching = true;
-  const dir = mkdtempSync(join(tmpdir(), "omb-brief-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-brief-"));
   dirs.push(dir);
   let now = Date.parse("2026-10-22T08:00:00Z");
   const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }));

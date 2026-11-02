@@ -29,7 +29,7 @@ describe("reply display", () => {
     const snippet = replySnippet(serializeCitation(citation));
     expect(snippet).toContain("quoted text");
     expect(snippet).toContain("why?");
-    expect(snippet).not.toContain("omb-citation");
+    expect(snippet).not.toContain("mausclaw-citation");
   });
 });
 

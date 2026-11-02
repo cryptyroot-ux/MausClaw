@@ -1,22 +1,22 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { afterAll, expect, it } from "vitest";
-import { runControlOmb } from "../control-omb.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
 
 let child: ChildProcess | undefined;
 afterAll(() => waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }));
 
-(process.env.OMB_UI_E2E === "1" ? it : it.skip)("Run now shows pending, its exact result, and retryable request errors", async () => {
+(process.env.MAUSCLAW_UI_E2E === "1" ? it : it.skip)("Run now shows pending, its exact result, and retryable request errors", async () => {
   const root = fileURLToPath(new URL("../..", import.meta.url));
   let output = "";
-  child = spawn(process.execPath, ["--experimental-strip-types", "scripts/control-omb.ts", "ui", "launch"], { cwd: root, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
+  child = spawn(process.execPath, ["--experimental-strip-types", "scripts/control-mausclaw.ts", "ui", "launch"], { cwd: root, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
   child.stdout!.on("data", chunk => { output += chunk; });
   let fixture: { ui: string; url: string; botId: string };
   await expect.poll(() => {
     try { fixture = JSON.parse(output); return Boolean(fixture.ui); } catch { return false; }
   }, { timeout: 120_000 }).toBe(true);
-  const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<any>;
+  const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<any>;
   const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
   const click = (name: string) => ui("click", "--name", name);
   const response = await fetch(`${fixture!.url}/api/routines`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Feedback fixture", prompt: "Reply with the fixture response.", botId: fixture!.botId, enabled: false, schedule: { type: "interval", everyMinutes: 60, anchorAt: Date.now() + 3_600_000 } }) });
@@ -57,5 +57,5 @@ afterAll(() => waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }));
   await click("Run now");
   await expect.poll(dialog, { timeout: 30_000 }).toContain("Completed");
   expect(await dialog()).toContain("A different competing run.");
-  if (process.env.OMB_RUN_FEEDBACK_SCREENSHOT) await ui("screenshot", "--out", process.env.OMB_RUN_FEEDBACK_SCREENSHOT);
+  if (process.env.MAUSCLAW_RUN_FEEDBACK_SCREENSHOT) await ui("screenshot", "--out", process.env.MAUSCLAW_RUN_FEEDBACK_SCREENSHOT);
 }, 180_000);

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer } from "../scripts/control-mausclaw.ts";
 import type { WireBot } from "../shared/wire.ts";
 
 it("saves, reads and resets facial feature color through the isolated HTTP routes", async () => {

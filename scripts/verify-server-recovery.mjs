@@ -14,7 +14,7 @@ import { pollServerIdentity } from "../electron/server-boot-probe.mjs";
 import { acquireDataDirLease } from "../electron/data-dir-lease.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const flag = "--omb-server-recovery-fixture";
+const flag = "--mausclaw-server-recovery-fixture";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function until(check, label) {
   const deadline = Date.now() + 30_000;
@@ -100,7 +100,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
     const url = `http://127.0.0.1:${port}`;
     const token = randomBytes(32).toString("base64url");
     lease = acquireDataDirLease(dataDir);
-    const leaseFile = join(dataDir, "openmausbot-server.lease");
+    const leaseFile = join(dataDir, "mausclaw-server.lease");
     const parentLease = readFileSync(leaseFile, "utf8");
     const start = async () => {
       const proc = utilityProcess.fork(join(output, "server/index.js"), [], {
@@ -109,8 +109,8 @@ if (process.versions.electron && process.argv.includes(flag)) {
           PATH: dirname(runtime), HOME: home, USERPROFILE: home,
           XDG_CONFIG_HOME: home, XDG_CACHE_HOME: home, XDG_DATA_HOME: home,
           APPDATA: home, LOCALAPPDATA: home, TMPDIR: home, TEMP: home, TMP: home,
-          OMB_DATA_DIR: dataDir, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(webhookPort),
-          OMB_STATIC_DIR: join(output, "ui"), OMB_DESKTOP_PARENT: "1",
+          MAUSCLAW_DATA_DIR: dataDir, MAUSCLAW_PORT: String(port), MAUSCLAW_WEBHOOK_PORT: String(webhookPort),
+          MAUSCLAW_STATIC_DIR: join(output, "ui"), MAUSCLAW_DESKTOP_PARENT: "1",
           ...lease.utilityServerLeaseEnvironment(),
           FAKE_CLAUDE_MODE: "hang", FAKE_CLAUDE_PROMPTS: join(home, "prompts.jsonl"),
           FAKE_CLAUDE_DUMP: join(home, "fake.json"),
@@ -127,7 +127,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
       supervisor.watch(proc);
       proc.once("spawn", () => {
         record("spawn", { pid: proc.pid, generation: children.length });
-        proc.postMessage({ type: "openmausbot:desktop-mutation-token", token, companionToken: token });
+        proc.postMessage({ type: "mausclaw:desktop-mutation-token", token, companionToken: token });
       });
       proc.on("message", (message) => {
         if (supervisor.isCurrent(proc)) approval.receive(proc, message);
@@ -189,7 +189,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
       fakePid = null;
       await until(() => active && active.pid !== initialPid, "replacement PID verified");
       const replacementPid = active.pid;
-      assert.equal(JSON.parse(readFileSync(join(dataDir, ".openmausbot-server-child/openmausbot-server.lease"), "utf8")).pid, replacementPid);
+      assert.equal(JSON.parse(readFileSync(join(dataDir, ".mausclaw-server-child/mausclaw-server.lease"), "utf8")).pid, replacementPid);
       const wait = await control("wait_for_conversation", { target_type: "bot", target_id: bot.id, task_id: bot.activeTaskId, timeout_seconds: 2 });
       assert.equal(wait.target.busy, false);
       const messages = await control("get_bot_messages", { bot_id: bot.id, task_id: bot.activeTaskId, limit: 10 });
@@ -221,7 +221,7 @@ if (process.versions.electron && process.argv.includes(flag)) {
 } else {
   assert.notEqual(process.platform, "win32", "This crash fixture uses POSIX SIGSTOP/SIGKILL");
   // macOS's default temp path leaves no room for the server's Unix sockets.
-  const output = mkdtempSync(join(process.platform === "darwin" ? "/tmp" : tmpdir(), "omb-server-recovery-"));
+  const output = mkdtempSync(join(process.platform === "darwin" ? "/tmp" : tmpdir(), "mausclaw-server-recovery-"));
   const electron = createRequire(import.meta.url)("electron");
   cpSync(join(root, "dist-server"), join(output, "server"), { recursive: true });
   mkdirSync(join(output, "ui"));

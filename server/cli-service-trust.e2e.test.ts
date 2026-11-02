@@ -1,4 +1,4 @@
-// The real CLI starts the real server in a disposable home with OMB_LOOPBACK_TRUST=service.
+// The real CLI starts the real server in a disposable home with MAUSCLAW_LOOPBACK_TRUST=service.
 import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -11,7 +11,7 @@ import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
-const ENTRY = join(SERVER_DIR, "openmausbot.ts");
+const ENTRY = join(SERVER_DIR, "mausclaw.ts");
 const run = promisify(execFile);
 
 let home: string;
@@ -22,7 +22,7 @@ let output = "";
 const environment = () => ({
   ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
   ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-  HOME: home, USERPROFILE: home, OMB_WEBHOOK_PORT: String(PORT + 1), OMB_LOOPBACK_TRUST: "service",
+  HOME: home, USERPROFILE: home, MAUSCLAW_WEBHOOK_PORT: String(PORT + 1), MAUSCLAW_LOOPBACK_TRUST: "service",
 });
 const cli = async (args: string[]) => {
   try {
@@ -34,9 +34,9 @@ const cli = async (args: string[]) => {
   }
 };
 
-describe.skipIf(process.platform === "win32")("openmausbot serve under service loopback trust", () => {
+describe.skipIf(process.platform === "win32")("mausclaw serve under service loopback trust", () => {
   beforeAll(async () => {
-    home = mkdtempSync(join(tmpdir(), "omb-cli-service-"));
+    home = mkdtempSync(join(tmpdir(), "mausclaw-cli-service-"));
     PORT = await freePortBlock([0, 1]);
     serve = spawn(process.execPath, ["--experimental-strip-types", ENTRY, "serve", "--port", String(PORT), "--data-dir", join(home, "data")], {
       env: environment(), stdio: ["ignore", "pipe", "pipe"],
@@ -57,7 +57,7 @@ describe.skipIf(process.platform === "win32")("openmausbot serve under service l
   });
 
   it("prints a pairing code for the CLI that started the server and keeps running", async () => {
-    expect(output).toContain("local requests: service trust (OMB_LOOPBACK_TRUST)");
+    expect(output).toContain("local requests: service trust (MAUSCLAW_LOOPBACK_TRUST)");
     expect(output).toMatch(/pairing code: {2}[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
     expect(output).not.toContain("no pairing code");
     expect(serve.exitCode).toBeNull();
@@ -65,7 +65,7 @@ describe.skipIf(process.platform === "win32")("openmausbot serve under service l
   });
 
   it("refuses everyone else on this machine the pairing route", async () => {
-    for (const headers of [{}, { "x-openmausbot-cli-owner": "x".repeat(43) }]) {
+    for (const headers of [{}, { "x-mausclaw-cli-owner": "x".repeat(43) }]) {
       const minted = await fetch(`http://127.0.0.1:${PORT}/api/auth/pairing`, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: "{}" });
       expect(minted.status).toBe(403);
     }

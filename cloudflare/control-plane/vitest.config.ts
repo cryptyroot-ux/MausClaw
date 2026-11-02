@@ -24,9 +24,9 @@ export default defineConfig({
           // tests add accounts themselves.
           CLOUDFLARE_ENDPOINT_ACCOUNTS: "",
           TEST_PRODUCTION_ENDPOINT_ACCOUNTS: JSON.stringify(productionAccounts),
-          ALLOWED_ORIGINS: "https://app.openmausbot.test",
+          ALLOWED_ORIGINS: "https://app.mausclaw.test",
           // Production starts in observe (wrangler.jsonc); the suite exercises reclaiming.
-          OMB_TUNNEL_RECLAIM: "on",
+          MAUSCLAW_TUNNEL_RECLAIM: "on",
           TEST_MIGRATIONS: await readD1Migrations(`${root}migrations`),
         },
         // An empty database for migration tests that need data written by an

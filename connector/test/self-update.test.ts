@@ -34,7 +34,7 @@ function installed(instance: string): ContainerSpec {
 }
 
 async function fixture() {
-  const dir = mkdtempSync(join(tmpdir(), "omb-connector-update-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-connector-update-"));
   dirs.push(dir);
   const state = new StateStore(join(dir, "state"));
   const docker = new FakeDocker(state.dir);

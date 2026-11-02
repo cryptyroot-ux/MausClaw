@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
-export const LATEST_RELEASE_URL = "https://api.github.com/repos/cryptyroot-ux/OMB-Claw/commits/feature/native-agent-engine";
+export const LATEST_RELEASE_URL = "https://api.github.com/repos/cryptyroot-ux/MausClaw/commits/feature/native-agent-engine";
 const CACHE_MS = 60 * 60_000;
 
 /** "managed" is a hosted or Cloud server that is updated for its owner. */
@@ -10,9 +10,9 @@ export type InstallKind = "desktop" | "managed" | "docker" | "podman" | "npm" | 
 
 /** As docs/self-hosting.md and deploy/podman/README.md give them. */
 export const UPDATE_COMMANDS: Partial<Record<InstallKind, { command: string; restart: boolean }>> = {
-  docker: { command: "docker compose pull omb && docker compose up -d", restart: false },
+  docker: { command: "docker compose pull mausclaw && docker compose up -d", restart: false },
   podman: { command: "git pull && cd deploy/podman && PODMAN_COMPOSE_PROVIDER=podman-compose podman compose --env-file .env -f compose.yaml up -d --build", restart: false },
-  npm: { command: "npm install -g openmausbot@latest", restart: true },
+  npm: { command: "npm install -g mausclaw@latest", restart: true },
   git: { command: "git pull && pnpm install && pnpm build", restart: true },
 };
 
@@ -95,7 +95,7 @@ export function createUpdateChecker(options: {
         const response = await fetchRelease(LATEST_RELEASE_URL, {
           headers: {
             accept: "application/vnd.github+json",
-            "user-agent": "openmausbot-update-check",
+            "user-agent": "mausclaw-update-check",
             ...(() => {
               // Try env vars first
               const envToken = process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
@@ -123,7 +123,7 @@ export function createUpdateChecker(options: {
           // An update is available if the remote SHA differs from local HEAD
           const { execSync } = await import("node:child_process");
           let currentSha = "";
-          try { currentSha = execSync("git rev-parse --short HEAD", { cwd: "/root/OMB-Claw", encoding: "utf8" }).trim(); } catch {}
+          try { currentSha = execSync("git rev-parse --short HEAD", { cwd: "/root/MausClaw", encoding: "utf8" }).trim(); } catch {}
           const available = currentSha !== "" && currentSha !== latest;
           const result: UpdateCheck = {
             ...base(),

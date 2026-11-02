@@ -347,7 +347,7 @@ export async function deleteTrigger(triggerId: string, installation: EventInstal
   return json({ removed: 1 });
 }
 
-/** This installation's bindings beside Composio's view of them, for the OMB server's reconciliation: a local trigger
+/** This installation's bindings beside Composio's view of them, for the MausClaw server's reconciliation: a local trigger
  *  whose `remote.state` is "missing" is created again, an `unbound` instance (one no installation binds) is deleted,
  *  and an `enabled` that differs from `remote.state` is patched. */
 export async function listTriggers(installation: EventInstallation, env: Env, now = Date.now()) {

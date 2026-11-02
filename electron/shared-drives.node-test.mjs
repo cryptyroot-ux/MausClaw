@@ -46,7 +46,7 @@ test("the home folder is lent only when asked for by the picker; its parents and
   const { tmpdir } = await import("node:os");
   const path = await import("node:path");
   const { validateSharedFolders, isHomeFolder } = await import("./computer-sharing.mjs");
-  const base = realpathSync.native(mkdtempSync(path.join(tmpdir(), "omb-home-opt-in-")));
+  const base = realpathSync.native(mkdtempSync(path.join(tmpdir(), "mausclaw-home-opt-in-")));
   const home = path.join(base, "me");
   mkdirSync(path.join(home, "Documents"), { recursive: true });
   const saved = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };

@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 function fixtureHome(): string {
-  const home = mkdtempSync(join(tmpdir(), "omb-setup-import-home-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-setup-import-home-"));
   homes.push(home);
   return home;
 }
@@ -262,7 +262,7 @@ describe("finding what another AI tool already set up on this computer", () => {
     expect(applySetupImport(machine, host, { skills: true, tools: true })).toMatchObject({ skills: { added: ["pdf"] }, tools: { added: ["ok"] } });
   });
 
-  it("accepts a trailing comma, gives a name OpenMausBot keeps for itself an mcp- prefix, and calls a different server by a taken name a conflict", () => {
+  it("accepts a trailing comma, gives a name MausClaw keeps for itself an mcp- prefix, and calls a different server by a taken name a conflict", () => {
     const home = fixtureHome();
     put(home, ".cursor/mcp.json", '{ "mcpServers": { "notion": { "url": "https://mcp.notion.com/mcp", }, }, }');
     put(home, ".gemini/settings.json", JSON.stringify({ mcpServers: { browser: { command: "my-browser-tool" }, github: { command: "docker", args: ["run", "github-mcp"] } } }));

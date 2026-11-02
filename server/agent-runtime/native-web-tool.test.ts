@@ -27,7 +27,7 @@ describe("native web tool", () => {
   });
 
   it("search returns results", async () => {
-    const r = await runWebTool(ctx, { operation: "search", query: "openmausbot" });
+    const r = await runWebTool(ctx, { operation: "search", query: "mausclaw" });
     // Network may be unavailable in CI; accept either results or error
     expect(typeof r.content).toBe("string");
   });

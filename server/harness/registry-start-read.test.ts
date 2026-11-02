@@ -39,7 +39,7 @@ async function engines(options: Record<string, FakeDriverOptions>, registryOptio
 
 const scratch: string[] = [];
 function statusFile(): string {
-  const dir = mkdtempSync(join(tmpdir(), "omb-engine-status-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-engine-status-"));
   scratch.push(dir);
   return join(dir, "providers", "engine-status.json");
 }

@@ -45,7 +45,7 @@ export interface NativeTurnContext {
   onSettled: () => void;
 }
 
-/** The OMB-owned native turn: mount capabilities, run the engine, bridge events, and close everything. The driver
+/** The MausClaw-owned native turn: mount capabilities, run the engine, bridge events, and close everything. The driver
  * supplies admission, approval, and the prepared messages; it never owns the model/tool cycle. */
 
 

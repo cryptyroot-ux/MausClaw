@@ -14,7 +14,7 @@ const routine = (id: string, botId: string, target = "bot") => ({ id, name: id, 
 
 function kinds(): MoveKindsDeps {
   return {
-    dataDir: "/omb", store: { bots: [], bot: () => undefined, group: () => undefined } as never,
+    dataDir: "/mausclaw", store: { bots: [], bot: () => undefined, group: () => undefined } as never,
     routines: () => ({ listRoutines: () => [routine("r-scout", "scout"), routine("r-goal", "scout", "room-goal"), routine("r-pip", "pip")], listRuns: () => [] }) as never,
     calls: () => list([{ id: "c1", name: "Standup", botIds: ["scout"] }]) as never,
     webhooks: () => list([{ id: "w1", name: "Hook", botId: "scout" }]) as never,

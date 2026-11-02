@@ -1,6 +1,6 @@
-# Run OpenMausBot from scripts and CI
+# Run MausClaw from scripts and CI
 
-The `openmausbot` command can drive a running workspace without a screen: set
+The `mausclaw` command can drive a running workspace without a screen: set
 up a team from a file, give a bot a job, wait until it and every teammate it
 asked are done, and keep what they made. It works against the server on this
 computer or one somewhere else, and it is built for scripts, CI and other
@@ -8,11 +8,11 @@ agents: every command can print one JSON document, and the exit code says how
 things went.
 
 ```sh
-npm install -g openmausbot            # or use npx openmausbot …
-openmausbot serve --no-pair &         # a workspace with no screen (or use your desktop app)
-openmausbot engine set claude --key-env ANTHROPIC_API_KEY
-openmausbot team apply launch-room.yaml
-openmausbot run "Room Lead" "Rehearse the launch of https://example.com" --export ./rehearsal
+npm install -g mausclaw            # or use npx mausclaw …
+mausclaw serve --no-pair &         # a workspace with no screen (or use your desktop app)
+mausclaw engine set claude --key-env ANTHROPIC_API_KEY
+mausclaw team apply launch-room.yaml
+mausclaw run "Room Lead" "Rehearse the launch of https://example.com" --export ./rehearsal
 ```
 
 `run` prints progress as it goes, then the Room Lead's final reply and the
@@ -20,9 +20,9 @@ files it links, and writes everything to `./rehearsal`.
 
 ## Which workspace, and as whom
 
-- `--url URL` or `OPENMAUSBOT_URL`: a workspace somewhere else. Use `https://`
+- `--url URL` or `MAUSCLAW_URL`: a workspace somewhere else. Use `https://`
   unless it is this computer (`ALLOW_INSECURE_HTTP=true` allows plain `http://`).
-- `--port N` or `OMB_PORT`: this computer, on that port.
+- `--port N` or `MAUSCLAW_PORT`: this computer, on that port.
 - Otherwise the command looks on this computer's usual ports (8799, 18799,
   28799), as the desktop app uses them.
 
@@ -30,15 +30,15 @@ On this computer a headless server treats you as its owner, and no token is
 needed. Anywhere else you need a token:
 
 ```sh
-openmausbot connect https://maus.example.com --code ABCD1234 --out ~/.openmausbot-token
-openmausbot doctor --url https://maus.example.com --token-file ~/.openmausbot-token
+mausclaw connect https://maus.example.com --code ABCD1234 --out ~/.mausclaw-token
+mausclaw doctor --url https://maus.example.com --token-file ~/.mausclaw-token
 ```
 
 Get the code in the app under **Settings → Phone → Set up a phone**. On this
 computer's own server, `connect` makes the code itself (`--client` gives a
 token that can chat but not change settings). The token goes to a file only
 you can read, and is never printed. Pass it with `--token-file FILE` or
-`OPENMAUSBOT_TOKEN`; there is no `--token` flag, because a command line can be
+`MAUSCLAW_TOKEN`; there is no `--token` flag, because a command line can be
 read by other programs. A token is never sent while the command is still
 looking for a server: with a token, name the server.
 
@@ -63,7 +63,7 @@ redaction the transcript uses). Durations are written `90`, `90s`, `5m` or `2h`.
 
 ## Commands
 
-Run `openmausbot help VERB` for any of these. A TARGET is a bot or room by
+Run `mausclaw help VERB` for any of these. A TARGET is a bot or room by
 name or id, or `--bot ID`, `--channel ID` or `--thread ID`; `--task ID` picks
 one of its conversations.
 
@@ -82,7 +82,7 @@ one of its conversations.
 | `engine set KIND`, `engine list` | Gives the workspace an engine key without a screen (below). |
 | `connect [URL]` | Gets a token for a workspace elsewhere. |
 | `new-bot`, `new-channel`, `set-model`, `edit` | Make a bot or a room, change a bot's model, rewrite an earlier message. |
-| `mcp` | The OpenMausBot MCP server on stdin and stdout ([docs/mcp-server.md](mcp-server.md)). |
+| `mcp` | The MausClaw MCP server on stdin and stdout ([docs/mcp-server.md](mcp-server.md)). |
 
 The message for `send` and `run` can be the next word, `--text TEXT`,
 `--message-file FILE`, or `-` to read it from stdin.
@@ -90,14 +90,14 @@ The message for `send` and `run` can be the next word, `--text TEXT`,
 ## run and wait
 
 ```sh
-openmausbot run "Room Lead" --message-file brief.md --timeout 45m --on-input exit --export ./out
+mausclaw run "Room Lead" --message-file brief.md --timeout 45m --on-input exit --export ./out
 ```
 
 `run` starts a new conversation (titled by `--title` or the message's first
 line) unless `--task current` or `--task ID` says otherwise, sends the message
 once, and waits for the whole job: the bot's own turn and every piece of work
 it handed to a teammate, and theirs in turn. Its first progress line names the
-conversation and when the job began (`since`), so a later `openmausbot wait
+conversation and when the job began (`since`), so a later `mausclaw wait
 --thread ID --since MS` can pick the same job up again.
 
 - `--wait job` (the default) waits for the bot and every teammate; `--wait turn`
@@ -150,8 +150,8 @@ have).
 ## export
 
 ```sh
-openmausbot export "Room Lead" --out ./rehearsal          # its current conversation
-openmausbot export --thread 3f2a… --out ./rehearsal --root ROOT_ID
+mausclaw export "Room Lead" --out ./rehearsal          # its current conversation
+mausclaw export --thread 3f2a… --out ./rehearsal --root ROOT_ID
 ```
 
 | Written | What it holds |
@@ -174,7 +174,7 @@ lists are removed first, and nothing else in the folder is touched.
 ## events
 
 ```sh
-openmausbot events --job 3f2a… --until-settled > events.jsonl
+mausclaw events --job 3f2a… --until-settled > events.jsonl
 ```
 
 One JSON line per event: messages as they are written and changed, threads,
@@ -191,8 +191,8 @@ always JSON lines; `--jsonl` is accepted and changes nothing.
 ## engine
 
 ```sh
-openmausbot engine set claude --key-env ANTHROPIC_API_KEY --base-url https://gateway.example.com --install
-openmausbot engine list
+mausclaw engine set claude --key-env ANTHROPIC_API_KEY --base-url https://gateway.example.com --install
+mausclaw engine list
 ```
 
 KIND is `claude`, `openai`, `openrouter`, `openai-compatible` (needs
@@ -215,10 +215,10 @@ with their standing instructions, models, approval levels and computers,
 skills, rooms, and the engines they run on. Write it in YAML or JSON.
 
 ```sh
-openmausbot team apply launch-room.yaml             # plan, then apply
-openmausbot team apply launch-room.yaml --dry-run   # only the plan
-openmausbot team apply launch-room.yaml --check     # exit 6 if anything would change (CI)
-openmausbot team export --team "Launch Room" --out exported.yaml
+mausclaw team apply launch-room.yaml             # plan, then apply
+mausclaw team apply launch-room.yaml --dry-run   # only the plan
+mausclaw team apply launch-room.yaml --check     # exit 6 if anything would change (CI)
+mausclaw team export --team "Launch Room" --out exported.yaml
 ```
 
 Apply prints its plan, then makes the changes:
@@ -272,7 +272,7 @@ bots:                                       # at least one
     chief: true                             # Chief of Staff of its team (one per team); false removes it
     manages: [Support]                      # other teams this Chief is also in charge of (every bot reaches every bot anyway)
     soul: TEXT | { file: PATH }             # standing instructions, at most 24,000 bytes
-    model: claude/claude-sonnet-5-5         # INSTANCE/MODEL; openmausbot models lists them
+    model: claude/claude-sonnet-5-5         # INSTANCE/MODEL; mausclaw models lists them
     effort: none | low | medium | high | xhigh | max
     approval: ask | edits | auto | full     # a new bot starts at full; Custom is set in the desktop app
     computer: auto | off | browser | local | vm | cloud
@@ -328,7 +328,7 @@ One Room Lead and the visitors who rehearse a launch, on a sandbox with no
 Claude login: the key runs every Claude bot.
 
 ```yaml
-# launch-room.yaml — openmausbot team apply launch-room.yaml
+# launch-room.yaml — mausclaw team apply launch-room.yaml
 version: 1
 
 engines:
@@ -386,7 +386,7 @@ Then rehearse, wait for every visitor, and keep the report, transcripts and
 screenshots:
 
 ```sh
-openmausbot run "Room Lead" "Rehearse the launch of https://example.com with every visitor, then write report.md." \
+mausclaw run "Room Lead" "Rehearse the launch of https://example.com with every visitor, then write report.md." \
   --timeout 45m --export ./rehearsal
 ```
 
@@ -402,27 +402,27 @@ an engine that can limit built-in tools.
 
 ```yaml
 # .github/workflows/rehearse.yml (a sketch)
-- run: npm install -g openmausbot @anthropic-ai/claude-code
-- run: openmausbot serve --no-pair --data-dir "$RUNNER_TEMP/omb" &
-  env: { OMB_ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}" }   # the workspace's Claude key from the start
-- run: openmausbot doctor --wait 2m          # the server answers and an engine is ready
-- run: openmausbot team apply team.yaml
-- run: openmausbot run "Release checker" "Check the deploy at ${{ env.URL }}" --timeout 20m --strict --export ./out
+- run: npm install -g mausclaw @anthropic-ai/claude-code
+- run: mausclaw serve --no-pair --data-dir "$RUNNER_TEMP/mausclaw" &
+  env: { MAUSCLAW_ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}" }   # the workspace's Claude key from the start
+- run: mausclaw doctor --wait 2m          # the server answers and an engine is ready
+- run: mausclaw team apply team.yaml
+- run: mausclaw run "Release checker" "Check the deploy at ${{ env.URL }}" --timeout 20m --strict --export ./out
 - uses: actions/upload-artifact@v4
   with: { name: release-check, path: ./out }
 ```
 
 `doctor --wait` waits for an engine too, so the server gets its key in its
-own environment, as here (`OMB_ANTHROPIC_API_KEY`; the team file's `engines:`
-section, or `openmausbot engine set`, can set it later instead).
+own environment, as here (`MAUSCLAW_ANTHROPIC_API_KEY`; the team file's `engines:`
+section, or `mausclaw engine set`, can set it later instead).
 
 The step fails when the job fails (exit 1), needs someone (exit 3) or runs out
 of time (exit 4). To drive a workspace that is already running elsewhere, set
-`OPENMAUSBOT_URL` and pass a token made with `openmausbot connect` as a secret
+`MAUSCLAW_URL` and pass a token made with `mausclaw connect` as a secret
 file (`--token-file`).
 
 ## For other agents
 
-`openmausbot mcp` serves the same operations as MCP tools on stdin and stdout
+`mausclaw mcp` serves the same operations as MCP tools on stdin and stdout
 ([docs/mcp-server.md](mcp-server.md)): `wait_for_conversation` waits on the
 same job, and returns the same result, as `wait`.

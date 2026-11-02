@@ -3,7 +3,7 @@ import type { LocaleKey } from "@/locales";
 import { t } from "./i18n";
 
 export type CallMode = "turns" | "live";
-export const CALL_MODE_KEY = "openmausbot.callMode.v1";
+export const CALL_MODE_KEY = "mausclaw.callMode.v1";
 
 export const CALL_MODES: ReadonlyArray<{ id: CallMode; label: LocaleKey }> = [
   { id: "turns", label: "call.mode.turns" },

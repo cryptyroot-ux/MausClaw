@@ -10,7 +10,7 @@ import { botPatch, CloudSendError, createCloudSend, parseSendState, sendNotice, 
 import { installCloudSend, openOwnerSession } from "./cloud-send-main.mjs";
 
 const LOCAL = "http://127.0.0.1:4100";
-const CLOUD = "https://omb-u-1.fly.dev";
+const CLOUD = "https://mausclaw-u-1.fly.dev";
 const summary = (items) => ({ v: 1, appVersion: "0.1.117", items });
 const bot = (id, parts, extra = {}) => ({ key: itemKey.bot(id), kind: "bot", label: id, id, parts, ...extra });
 
@@ -146,13 +146,13 @@ test("My Cloud's page is told names of bots and counts, with an opaque signature
 
 test("an owner session is made only at the person's own Cloud, and nothing is sent to an origin a grant names instead", async () => {
   const fetched = [];
-  const fetchImpl = async (url, init) => { fetched.push([url, init?.headers?.authorization ?? null]); return new Response(JSON.stringify({ token: "omb_sess_fake" }), { status: 200 }); };
+  const fetchImpl = async (url, init) => { fetched.push([url, init?.headers?.authorization ?? null]); return new Response(JSON.stringify({ token: "mausclaw_sess_fake" }), { status: 200 }); };
   await assert.rejects(openOwnerSession({ origin: CLOUD, grant: async () => ({ origin: "https://attacker.example", code: "C" }) }, fetchImpl), /not ready/);
   assert.deepEqual(fetched, []);
   const session = await openOwnerSession({ origin: CLOUD, grant: async () => ({ origin: CLOUD, code: "C" }) }, fetchImpl);
   await session.call("GET", "/api/cloud-send");
   await session.close();
-  assert.deepEqual(fetched.map(([url, auth]) => [url.replace(CLOUD, ""), auth]), [["/api/auth/pair", null], ["/api/cloud-send", "Bearer omb_sess_fake"], ["/api/auth/logout", "Bearer omb_sess_fake"]]);
+  assert.deepEqual(fetched.map(([url, auth]) => [url.replace(CLOUD, ""), auth]), [["/api/auth/pair", null], ["/api/cloud-send", "Bearer mausclaw_sess_fake"], ["/api/auth/logout", "Bearer mausclaw_sess_fake"]]);
 });
 
 test("either page asks only for the move's line, its Try again and closing it; nothing else of a send is left", async () => {
@@ -175,7 +175,7 @@ test("either page asks only for the move's line, its Try again and closing it; n
 function preload({ remote = false, activation = false } = {}) {
   let bridge; const invoked = [];
   vm.runInNewContext(readFileSync(new URL("./preload.cjs", import.meta.url), "utf8"), {
-    process: { platform: "darwin", argv: [`--omb-local-origin=${LOCAL}`, "--omb-company-desktop=1"] },
+    process: { platform: "darwin", argv: [`--mausclaw-local-origin=${LOCAL}`, "--mausclaw-company-desktop=1"] },
     location: { origin: remote ? CLOUD : LOCAL }, navigator: { userActivation: { isActive: activation } },
     TextEncoder, localStorage: { getItem: () => null },
     require: () => ({ webUtils: {}, contextBridge: { exposeInMainWorld: (_name, value) => { bridge = value; } },
@@ -283,7 +283,7 @@ test("My Cloud's notice says what did not go, by kind, with each reason: logins 
   const login = (id, site) => ({ key: itemKey.login(site, "amit"), kind: "login", label: site, detail: "amit", id, parts: { saved: id } });
   const sides = fakeSides({ localItems: [bot("ember", { soul: "s" }), login("l1", "bank.example"), login("l2", "crm.example"), { key: itemKey.onePassword(), kind: "1password", label: "1Password", parts: { token: "t" } }] });
   sides.deps.handoff = async (what) => {
-    if (what.kind === "login") throw new Error("OpenMausBot on this computer did not answer. Try again.");
+    if (what.kind === "login") throw new Error("MausClaw on this computer did not answer. Try again.");
     throw new Error("1Password did not accept this computer's token, so it was not sent to My Cloud.");
   };
   const send = createCloudSend(sides.deps);
@@ -293,7 +293,7 @@ test("My Cloud's notice says what did not go, by kind, with each reason: logins 
   const notice = sendNotice(send.snapshot());
   const none = { bots: [], skills: 0, logins: 0, onePassword: false, settings: 0, connections: 0, chats: false };
   assert.deepEqual(notice.last.reasons, [
-    { what: { ...none, logins: 2 }, error: "OpenMausBot on this computer did not answer. Try again." },
+    { what: { ...none, logins: 2 }, error: "MausClaw on this computer did not answer. Try again." },
     { what: { ...none, onePassword: true }, error: "1Password did not accept this computer's token, so it was not sent to My Cloud." },
   ]);
   assert.equal(notice.last.error, undefined, "the send itself did not stop");
@@ -337,7 +337,7 @@ test("chats by row: the cursor moves only past what My Cloud took; one removed t
   };
   const local = sides.deps.local;
   sides.deps.local = async (route) => {
-    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.openmausbot", conversations: heads() }), { status: 200 });
+    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.mausclaw", conversations: heads() }), { status: 200 });
     const asked = /^\/api\/cloud-send\/chats\/rows\?thread=([\w-]+)&after=(\d+)&id=/u.exec(route);
     if (asked) {
       const list = rows[asked[1]], from = Number(asked[2]);
@@ -400,7 +400,7 @@ function chatSides({ threads, page = 300, answer = () => "accepted", onPost = ()
   const local = sides.deps.local;
   const json = (value) => new Response(JSON.stringify(value), { status: 200 });
   sides.deps.local = async (route) => {
-    if (route === "/api/cloud-send/chats") return json({ v: 1, dataDir: "/desk/.openmausbot", conversations: Object.entries(rows).map(([threadId, list]) => ({ bot: "ember", threadId, last: list.length, lastId: list.at(-1).id, busy: false })) });
+    if (route === "/api/cloud-send/chats") return json({ v: 1, dataDir: "/desk/.mausclaw", conversations: Object.entries(rows).map(([threadId, list]) => ({ bot: "ember", threadId, last: list.length, lastId: list.at(-1).id, busy: false })) });
     const asked = /^\/api\/cloud-send\/chats\/rows\?thread=([\w-]+)&after=(\d+)&id=/u.exec(route);
     if (asked) {
       onRead(asked[1]);
@@ -483,7 +483,7 @@ test("a room's chats go with the room, whatever bots My Cloud has, and never as 
   const local = sides.deps.local;
   const room = { name: "Launch", memberIds: ["ember"], bulletin: "Ship it." };
   sides.deps.local = async (route) => {
-    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.openmausbot", conversations: [
+    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.mausclaw", conversations: [
       { bot: "ember", threadId: "t-a", last: 1, lastId: "t-a-1", busy: false }, { room: "r-launch", threadId: "t-room", last: 1, lastId: "t-room-1", busy: false },
       { room: "r-busy", threadId: "t-busy", last: 1, lastId: "t-busy-1", busy: true }, { bot: "ember", room: "r-both", threadId: "t-both", last: 1, lastId: "t-both-1", busy: false },
     ] }), { status: 200 });
@@ -512,7 +512,7 @@ test("a room nobody wrote in yet goes once as its thread with no rows, so My Clo
   const room = { name: "Quiet", memberIds: ["ember"], bulletin: "" };
   const asked = [];
   sides.deps.local = async (route) => {
-    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.openmausbot", conversations: [{ bot: "ember", threadId: "t-a", last: 1, lastId: "t-a-1", busy: false }],
+    if (route === "/api/cloud-send/chats") return new Response(JSON.stringify({ v: 1, dataDir: "/desk/.mausclaw", conversations: [{ bot: "ember", threadId: "t-a", last: 1, lastId: "t-a-1", busy: false }],
       rooms: [{ room: "r-quiet", threadId: "t-quiet", members: ["ember"] }, { room: "r-lonely", threadId: "t-lonely", members: [] }] }), { status: 200 });
     if (route.startsWith("/api/cloud-send/chats/rows?thread=t-quiet&")) {
       asked.push(route);
@@ -557,7 +557,7 @@ test("an owner session that could not open says whether nothing answered or My C
 
 
 test("closing the move's done line closes the move's own send result with it, so My Cloud's page says it once", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "omb-move-line-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-move-line-"));
   const file = join(dir, "cloud-send.json");
   const result = { bots: ["Ember"], updatedBots: [], skills: 0, logins: 0, onePassword: false, settings: [], chats: null, failed: [], notes: [] };
   writeFileSync(file, JSON.stringify({ v: 1, clouds: { [CLOUD]: { sent: {}, off: {}, dismissed: "", last: { at: 7, reason: "move", result }, whole: null, chats: {}, created: {}, release: [], files: {}, on: {} } } }));

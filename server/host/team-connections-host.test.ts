@@ -21,7 +21,7 @@ const ADA_ACCESS = { url: "https://broker.test", token: "a".repeat(64) };
 const AUDIENCES: Record<string, Audience> = { "ada-chat": `member:${ADA}`, "cleo-chat": `member:${CLEO}`, "room-chat": "room:launch", "main-chat": "team" };
 
 function setup(options: { team?: boolean; requester?: Record<string, string>; servers?: Record<string, unknown> } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), "omb-team-connections-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-team-connections-"));
   const requester = { "ada-chat": ADA, "cleo-chat": CLEO, "room-chat": ADA, "main-chat": ADA, ...options.requester };
   const cfg = { mcpServers: options.servers ?? {
     mail: { type: "http", url: "https://mail.example/mcp", headers: { Authorization: "Bearer team-mail-key" }, enabled: true },

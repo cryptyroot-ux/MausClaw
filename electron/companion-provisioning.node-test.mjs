@@ -26,7 +26,7 @@ const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
 const INSTALLATION_ID = "22222222-2222-4222-8222-222222222222";
 const REQUEST_ID = "33333333-3333-4333-8333-333333333333";
 const ACCOUNT_TOKEN = `fixture-account.${"a".repeat(40)}`;
-const INSTALLATION_CREDENTIAL = `omb_install_${"b".repeat(22)}.${"c".repeat(43)}`;
+const INSTALLATION_CREDENTIAL = `mausclaw_install_${"b".repeat(22)}.${"c".repeat(43)}`;
 const CONNECTOR_TOKEN = `fixture-connector.${"d".repeat(80)}`;
 const EMAIL = "companion-fixture@example.test";
 const ENDPOINT = "https://c-fixture.example.test";
@@ -68,7 +68,7 @@ test("endpoint failure retains the installation across immediate Retry and resta
     switch (key) {
       case "GET /healthz":
         assert.equal(body, null);
-        return reply(response, 200, { ok: true, service: "openmausbot-control-plane" });
+        return reply(response, 200, { ok: true, service: "mausclaw-control-plane" });
       case "POST /api/auth/email-otp/send-verification-otp":
         assert.deepEqual(body, { email: EMAIL, type: "sign-in" });
         return reply(response, 200, { success: true });
@@ -235,7 +235,7 @@ test("a reclaimed endpoint is re-provisioned at restart and a full provider retr
     }
     switch (key) {
       case "GET /healthz":
-        return reply(response, 200, { ok: true, service: "openmausbot-control-plane" });
+        return reply(response, 200, { ok: true, service: "mausclaw-control-plane" });
       case "GET /v1/installations/self":
         return reply(response, 200, { installation, credentialExpiresAt });
       case "GET /v1/installations/self/endpoint":
@@ -348,7 +348,7 @@ test("on demand, an address nothing needs is given back and comes back the same 
     assert.equal(request.headers.authorization, expectedBearer, `unexpected bearer for ${key}`);
     switch (key) {
       case "GET /healthz":
-        return reply(response, 200, { ok: true, service: "openmausbot-control-plane" });
+        return reply(response, 200, { ok: true, service: "mausclaw-control-plane" });
       case "POST /api/auth/email-otp/send-verification-otp":
         return reply(response, 200, { success: true });
       case "POST /api/auth/sign-in/email-otp":
@@ -535,7 +535,7 @@ test("on demand, a give-back the control plane left pending is finished before t
     }
     switch (key) {
       case "GET /healthz":
-        return reply(response, 200, { ok: true, service: "openmausbot-control-plane" });
+        return reply(response, 200, { ok: true, service: "mausclaw-control-plane" });
       case "GET /v1/installations/self":
         return reply(response, 200, { installation, credentialExpiresAt: Date.now() + 86_400_000 });
       case "DELETE /v1/installations/self/endpoint":

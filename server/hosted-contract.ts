@@ -1,6 +1,6 @@
 // This versions only the hosted consume/check wire contract, not the app release.
 export const HOSTED_CONTRACT_VERSION = 1;
-export const HOSTED_CONTRACT_HEADER = "x-omb-hosted-contract-version";
+export const HOSTED_CONTRACT_HEADER = "x-mausclaw-hosted-contract-version";
 export const HOSTED_CONTRACT_METADATA = Object.freeze({
   contractVersion: HOSTED_CONTRACT_VERSION,
   supportedContractVersions: Object.freeze([HOSTED_CONTRACT_VERSION]),

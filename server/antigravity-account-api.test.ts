@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-import { verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
@@ -34,10 +34,10 @@ async function launch(port: number) {
   }, { timeout: 20_000, interval: 100 });
 }
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), "omb-google-accounts-"));
+  home = mkdtempSync(join(tmpdir(), "mausclaw-google-accounts-"));
   mkdirSync(join(home, "tmp"));
   const port = await freePortBlock([0, 1]); base = `http://127.0.0.1:${port}`;
-  logPath = join(tmpdir(), `omb-google-accounts-${port}-${process.pid}.log`);
+  logPath = join(tmpdir(), `mausclaw-google-accounts-${port}-${process.pid}.log`);
   cli = join(home, "fake-antigravity.mjs");
   writeFileSync(cli, `#!/usr/bin/env node
 process.env.FAKE_ACP_AUTH_METHOD = "oauth-personal";

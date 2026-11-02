@@ -8,7 +8,7 @@ import { createCloudTeamHost } from "./cloud-team-host.ts";
 function host(team: { id: string; name: string } | null) {
   const starters = new Map([["ada-chat", "p_ada"], ["cleo-chat", "p_cleo"], ["main-chat", "nobody"]]);
   return createCloudTeamHost({
-    team, dataDir: mkdtempSync(join(tmpdir(), "omb-team-host-")),
+    team, dataDir: mkdtempSync(join(tmpdir(), "mausclaw-team-host-")),
     store: { groupByThread: (threadId) => (threadId === "room-chat" ? { id: "launch" } : undefined) },
     starters, markers: new Set(["nobody"]),
   });

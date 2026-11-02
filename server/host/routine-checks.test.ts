@@ -12,7 +12,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 function setup(options: { fenced?: boolean; may?: (app: ReadApp) => boolean } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-routine-checks-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-routine-checks-"));
   dirs.push(dir);
   let now = Date.parse("2026-10-22T08:00:00Z");
   const inbox: EmailHeader[] = [];

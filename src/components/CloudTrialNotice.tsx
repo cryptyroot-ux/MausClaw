@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { NoticeCard, NotNowButton, PRIMARY_BUTTON } from "./NoticeCard";
 
 export const CLOUD_PLAN_REFRESH_MS = 5 * 60_000;
-const PLAN_CHANGED = "omb:cloud-plan-changed";
+const PLAN_CHANGED = "mausclaw:cloud-plan-changed";
 export const cloudPlanChanged = () => globalThis.window?.dispatchEvent?.(new Event(PLAN_CHANGED));
 
 export function useCloudPlanSnapshot(bridge: CloudPlanBridge | undefined): CloudPlanSnapshot | null {

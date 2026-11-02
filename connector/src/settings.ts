@@ -35,8 +35,8 @@ export const PATHS = {
   profiles: process.env.MAUSBOT_PROFILES_DIR || "/app/profiles",
 } as const;
 
-export const SECCOMP_FILE = "seccomp-omb-home.json";
-export const APPARMOR_PROFILE = "omb-home-narrow";
+export const SECCOMP_FILE = "seccomp-mausclaw-home.json";
+export const APPARMOR_PROFILE = "mausclaw-home-narrow";
 
 /** Where the home's edge listens on the server: loopback only, reached by the tunnel and by the connector. */
 export const HOME_PORT = 8080;

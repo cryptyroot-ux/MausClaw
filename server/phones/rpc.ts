@@ -1,5 +1,5 @@
 // The JSON-RPC entry the harness proxy reaches for the device kind: tools/list (filtered to what this bot may run on the
-// owner's phones) and tools/call (validate → verdict → pick the phone → run as a phone job). OpenMausBot adds no card of
+// owner's phones) and tools/call (validate → verdict → pick the phone → run as a phone job). MausClaw adds no card of
 // its own: a send opens a sheet on the phone and goes only when the person taps Send there. The turn's capability must
 // still be live before and after the call.
 import { isPhoneToolName, isPhoneWrite, type PhonePlatform, type PhoneToolName } from "../../shared/phone-apps.ts";

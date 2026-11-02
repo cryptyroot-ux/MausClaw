@@ -12,7 +12,7 @@ import { join, resolve } from "node:path";
 
 const TREES = ["server", "companion"];
 const resources = resolve(process.argv[2] ?? "");
-const stage = mkdtempSync(join(tmpdir(), "omb-module-scope-"));
+const stage = mkdtempSync(join(tmpdir(), "mausclaw-module-scope-"));
 let bad = 0;
 try {
   // The hostile parent: what a stray `npm init -y` leaves in a home folder.

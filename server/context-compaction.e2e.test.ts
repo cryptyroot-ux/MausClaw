@@ -3,7 +3,7 @@ import { closeSync, existsSync, openSync, readFileSync, writeFileSync } from "no
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { request } from "../scripts/mcp-server.ts";
 import { waitForExit } from "./testing/cleanup.ts";
 
@@ -25,7 +25,7 @@ async function setup(hang: boolean, fakeEnv: NodeJS.ProcessEnv) {
       return result;
     };
     const cli = async (...args: string[]) => {
-      const result = await runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as any;
+      const result = await runControlMausclaw(args, { env: { MAUSCLAW_URL: session.info.url } }) as any;
       evidence.push({ command: args, result });
       return result;
     };
@@ -165,7 +165,7 @@ it.each([
     await f.restart(() => {
       const path = join(f.session.info.dataDir, "config.json");
       const config = JSON.parse(readFileSync(path, "utf8"));
-      config.instances.claude.environment.OMB_CLAUDE_AUTOCOMPACT = native;
+      config.instances.claude.environment.MAUSCLAW_CLAUDE_AUTOCOMPACT = native;
       writeFileSync(path, JSON.stringify(config));
     });
   }

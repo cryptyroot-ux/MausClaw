@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createOneHome, QUIET_MS } from "./one-home.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://mausclaw-t-1.fly.dev";
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 const KINDS = { routines: "routine", webhooks: "webhook", "calendar-calls": "call", "app-triggers": "app-event" };
 const keyOf = (route) => {

@@ -25,7 +25,7 @@ export const HEARTBEAT_INTERVAL_MS = 30_000;
 export const UPDATE_HEALTH_WINDOW_MS = 10 * 60_000;
 
 /** The only images a home may run, and the only ones the connector may become: our registry, pinned by digest. */
-export const HOME_IMAGE = /^ghcr\.io\/milind-soni\/openmausbot-cloud-home@sha256:[0-9a-f]{64}$/;
+export const HOME_IMAGE = /^ghcr\.io\/milind-soni\/mausclaw-cloud-home@sha256:[0-9a-f]{64}$/;
 export const CONNECTOR_IMAGE = /^ghcr\.io\/milind-soni\/mausbot-connector@sha256:[0-9a-f]{64}$/;
 
 export interface ConnectorIdentity {
@@ -196,18 +196,18 @@ const JOB_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const BACKUP_ID = /^[a-z0-9][a-z0-9-]{0,62}$/;
 const OPAQUE_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const TOKEN = /^[A-Za-z0-9_.~-]{32,512}$/;
-const ENV_NAME = /^OMB_[A-Z0-9_]{1,60}$/;
+const ENV_NAME = /^MAUSCLAW_[A-Z0-9_]{1,60}$/;
 // oxlint-disable-next-line no-control-regex
 const ENV_VALUE = /^[^\0\r\n]{0,8192}$/;
 const MAX_ENV = 64;
 
 /** The home's boot contract: without these the home refuses to start. */
-export const REQUIRED_HOME_ENV = ["OMB_CLOUD_ROLE", "OMB_CLOUD_MACHINE_ID", "OMB_CLOUD_ADMIN_URL", "OMB_PUBLIC_URL", "OMB_CLOUD_BOOTSTRAP_SECRET"] as const;
+export const REQUIRED_HOME_ENV = ["MAUSCLAW_CLOUD_ROLE", "MAUSCLAW_CLOUD_MACHINE_ID", "MAUSCLAW_CLOUD_ADMIN_URL", "MAUSCLAW_PUBLIC_URL", "MAUSCLAW_CLOUD_BOOTSTRAP_SECRET"] as const;
 
 /** Settings the image owns, or that make sense only on Fly; a home on an own server never takes them from outside. */
 export const REFUSED_HOME_ENV = new Set([
-  "OMB_CLOUD_EDGE_HOLD", "OMB_CLOUD_EDGE_BIN", "OMB_CLOUD_EDGE_CONFIG", "OMB_CLOUD_HARDEN",
-  "OMB_DATA_DIR", "OMB_STATIC_DIR", "OMB_DUCKDB_DIR", "OMB_PORT", "OMB_WEBHOOK_PORT", "OMB_CLOUD_SECRETS_FD",
+  "MAUSCLAW_CLOUD_EDGE_HOLD", "MAUSCLAW_CLOUD_EDGE_BIN", "MAUSCLAW_CLOUD_EDGE_CONFIG", "MAUSCLAW_CLOUD_HARDEN",
+  "MAUSCLAW_DATA_DIR", "MAUSCLAW_STATIC_DIR", "MAUSCLAW_DUCKDB_DIR", "MAUSCLAW_PORT", "MAUSCLAW_WEBHOOK_PORT", "MAUSCLAW_CLOUD_SECRETS_FD",
 ]);
 
 export type Checked<T> = { ok: true; value: T } | { ok: false; message: string };
@@ -233,20 +233,20 @@ function httpsOrigin(value: string): boolean {
   }
 }
 
-/** The home's environment: names are `OMB_*` and never one the image owns; values are one line. Never echoes a value. */
+/** The home's environment: names are `MAUSCLAW_*` and never one the image owns; values are one line. Never echoes a value. */
 export function checkHomeEnv(env: unknown): Checked<Record<string, string>> {
   if (!plainObject(env)) return { ok: false, message: "env must be an object of names and values" };
   const entries = Object.entries(env);
   if (entries.length > MAX_ENV) return { ok: false, message: `env has more than ${MAX_ENV} names` };
   for (const [name, value] of entries) {
-    if (!ENV_NAME.test(name)) return { ok: false, message: `env name ${JSON.stringify(name.slice(0, 64))} is not an OMB_ setting` };
+    if (!ENV_NAME.test(name)) return { ok: false, message: `env name ${JSON.stringify(name.slice(0, 64))} is not an MAUSCLAW_ setting` };
     if (REFUSED_HOME_ENV.has(name)) return { ok: false, message: `env name ${name} is the image's own setting` };
     if (typeof value !== "string" || !ENV_VALUE.test(value)) return { ok: false, message: `env value of ${name} must be one line of at most 8192 characters` };
   }
   for (const name of REQUIRED_HOME_ENV) if (typeof env[name] !== "string" || !env[name]) return { ok: false, message: `env must set ${name}` };
-  if (env.OMB_CLOUD_ROLE !== "home" && env.OMB_CLOUD_ROLE !== "team") return { ok: false, message: 'OMB_CLOUD_ROLE must be "home" or "team"' };
-  if (!httpsOrigin(env.OMB_PUBLIC_URL as string)) return { ok: false, message: "OMB_PUBLIC_URL must be an https origin" };
-  if (!httpsOrigin(env.OMB_CLOUD_ADMIN_URL as string)) return { ok: false, message: "OMB_CLOUD_ADMIN_URL must be an https origin" };
+  if (env.MAUSCLAW_CLOUD_ROLE !== "home" && env.MAUSCLAW_CLOUD_ROLE !== "team") return { ok: false, message: 'MAUSCLAW_CLOUD_ROLE must be "home" or "team"' };
+  if (!httpsOrigin(env.MAUSCLAW_PUBLIC_URL as string)) return { ok: false, message: "MAUSCLAW_PUBLIC_URL must be an https origin" };
+  if (!httpsOrigin(env.MAUSCLAW_CLOUD_ADMIN_URL as string)) return { ok: false, message: "MAUSCLAW_CLOUD_ADMIN_URL must be an https origin" };
   return { ok: true, value: Object.fromEntries(entries) as Record<string, string> };
 }
 
@@ -285,14 +285,14 @@ function checkArgs(type: JobType, args: Record<string, unknown>): Checked<JobArg
     case "start": {
       const extra = only(args, ["image", "env"]);
       if (extra) return { ok: false, message: extra };
-      if (typeof args.image !== "string" || !HOME_IMAGE.test(args.image)) return { ok: false, message: "image must be ghcr.io/milind-soni/openmausbot-cloud-home@sha256:<digest>" };
+      if (typeof args.image !== "string" || !HOME_IMAGE.test(args.image)) return { ok: false, message: "image must be ghcr.io/milind-soni/mausclaw-cloud-home@sha256:<digest>" };
       const env = checkHomeEnv(args.env);
       return env.ok ? { ok: true, value: { image: args.image, env: env.value } } : env;
     }
     case "update": {
       const extra = only(args, ["image"]);
       if (extra) return { ok: false, message: extra };
-      if (typeof args.image !== "string" || !HOME_IMAGE.test(args.image)) return { ok: false, message: "image must be ghcr.io/milind-soni/openmausbot-cloud-home@sha256:<digest>" };
+      if (typeof args.image !== "string" || !HOME_IMAGE.test(args.image)) return { ok: false, message: "image must be ghcr.io/milind-soni/mausclaw-cloud-home@sha256:<digest>" };
       return { ok: true, value: { image: args.image } };
     }
     case "self-update": {

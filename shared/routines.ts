@@ -91,7 +91,7 @@ export type RoutineRunStatus =
   | "cancelled"
   | "missed";
 
-/** Why a run started a second time by itself: its engine stalled, OpenMausBot
+/** Why a run started a second time by itself: its engine stalled, MausClaw
  * restarted while it ran, the provider rate-limited it or failed for a moment,
  * it waited for its engine's usage limit to reset, or it failed some other way.
  * A run gets one. */
@@ -126,7 +126,7 @@ export interface Routine {
   overlap?: "skip" | "queue";
   /** Each run starts with the previous run's report. */
   continuity?: boolean;
-  /** Also run once each time OpenMausBot starts. */
+  /** Also run once each time MausClaw starts. */
   runOnStartup?: boolean;
   checks?: RoutineCheck[];
   access?: RoutineAccess;

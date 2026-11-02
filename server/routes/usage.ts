@@ -96,7 +96,7 @@ const MAX_TOOL_NAME = 128;
 const MAX_TOOL_MS = 24 * 60 * 60_000;
 const MAX_SKEW_MS = 24 * 60 * 60_000;
 
-/** A receipt from the agents tools for one call this turn's capability made: OMB's own timing of the tools it serves. */
+/** A receipt from the agents tools for one call this turn's capability made: MausClaw's own timing of the tools it serves. */
 export function createToolTimingRoute(recorder: Pick<TraceRecorder, "receipt">, threadId: string): RouteHandler {
   return async ({ req, res, path, method, json, readBody }) => {
     if (!(method === "POST" && path === "/api/internal/tool-timing")) return PASS;

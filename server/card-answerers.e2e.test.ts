@@ -45,8 +45,8 @@ async function start(env: NodeJS.ProcessEnv = {}) {
     env: {
       ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
-      HOME: home, USERPROFILE: home, OMB_PORT: String(PORT), OMB_WEBHOOK_PORT: String(PORT + 1),
-      OMB_TEST_INTERNAL_CAPABILITY_KEY: CAPABILITY_KEY, ...env,
+      HOME: home, USERPROFILE: home, MAUSCLAW_PORT: String(PORT), MAUSCLAW_WEBHOOK_PORT: String(PORT + 1),
+      MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: CAPABILITY_KEY, ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -108,8 +108,8 @@ const refusal = /Only the person who started this conversation or sent this requ
 posixOnly("who may answer a card on a shared workspace", () => {
   beforeAll(async () => {
     chmodSync(FAKE_CLI, 0o755);
-    home = mkdtempSync(join(tmpdir(), "omb-card-answerers-"));
-    const data = join(home, ".openmausbot");
+    home = mkdtempSync(join(tmpdir(), "mausclaw-card-answerers-"));
+    const data = join(home, ".mausclaw");
     mkdirSync(data, { recursive: true });
     writeFileSync(join(data, "config.json"), JSON.stringify({
       signIn: { admins: [BOSS], members: [ADA, BOB] },
@@ -180,7 +180,7 @@ posixOnly("who may answer a card on a shared workspace", () => {
     // a fresh thread (the threads route: coordinate_bots with thread "new",
     // an assignment on the job runtime, opened for the same person).
     const minted = await fetch(`${BASE}/api/testing/internal-capability`, {
-      method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": CAPABILITY_KEY },
+      method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": CAPABILITY_KEY },
       body: JSON.stringify({ botId: opener.id, threadId: opener.threadId }),
     });
     expect(minted.status).toBe(201);
@@ -260,7 +260,7 @@ posixOnly("who may answer a card on a shared workspace", () => {
     expect(task.status).toBe(201);
     const threadId = task.body.task.threadId as string;
     const minted = await fetch(`${BASE}/api/testing/internal-capability`, {
-      method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": CAPABILITY_KEY },
+      method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": CAPABILITY_KEY },
       body: JSON.stringify({ botId: bot.id, threadId }),
     });
     const { token } = await minted.json() as { token: string };
@@ -282,8 +282,8 @@ posixOnly("who may answer a card on a shared workspace", () => {
   it("lets a session-less local service decline but never approve under service trust", async () => {
     const bot = await makeBot("Serviced");
     await waitForExit(child, { signal: "SIGTERM" });
-    await start({ OMB_LOOPBACK_TRUST: "service" });
-    expect(log).toContain("local requests: service trust (OMB_LOOPBACK_TRUST)");
+    await start({ MAUSCLAW_LOOPBACK_TRUST: "service" });
+    expect(log).toContain("local requests: service trust (MAUSCLAW_LOOPBACK_TRUST)");
     const requestId = await cardFrom(bot, bot.threadId, ADA);
 
     const approve = await api("POST", `/api/threads/${bot.threadId}/respond`, { requestId, behavior: "allow" });
@@ -301,7 +301,7 @@ posixOnly("who may answer a card on a shared workspace", () => {
 
     // A Slack-shaped request: the worker opens the thread and sends through
     // the guarded route, so no person can be named. Any member may approve it
-    // in OpenMausBot, as before; nothing waits on an admin.
+    // in MausClaw, as before; nothing waits on an admin.
     const task = await api("POST", `/api/bots/${bot.id}/tasks`, { title: "Slack · C1 · 1.0" });
     expect(task.status, JSON.stringify(task.body)).toBe(201);
     const threadId = task.body.task.threadId as string;

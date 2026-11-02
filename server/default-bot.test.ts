@@ -230,7 +230,7 @@ describe("MausBot, every person's helper", () => {
     const place = boot(store)!;
     const member = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "user@example.com", team: "Acme" })!;
     const admin = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "admin@example.com", team: "Acme" })!;
-    const tools = (bot: BotRecord) => availableTools(catalogProfileFromEnv({ OMB_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", OMB_BOT_ID: bot.id })).map((tool) => tool.name);
+    const tools = (bot: BotRecord) => availableTools(catalogProfileFromEnv({ MAUSCLAW_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", MAUSCLAW_BOT_ID: bot.id })).map((tool) => tool.name);
     expect(tools(place)).toEqual(expect.arrayContaining(["create_bot", "propose_team_setup", "retry_thread", "manage_room"]));
     expect([chiefLevel(member), chiefLevel(admin)]).toEqual([false, false]);
     readTeamRolesWith((email) => email === "admin@example.com" ? "admin" : email === "user@example.com" ? "member" : null);
@@ -247,7 +247,7 @@ describe("MausBot, every person's helper", () => {
       let status = 0;
       await moveKindsRoute(deps(store), { path: "/api/cloud-send/kind", method: "PUT", url: new URL("http://127.0.0.1/api/cloud-send/kind"), auth: {} as never, req: {} as never,
         res: { setHeader() {} } as never, json: ((_res: unknown, code: number) => { status = code; }) as never,
-        readBody: (async () => ({ v: 1, key: `bot:${id}`, dataDir: "/Users/amit/.openmausbot", record })) as never });
+        readBody: (async () => ({ v: 1, key: `bot:${id}`, dataDir: "/Users/amit/.mausclaw", record })) as never });
       return status;
     }
     const fields = (bot: Record<string, unknown>) => Object.fromEntries(MOVE_BOT_FIELDS.map((name) => [name, bot[name] ?? null]));

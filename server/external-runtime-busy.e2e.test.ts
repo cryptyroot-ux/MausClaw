@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
 
@@ -12,7 +12,7 @@ const TOKEN = "external-runtime-busy-fixture-0123456789abcdef";
 it.each(["already busy", "became busy during approval"])(
   "queues an idle external caller's ask behind a peer that is %s, without losing or repeating approval",
   async scenario => {
-    const scratch = mkdtempSync(join(tmpdir(), "omb-external-busy-"));
+    const scratch = mkdtempSync(join(tmpdir(), "mausclaw-external-busy-"));
     const gate = join(scratch, "finish-peer");
     const prompts = join(scratch, "prompts.jsonl");
     let fixture: VerificationServer | undefined;
@@ -21,7 +21,7 @@ it.each(["already busy", "became busy during approval"])(
       fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_MODE: "slow",
         FAKE_CLAUDE_SLOW_FINISH_GATE: gate, FAKE_CLAUDE_PROMPTS: prompts });
       const session = fixture;
-      const control = (...args: string[]) => runControlOmb([...args, "--url", session.info.url]) as Promise<any>;
+      const control = (...args: string[]) => runControlMausclaw([...args, "--url", session.info.url]) as Promise<any>;
       const api = async (method: string, path: string, body?: unknown, runtime = false): Promise<any> => {
         const response = await fetch(session.info.url + path, {
           method, headers: { "content-type": "application/json", ...(runtime ? { authorization: `Bearer ${TOKEN}` } : { origin: session.info.url }) },

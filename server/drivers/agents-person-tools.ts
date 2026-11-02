@@ -1,4 +1,4 @@
-// The agents catalog's message_person tool, shown only on a Team Cloud (OMB_TEAM_PEOPLE), and the internal route behind
+// The agents catalog's message_person tool, shown only on a Team Cloud (MAUSCLAW_TEAM_PEOPLE), and the internal route behind
 // it (server/host/team-messages.ts), which decides where the message goes and refuses in words a bot can repeat.
 import type { ToolCallContext, ToolCallResult } from "./agents-call.ts";
 import type { Json } from "./agents-client.ts";

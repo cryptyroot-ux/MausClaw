@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 function setup(options: { team?: boolean; driver?: string; configured?: () => boolean; cloud?: boolean } = {}) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-proactive-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-proactive-"));
   dirs.push(dir);
   const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }));
   const chief = store.createBot({ name: "Chief" });

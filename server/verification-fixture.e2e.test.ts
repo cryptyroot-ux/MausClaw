@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { expect, it } from "vitest";
-import { FIXTURE_STARTER_BOT_NAME, launchVerificationServer } from "../scripts/control-omb.ts";
+import { FIXTURE_STARTER_BOT_NAME, launchVerificationServer } from "../scripts/control-mausclaw.ts";
 
 it("pins the fixture starter bot's name deterministically (#1257)", async () => {
   // The first-run seed draws a random name from server/names.ts, which includes "Quill": both launches must see the pinned name.

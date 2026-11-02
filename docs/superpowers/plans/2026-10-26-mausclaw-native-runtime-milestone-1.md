@@ -1,16 +1,16 @@
-# OMB Native Runtime Milestone 1 Implementation Plan
+# MausClaw Native Runtime Milestone 1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Extract a durable OMB-owned multi-step API agent loop and prove it through the existing OpenAI-compatible `ProviderAdapter` boundary with no external agent CLI.
+**Goal:** Extract a durable MausClaw-owned multi-step API agent loop and prove it through the existing OpenAI-compatible `ProviderAdapter` boundary with no external agent CLI.
 
 **Architecture:** Keep `ProviderAdapter.sendTurn` as the compatibility boundary. The first milestone adds a protocol-neutral `AgentEngine`, a real OpenAI-compatible `ModelAdapter`, a grant-enforcing adapter over the existing `ChatToolSession`, and a SQLite run/capability-call journal. Exercise the new engine through test-fixture injection; leave production routing, other provider drivers, ACP/CLI paths, UI selection, bot settings, and defaults unchanged.
 
 **Tech Stack:** TypeScript, Node.js `node:sqlite`, Vitest, local HTTP/SSE fixtures, existing MCP test fixtures.
 
 **Spec:**
-- `docs/superpowers/specs/2026-10-26-omb-native-agent-platform-design.md`
-- `docs/superpowers/specs/2026-10-26-omb-cli-free-acceptance-contract.md`
+- `docs/superpowers/specs/2026-10-26-mausclaw-native-agent-platform-design.md`
+- `docs/superpowers/specs/2026-10-26-mausclaw-cli-free-acceptance-contract.md`
 
 ## Global Constraints
 
@@ -114,7 +114,7 @@ Add `agent_runs` and `agent_capability_calls` tables to `message-db.ts`. Persist
 - [x] **Step 4: Run persistence tests**
 
 Run: `pnpm vitest run server/agent-runtime/run-store.test.ts server/message-db.test.ts`
-Expected: all selected tests pass; a reopened DB reports the uncertain call and never marks it safe to replay. Run `server/message-db.test.ts` only with a disposable `OMB_DATA_DIR` because that suite deletes its data directory.
+Expected: all selected tests pass; a reopened DB reports the uncertain call and never marks it safe to replay. Run `server/message-db.test.ts` only with a disposable `MAUSCLAW_DATA_DIR` because that suite deletes its data directory.
 
 - [x] **Step 5: Commit**
 

@@ -95,7 +95,7 @@ test("fails closed on unparsable or opaque origins", () => {
   assert.equal(appPermissionAllowed("notifications", "javascript:alert(1)", LOCAL_ORIGIN), false);
 });
 
-const CLOUD = "https://omb-u-0123456789ab.fly.dev";
+const CLOUD = "https://mausclaw-u-0123456789ab.fly.dev";
 function cloudFixture({ home = CLOUD } = {}) {
   const main = { getURL: () => `${CLOUD}/chat?botId=bot-1` };
   const state = { home, main, remote: false };
@@ -151,7 +151,7 @@ test("the Cloud's microphone is decided by this computer's media rule, never a c
 test("a server that is not the verified Cloud never hears the microphone", () => {
   const { state, ask, check } = cloudFixture();
   const mic = { isMainFrame: true, mediaTypes: ["audio"] };
-  for (const other of ["https://my-vps.example.com", "http://omb-u-0123456789ab.fly.dev", "https://omb-u-0123456789ab.fly.dev:8443", "https://evil.fly.dev"]) {
+  for (const other of ["https://my-vps.example.com", "http://mausclaw-u-0123456789ab.fly.dev", "https://mausclaw-u-0123456789ab.fly.dev:8443", "https://evil.fly.dev"]) {
     assert.equal(ask("media", { ...mic, requestingUrl: `${other}/chat` }), false, other);
     assert.equal(check("media", other, { isMainFrame: true, mediaType: "audio" }), false, other);
   }
@@ -181,7 +181,7 @@ test("the verified Cloud open in this window may write the clipboard, by the rem
   assert.equal(ask(write, onCloud({ isMainFrame: false })), false, "a subframe");
   assert.equal(check(write, CLOUD, { isMainFrame: false }), false, "a subframe");
   assert.equal(check(write, CLOUD, {}), false, "no frame information");
-  for (const other of ["https://my-vps.example.com", "http://omb-u-0123456789ab.fly.dev", "https://omb-u-0123456789ab.fly.dev:8443", "https://evil.fly.dev"]) {
+  for (const other of ["https://my-vps.example.com", "http://mausclaw-u-0123456789ab.fly.dev", "https://mausclaw-u-0123456789ab.fly.dev:8443", "https://evil.fly.dev"]) {
     assert.equal(ask(write, { requestingUrl: `${other}/chat`, isMainFrame: true }), false, other);
     assert.equal(check(write, other, { isMainFrame: true }), false, other);
   }
@@ -256,11 +256,11 @@ function myCloudFixture() {
   const identity = () => ({ cloudContractVersion: 1, expiresAt: f.now + 86_400_000, device: { id: "device-1" }, account: ACCOUNT });
   f.saved = { origin: ADMIN, token: `omc_${"T".repeat(43)}`, ...identity() };
   delete f.saved.cloudContractVersion;
-  // `f.cloud`: the machine OpenMausBot Cloud names for this account (null: none).
+  // `f.cloud`: the machine MausClaw Cloud names for this account (null: none).
   f.cloud = { state: "ready", origin: CLOUD };
   const session = () => ({ ...identity(), cloud: f.cloud,
     entitlement: { plan: "pro", tier: "pro", status: "active", expiresAt: f.now + 30 * 86_400_000, version: 1 } });
-  // OpenMausBot Cloud answers now ("ready"), later (a promise the test releases), never ("down"), or with the sign-in ended ("ended").
+  // MausClaw Cloud answers now ("ready"), later (a promise the test releases), never ("down"), or with the sign-in ended ("ended").
   const fetch = async (url, { method = "GET" } = {}) => {
     if (!url.endsWith("/api/cloud/desktop/session")) return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
     if (method === "DELETE") return Response.json({ revoked: true });
@@ -322,7 +322,7 @@ test("a restore that ends without this Cloud, or outlasts the wait, refuses rath
   assert.equal(await f.ask("media", MIC).done, false);
 });
 
-test("with OpenMausBot Cloud unreachable past the verified window, the same account's Cloud keeps the microphone", async () => {
+test("with MausClaw Cloud unreachable past the verified window, the same account's Cloud keeps the microphone", async () => {
   const f = myCloudFixture();
   await f.restore();
   assert.equal(f.client.homeTarget()?.origin, CLOUD);
@@ -459,7 +459,7 @@ test("the page's answer is the request handler's answer for its microphone", asy
   for (const home of [CLOUD, null, "https://evil.fly.dev"]) {
     state.home = home;
     for (const contents of [state.main, local, other]) {
-      for (const url of [`${CLOUD}/chat`, LOCAL_PAGE, "https://my-vps.example.com/", "http://omb-u-0123456789ab.fly.dev/"]) {
+      for (const url of [`${CLOUD}/chat`, LOCAL_PAGE, "https://my-vps.example.com/", "http://mausclaw-u-0123456789ab.fly.dev/"]) {
         for (const mainFrame of [true, false]) {
           const granted = await new Promise((resolve) => {
             handlers.request(contents, "media", resolve, { requestingUrl: url, isMainFrame: mainFrame, mediaTypes: ["audio"] });

@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 function archive(members: ZipFixtureMember[]): { file: string; out: string } {
-  scratch = mkdtempSync(join(tmpdir(), "omb-zip-archive-"));
+  scratch = mkdtempSync(join(tmpdir(), "mausclaw-zip-archive-"));
   const file = join(scratch, "fixture.zip");
   writeFileSync(file, buildZip(members));
   const out = join(scratch, "out");
@@ -79,7 +79,7 @@ describe("extracting a verified zip", () => {
   });
 
   it("refuses a file that is not a zip", async () => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-zip-archive-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-zip-archive-"));
     const file = join(scratch, "not.zip");
     writeFileSync(file, "plain text, no directory");
     await expect(extractZip(file, scratch, { maxEntries: 10 })).rejects.toThrow(/ZIP/);

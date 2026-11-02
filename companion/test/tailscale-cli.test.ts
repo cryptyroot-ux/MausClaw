@@ -78,17 +78,17 @@ describe("Tailscale from a shell-less standalone macOS app", () => {
       controlToken: () => "fixture-control-token",
       companionPort: 8787,
       discovery: () => ({ advertising: false, name: "Fixture" }),
-      hostedUrl: () => "https://fixture.openmausbot.com",
+      hostedUrl: () => "https://fixture.mausclaw.com",
       refreshTailscale: () => refreshTailnetName(),
     });
     await new Promise<void>((resolve) => control!.listen(0, "127.0.0.1", resolve));
     const { port } = control.address() as { port: number };
-    const response = await fetch(`http://127.0.0.1:${port}/tailscale/refresh`, { method: "POST", headers: { "x-openmausbot-control-token": "fixture-control-token" } });
+    const response = await fetch(`http://127.0.0.1:${port}/tailscale/refresh`, { method: "POST", headers: { "x-mausclaw-control-token": "fixture-control-token" } });
     const state = await response.json() as ReturnType<typeof companionState>;
     expect(response.status).toBe(200);
     expect(state.tailnetName).toBe("fixture.tail1234.ts.net");
     expect(state.endpoints).toContainEqual({ url: "http://fixture.tail1234.ts.net:8787", kind: "tailnet", priority: 100 });
-    expect(state.endpoints).toContainEqual({ url: "https://fixture.openmausbot.com", kind: "hosted", priority: 0 });
+    expect(state.endpoints).toContainEqual({ url: "https://fixture.mausclaw.com", kind: "hosted", priority: 0 });
     expect(state.endpoints.some((endpoint: { url: string }) => endpoint.url.includes("100.64.0.7"))).toBe(false);
     expect(state.pairing).toBeNull();
     expect(fixture.calls).toHaveLength(1);

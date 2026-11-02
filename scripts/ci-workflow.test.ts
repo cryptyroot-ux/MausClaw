@@ -94,8 +94,8 @@ describe("CI concurrency", () => {
     const run = (workflow.jobs.vitest.steps as { name?: string; run?: string; env?: Record<string, string> }[])
       .find((step) => step.name === "Run tests")!;
     expect(run.run).toContain("pnpm exec vitest run ${{ matrix.files }} --shard=${{ matrix.shard }}/${{ matrix.shards }} ");
-    expect(run.env?.OMB_VITEST_E2E).toBe("${{ matrix.e2e }}");
-    expect(run.env?.OMB_VITEST_SUBSET).toBe("${{ matrix.files }}");
+    expect(run.env?.MAUSCLAW_VITEST_E2E).toBe("${{ matrix.e2e }}");
+    expect(run.env?.MAUSCLAW_VITEST_SUBSET).toBe("${{ matrix.files }}");
     const { include } = vitestMatrix(["macos-latest", "ubuntu-latest", "windows-latest"]);
     for (const os of ["macos-latest", "ubuntu-latest", "windows-latest"]) {
       const shards = include.filter((entry) => entry.os === os);
@@ -182,7 +182,7 @@ describe("CI concurrency", () => {
     // The runner context exists only at step level, never in a job's env.
     expect(workflow.jobs.vitest.env).toBeUndefined();
     for (const step of [steps[tests]!, steps[report]!]) {
-      expect(step.env?.OMB_VITEST_RETRY_LOG).toBe("${{ runner.temp }}/vitest-retries.jsonl");
+      expect(step.env?.MAUSCLAW_VITEST_RETRY_LOG).toBe("${{ runner.temp }}/vitest-retries.jsonl");
     }
     expect(readFileSync(new URL("../vite.config.ts", import.meta.url), "utf8")).toContain('runner: "./scripts/testing/ci-retry-runner.ts"');
   });

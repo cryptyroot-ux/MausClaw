@@ -60,7 +60,7 @@ function useFakeNpm() {
   const ctx = { scratch: "", binDir: "", base: "" };
   let originalPath: string | undefined;
   beforeEach(() => {
-    ctx.scratch = mkdtempSync(join(tmpdir(), "omb-engine-install-"));
+    ctx.scratch = mkdtempSync(join(tmpdir(), "mausclaw-engine-install-"));
     ctx.binDir = join(ctx.scratch, "fake-path");
     ctx.base = join(ctx.scratch, "data");
     mkdirSync(ctx.binDir);
@@ -225,7 +225,7 @@ describe.skipIf(process.platform === "win32")("app-installed engines on PATH at 
   });
 
   it("puts the app's npm folder first and a checked standalone build last, behind the person's own PATH", () => {
-    scratch = mkdtempSync(join(tmpdir(), "omb-engine-boot-"));
+    scratch = mkdtempSync(join(tmpdir(), "mausclaw-engine-boot-"));
     const base = join(scratch, "data");
     const engine = standaloneEngineDir("fake-engine", base);
     const program = "#!/bin/sh\necho 2.0.0\n";

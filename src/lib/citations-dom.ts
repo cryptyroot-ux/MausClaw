@@ -127,8 +127,8 @@ export async function highlightCitationSource(citation: CitationAttachment): Pro
       const HighlightConstructor = (globalThis as unknown as { Highlight?: new (range: Range) => unknown }).Highlight;
       window.clearTimeout(highlightCleanup);
       if (highlights && HighlightConstructor) {
-        highlights.set("omb-citation-source", new HighlightConstructor(range));
-        highlightCleanup = window.setTimeout(() => highlights.delete("omb-citation-source"), 2_500);
+        highlights.set("mausclaw-citation-source", new HighlightConstructor(range));
+        highlightCleanup = window.setTimeout(() => highlights.delete("mausclaw-citation-source"), 2_500);
       } else {
         const selection = window.getSelection();
         selection?.removeAllRanges();

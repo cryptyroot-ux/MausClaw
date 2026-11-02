@@ -4,13 +4,13 @@ import { CLOUD_ID, CLOUD_SWATCHES, cleanCloudListName, otherOwnClouds, ownCloud,
 import { planTeam, teamPlan } from "./cloud-team-plan.mjs";
 import { cleanCode, cleanEmail, parseSignInStart, SIGN_IN_START, SIGN_IN_TRIES, SIGN_IN_VERIFY, signInIdentity, startFailure, verifyFailure } from "./cloud-signin.mjs";
 
-export const CLOUD_ORIGIN = "https://cloud.openmausbot.com";
-/** The staging Admin (Dodo test mode, real test Clouds): a fixed address, on only with OMB_CLOUD_STAGING=1. */
-export const STAGING_CLOUD_ORIGIN = "https://omb-cloud-staging.fly.dev";
+export const CLOUD_ORIGIN = "https://cloud.mausclaw.com";
+/** The staging Admin (Dodo test mode, real test Clouds): a fixed address, on only with MAUSCLAW_CLOUD_STAGING=1. */
+export const STAGING_CLOUD_ORIGIN = "https://mausclaw-cloud-staging.fly.dev";
 /** Which Admin this app signs in to, and the files that depend on it (the sign-in, saved servers with the Cloud's
  * entry, Files' state, the Cloud's chosen name): staging never reads or writes production's. */
 export function cloudTarget(env = process.env) {
-  return env?.OMB_CLOUD_STAGING === "1"
+  return env?.MAUSCLAW_CLOUD_STAGING === "1"
     ? { origin: STAGING_CLOUD_ORIGIN, staging: true, file: "cloud-account-staging.bin", environments: "environments-staging.json", sync: "cloud-sync-staging", look: "cloud-home-look-staging.json" }
     : { origin: CLOUD_ORIGIN, staging: false, file: "cloud-account.bin", environments: "environments.json", sync: "cloud-sync", look: "cloud-home-look.json" };
 }
@@ -126,7 +126,7 @@ export function createCloudAccountClient({ store, openBrowser, platform, deviceN
   };
   const reset = () => { generation++; stopTimer(); controller.abort(); controller = new AbortController(); pending = null; emailed = null; verifiedUntil = 0; failures = 0; return generation; };
   const current = stamp => !closed && generation === stamp;
-  const versionHeader = text(appVersion, 40) && /^[0-9A-Za-z][0-9A-Za-z.+-]{0,39}$/.test(appVersion) ? { "x-openmausbot-version": appVersion } : {};
+  const versionHeader = text(appVersion, 40) && /^[0-9A-Za-z][0-9A-Za-z.+-]{0,39}$/.test(appVersion) ? { "x-mausclaw-version": appVersion } : {};
   async function request(route, { method = "GET", body, token, signal = controller.signal, path = `/api/cloud/desktop/${route}`, timeoutMs = 20_000 } = {}) {
     const response = await fetcher(`${origin}${path}`, {
       method, redirect: "error", credentials: "omit", cache: "no-store",
@@ -745,7 +745,7 @@ export function createCloudAccountClient({ store, openBrowser, platform, deviceN
       catch (error) { if (error?.status === 402 || error?.status === 404) return null; throw error; }
       let relay = null;
       try { relay = typeof result?.url === "string" ? new URL(result.url) : null; } catch { relay = null; }
-      if (result?.cloudContractVersion !== 1 || !relay || relay.origin !== origin || typeof result.token !== "string" || !/^omb_xd_[A-Za-z0-9_-]{43}$/.test(result.token)) {
+      if (result?.cloudContractVersion !== 1 || !relay || relay.origin !== origin || typeof result.token !== "string" || !/^mausclaw_xd_[A-Za-z0-9_-]{43}$/.test(result.token)) {
         throw new Error("Invalid Cloud X research response.");
       }
       return { url: result.url, token: result.token };
@@ -761,7 +761,7 @@ export function createCloudAccountClient({ store, openBrowser, platform, deviceN
       catch (error) { if (error?.status === 404) return null; throw error; }
       let target = null;
       try { target = typeof result?.url === "string" ? new URL(result.url) : null; } catch { target = null; }
-      if (result?.cloudContractVersion !== 1 || !target || target.origin !== origin || typeof result.token !== "string" || !/^omb_pd_[A-Za-z0-9_-]{43}$/.test(result.token)) {
+      if (result?.cloudContractVersion !== 1 || !target || target.origin !== origin || typeof result.token !== "string" || !/^mausclaw_pd_[A-Za-z0-9_-]{43}$/.test(result.token)) {
         throw new Error("Invalid Cloud pages response.");
       }
       return { url: result.url, token: result.token };

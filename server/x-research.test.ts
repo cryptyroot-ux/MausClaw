@@ -76,9 +76,9 @@ function fakeFetch(...responses: Reply[]) {
   return { fetcher: fetcher as unknown as typeof fetch, calls };
 }
 
-/** The Admin's X relay (a Cloud home's OMB_CLOUD_X_URL, or a desktop's from its Cloud sign-in). */
+/** The Admin's X relay (a Cloud home's MAUSCLAW_CLOUD_X_URL, or a desktop's from its Cloud sign-in). */
 const RELAY = "https://cloud.example.test/api/cloud/services/x";
-const clientWith = (fetcher: typeof fetch) => createXRelayClient({ url: RELAY, token: "omb_xd_test", fetcher });
+const clientWith = (fetcher: typeof fetch) => createXRelayClient({ url: RELAY, token: "mausclaw_xd_test", fetcher });
 
 async function failure(promise: Promise<unknown>): Promise<XResearchError> {
   try {
@@ -220,7 +220,7 @@ describe("search", () => {
     expect(calls[0]!.method).toBe("POST");
     expect(calls[0]!.url.href).toBe(`${RELAY}/call/anyapi.x.search.posts`);
     expect(calls[0]!.body).toEqual({ query: "mausbot", queryType: "Latest", limit: 20 });
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_test");
+    expect(calls[0]!.headers.get("authorization")).toBe("Bearer mausclaw_xd_test");
     // Our treg key, the customer tag and the cost ceiling are the relay's to add; nothing of treg's is sent from here.
     expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
     expect(calls[0]!.headers.get("x-treg-route-max-cost")).toBeNull();
@@ -455,7 +455,7 @@ describe("errors", () => {
 });
 
 describe("the plan's included X calls this month", () => {
-  const plan = { token: "omb_xd_plan", api: `${RELAY}/`, included: true };
+  const plan = { token: "mausclaw_xd_plan", api: `${RELAY}/`, included: true };
   const usage = { calls: 312, max: 5_000, resetsAt: "2026-11-01T00:00:00.000Z" };
 
   it("asks the relay's /usage with the plan's bearer, by GET, and reads its answer", async () => {
@@ -464,7 +464,7 @@ describe("the plan's included X calls this month", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]!.url.href).toBe(`${RELAY}/usage`);
     expect(calls[0]!.method).toBe("GET");
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_plan");
+    expect(calls[0]!.headers.get("authorization")).toBe("Bearer mausclaw_xd_plan");
     expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
   });
 
@@ -506,9 +506,9 @@ describe("with the person's own treg key", () => {
 
   it("goes through the relay with a bearer when the credential is the plan's", async () => {
     const { fetcher, calls } = fakeFetch({ body: anyapi({ items: [], nextCursor: "" }) });
-    await createXClient({ token: "omb_xd_plan", api: RELAY, included: true }, { fetcher }).search({ query: "maus", sort: "latest", limit: 20 });
+    await createXClient({ token: "mausclaw_xd_plan", api: RELAY, included: true }, { fetcher }).search({ query: "maus", sort: "latest", limit: 20 });
     expect(calls[0]!.url.toString()).toBe(`${RELAY}/call/anyapi.x.search.posts`);
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_plan");
+    expect(calls[0]!.headers.get("authorization")).toBe("Bearer mausclaw_xd_plan");
     expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
   });
 

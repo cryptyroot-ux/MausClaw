@@ -53,7 +53,7 @@ describe("what bots learned about the person", () => {
 
 describe("a team's memory and a bot's journal", () => {
   it("team entries arrive once: one this team has by id or by key stays as it is", () => {
-    const memory = new TeamMemory(join(mkdtempSync(join(tmpdir(), "omb-team-")), "team-memory.json"));
+    const memory = new TeamMemory(join(mkdtempSync(join(tmpdir(), "mausclaw-team-")), "team-memory.json"));
     const entry = (id: string, name: string) => ({ id, kind: "person", name, detail: `${name} at Acme.`, aliases: [], status: "accepted", source: { botId: "b1", botName: "Nova", threadId: "t", at: 1 }, updatedAt: 1 });
     expect(memory.adopt("", [entry("e1", "Dana"), entry("e2", "Raj"), { id: "bad" }])).toBe(2);
     expect(memory.adopt("", [entry("e1", "Dana"), entry("e3", "dana"), entry("e4", "Lee")])).toBe(1);

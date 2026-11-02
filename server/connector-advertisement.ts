@@ -3,9 +3,9 @@
 import { CONNECTOR_SLUG_PATTERN, CONNECTOR_TOOL_NAME_PATTERN, type ConnectorToolGrant } from "../shared/wire.ts";
 import { serviceSlugFor, serviceSlugForCandidates } from "./connector-verdict.ts";
 
-export const CONNECTOR_ALLOWED_TOOLS_ENV = "OMB_CONNECTOR_ALLOWED_TOOLS";
+export const CONNECTOR_ALLOWED_TOOLS_ENV = "MAUSCLAW_CONNECTOR_ALLOWED_TOOLS";
 
-export const CONNECTOR_SERVICE_SLUGS_ENV = "OMB_CONNECTOR_SERVICE_SLUGS";
+export const CONNECTOR_SERVICE_SLUGS_ENV = "MAUSCLAW_CONNECTOR_SERVICE_SLUGS";
 
 /** Past this the env var is omitted: mounting must never depend on catalog size. */
 export const CONNECTOR_ALLOWED_TOOLS_MAX_BYTES = 32 * 1024;
@@ -124,11 +124,11 @@ export function filterToolsListFrame(
 
 const AUTH_CONFIG_PARAMETER = {
   type: "string",
-  description: "Optional, read by OpenMausBot: the id (ac_…) of an auth config in the person's own Composio project to "
+  description: "Optional, read by MausClaw: the id (ac_…) of an auth config in the person's own Composio project to "
     + "connect the one listed toolkit with. Leave it out to use their most recently created enabled config for it.",
 };
 
-/** COMPOSIO_MANAGE_CONNECTIONS as OpenMausBot's connection cards read it: Composio's schema has no auth config id. */
+/** COMPOSIO_MANAGE_CONNECTIONS as MausClaw's connection cards read it: Composio's schema has no auth config id. */
 export function withAuthConfigParameter(frame: Record<string, unknown>): Record<string, unknown> {
   const result = frame.result;
   if (!result || typeof result !== "object" || Array.isArray(result)) return frame;

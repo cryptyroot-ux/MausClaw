@@ -1,15 +1,15 @@
-// Real-model search acceptance through an isolated OpenMausBot server.
+// Real-model search acceptance through an isolated MausClaw server.
 // Existing sign-in is explicitly designated; personal chats/config are not copied.
 import { copyFileSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi } from "./testing/preview-fixture.ts";
 import { verifiedNativeSearch } from "./testing/native-search-evidence.ts";
 
-const cli = process.env.OMB_VERIFY_CODEX_CLI;
-const auth = process.env.OMB_VERIFY_CODEX_AUTH;
-const output = process.env.OMB_VERIFY_OUTPUT;
-const models = (process.env.OMB_VERIFY_MODELS ?? "gpt-5.6-luna").split(",").map(model => model.trim()).filter(Boolean);
+const cli = process.env.MAUSCLAW_VERIFY_CODEX_CLI;
+const auth = process.env.MAUSCLAW_VERIFY_CODEX_AUTH;
+const output = process.env.MAUSCLAW_VERIFY_OUTPUT;
+const models = (process.env.MAUSCLAW_VERIFY_MODELS ?? "gpt-5.6-luna").split(",").map(model => model.trim()).filter(Boolean);
 if (!models.length) throw new Error("Choose at least one acceptance model.");
 if (!cli || !auth || !output) throw new Error("Supply explicit CLI, sign-in and output. Uses real model quota.");
 mkdirSync(output, { recursive: true });
@@ -33,15 +33,15 @@ try {
     const prompt = "Check the current official OpenAI documentation: is the built-in browser available in Codex CLI? After searching, open the source URL in a separate call, read it, and cite that exact URL in your answer.";
     const entry: any = { model, prompt, botId: bot.id };
     report.cases.push(entry); save();
-    entry.sent = await runControlOmb(["send", "--bot", bot.id, "--text", prompt, "--url", fixture.info.url]);
+    entry.sent = await runControlMausclaw(["send", "--bot", bot.id, "--text", prompt, "--url", fixture.info.url]);
     console.log(JSON.stringify({ model, sent: entry.sent }));
     const deadline = Date.now() + 240_000;
     do {
-      entry.wait = await runControlOmb(["wait", "--bot", bot.id, "--timeout", "30", "--url", fixture.info.url]);
+      entry.wait = await runControlMausclaw(["wait", "--bot", bot.id, "--timeout", "30", "--url", fixture.info.url]);
       save();
       if (["settled", "failed", "needs-user", "stalled"].includes(entry.wait?.status)) break;
     } while (Date.now() < deadline);
-    entry.messages = await runControlOmb(["messages", "--bot", bot.id, "--limit", "50", "--url", fixture.info.url]);
+    entry.messages = await runControlMausclaw(["messages", "--bot", bot.id, "--limit", "50", "--url", fixture.info.url]);
     const nativePath = join(fixture.info.dataDir, "native", `${entry.sent.taskId}.ndjson`);
     const records = readFileSync(nativePath, "utf8").trim().split("\n").map(line => JSON.parse(line));
     const searches = records.filter(record => record.msg?.method === "item/completed" && record.msg?.params?.item?.type === "webSearch");

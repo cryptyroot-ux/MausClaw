@@ -26,7 +26,7 @@ const row = (overrides: Partial<DecisionRow> = {}): Omit<DecisionRow, "at"> => (
 });
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "omb-decisions-"));
+  dir = mkdtempSync(join(tmpdir(), "mausclaw-decisions-"));
 });
 
 afterEach(async () => {
@@ -114,8 +114,8 @@ describe("appendDecision / readDecisions", () => {
     expect(DEFAULT_DECISION_RETENTION_DAYS).toBe(180);
     expect(decisionRetentionDays(undefined, {})).toBe(180);
     expect(decisionRetentionDays(365, {})).toBe(365);
-    expect(decisionRetentionDays(365, { OMB_DECISION_RETENTION_DAYS: "30" })).toBe(30);
-    for (const bad of ["0", "-1", "1.5", "forever", "4000", ""]) expect(decisionRetentionDays(90, { OMB_DECISION_RETENTION_DAYS: bad }), bad).toBe(90);
+    expect(decisionRetentionDays(365, { MAUSCLAW_DECISION_RETENTION_DAYS: "30" })).toBe(30);
+    for (const bad of ["0", "-1", "1.5", "forever", "4000", ""]) expect(decisionRetentionDays(90, { MAUSCLAW_DECISION_RETENTION_DAYS: bad }), bad).toBe(90);
     expect(decisionRetentionDays(0, {})).toBe(180);
   });
 

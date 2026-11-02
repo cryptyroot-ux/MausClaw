@@ -152,7 +152,7 @@ describe("reviewed Chief team setup", () => {
   it("accepts a working folder on create only, with the profile path's exact validation copy", () => {
     const h = harness();
     const mira = specialist("Mira", "Work");
-    const folder = mkdtempSync(join(tmpdir(), "omb-team-cwd-"));
+    const folder = mkdtempSync(join(tmpdir(), "mausclaw-team-cwd-"));
     const withFolder = h.propose([{ ...mira, fields: { ...mira.fields, cwd: folder } }]);
     expect(withFolder.detail).toContain(`Working folder: "${folder}"`);
     expect(() => h.propose([{ ...mira, fields: { ...mira.fields, cwd: "relative/path" } }]))

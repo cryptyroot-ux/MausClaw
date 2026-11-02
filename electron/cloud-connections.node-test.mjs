@@ -35,7 +35,7 @@ function cloud({ connections = [], engines = [], commands = ["npx", "node"], rep
       calls.push([method, route, body]);
       if (method === "GET" && route === "/api/cloud-connections") {
         reads++;
-        return { ok: true, status: 200, body: { computer: { environmentId: "env-cloud", label: "omb-u-1" }, connections, engines: reads > readyAfter ? engines : [], commands } };
+        return { ok: true, status: 200, body: { computer: { environmentId: "env-cloud", label: "mausclaw-u-1" }, connections, engines: reads > readyAfter ? engines : [], commands } };
       }
       const answer = reply(method, route, body) ?? { status: 200, body: {} };
       return { ok: answer.status >= 200 && answer.status < 300, ...answer };

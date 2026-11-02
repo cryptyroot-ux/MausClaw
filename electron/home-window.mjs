@@ -331,7 +331,7 @@ export function createHomeWindow(deps) {
   async function redeem(origin, grant) {
     try {
       const response = await cookieFetch(`${origin}/api/auth/pair`, { method: "POST", credentials: "include", redirect: "error", cache: "no-store", signal: AbortSignal.timeout(15_000),
-        headers: { "content-type": "application/json", origin }, body: JSON.stringify({ code: grant.code, cookie: true, label: "OpenMausBot app" }) });
+        headers: { "content-type": "application/json", origin }, body: JSON.stringify({ code: grant.code, cookie: true, label: "MausClaw app" }) });
       await response.body?.cancel?.().catch(() => {});
       return response.ok;
     } catch { return false; }
@@ -491,7 +491,7 @@ export function createHomeWindow(deps) {
 
   async function version(origin) {
     try {
-      const response = await cookieFetch(`${origin}/.well-known/openmausbot/environment`, { cache: "no-store", redirect: "error",
+      const response = await cookieFetch(`${origin}/.well-known/mausclaw/environment`, { cache: "no-store", redirect: "error",
         signal: AbortSignal.timeout(LOOK_MS), headers: { accept: "application/json", ...BACKGROUND_HEADERS } });
       const body = response.ok ? await response.json() : null;
       return typeof body?.version === "string" ? body.version : null;

@@ -1,10 +1,10 @@
 # iOS companion architecture
 
-The iOS app is a thin, native client for the OpenMausBot instance running on
+The iOS app is a thin, native client for the MausClaw instance running on
 your Mac. The Mac remains the only machine that persists agent processes,
 credentials, SQLite data, transcripts, and computers. The iPhone trusts a Mac
 by scanning the QR code shown in desktop **Settings → Remote access**; it does not need
-an OpenMausBot account of its own.
+an MausClaw account of its own.
 
 ## Use My Cloud on your phone
 
@@ -59,7 +59,7 @@ automation are not part of this version. The optional hosted transport connects
 to the user's own computer; it is not a cloud transcript store and cannot wake
 a terminated iOS app.
 
-The Mac must be running OpenMausBot and must not be asleep. Desktop
+The Mac must be running MausClaw and must not be asleep. Desktop
 **Settings → Remote access** offers an off-by-default **Keep this computer awake**
 switch that prevents system sleep while device access is on; the display may
 still turn off. A sleeping or powered-off computer cannot receive phone
@@ -101,7 +101,7 @@ of this version.
  credential ciphertext only)
             │ loopback only
             ▼
- OpenMausBot harness :8799
+ MausClaw harness :8799
    HTTP API + event stream
    agent processes and approvals
             │ private Electron utility-process channel
@@ -144,7 +144,7 @@ harness API:
   If an API payload changes, regenerate the fixtures with
   `node scripts/capture-companion-fixtures.mjs` and review the diff.
 
-The sidecar keeps its device registry in `~/.openmausbot/devices.json`. That is
+The sidecar keeps its device registry in `~/.mausclaw/devices.json`. That is
 security state owned by the network boundary, not transcript data, so it does
 not belong in the message database.
 
@@ -174,7 +174,7 @@ card is only for people who already use Tailscale. Install or open Tailscale
 on both devices, sign in to the same tailnet, leave MagicDNS enabled, and
 choose **Turn on device access & check** followed by **Pair over Tailscale**.
 That first action explicitly starts Remote access so the phone has a listener
-to reach. OpenMausBot then places the computer's MagicDNS name in that
+to reach. MausClaw then places the computer's MagicDNS name in that
 dedicated QR; it never silently replaces the default hosted HTTPS route.
 Manual entry remains available as a fallback.
 
@@ -183,7 +183,7 @@ WireGuard inside the tailnet. Use the MagicDNS name rather than the
 `100.64.0.0/10` address: App Transport Security exceptions are domain-based,
 and `ios/project.yml` narrowly allows insecure HTTP for `ts.net` subdomains.
 
-Tailscale is optional. The direct path does not use an OpenMausBot-operated
+Tailscale is optional. The direct path does not use an MausClaw-operated
 relay or create a cloud copy of local transcript data.
 
 ### Optional hosted HTTPS
@@ -209,7 +209,7 @@ back. If no HTTPS address is free, the panel says when to try again, and
 Wi-Fi or Tailscale pairing still works.
 
 Cloudflare terminates and proxies the encrypted connection to the connector.
-The OpenMausBot control plane stores account and installation metadata plus
+The MausClaw control plane stores account and installation metadata plus
 opaque tunnel/DNS identifiers in D1, but not bots, transcripts, approvals,
 screen frames, pairing tokens, or connector tokens. See `docs/ios-privacy.md`
 for data and deletion details.
@@ -248,7 +248,7 @@ event stream and in-memory chat state, but keeps every saved pairing; removing
 one computer deletes only that computer's Keychain credential from the phone.
 An app upgrade migrates the previous single saved pairing automatically.
 
-The Mac must remain awake with OpenMausBot running for chats, approvals, and
+The Mac must remain awake with MausClaw running for chats, approvals, and
 routines to work, including through hosted HTTPS or Tailscale.
 
 After pairing, the phone periodically reads the authenticated, sidecar-owned
@@ -257,7 +257,7 @@ new hosted address—or its withdrawal—without another pairing ceremony. The
 route never reaches the harness and returns only the computer name plus a
 bounded list of connection origins.
 
-An OpenMausBot account is not required for nearby, manual, or Tailscale
+An MausClaw account is not required for nearby, manual, or Tailscale
 connections. Only the desktop owner signs in when enabling the optional hosted
 HTTPS route; the iPhone always uses the same QR trust flow.
 
@@ -285,7 +285,7 @@ Each submission uses RFC 9180 base-mode HPKE with P-256/HKDF-SHA256/AES-GCM-256
 and authenticates this exact newline-separated context:
 
 ```text
-openmausbot-phone-credential-v1
+mausclaw-phone-credential-v1
 <key id>
 <authenticated companion device id>
 <bot id>
@@ -335,14 +335,14 @@ Allowed in the first release:
   (`action: "check"`, read-only) and closes the relay when it does not. The
   phone speaks RFB over the relay. Hand back closes the viewer and releases
   the lease, and so does backgrounding the app.
-- A phone paired with the server directly (`openmausbot serve` behind
+- A phone paired with the server directly (`mausclaw serve` behind
   Tailscale Serve or a tunnel, no sidecar) drives the Local VM the same way,
   but the join answers it with the server's own authenticated desktop proxy
   (`/api/desktop-viewer/local/<target>/websockify`), bound to its control
   lease, and the VNC password; never the loopback address. The proxy re-checks
   the lease and the session every few seconds and closes the socket when
   either lapses; hand back closes it at once. Computer access is the pairing's
-  scope: Full access (`openmausbot pair`) may, chat-only (`--client`) is
+  scope: Full access (`mausclaw pair`) may, chat-only (`--client`) is
   answered 403 and the app shows computer access as off.
 - Phone control requires per-bot Local VMs. Shared and pool modes are refused
   on both connection paths until a viewer can reserve its desktop against
@@ -401,7 +401,7 @@ skip the remaining gap.
 
 The phone registers the apps it allows with `PUT /api/phones/self`. Behind the sidecar it is identified by the companion header; on a Cloud home it uses its own session. It long-polls `GET /api/phones/self/jobs` (20 s), leases a job with `POST /api/phones/self/jobs/:id/lease`, and answers with `POST /api/phones/self/jobs/:id/result`, sending `{ ok: true, result }` or `{ ok: false, error, code }`. Results over 256 KB are refused as `too_large`. The SSE frame `{ kind: "device.job", phone, id }` tells an open app to poll now.
 
-Bots see these apps as `PHONE_*` tools through the `device` MCP kind. Reads run silently and writes show up as activity rows. A send opens a sheet on the phone and goes only when the person taps Send there; OpenMausBot adds no card of its own. A turn that came from the phone does phone things on the phone; a turn at the computer works the usual way and changes the phone only when the person names it. Only the owner's phone is reachable, so team Clouds never expose it. The contract fixture `server/testing/fixtures/phone-jobs.json` is what the phone apps copy into their own test fixtures.
+Bots see these apps as `PHONE_*` tools through the `device` MCP kind. Reads run silently and writes show up as activity rows. A send opens a sheet on the phone and goes only when the person taps Send there; MausClaw adds no card of its own. A turn that came from the phone does phone things on the phone; a turn at the computer works the usual way and changes the phone only when the person names it. Only the owner's phone is reachable, so team Clouds never expose it. The contract fixture `server/testing/fixtures/phone-jobs.json` is what the phone apps copy into their own test fixtures.
 
 ## Source layout
 

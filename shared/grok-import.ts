@@ -1,4 +1,4 @@
-// Bringing a shared Grok Bot into OpenMausBot. A public x.ai/bot/<id> page
+// Bringing a shared Grok Bot into MausClaw. A public x.ai/bot/<id> page
 // shows only the name, creator and description, so the full setup comes from
 // the person's own Grok Bot: they paste GROK_EXPORT_PROMPT into it and paste
 // the JSON it writes back here. Both turn into an ordinary openmaus.package v2,
@@ -103,7 +103,7 @@ export const grokMarketplaceUrl = (slug: string) => `https://x.ai/bot/marketplac
 /** A Grok Bot share link, its grokbot:// button link, or a marketplace page. */
 export const isGrokLink = (text: string) => Boolean(grokShareIdFrom(text) ?? grokMarketplaceSlugFrom(text));
 
-export const GROK_EXPORT_PROMPT = `Please export your setup so I can run you in OpenMausBot.
+export const GROK_EXPORT_PROMPT = `Please export your setup so I can run you in MausClaw.
 
 Reply with ONE JSON code block and nothing else, in exactly this shape:
 
@@ -445,7 +445,7 @@ export function grokExportToPackage(
       category: "Imported",
       author: { name: clip(x.creator || "Grok Bot creator", 100), ...(sourceUrl ? { url: sourceUrl } : {}) },
       license: "See source",
-      outcomes: [clip(`${name} runs in OpenMausBot with your own engine and apps.`, 240)],
+      outcomes: [clip(`${name} runs in MausClaw with your own engine and apps.`, 240)],
       setupMinutes: 5,
       requirements: { apps, capabilities: [] },
       team: { name: clip(name, 60) },

@@ -179,8 +179,8 @@ describe("tool history in an inline replay", () => {
     expect(text?.endsWith("and now?")).toBe(true);
   });
 
-  it("is switched on by OMB_REPLAY_TOOL_HISTORY=1 alone", () => {
-    const out = buildTurnContext({ text: "and now?", transcript: replay(undefined, { OMB_REPLAY_TOOL_HISTORY: "1" }).inline, ...flags, fresh: true });
+  it("is switched on by MAUSCLAW_REPLAY_TOOL_HISTORY=1 alone", () => {
+    const out = buildTurnContext({ text: "and now?", transcript: replay(undefined, { MAUSCLAW_REPLAY_TOOL_HISTORY: "1" }).inline, ...flags, fresh: true });
     expect(out.turnText.split("\n\n")[1]).toBe(conversation);
   });
 

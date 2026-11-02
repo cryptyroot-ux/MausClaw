@@ -57,7 +57,7 @@ afterEach(() => {
 
 let seq = 0;
 function workspace() {
-  const cwd = mkdtempSync(join(tmpdir(), "omb-ckpt-perf-ws-"));
+  const cwd = mkdtempSync(join(tmpdir(), "mausclaw-ckpt-perf-ws-"));
   scratchDirs.push(cwd);
   seq += 1;
   return { bot: `ckpt-perf-bot-${seq}`, cwd };
@@ -104,7 +104,7 @@ function countObjects({ count = 0, size = 0, sizePack = 0 }: { count?: number; s
 
 /** Is the temp volume case-insensitive (macOS default APFS, NTFS)? */
 const caseInsensitiveTmp = (() => {
-  const probe = mkdtempSync(join(tmpdir(), "omb-ckpt-perf-case-"));
+  const probe = mkdtempSync(join(tmpdir(), "mausclaw-ckpt-perf-case-"));
   scratchDirs.push(probe);
   writeFileSync(join(probe, "probe"), "");
   return existsSync(join(probe, "PROBE"));
@@ -143,7 +143,7 @@ describe("incremental shadow index", () => {
     expect(changed).toMatch(/^[0-9a-f]{40}$/);
     expect(subcommands()).toEqual(["ls-files", "log", "ls-files", "ls-files", "add", "write-tree", "commit-tree", "update-ref", "count-objects"]);
     expect(shadowGit(bot, cwd, "rev-parse", "HEAD").trim()).toBe(changed);
-    expect(shadowGit(bot, cwd, "for-each-ref", "--format=%(objectname)", "refs/omb-live/").trim()).toBe(changed);
+    expect(shadowGit(bot, cwd, "for-each-ref", "--format=%(objectname)", "refs/mausclaw-live/").trim()).toBe(changed);
     hooks.calls = [];
     expect(await snapshot(bot, cwd, "unchanged")).toBe(changed);
     expect(subcommands()).toEqual(["ls-files", "log", "ls-files", "ls-files", "add", "write-tree"]);

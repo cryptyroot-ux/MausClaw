@@ -13,7 +13,7 @@ import {
   readApnsConfig,
 } from "../src/push";
 
-const BASE_URL = "https://auth.openmausbot.test";
+const BASE_URL = "https://auth.mausclaw.test";
 const TOKEN_A = "a1".repeat(32);
 const TOKEN_B = "b2".repeat(32);
 
@@ -183,7 +183,7 @@ describe("phone push relay", () => {
         "thread-id": "th_1",
         "interruption-level": "time-sensitive",
       },
-      omb: { v: 1, kind: "approval", botId: "bot_1", botName: "Scout", threadId: "th_1", roomId: "grp_1", roomName: "Launch", pairing: "pair-tag-1" },
+      mausclaw: { v: 1, kind: "approval", botId: "bot_1", botName: "Scout", threadId: "th_1", roomId: "grp_1", roomName: "Launch", pairing: "pair-tag-1" },
     });
 
     const jwt = sent!.headers.authorization!.replace(/^bearer /, "");

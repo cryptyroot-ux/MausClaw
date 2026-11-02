@@ -24,7 +24,7 @@ export function applyManagedBrokerMessage(message: unknown): boolean {
   const parsed = managedBrokerMessageSchema.safeParse(message);
   if (
     !parsed.success ||
-    parsed.data.type !== "openmausbot:managed-composio" ||
+    parsed.data.type !== "mausclaw:managed-composio" ||
     !Object.hasOwn(parsed.data, "access")
   ) {
     return false;
@@ -45,8 +45,8 @@ export function setManagedBrokerAccess(access: unknown): void {
 export type BrokerAccess = { url: string; token: string }; // `as` below: a Team Cloud member's own installation, never a project key
 export function brokerAccess(): BrokerAccess | null {
   if (managedBrokerAccess !== undefined) return managedBrokerAccess;
-  const url = process.env.OMB_COMPOSIO_BROKER_URL?.trim();
-  const token = process.env.OMB_COMPOSIO_BROKER_TOKEN?.trim();
+  const url = process.env.MAUSCLAW_COMPOSIO_BROKER_URL?.trim();
+  const token = process.env.MAUSCLAW_COMPOSIO_BROKER_TOKEN?.trim();
   if (!url || !token) return null;
   if (!managedBrokerToken.test(token)) throw new Error("The connected-apps service token is invalid");
   return { url: normalizeManagedBrokerUrl(url), token };

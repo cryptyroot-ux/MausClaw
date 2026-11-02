@@ -7,7 +7,7 @@ line. The product behaviour is described in
 [../org-library.md](../org-library.md). Nothing here talks to a real Admin.
 A catalog is relayed into a disposable fixture through
 `POST /api/testing/org-library`, which exists only when the fixture was
-started with `OMB_TEST_ORG_LIBRARY_KEY`.
+started with `MAUSCLAW_TEST_ORG_LIBRARY_KEY`.
 
 ## Library units
 
@@ -80,7 +80,7 @@ pnpm exec vitest run server/org-library.e2e.test.ts --silent=false
 ```
 
 This launches and cleans its own fake-engine fixture with
-`launchVerificationServer`, passing a random `OMB_TEST_ORG_LIBRARY_KEY`. It
+`launchVerificationServer`, passing a random `MAUSCLAW_TEST_ORG_LIBRARY_KEY`. It
 checks the following:
 
 - With no relay, `GET /api/org-library` is `{organization: null, packages: []}`.
@@ -98,21 +98,21 @@ checks the following:
 
 ```sh
 pnpm exec vitest run src/lib/org-library.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/org-library-ui.e2e.test.ts --silent=false
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/org-library-ui.e2e.test.ts --silent=false
 ```
 
 The first command renders the shelf cards and the preview to markup. It
 checks:
 
 - Add appears only for a checked file, and there is no confirm step;
-- Added, "Update OpenMausBot to add this", the Recommended badge, the
+- Added, "Update MausClaw to add this", the Recommended badge, the
   waiting-release sentence and "Withdrawn by …";
 - "Included skills — switched on";
 - a skills-only preview with no team;
 - the provenance line, which a bot imported from a file does not get.
 
-The second command runs a disposable `control-omb ui` app, with the key
-passed through `scripts/control-omb.ts`. It checks, in order:
+The second command runs a disposable `control-mausclaw ui` app, with the key
+passed through `scripts/control-mausclaw.ts`. It checks, in order:
 
 - Templates has no organization tab before any relay.
 - After the relay, **From Customer Co** is the first tab and opens first.
@@ -126,7 +126,7 @@ passed through `scripts/control-omb.ts`. It checks, in order:
 - **Skills → From Customer Co → Add follow-up to this bot** puts the skill
   on, switched on.
 
-Screenshots go to `.omb-scratch/verify-evidence/org-library-*.png`.
+Screenshots go to `.mausclaw-scratch/verify-evidence/org-library-*.png`.
 
 ## 2026-09-24: what was actually run
 
@@ -134,7 +134,7 @@ This ran on macOS (arm64) against disposable fixtures only. These passed:
 
 - `pnpm typecheck`, `pnpm lint` and `pnpm i18n:check`;
 - the four commands above, including the headless-renderer run with
-  `OMB_UI_E2E=1`;
+  `MAUSCLAW_UI_E2E=1`;
 - `server/package-import.test.ts`, `server/package-export.test.ts`,
   `shared/package-format.test.ts`, `server/bot-package.test.ts`,
   `server/skills.test.ts`, `server/routines.test.ts`, `server/store.test.ts`,
@@ -193,7 +193,7 @@ fixtures only:
   Bot settings on an installation with no organization.
 
 These passed: `pnpm typecheck`, `pnpm lint`, the four commands above
-(including the headless-renderer run with `OMB_UI_E2E=1`, together with
+(including the headless-renderer run with `MAUSCLAW_UI_E2E=1`, together with
 `scripts/testing/team-share-ui.e2e.test.ts`), and the neighbouring tests
 listed in the section above plus `src/lib/team-share.test.ts`.
 

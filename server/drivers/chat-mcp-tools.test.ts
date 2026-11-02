@@ -32,7 +32,7 @@ const controllers: AbortController[] = [];
 const schema = { type: "object", properties: { value: { type: "string" } }, required: ["value"], additionalProperties: false };
 
 function fixture(body = "", toolSchema: Record<string, unknown> = schema) {
-  const dir = mkdtempSync(join(tmpdir(), "omb-chat-mcp-"));
+  const dir = mkdtempSync(join(tmpdir(), "mausclaw-chat-mcp-"));
   dirs.push(dir);
   const script = join(dir, "fake-mcp.mjs");
   const receipt = join(dir, "receipt.json");
@@ -53,7 +53,7 @@ function fixture(body = "", toolSchema: Record<string, unknown> = schema) {
         const line = buffer.slice(0, newline); buffer = buffer.slice(newline + 1);
         const message = JSON.parse(line);
         calls.push(message);
-        writeFileSync(receipt, JSON.stringify({pid:process.pid,path:process.env.PATH,omb:Object.fromEntries(Object.entries(process.env).filter(([name]) => name.startsWith("OMB_"))),calls}));
+        writeFileSync(receipt, JSON.stringify({pid:process.pid,path:process.env.PATH,mausclaw:Object.fromEntries(Object.entries(process.env).filter(([name]) => name.startsWith("MAUSCLAW_"))),calls}));
         ${body}
         if (message.method === "initialize") reply(message, {protocolVersion:"2024-11-05",capabilities:{tools:{}}});
         else if (message.method === "tools/list") reply(message, {tools:[{name:"write",description:"Fixture write",inputSchema:schema}]});
@@ -67,7 +67,7 @@ function fixture(body = "", toolSchema: Record<string, unknown> = schema) {
   const server: { command: string; args: string[]; env: Record<string, string> } = { command: script, args: [], env: { RECEIPT: receipt } };
   return {
     dir, receipt, controller, server,
-    read: () => JSON.parse(readFileSync(receipt, "utf8")) as { pid: number; path: string; omb: Record<string, string>; calls: Array<{ method: string; params?: { name?: string; arguments?: unknown } }> },
+    read: () => JSON.parse(readFileSync(receipt, "utf8")) as { pid: number; path: string; mausclaw: Record<string, string>; calls: Array<{ method: string; params?: { name?: string; arguments?: unknown } }> },
     async mount(computerUse = false, localComputer = false, toolScope?: ToolScope) {
       const session = await mountChatTools(localComputer ? { localComputer: server } : { custom: { audit: server } }, controller.signal, computerUse, toolScope);
       sessions.push(session);
@@ -204,7 +204,7 @@ describe("Chat MCP session", () => {
       sessions.push(session);
       const [definition] = session.definitions;
       expect(schemaBytes(definition!.function.parameters)).toBeLessThanOrEqual(12_000);
-      expect(definition!.function.description).toContain("OpenMausBot shortened this tool's parameters to fit Kimi's size limit");
+      expect(definition!.function.description).toContain("MausClaw shortened this tool's parameters to fit Kimi's size limit");
       expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^chat-mcp: audit: kept only the top-level fields of tool "write"'s parameters/));
       expect(() => session.validate("audit_write", { field_000: { label: 5 } })).toThrow("input schema");
       expect(() => session.validate("audit_write", { field_000: { label: "five" } })).not.toThrow();
@@ -229,14 +229,14 @@ describe("Chat MCP session", () => {
   });
 
   it("keeps the operator's control-plane secrets from a chat bot's tool servers, but not what the descriptor grants", async () => {
-    const secrets = ["OMB_CLOUD_READY_TOKEN", "OMB_CLOUD_BOOTSTRAP", "OMB_LICENSE_KEY", "OMB_INSTALLATION_CREDENTIAL"];
+    const secrets = ["MAUSCLAW_CLOUD_READY_TOKEN", "MAUSCLAW_CLOUD_BOOTSTRAP", "MAUSCLAW_LICENSE_KEY", "MAUSCLAW_INSTALLATION_CREDENTIAL"];
     for (const name of secrets) vi.stubEnv(name, "should-not-leak");
-    vi.stubEnv("OMB_CLOUDFLARED_PATH", "/usr/local/bin/cloudflared");
+    vi.stubEnv("MAUSCLAW_CLOUDFLARED_PATH", "/usr/local/bin/cloudflared");
     const f = fixture();
-    f.server.env = { ...f.server.env, OMB_COMMS_TOKEN: "turn-capability" };
+    f.server.env = { ...f.server.env, MAUSCLAW_COMMS_TOKEN: "turn-capability" };
     await f.mount();
-    const seen = f.read().omb;
-    expect(seen).toMatchObject({ OMB_CLOUDFLARED_PATH: "/usr/local/bin/cloudflared", OMB_COMMS_TOKEN: "turn-capability" });
+    const seen = f.read().mausclaw;
+    expect(seen).toMatchObject({ MAUSCLAW_CLOUDFLARED_PATH: "/usr/local/bin/cloudflared", MAUSCLAW_COMMS_TOKEN: "turn-capability" });
     for (const name of secrets) expect(seen).not.toHaveProperty(name);
   });
 
@@ -493,7 +493,7 @@ describe("Chat MCP shutdown verdict", () => {
 const grantFor = (server: string, tool: string) => expect.stringMatching(new RegExp(`^\\["${server}","[0-9a-f]{64}","${tool}"\\]$`));
 
 describe("Chat MCP approvals by server", () => {
-  it("asks nothing for OpenMausBot's agents server, and grants no session-wide allow on the person's computer", async () => {
+  it("asks nothing for MausClaw's agents server, and grants no session-wide allow on the person's computer", async () => {
     const agents = fixture(); const audit = fixture(); const computer = fixture();
     const session = await mountChatTools({
       agents: agents.server, custom: { audit: audit.server },

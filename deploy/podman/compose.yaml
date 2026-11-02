@@ -1,12 +1,12 @@
-name: ${COMPOSE_PROJECT_NAME:-openmausbot-podman}
+name: ${COMPOSE_PROJECT_NAME:-mausclaw-podman}
 services:
-  omb:
+  mausclaw:
     build:
       context: ../..
       dockerfile: deploy/podman/Containerfile
       args:
         ENGINES: ${ENGINES:-}
-    image: localhost/openmausbot-podman:${OMB_IMAGE_TAG:-local}
+    image: localhost/mausclaw-podman:${MAUSCLAW_IMAGE_TAG:-local}
     # Collects exited browser processes; Chrome's shared memory as on the
     # desktop containers (docs/browser-packaging.md, "Process hygiene").
     init: true
@@ -18,19 +18,19 @@ services:
     # dynamically allocated, loopback-only desktop ports on that same host.
     network_mode: host
     volumes:
-      - ${OMB_DATA_ROOT:?Run setup.sh first}:${OMB_DATA_ROOT}
-      - ${PODMAN_SOCKET:?Run setup.sh first}:/run/omb-podman.sock
+      - ${MAUSCLAW_DATA_ROOT:?Run setup.sh first}:${MAUSCLAW_DATA_ROOT}
+      - ${PODMAN_SOCKET:?Run setup.sh first}:/run/mausclaw-podman.sock
     environment:
-      HOME: ${OMB_DATA_ROOT}
-      OMB_DATA_DIR: ${OMB_DATA_ROOT}/.openmausbot
-      OMB_STATIC_DIR: /app/dist
-      CONTAINER_HOST: unix:///run/omb-podman.sock
-      OMB_PORT: ${OMB_PORT:-8799}
-      OMB_WEBHOOK_PORT: ${OMB_WEBHOOK_PORT:-8800}
-      OMB_PUBLIC_URL: ${OMB_PUBLIC_URL:-http://localhost:8080}
-      OMB_WEBHOOK_PUBLIC_URL: ${OMB_PUBLIC_URL:-http://localhost:8080}
+      HOME: ${MAUSCLAW_DATA_ROOT}
+      MAUSCLAW_DATA_DIR: ${MAUSCLAW_DATA_ROOT}/.mausclaw
+      MAUSCLAW_STATIC_DIR: /app/dist
+      CONTAINER_HOST: unix:///run/mausclaw-podman.sock
+      MAUSCLAW_PORT: ${MAUSCLAW_PORT:-8799}
+      MAUSCLAW_WEBHOOK_PORT: ${MAUSCLAW_WEBHOOK_PORT:-8800}
+      MAUSCLAW_PUBLIC_URL: ${MAUSCLAW_PUBLIC_URL:-http://localhost:8080}
+      MAUSCLAW_WEBHOOK_PUBLIC_URL: ${MAUSCLAW_PUBLIC_URL:-http://localhost:8080}
     healthcheck:
-      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:$$OMB_PORT/api/health | grep -q openmausbot']
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:$$MAUSCLAW_PORT/api/health | grep -q mausclaw']
       interval: 15s
       timeout: 5s
       start_period: 30s
@@ -40,13 +40,13 @@ services:
     restart: unless-stopped
     network_mode: host
     depends_on:
-      omb:
+      mausclaw:
         condition: service_healthy
     environment:
-      OMB_HTTP_PORT: ${OMB_HTTP_PORT:-8080}
-      OMB_PORT: ${OMB_PORT:-8799}
-      OMB_WEBHOOK_PORT: ${OMB_WEBHOOK_PORT:-8800}
-      OMB_HTTPS_HOST: ${OMB_HTTPS_HOST:-https-disabled.invalid}
+      MAUSCLAW_HTTP_PORT: ${MAUSCLAW_HTTP_PORT:-8080}
+      MAUSCLAW_PORT: ${MAUSCLAW_PORT:-8799}
+      MAUSCLAW_WEBHOOK_PORT: ${MAUSCLAW_WEBHOOK_PORT:-8800}
+      MAUSCLAW_HTTPS_HOST: ${MAUSCLAW_HTTPS_HOST:-https-disabled.invalid}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

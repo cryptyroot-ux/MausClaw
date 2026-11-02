@@ -25,7 +25,7 @@ in the manual editor remain possible. Existing routines are never removed.
 
 ```sh
 pnpm exec vitest run shared/routine-schedule.test.ts server/routine-cron.e2e.test.ts server/routine-requests.test.ts server/routines.test.ts server/routines-startup.test.ts src/components/routines/cron-editor.test.ts src/lib/routine-calendar.test.ts src/lib/schedule-label.test.ts server/bot-package.test.ts server/package-export.test.ts
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/cron-routines-ui.e2e.test.ts
+MAUSCLAW_UI_E2E=1 pnpm exec vitest run scripts/testing/cron-routines-ui.e2e.test.ts
 ```
 
 ## Launch the isolated renderer
@@ -51,7 +51,7 @@ The launcher prepares these cases:
   decide to call the tool.
 - **Manual inbox check** is created through the routine API and run twice for
   Pepper. Both fresh executions report into **Fleet health reports**, inside
-  the **OMB management** folder. Its next scheduled occurrence is an hour later.
+  the **MausClaw management** folder. Its next scheduled occurrence is an hour later.
 - **Provider failure example** is created for **Miso** and run once. Miso's
   isolated fake engine deliberately exits early, producing a failure receipt.
 - **Automatic scheduled check** is scheduled for Pepper about twelve seconds
@@ -99,7 +99,7 @@ The final startup JSON includes the server `url`, `previewUrl`, `pepperId`,
 7. Open bot settings → Routines. It must use the same routine editor and central
    logs, without creating a second definition or competing history page.
    Confirm that the chat's model header and Ask composer retain their positions.
-8. Expand Pepper's threads. **OMB management** contains one **Fleet health
+8. Expand Pepper's threads. **MausClaw management** contains one **Fleet health
    reports** thread, not separate sidebar entries for the two executions.
    Right-click the folder (or use its actions menu) → **Mark folder as read**.
    Its unread dots clear without selecting a conversation or resolving any
@@ -144,7 +144,7 @@ result and scheduled/manual trigger must agree with the saved server record.
 
 ## Run on startup
 
-A repeating routine's **Advanced** section offers **Also run when OpenMausBot
+A repeating routine's **Advanced** section offers **Also run when MausClaw
 starts**. In the isolated renderer, create a daily routine with it ticked, then
 reopen the editor: the box stays ticked. A one-time routine does not offer it.
 Startup needs a restart on the same data, which this launcher does not do;
@@ -152,7 +152,7 @@ Startup needs a restart on the same data, which this launcher does not do;
 store and requires exactly one completed **On startup** run.
 
 The desktop gives every server child of one launch the same
-`OMB_DESKTOP_LAUNCH_ID`, and `routines.json` records the launch whose startup
+`MAUSCLAW_DESKTOP_LAUNCH_ID`, and `routines.json` records the launch whose startup
 runs were queued. A crash recovery or switching back to a workspace within
 that launch queues none; the next launch does. A server without the variable,
 such as a standalone one, counts every process start.
@@ -169,8 +169,8 @@ final startup JSON. For bounded chat evidence, copy the exact fixture bot and
 execution-thread IDs into the shared control commands:
 
 ```sh
-pnpm control:omb wait --bot BOT_ID --task THREAD_ID --timeout 30 --url http://127.0.0.1:PORT
-pnpm control:omb messages --bot BOT_ID --task THREAD_ID --limit 20 --url http://127.0.0.1:PORT
+pnpm control:mausclaw wait --bot BOT_ID --task THREAD_ID --timeout 30 --url http://127.0.0.1:PORT
+pnpm control:mausclaw messages --bot BOT_ID --task THREAD_ID --limit 20 --url http://127.0.0.1:PORT
 ```
 
 Use only the printed fixture server URL. The browser interaction checklist is

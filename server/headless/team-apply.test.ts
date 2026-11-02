@@ -31,7 +31,7 @@ function workspace(seed: { bots?: Rec[]; groups?: Rec[]; sections?: string[]; co
     const method = init.method ?? "GET";
     const body = init.body ? JSON.parse(String(init.body)) : undefined;
     if (method !== "GET") writes.push(`${method} ${path}`);
-    const url = new URL(path, "http://omb");
+    const url = new URL(path, "http://mausclaw");
     const m = url.pathname.split("/").slice(1);
     if (url.pathname === "/api/config") {
       if (method === "PUT") for (const [name, value] of Object.entries(body as Rec)) state.config[name] = { ...state.config[name], configured: true, ...(value.everyClaudeBot !== undefined ? { everyClaudeBot: value.everyClaudeBot } : {}) };
@@ -77,7 +77,7 @@ function workspace(seed: { bots?: Rec[]; groups?: Rec[]; sections?: string[]; co
     throw new Error(`no route for ${method} ${path}`);
   };
   const client: HeadlessClient = {
-    baseUrl: "http://omb", explicit: true, json, raw: async () => { throw new Error("no raw reads here"); },
+    baseUrl: "http://mausclaw", explicit: true, json, raw: async () => { throw new Error("no raw reads here"); },
     tool: async (name, args: Rec) => {
       writes.push(`tool ${name}`);
       if (name === "create_channel") state.groups.push({ id: `room-${++ids}`, name: args.name, memberIds: args.member_ids, section: args.section,
@@ -316,7 +316,7 @@ describe("team export", () => {
     state.skills["bot-a"] = { common: { text: skill("first"), enabled: true } };
     state.skills["bot-b"] = { common: { text: skill("second"), enabled: true } };
     state.skills["bot-c"] = { common: { text: skill("third"), enabled: true } };
-    const dir = mkdtempSync(join(tmpdir(), "omb-team-export-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-team-export-"));
     try {
       const out = join(dir, "team.yaml");
       const ctx = { verb: "team export", flags: { out }, positionals: [], env: {}, io: { out: () => undefined, err: () => undefined, readStdin: async () => "" },
@@ -339,7 +339,7 @@ describe("team export", () => {
     state.bots.find((bot) => bot.name === "Room Lead")!.soul = `Lead the rehearsal. Pay with ${KEY}.`;
     state.briefs["Launch Room"] = `We rehearse a launch. The staging key is ${KEY}.`;
     state.skills["bot-1"]!["launch-report"]!.text = `---\nname: launch-report\ndescription: Write it.\n---\nUpload with ${KEY}\n`;
-    const dir = mkdtempSync(join(tmpdir(), "omb-team-export-"));
+    const dir = mkdtempSync(join(tmpdir(), "mausclaw-team-export-"));
     try {
       const out = join(dir, "team.yaml");
       const ctx = { verb: "team export", flags: { out }, positionals: [], env: {}, io: { out: () => undefined, err: () => undefined, readStdin: async () => "" },

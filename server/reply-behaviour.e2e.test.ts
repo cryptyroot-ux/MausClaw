@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "../scripts/control-mausclaw.ts";
 import { CAPTURE_MARKER } from "./memory-capture.ts";
 import { TIDY_MARKER } from "./memory-tidy.ts";
 import { REPLY_HABITS_PROMPT } from "./reply-habits.ts";
@@ -13,7 +13,7 @@ import { REMEMBER_AND_FORGET } from "./workspace.ts";
 type Step = { tool: string; arguments: Record<string, unknown> };
 
 it("remembers at once, learns only what the person said, forgets everywhere, and words a routine plainly", async () => {
-  const scratch = mkdtempSync(join(tmpdir(), "omb-reply-behaviour-"));
+  const scratch = mkdtempSync(join(tmpdir(), "mausclaw-reply-behaviour-"));
   const routes = join(scratch, "routes.json");
   const learnerLog = join(scratch, "learner.jsonl");
   writeFileSync(routes, JSON.stringify({
@@ -40,7 +40,7 @@ it("remembers at once, learns only what the person said, forgets everywhere, and
     expect(response.status, `${method} ${path}`).toBe(status);
     return response.json() as Promise<T>;
   };
-  const cli = (...args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+  const cli = (...args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
   const turn = async (bot: { id: string; activeTaskId: string }, text: string, steps: Step[], reply: string) => {
     const before = evidence().length;
     writeFileSync(planPath, JSON.stringify({ [bot.id]: { steps, reply } }));

@@ -4,19 +4,19 @@ import { describe, expect, it, vi } from "vitest";
 import { createUpdateChecker, installKind, isNewerVersion, LATEST_RELEASE_URL } from "./update-check.ts";
 
 const release = (tag: string) =>
-  ({ ok: true, status: 200, json: async () => ({ tag_name: tag, html_url: `https://github.com/cryptyroot-ux/OMB-Claw/releases/tag/${tag}` }) }) as Response;
+  ({ ok: true, status: 200, json: async () => ({ tag_name: tag, html_url: `https://github.com/cryptyroot-ux/MausClaw/releases/tag/${tag}` }) }) as Response;
 
 describe("server update check", () => {
   it("tells how this server was installed", () => {
     const none = () => false;
-    const root = ["", "srv", "OpenMausBot", "server"].join(sep);
+    const root = ["", "srv", "MausClaw", "server"].join(sep);
     expect(installKind({ desktopManaged: true, managed: false, serverRoot: root, exists: () => true })).toBe("desktop");
     expect(installKind({ desktopManaged: false, managed: true, serverRoot: root, exists: () => true })).toBe("managed");
     expect(installKind({ desktopManaged: false, managed: false, serverRoot: root, exists: (path) => path === "/.dockerenv" })).toBe("docker");
     expect(installKind({ desktopManaged: false, managed: false, serverRoot: root, exists: (path) => path === "/run/.containerenv" })).toBe("podman");
     expect(installKind({
       desktopManaged: false, managed: false, exists: none,
-      serverRoot: ["", "usr", "lib", "node_modules", "openmausbot", "dist-server"].join(sep),
+      serverRoot: ["", "usr", "lib", "node_modules", "mausclaw", "dist-server"].join(sep),
     })).toBe("npm");
     expect(installKind({ desktopManaged: false, managed: false, serverRoot: root, exists: (path) => path === join(root, "..", ".git") })).toBe("git");
     expect(installKind({ desktopManaged: false, managed: false, serverRoot: root, exists: none })).toBe("unknown");
@@ -46,8 +46,8 @@ describe("server update check", () => {
       install: "docker",
       latest: "0.1.93",
       available: true,
-      releaseUrl: "https://github.com/cryptyroot-ux/OMB-Claw/releases/tag/v0.1.93",
-      command: "docker compose pull omb && docker compose up -d",
+      releaseUrl: "https://github.com/cryptyroot-ux/MausClaw/releases/tag/v0.1.93",
+      command: "docker compose pull mausclaw && docker compose up -d",
       restart: false,
     });
     expect(fetch).toHaveBeenCalledWith(LATEST_RELEASE_URL, expect.anything());
@@ -57,7 +57,7 @@ describe("server update check", () => {
     let now = 0;
     const fetch = vi.fn(async () => release("v0.1.92"));
     const check = createUpdateChecker({ current: "0.1.92", install: "npm", fetch, now: () => now });
-    expect(await check()).toMatchObject({ available: false, latest: "0.1.92", command: "npm install -g openmausbot@latest", restart: true });
+    expect(await check()).toMatchObject({ available: false, latest: "0.1.92", command: "npm install -g mausclaw@latest", restart: true });
     now = 59 * 60_000;
     await check();
     expect(fetch).toHaveBeenCalledTimes(1);

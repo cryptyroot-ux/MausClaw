@@ -87,7 +87,7 @@ export function boundRetentionDays(): number {
 }
 
 export function decisionRetentionDays(configured: number | undefined, env: NodeJS.ProcessEnv = process.env): number {
-  const fromEnv = env.OMB_DECISION_RETENTION_DAYS?.trim();
+  const fromEnv = env.MAUSCLAW_DECISION_RETENTION_DAYS?.trim();
   const parsed = fromEnv ? Number(fromEnv) : NaN;
   if (Number.isInteger(parsed) && parsed >= 1 && parsed <= MAX_DECISION_RETENTION_DAYS) return parsed;
   if (typeof configured === "number" && Number.isInteger(configured) && configured >= 1 && configured <= MAX_DECISION_RETENTION_DAYS) return configured;

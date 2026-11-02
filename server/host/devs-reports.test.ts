@@ -18,7 +18,7 @@ const ROVER = { id: "rover", name: "Rover", threadId: "rover-main", modelSelecti
 
 function fixture(options: { dataDir?: string; outcomes?: SendOutcome[]; sessions?: PublicSession[]; ownerKey?: string | null; team?: boolean;
   profileEmail?: string; automated?: boolean } = {}) {
-  const dataDir = options.dataDir ?? mkdtempSync(join(tmpdir(), "omb-devs-reports-"));
+  const dataDir = options.dataDir ?? mkdtempSync(join(tmpdir(), "mausclaw-devs-reports-"));
   if (!options.dataDir) dirs.push(dataDir);
   const listeners = new Set<(change: StoreChange) => void>();
   const threads = new Map<string, Message[]>();
@@ -138,7 +138,7 @@ describe("a message that tags @devs", () => {
     expect(fx.reports.note("rover-main", false)).toBe("");
     fx.busy.delete("rover-main");
     await fx.settle();
-    expect(fx.sent[1]!.description).toContain("the bot's engine cannot use OpenMausBot's tools");
+    expect(fx.sent[1]!.description).toContain("the bot's engine cannot use MausClaw's tools");
     expect(fx.sent[1]!.diagnostics).toContain("Engine: Codex (codex), model gpt-5.5, effort high");
 
     fx.person("scout-main", "@devs it failed");
@@ -225,7 +225,7 @@ describe("a report that cannot go yet", () => {
     const second = fixture({ dataDir: first.dataDir });
     await second.settle();
     expect(second.sent).toHaveLength(1);
-    expect(second.sent[0]!.description).toContain("OpenMausBot restarted before a bot wrote one");
+    expect(second.sent[0]!.description).toContain("MausClaw restarted before a bot wrote one");
     second.stop();
     writeFileSync(join(first.dataDir, DEVS_REPORTS_FILE), "not json");
     const third = fixture({ dataDir: first.dataDir });

@@ -8,9 +8,9 @@ icon: CalendarClock
 
 A routine runs once, at a repeating interval, or on selected weekdays. Each run starts a fresh execution using the selected bot's model, permissions, tools, and computer configuration.
 
-<ProductScreenshot name="docs-automations" alt="An empty OpenMausBot automations calendar ready for its first schedule" caption="Review work across a day, three-day, or week view and filter by bot." />
+<ProductScreenshot name="docs-automations" alt="An empty MausClaw automations calendar ready for its first schedule" caption="Review work across a day, three-day, or week view and filter by bot." />
 
-Run receipts distinguish queued, active, waiting, completed, missed, failed, and cancelled work. OpenMausBot must be running when a local routine becomes due.
+Run receipts distinguish queued, active, waiting, completed, missed, failed, and cancelled work. MausClaw must be running when a local routine becomes due.
 
 ### Results arrive in the bot's chat
 
@@ -22,7 +22,7 @@ Nothing lands in the middle of your own conversation: if you are chatting with t
 
 Files a run links in its message open from the chat, just as they would in the run's own conversation. Use **See run** on a message for the run's full conversation, then **Back to results** to return. **Run logs** keeps the execution history, including failures and waiting runs. Background run conversations stay out of the normal sidebar and mobile thread pickers.
 
-In a routine's editor, use **Post results to** to choose an existing thread, or leave it on **The bot's main thread**: the conversation you last wrote in, which is also the one conversation you see with threads hidden. You can move a results thread into a folder, such as **OMB management**, just like any other thread. On My Cloud, an automation that an outside event starts, or that someone else wrote, reports into a chat of its own, so the chats you write in stay yours alone and can keep using a Mac you lend to My Cloud.
+In a routine's editor, use **Post results to** to choose an existing thread, or leave it on **The bot's main thread**: the conversation you last wrote in, which is also the one conversation you see with threads hidden. You can move a results thread into a folder, such as **MausClaw management**, just like any other thread. On My Cloud, an automation that an outside event starts, or that someone else wrote, reports into a chat of its own, so the chats you write in stay yours alone and can keep using a Mac you lend to My Cloud.
 
 A bot schedules, changes, pauses, resumes, and deletes its own routines from chat without asking, and each change shows as one line with **Undo** (see [Changes a bot makes](/docs/features/approvals-and-inspector#changes-a-bot-makes)). A routine for another bot asks first unless the conversation has Full access.
 
@@ -34,7 +34,7 @@ Each run starts fresh by default. For work that builds on last time, such as a Q
 
 ### Run when the app starts
 
-If your computer is often off when a routine is due, open the routine's **Advanced** options and turn on **Also run when OpenMausBot starts**. The routine then runs once each time OpenMausBot opens, as well as on its schedule. Its run logs show these runs as **On startup**. A routine that OpenMausBot is already catching up on at startup runs once, not twice, and an occurrence missed by more than 12 hours is covered by the startup run instead of being reported as missed. Switching to another workspace and back, or OpenMausBot recovering from a crash, doesn't count as opening the app again. Pausing a routine stops its startup runs too. It's available for repeating routines, and you can also ask the bot in chat to turn it on.
+If your computer is often off when a routine is due, open the routine's **Advanced** options and turn on **Also run when MausClaw starts**. The routine then runs once each time MausClaw opens, as well as on its schedule. Its run logs show these runs as **On startup**. A routine that MausClaw is already catching up on at startup runs once, not twice, and an occurrence missed by more than 12 hours is covered by the startup run instead of being reported as missed. Switching to another workspace and back, or MausClaw recovering from a crash, doesn't count as opening the app again. Pausing a routine stops its startup runs too. It's available for repeating routines, and you can also ask the bot in chat to turn it on.
 
 ### Clear a folder's unread dots
 
@@ -44,7 +44,7 @@ Right-click a folder or open its **…** menu, then choose **Mark folder as read
 
 Webhooks start the same queued task executor from an external HTTP request. They are independent from schedules and use a dedicated receiver on `127.0.0.1:8800` by default.
 
-The receiver exposes only health and secret hook routes. It does not expose the broader OpenMausBot API.
+The receiver exposes only health and secret hook routes. It does not expose the broader MausClaw API.
 
 Bearer authentication is preferred because it keeps the secret out of URLs and most access logs. A capability URL is available for senders that cannot set headers.
 
@@ -58,6 +58,6 @@ On My Cloud there is nothing to set up: webhooks use the workspace's own address
 
 On the desktop app the receiver listens only on this computer. To accept events from the public internet, proxy only the webhook receiver through a narrowly configured relay or tunnel. Do not expose the main harness port.
 
-<Callout type="warn" title="OpenMausBot must remain running">
+<Callout type="warn" title="MausClaw must remain running">
   Local routines and webhook deliveries are not hosted jobs. Closing the desktop app stops the local executor and receiver. My Cloud keeps running them while your computer is off.
 </Callout>

@@ -62,7 +62,7 @@ function parseCloudEntry(input) {
     primary: input.primary, managed, ...(setup ? { setup } : {}), ...(lastSeenAt ? { lastSeenAt } : {}), ...(version ? { version } : {}), ...(power ? { power } : {}) };
 }
 
-/** An OpenMausBot release as the Admin names it ("0.1.130"), or null: anything else is no version at all. */
+/** An MausClaw release as the Admin names it ("0.1.130"), or null: anything else is no version at all. */
 export const releaseVersion = value => (typeof value === "string" && VERSION.test(value) ? value : null);
 
 /** Whether `version` is an older release than `latest`, compared number by number; false when either isn't plain

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // config.ts resolves DATA_DIR at import time; isolate before importing.
-process.env.OMB_DATA_DIR = mkdtempSync(join(tmpdir(), "omb-skills-migration-"));
+process.env.MAUSCLAW_DATA_DIR = mkdtempSync(join(tmpdir(), "mausclaw-skills-migration-"));
 
 const library = await import("./skill-library.ts");
 const skills = await import("./skills.ts");
@@ -25,12 +25,12 @@ beforeEach(() => {
 
 describe("skills library migration", () => {
   it("rejects missing --data-dir values before importing or migrating", () => {
-    const directory = mkdtempSync(join(tmpdir(), "omb-migration-args-"));
+    const directory = mkdtempSync(join(tmpdir(), "mausclaw-migration-args-"));
     try {
       for (const args of [["--data-dir"], ["--data-dir", "--other-option"]]) {
         const result = spawnSync(process.execPath, ["--experimental-strip-types",
           fileURLToPath(new URL("../scripts/migrate-skills-library.ts", import.meta.url)), ...args], {
-          cwd: directory, env: { ...process.env, HOME: directory, USERPROFILE: directory, OMB_DATA_DIR: directory }, encoding: "utf8",
+          cwd: directory, env: { ...process.env, HOME: directory, USERPROFILE: directory, MAUSCLAW_DATA_DIR: directory }, encoding: "utf8",
         });
         expect(result.status).toBe(2);
         expect(result.stderr).toMatch(/usage:.*--data-dir/i);

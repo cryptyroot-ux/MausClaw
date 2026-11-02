@@ -1,10 +1,10 @@
-// OMB-Claw adalah platform agen AI mandiri. Semua driver agen eksternal
+// MausClaw adalah platform agen AI mandiri. Semua driver agen eksternal
 // (CLI/ACP: Claude, Codex, Hermes, Pi, Antigravity, OpenCode, Qwen, Cursor,
 // dll.) telah dihapus total. Hanya driver API native yang dijalankan di atas
-// OMB-owned native agent engine. Provider/model dihubungkan melalui
+// MausClaw-owned native agent engine. Provider/model dihubungkan melalui
 // ModelAdapter, bukan melalui CLI atau proses ACP eksternal.
 
-/** API drivers whose turns run on the OMB-owned native loop. */
+/** API drivers whose turns run on the MausClaw-owned native loop. */
 const NATIVE_API_DRIVER_KINDS = new Set([
   "openai-compat",
   "grok",

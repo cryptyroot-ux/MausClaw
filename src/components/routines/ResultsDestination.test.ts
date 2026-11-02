@@ -5,7 +5,7 @@ import type { Bot } from "@/state/store";
 import { ResultsDestination } from "./ResultsDestination";
 
 const bot = {
-  id: "pepper", projects: [{ id: "management", name: "OMB management" }],
+  id: "pepper", projects: [{ id: "management", name: "MausClaw management" }],
   tasks: [
     { threadId: "main", title: "Everyday chat" },
     { threadId: "health", title: "Fleet health", projectId: "management" },
@@ -18,7 +18,7 @@ describe("routine result destination", () => {
     const html = renderToStaticMarkup(createElement(ResultsDestination, { bot, value: null, onChange: vi.fn() }));
     expect(html).toContain("Post results to");
     expect(html).toContain('value="new" selected=""');
-    expect(html).toContain('label="OMB management"');
+    expect(html).toContain('label="MausClaw management"');
     expect(html).toContain("Fleet health");
     expect(html).toContain("Everyday chat");
     expect(html).not.toContain("Internal run");

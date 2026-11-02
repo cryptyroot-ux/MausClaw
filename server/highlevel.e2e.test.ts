@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
-import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-omb.ts";
+import { launchVerificationServer, verificationServerEnvironment, type VerificationServer } from "../scripts/control-mausclaw.ts";
 import { HIGHLEVEL_TOOL_NAMES } from "../shared/highlevel.ts";
 import { HIGHLEVEL_NOT_CONNECTED_TEXT, HIGHLEVEL_SIGNED_OUT_TEXT } from "./highlevel/instructions.ts";
 import { isHighLevelWrite } from "./highlevel/tools.ts";
@@ -32,7 +32,7 @@ const api = async (method: string, path: string, body?: unknown, token = admin) 
 };
 const mint = async (botId: string, threadId: string, kind = "highlevel") => {
   const response = await fetch(fixture.info.url + "/api/testing/internal-capability", {
-    method: "POST", headers: { "content-type": "application/json", "x-openmausbot-test-capability": key },
+    method: "POST", headers: { "content-type": "application/json", "x-mausclaw-test-capability": key },
     body: JSON.stringify({ botId, threadId, kind }),
   });
   expect(response.status).toBe(201);
@@ -59,7 +59,7 @@ beforeAll(async () => {
   child = spawn(process.execPath, ["--experimental-strip-types", fileURLToPath(new URL("./index.ts", import.meta.url))], {
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { ...verificationServerEnvironment({}, fixture.info.dataDir, Number(new URL(fixture.info.url).port)),
-      OMB_TEST_INTERNAL_CAPABILITY_KEY: key, OMB_HIGHLEVEL_RELAY_URL: relay.url, OMB_HIGHLEVEL_API_URL: hl.url },
+      MAUSCLAW_TEST_INTERNAL_CAPABILITY_KEY: key, MAUSCLAW_HIGHLEVEL_RELAY_URL: relay.url, MAUSCLAW_HIGHLEVEL_API_URL: hl.url },
     stdio: ["ignore", log, log],
   });
   closeSync(log);
@@ -121,7 +121,7 @@ it("gives a bot its scoped tools, records writes without contact data, refreshes
 
   const refused = await call(token, "HIGHLEVEL_ADD_NOTE", { contactId: "contact_1", body: "Called back" });
   expect(refused.body.result.isError).toBe(true);
-  expect(refused.body.result.content[0].text).toBe("OpenMausBot did not run this: HighLevel is read-only for CRM scout, and Add note would write to it. Ask the user before trying again.");
+  expect(refused.body.result.content[0].text).toBe("MausClaw did not run this: HighLevel is read-only for CRM scout, and Add note would write to it. Ask the user before trying again.");
   expect(hl.calls.some((row) => row.path.endsWith("/notes"))).toBe(false);
 
   expect((await api("PATCH", `/api/bots/${bot.id}`, { connectorScopes: { apps: { highlevel: "write" } } })).status).toBe(200);

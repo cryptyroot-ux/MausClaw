@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
-import { verificationServerEnvironment } from "../scripts/control-omb.ts";
+import { verificationServerEnvironment } from "../scripts/control-mausclaw.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { freePortBlock } from "./testing/ports.ts";
 
@@ -24,7 +24,7 @@ afterEach(async () => {
 
 /** `claude`'s connection check fails; `spare`'s answers. */
 function freshHome(extra: Record<string, unknown> = {}): string {
-  const home = mkdtempSync(join(tmpdir(), "omb-tested-ai-"));
+  const home = mkdtempSync(join(tmpdir(), "mausclaw-tested-ai-"));
   homes.push(home);
   mkdirSync(join(home, "tmp"), { recursive: true });
   mkdirSync(join(home, "spare-claude"), { recursive: true });
@@ -46,7 +46,7 @@ async function boot(home: string) {
   const child = spawn(process.execPath, ["--experimental-strip-types", join(ROOT, "server/index.ts")], {
     cwd: ROOT,
     // Background test messages are off in test fixtures unless asked for.
-    env: { ...verificationServerEnvironment(process.env, home, port), OMB_AI_CHECKS: "1" },
+    env: { ...verificationServerEnvironment(process.env, home, port), MAUSCLAW_AI_CHECKS: "1" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   children.push(child);

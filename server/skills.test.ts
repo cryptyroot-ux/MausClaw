@@ -42,7 +42,7 @@ import { ensureTaskWorkspaceWithSkills, syncTaskSkillLinks } from "./skill-task-
 import { buildSystemPrompt } from "./system-prompt.ts";
 import { ensureTaskWorkspace, TASK_WORKSPACES_DIR, workspaceDir } from "./workspace.ts";
 
-// skills.ts reads OMB_DATA_DIR at import time, so tests isolate by a unique botId each.
+// skills.ts reads MAUSCLAW_DATA_DIR at import time, so tests isolate by a unique botId each.
 const SKILL = (name: string, description = "Reviews a PR the way this team reviews PRs.") =>
   `---\nname: ${name}\ndescription: ${description}\n---\n\n# ${name}\n\nDo the thing.\n`;
 
@@ -60,8 +60,8 @@ let scratch: string;
 let bot: string;
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "omb-skills-"));
-  process.env.OMB_TEST_UNUSED = scratch;
+  scratch = mkdtempSync(join(tmpdir(), "mausclaw-skills-"));
+  process.env.MAUSCLAW_TEST_UNUSED = scratch;
   bot = `test-bot-${Math.random().toString(36).slice(2, 10)}`;
 });
 

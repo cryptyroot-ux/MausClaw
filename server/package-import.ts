@@ -16,7 +16,7 @@ import { takeImportName } from "../shared/import-name.ts";
 import { decodeBase64, type PackageAgent, type PackageDocument, type PackageTrust } from "../shared/package-format.ts";
 import type { BotVisibility, ModelSelection } from "../shared/wire.ts";
 
-export const NO_BOTS_MESSAGE = "This package has no bots. Add it from your organization's shelf, or update OpenMausBot.";
+export const NO_BOTS_MESSAGE = "This package has no bots. Add it from your organization's shelf, or update MausClaw.";
 export const NO_PRESETS_MESSAGE = "This file has no bots or preset bots to add. Its skills can be added from your organization's shelf.";
 
 export type PackageImportErrorCode = "no_bots" | "invalid_package";
@@ -117,7 +117,7 @@ export interface PackageImportResult {
 export type ImportResult = PackageImportResult | { alreadyAdded: true; installId: string };
 
 export function orgInstallId(adminOrigin: string, organizationId: string, packageId: string): string {
-  return createHash("sha256").update(`omb-install:v1\n${adminOrigin}\n${organizationId}\n${packageId}`, "utf8").digest("hex").slice(0, 32);
+  return createHash("sha256").update(`mausclaw-install:v1\n${adminOrigin}\n${organizationId}\n${packageId}`, "utf8").digest("hex").slice(0, 32);
 }
 
 export function memberFromAgent(agent: PackageAgent): TeamManifestMember {

@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe("the computer panel's resize edge", () => {
   it("widens with the arrow keys, stops at the maximum, and remembers the width", () => {
-    localStorage.setItem("omb-computer-panel-width", String(PANEL_MAX_WIDTH - 40));
+    localStorage.setItem("mausclaw-computer-panel-width", String(PANEL_MAX_WIDTH - 40));
     act(() => root.render(createElement(Panel)));
     expect(width).toBe(PANEL_MAX_WIDTH - 40);
     press("ArrowLeft");
@@ -44,11 +44,11 @@ describe("the computer panel's resize edge", () => {
     expect(width).toBe(PANEL_MAX_WIDTH);
     press("ArrowRight");
     expect(width).toBe(PANEL_MAX_WIDTH - 40);
-    expect(localStorage.getItem("omb-computer-panel-width")).toBe(String(PANEL_MAX_WIDTH - 40));
+    expect(localStorage.getItem("mausclaw-computer-panel-width")).toBe(String(PANEL_MAX_WIDTH - 40));
   });
 
   it("ignores a stored width outside the bounds", () => {
-    localStorage.setItem("omb-computer-panel-width", "5000");
+    localStorage.setItem("mausclaw-computer-panel-width", "5000");
     act(() => root.render(createElement(Panel)));
     expect(width).toBe(400);
   });

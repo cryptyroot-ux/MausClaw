@@ -4,11 +4,11 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env }));
+const enabled = process.env.MAUSCLAW_UI_E2E === "1" || Boolean(resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env }));
 interface FixtureInfo { ui: string; url: string; logPath: string }
 interface SavedBot { id: string; name: string; modelSelection: { instanceId: string; model: string }; outbound?: unknown; connectorScopes?: unknown; fallback?: unknown }
 
@@ -22,7 +22,7 @@ describe("trust controls in the real renderer", () => {
   (enabled ? it : it.skip)("refreshes receipts, saves intersecting limits and serializes memory edits", async () => {
     let output = "", errors = "";
     let info!: FixtureInfo;
-    const launcher = new URL("./control-omb-ui.ts", import.meta.url).href;
+    const launcher = new URL("./control-mausclaw-ui.ts", import.meta.url).href;
     const bootstrap = `import { launchUi } from ${JSON.stringify(launcher)};
       process.on('message', message => { if (message === 'stop') process.emit('SIGINT'); });
       try { await launchUi(['--tool-calls', '[{"name":"Bash","input":{"command":"echo fixture"},"ok":true}]']); } finally { process.disconnect(); }`;
@@ -37,7 +37,7 @@ describe("trust controls in the real renderer", () => {
       try { info = JSON.parse(output); return Boolean(info.ui); } catch { return false; }
     }, { timeout: 300_000, interval: 250 }).toBe(true);
 
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const click = (name: string) => ui("click", "--name", name);
     const type = async (name: string, text: string) => {
@@ -62,8 +62,8 @@ describe("trust controls in the real renderer", () => {
     await click("More");
     await click("Activity");
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Nothing yet.");
-    await runControlOmb(["send", "--bot", bot.id, "--text", "Run the harmless fixture tool.", "--url", info.url]);
-    await runControlOmb(["wait", "--bot", bot.id, "--timeout", "20", "--url", info.url]);
+    await runControlMausclaw(["send", "--bot", bot.id, "--text", "Run the harmless fixture tool.", "--url", info.url]);
+    await runControlMausclaw(["wait", "--bot", bot.id, "--timeout", "20", "--url", info.url]);
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Ran a command");
     await ui("screenshot", "--out", `${info.logPath}.activity.png`);
     await click("Close activity");
@@ -120,7 +120,7 @@ describe("trust controls in the real renderer", () => {
     expect((await saved()).modelSelection).toEqual(bot.modelSelection);
     await ui("press", "--keys", "Escape");
 
-    await evaluate(`(() => { localStorage.setItem('omb-advanced-mode','1'); window.dispatchEvent(new StorageEvent('storage', {key:'omb-advanced-mode'})); return true; })()`);
+    await evaluate(`(() => { localStorage.setItem('mausclaw-advanced-mode','1'); window.dispatchEvent(new StorageEvent('storage', {key:'mausclaw-advanced-mode'})); return true; })()`);
     await click("Team map");
     const openMemory = async () => {
       await evaluate(`(() => { const menu = document.querySelector('[data-team-key=""] details'); if (!menu) throw new Error('No General team menu'); if (!menu.open) menu.querySelector('summary').click(); return true; })()`);

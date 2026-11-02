@@ -6,7 +6,7 @@ export interface WelcomeDraft {
 }
 
 /** Kept in this browser beside the email gate (analytics). */
-export const WELCOME_DRAFT_KEY = "omb.onboarding.welcomeDraft";
+export const WELCOME_DRAFT_KEY = "mausclaw.onboarding.welcomeDraft";
 
 /** A draft from an earlier welcome (its steps, a typed name) is no draft of this one. */
 export function readWelcomeDraft(): WelcomeDraft | null {

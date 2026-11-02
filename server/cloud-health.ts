@@ -43,7 +43,7 @@ const ROWLESS_STOPS = new Set(["shutdown_timeout", "auth_required", "update_requ
 const FIXED_CAUSES: ReadonlyArray<[RegExp, string]> = [
   [/ran out of memory while \d+ tasks? ran at once/, "out_of_memory"],
   [/^no activity for \d+ minutes — the turn was stopped$/, "stalled"],
-  [/^turn interrupted — OpenMausBot restarted$/, "restart"],
+  [/^turn interrupted — MausClaw restarted$/, "restart"],
   [/could not start — /, "could_not_start"],
   [/^the incident could not reach /, "incident_undelivered"],
   [/^could not deliver approval to the provider/, "approval_undelivered"],

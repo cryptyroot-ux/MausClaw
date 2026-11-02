@@ -10,14 +10,14 @@ describe("api() and a Cloud home that sleeps", () => {
     vi.stubGlobal("fetch", fetch);
     await api("/api/team-map", { background: true });
     await api("/api/threads");
-    await api("/api/upload", { method: "PUT", headers: { "x-omb-sha256": "abc" } });
+    await api("/api/upload", { method: "PUT", headers: { "x-mausclaw-sha256": "abc" } });
     const sent = fetch.mock.calls.map(([, init]) => new Headers(init?.headers));
-    expect(sent[0].get("x-omb-background")).toBe("1");
+    expect(sent[0].get("x-mausclaw-background")).toBe("1");
     expect(sent[0].get("content-type")).toBe("application/json");
-    expect(sent[1].get("x-omb-background")).toBeNull();
+    expect(sent[1].get("x-mausclaw-background")).toBeNull();
     expect(sent[1].get("content-type")).toBe("application/json");
     expect(sent[2].get("content-type")).toBeNull();
-    expect(sent[2].get("x-omb-sha256")).toBe("abc");
+    expect(sent[2].get("x-mausclaw-sha256")).toBe("abc");
   });
 
   it("never sends a background poll while the home sleeps; anything else wakes it", async () => {
@@ -32,7 +32,7 @@ describe("api() and a Cloud home that sleeps", () => {
   });
 
   it("goes quiet on the home's asleep answer", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "asleep" }), { status: 503, headers: { "x-omb-cloud-power": "asleep" } })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "asleep" }), { status: 503, headers: { "x-mausclaw-cloud-power": "asleep" } })));
     await expect(api("/api/sync")).rejects.toBeInstanceOf(ApiError);
     expect(cloudAsleep()).toBe(true);
   });
@@ -50,7 +50,7 @@ describe("api() and a Cloud home that sleeps", () => {
     page.show();
     await Promise.all(held);
     expect(fetch.mock.calls.map(([path]) => path)).toEqual(["/api/threads", "/api/limit-resets", "/api/inbox", "/api/inbox/a/read"]);
-    expect(new Headers(fetch.mock.calls[1]![1]?.headers).get("x-omb-background")).toBe("1");
+    expect(new Headers(fetch.mock.calls[1]![1]?.headers).get("x-mausclaw-background")).toBe("1");
     expect(page.listeners.size).toBe(0);
   });
 

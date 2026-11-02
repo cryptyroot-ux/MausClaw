@@ -25,7 +25,7 @@ describe("cloudflared download retries", () => {
 
   function mockDownload() {
     vi.useFakeTimers();
-    vi.stubEnv("OMB_CLOUDFLARED_ARCHIVE_DIR", "");
+    vi.stubEnv("MAUSCLAW_CLOUDFLARED_ARCHIVE_DIR", "");
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -158,8 +158,8 @@ describe("pinned cloudflared packaging", () => {
     expect(parsePrepareCloudflaredArgs(["--current"])).toEqual({ current: true });
     expect(() => parsePrepareCloudflaredArgs(["--all"])).toThrow(/Usage:/);
     expect(() => parsePrepareCloudflaredArgs(["--current", "--current"])).toThrow(/Usage:/);
-    // `openmausbot serve --tunnel` stages into its data dir
-    expect(parsePrepareCloudflaredArgs(["--current", "--root", "/srv/omb"])).toEqual({ current: true, root: "/srv/omb" });
+    // `mausclaw serve --tunnel` stages into its data dir
+    expect(parsePrepareCloudflaredArgs(["--current", "--root", "/srv/mausclaw"])).toEqual({ current: true, root: "/srv/mausclaw" });
     expect(() => parsePrepareCloudflaredArgs(["--root"])).toThrow(/Usage:/);
     expect(() => parsePrepareCloudflaredArgs(["--root", "/a", "--root", "/b"])).toThrow(/Usage:/);
   });

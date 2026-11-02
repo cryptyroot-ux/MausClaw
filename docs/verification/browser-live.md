@@ -1,11 +1,11 @@
 # Live browser and profiles
 
 Use installed native engine and Chrome binaries explicitly; the fixture never
-uses the operator's browser profiles, OMB home, provider logins, or API keys.
+uses the operator's browser profiles, MausClaw home, provider logins, or API keys.
 
 ```sh
-OMB_VERIFY_BROWSER_BINARY=/absolute/path/to/agent-browser \
-OMB_VERIFY_BROWSER_CHROME=/absolute/path/to/chrome-headless-shell \
+MAUSCLAW_VERIFY_BROWSER_BINARY=/absolute/path/to/agent-browser \
+MAUSCLAW_VERIFY_BROWSER_CHROME=/absolute/path/to/chrome-headless-shell \
 node --experimental-strip-types scripts/verify-browser-live.ts
 ```
 
@@ -111,7 +111,7 @@ UI and harness, then removes its temporary data; the server log remains.
 
 ### A narrow panel filled
 
-Run `node --experimental-strip-types scripts/control-omb.ts ui launch --entry threads`, turn on
+Run `node --experimental-strip-types scripts/control-mausclaw.ts ui launch --entry threads`, turn on
 `features.browser`, allow the test page's loopback port in `browserEngine.egress.allow`, open the
 bot's screen and its Browser tab in Simple mode, and open the test page. The page must reach every
 edge of the panel at 1280 CSS pixels wide; Maximize shows it at the window's own size; a preset
@@ -127,7 +127,7 @@ from the menu (new engine) still shows bands on purpose.
 | ![Before](images/browser-fill/before-midnight-maximized.png) | ![After](images/browser-fill/after-midnight-maximized.png) | ![Wide](images/browser-fill/after-midnight-advanced-wide.png) | ![Tablet](images/browser-fill/after-new-engine-tablet-preset.png) |
 
 `scripts/testing/browser-fill.e2e.test.ts` runs the agent-browser side against the pinned engine and
-`server/browser/viewers/viewers.e2e.test.ts` the new engine's (`OMB_CDP_CHROME`).
+`server/browser/viewers/viewers.e2e.test.ts` the new engine's (`MAUSCLAW_CDP_CHROME`).
 
 Focused automated coverage:
 
@@ -156,9 +156,9 @@ With an installed Playwright module, the same isolated launcher can run an
 automatic native acceptance pass, close its browsers and exit:
 
 ```sh
-OMB_VERIFY_BROWSER_BINARY=/absolute/path/to/agent-browser \
-OMB_VERIFY_BROWSER_CHROME=/absolute/path/to/chrome-headless-shell \
-OMB_VERIFY_PLAYWRIGHT=/absolute/path/to/playwright/index.mjs \
+MAUSCLAW_VERIFY_BROWSER_BINARY=/absolute/path/to/agent-browser \
+MAUSCLAW_VERIFY_BROWSER_CHROME=/absolute/path/to/chrome-headless-shell \
+MAUSCLAW_VERIFY_PLAYWRIGHT=/absolute/path/to/playwright/index.mjs \
 node --experimental-strip-types scripts/verify-browser-live.ts --recovery
 ```
 
@@ -185,10 +185,10 @@ as well: native macOS acceptance alone does not prove Windows process behavior.
 - [Pi author's browser tools](https://github.com/badlogic/agent-tools/blob/main/browser-tools/browser-nav.js)
   disconnect the automation client instead of closing Chrome after navigation.
 - [OpenClaw's CDP connection](https://github.com/openclaw/openclaw/blob/main/extensions/browser/src/browser/cdp-websocket.ts)
-  bounds connection retries before commands have side effects. OMB similarly
+  bounds connection retries before commands have side effects. MausClaw similarly
   retries observation only, never clicks, text, navigation or submissions.
 
-No upstream implementation was copied; OMB already ships agent-browser and
+No upstream implementation was copied; MausClaw already ships agent-browser and
 keeps its existing license notices and profile/control boundaries.
 
 Verified 2026-09-19 on macOS arm64 with agent-browser 0.37.0 and the packaged
@@ -199,7 +199,7 @@ real preview recovered its injected stream failure without replaying actions
 or restoring a human lease. Windows native acceptance remains outstanding.
 Final fixture evidence: `server-1789811974163-38144.log` and
 `server-1789811974163-38144-browser.png` in the launcher's printed
-`openmausbot-verification-evidence` directory.
+`mausclaw-verification-evidence` directory.
 
 ## Real Codex chat-to-action acceptance (opt-in)
 
@@ -209,9 +209,9 @@ does not import personal chats, provider settings, skills or browser profiles.
 Never point its requests at the user's running app.
 
 ```sh
-OMB_VERIFY_CODEX_CLI=/absolute/path/to/codex \
-OMB_VERIFY_CODEX_AUTH=/absolute/path/to/auth.json \
-OMB_VERIFY_CODEX_MODEL=your-supported-model \
+MAUSCLAW_VERIFY_CODEX_CLI=/absolute/path/to/codex \
+MAUSCLAW_VERIFY_CODEX_AUTH=/absolute/path/to/auth.json \
+MAUSCLAW_VERIFY_CODEX_MODEL=your-supported-model \
 node --experimental-strip-types scripts/verify-codex-surface-live.ts
 ```
 

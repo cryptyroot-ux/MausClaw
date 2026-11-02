@@ -11,11 +11,11 @@ dist-server
 .DS_Store
 *.tsbuildinfo
 electron/resources/speech-helper
-electron/resources/OpenMausBot Speech.app
+electron/resources/MausClaw Speech.app
 # stale helper from the removed Teach a skill recorder
-electron/resources/OpenMausBot Recorder.app
+electron/resources/MausClaw Recorder.app
 release
-.omb-scratch
+.mausclaw-scratch
 .wrangler/
 .dev.vars
 .dev.vars.*

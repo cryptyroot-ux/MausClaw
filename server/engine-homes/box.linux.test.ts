@@ -11,12 +11,12 @@ import { detectBox } from "../bot-box/detect.ts";
 import { audienceHome, engineHomesRoot, homedSpawn } from "./layout.ts";
 import { syncSignIns } from "./sign-ins.ts";
 
-const detection = detectBox({ env: { ...process.env, OMB_BOT_BOX: "1" } });
+const detection = detectBox({ env: { ...process.env, MAUSCLAW_BOT_BOX: "1" } });
 const available = detection.box === "bwrap" && detection.tools !== null;
-const root = mkdtempSync(join(tmpdir(), "omb-engine-box-"));
+const root = mkdtempSync(join(tmpdir(), "mausclaw-engine-box-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
-const serverHome = join(root, "home"), dataDir = join(serverHome, ".openmausbot");
+const serverHome = join(root, "home"), dataDir = join(serverHome, ".mausclaw");
 const owner = audienceHome(dataDir, "member:p_olive"), bob = audienceHome(dataDir, "member:p_bob");
 const put = (path: string, text: string) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, text); };
 const cwd = join(dataDir, "task-workspaces", "bot-a", "t-owner");

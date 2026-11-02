@@ -1,5 +1,5 @@
 -- One row per Composio trigger instance an installation listens to. Composio
--- returns the same instance for an identical config, so the OMB server counts
+-- returns the same instance for an identical config, so the MausClaw server counts
 -- its own local triggers per instance and keeps one binding here.
 CREATE TABLE trigger_bindings (
   installation_id      TEXT NOT NULL REFERENCES installations(id),

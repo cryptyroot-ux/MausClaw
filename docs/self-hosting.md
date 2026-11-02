@@ -1,4 +1,4 @@
-# Self-hosting the OpenMausBot server
+# Self-hosting the MausClaw server
 
 Run the harness server on an always-on Linux box (a VPS, a home server, a
 Mac mini in a closet) and pair browsers, the desktop app, or phones with it.
@@ -14,7 +14,7 @@ The npm CLI supports a managed public tunnel, Tailscale, or your own proxy.
 > session. If several people use one server, read
 > [Loopback trust](#loopback-trust-owner-or-service) below.
 
-Step by step, for a server you do not have yet: [Deploy OpenMausBot on a
+Step by step, for a server you do not have yet: [Deploy MausClaw on a
 VPS](deploy-vps.md) walks through the three ways in (public address, own
 domain, Tailscale), signing engines in, pairing, keeping it running,
 updating and backups. This page is the reference behind it.
@@ -33,7 +33,7 @@ Runs fully on a server:
 - text-to-speech (with a key), the web UI (the server serves it itself)
 
 - a browser for bots, once the engine is installed on the server
-  (`npx openmausbot browser install`, or nothing to do in the Docker image,
+  (`npx mausclaw browser install`, or nothing to do in the Docker image,
   which ships it): each bot gets its own isolated, persistent session.
   Watching it live from the app is the next step (docs/plans/browser-engine.md).
   It reaches the public internet and the dev servers a bot starts itself,
@@ -49,7 +49,7 @@ Desktop-only for now (needs the Mac/Linux app):
 On any machine with Node 24 or newer (a VPS, a Mac mini, a Raspberry Pi):
 
 ```sh
-npx openmausbot start
+npx mausclaw start
 ```
 
 First launch asks you to choose AI access, connect an account or API key,
@@ -58,38 +58,38 @@ Codex also offers device-code login for SSH. API-key connections currently
 support chat, not agent tools or computer use. The [setup guide](cli-onboarding.md)
 explains the choices, key storage, and how to run setup again safely.
 
-It then starts the server and keeps your data in `~/.openmausbot`. If you
+It then starts the server and keeps your data in `~/.mausclaw`. If you
 choose phone access, it prints a pairing link and QR code only after checking
 the HTTPS connection. Choosing **Skip for now** keeps the workspace local-only
-and creates no pairing invitation. Use `npx openmausbot setup` to configure without starting, or
-`npx openmausbot serve` to start non-interactively with your existing config
+and creates no pairing invitation. Use `npx mausclaw setup` to configure without starting, or
+`npx mausclaw serve` to start non-interactively with your existing config
 (for services and scripts).
 
 The npm package does not include engine CLIs (`claude`, `codex`, …); setup
 can offer to install and sign in supported engines on this machine.
 Run setup, engine authentication, and the server as the same unprivileged
 operating-system user. Engine credentials live in that user's CLI-specific
-directories, not all under `.openmausbot`.
+directories, not all under `.mausclaw`.
 
 For a Linux service, the [VPS guide](deploy-vps.md#before-you-start) shows the
 account setup, engine installation, and browser dependency installation.
 After installing browser libraries as administrator, also run
-`npx openmausbot browser install` as the service user so that user's browser
+`npx mausclaw browser install` as the service user so that user's browser
 is present. Three ways to make the server reachable from elsewhere:
 
 - **On your Tailscale network, no domain needed:**
-  `npx openmausbot serve --tailscale`. Tailscale terminates HTTPS with its
+  `npx mausclaw serve --tailscale`. Tailscale terminates HTTPS with its
   own certificate and the link uses this machine's MagicDNS name, so only
   devices on your tailnet can reach it. Needs Tailscale signed in and HTTPS
   certificates enabled for the tailnet (admin console → DNS).
 - **A public address, no domain, no proxy, no open port:**
 
   ```sh
-  npx openmausbot login          # once: an emailed code signs this machine in
-  npx openmausbot serve --tunnel
+  npx mausclaw login          # once: an emailed code signs this machine in
+  npx mausclaw serve --tunnel
   ```
 
-  `login` reserves an address like `https://c-….openmausbot.com` for this
+  `login` reserves an address like `https://c-….mausclaw.com` for this
   machine; `serve --tunnel` connects it through a Cloudflare tunnel (the same
   one the desktop app uses for its companion) and prints the pairing link at
   that address. The first run downloads `cloudflared` (pinned version and
@@ -98,18 +98,18 @@ is present. Three ways to make the server reachable from elsewhere:
   the server treats as "through a proxy", never as the owner. That listener
   also gzips JSON replies of 1 KB or more when the client accepts gzip, since
   the hop to Cloudflare runs on this machine's upload uncompressed; the
-  loopback port never compresses. `npx openmausbot logout` releases the
+  loopback port never compresses. `npx mausclaw logout` releases the
   address. The account credentials live in
-  `~/.openmausbot/tunnel-account.json` (mode 0600).
+  `~/.mausclaw/tunnel-account.json` (mode 0600).
   Starting it from a fleet or a container, where nobody can type an emailed
-  code? Set `OMB_INSTALLATION_CREDENTIAL` to the installation credential the
+  code? Set `MAUSCLAW_INSTALLATION_CREDENTIAL` to the installation credential the
   fleet issued and skip `login`: the address and connector token are fetched
   at every start and nothing is written to disk. A rejected credential stops
   the start with a clear message rather than serving locally.
 - **Your own domain, still one command:**
 
   ```sh
-  npx openmausbot serve --domain maus.example.com
+  npx mausclaw serve --domain maus.example.com
   ```
 
   Point the domain's A record at this machine and open ports 80 and 443.
@@ -118,13 +118,13 @@ is present. Three ways to make the server reachable from elsewhere:
   and renews the certificate from Let's Encrypt. On Linux, binding ports 80
   and 443 as a normal user needs one privilege grant; when Caddy reports the
   refusal, `serve` prints the exact `setcap` command to run once.
-- **Behind your own proxy or domain:** `npx openmausbot serve --public-url
+- **Behind your own proxy or domain:** `npx mausclaw serve --public-url
   https://maus.example.com`, with the proxy rules from "Putting a proxy in
   front".
 
-Later: `npx openmausbot pair --label "Kitchen iPad"` for another device
+Later: `npx mausclaw pair --label "Kitchen iPad"` for another device
 (`--client` for one that may chat but not change settings), and
-`npx openmausbot sessions` to see or revoke them. `openmausbot serve` is a
+`npx mausclaw sessions` to see or revoke them. `mausclaw serve` is a
 plain foreground process. For unattended use, follow the
 [systemd example](deploy-vps.md#keep-it-running), which installs a chosen
 release and runs its binary directly. Restarting that service does not
@@ -133,14 +133,14 @@ implicitly download a new release.
 ## Connect ChatGPT from the browser
 
 A browser paired with Full access can connect an installed Codex CLI without opening a
-terminal: **Settings → Engines → Codex → Connect ChatGPT**. OMB starts
+terminal: **Settings → Engines → Codex → Connect ChatGPT**. MausClaw starts
 `codex login --device-auth` on the server and shows a one-time code. Choose
 **Open ChatGPT sign-in**, enter the code on OpenAI's page, and complete sign-in
-with your own account. OMB checks for completion and refreshes the model list.
+with your own account. MausClaw checks for completion and refreshes the model list.
 You can cancel or request a fresh code after it expires.
 
 The server still needs Codex installed and runs it as the same operating-system
-user as OMB. Your password never goes through OMB; Codex stores its credentials
+user as MausClaw. Your password never goes through MausClaw; Codex stores its credentials
 on the server. Treat server access and backups as sensitive. Device-code login
 may need enabling in ChatGPT security settings or by your workspace admin; see
 [OpenAI's headless authentication guide](https://learn.chatgpt.com/docs/auth#login-on-headless-devices).
@@ -149,7 +149,7 @@ other providers retain their existing sign-in methods.
 
 Once connected, Settings shows the account email when Codex can report it.
 To switch accounts, open **Manage account and sign-in** under that line
-and choose **Sign out of ChatGPT**: OMB runs `codex logout` on the server as
+and choose **Sign out of ChatGPT**: MausClaw runs `codex logout` on the server as
 the same user and confirms with `codex login status`. New ChatGPT tasks need
 a connected account. Stop running Codex tasks before switching: sign-out does
 not cancel work already in progress. API-key logins are not removed by this
@@ -169,7 +169,7 @@ relative name (or `@` at the zone root). Server/proxy instructions are under
 The IP comes from this server's network interfaces, never the browser, tunnel
 hostname or an IP-echo service. Only a single unambiguous public IPv4 is shown.
 For containers/NAT or hosts with multiple public addresses, an administrator can
-set `OMB_PUBLIC_IPV4` to the public IPv4 of the HTTPS proxy and restart OMB.
+set `MAUSCLAW_PUBLIC_IPV4` to the public IPv4 of the HTTPS proxy and restart MausClaw.
 This is a display hint, not proof of reachability; verification still checks
 HTTPS and the workspace identity. If the IP is missing or invalid, the UI asks
 for administrator help instead of inventing a DNS value.
@@ -180,12 +180,12 @@ To configure the connection:
    Add **AAAA** only when IPv6 routes to the same server.
 2. Configure HTTPS with a reverse proxy such as Caddy. The Settings example uses
    your actual app and webhook ports; the [supplied Caddyfile](../deploy/Caddyfile)
-   is the reference. Keep OMB listening on loopback, forward the original Host
+   is the reference. Keep MausClaw listening on loopback, forward the original Host
    and proxy headers, and keep event streams unbuffered. Caddy needs incoming
    ports 80/443 for its usual certificate setup. For containers, follow the
    Docker recipe below so Caddy can reach the loopback listener.
 3. Enter `bots.yourcompany.com` (or its bare `https://` origin) and choose
-   **Connect domain**. OMB checks HTTPS and the workspace identity at that
+   **Connect domain**. MausClaw checks HTTPS and the workspace identity at that
    domain before saving it. An incorrect domain leaves the existing address
    unchanged.
 
@@ -194,7 +194,7 @@ address for **new server pairing links**. Removing it restores that fallback
 address, if any; neither action changes DNS, the proxy, bots, conversations, or
 existing sessions. A different browser origin needs its own pairing, so keep
 your original tab open until the new one works. The setting does not change
-`OMB_WEBHOOK_PUBLIC_URL`, existing webhook URLs, or the desktop companion's
+`MAUSCLAW_WEBHOOK_PUBLIC_URL`, existing webhook URLs, or the desktop companion's
 managed connection. This feature is for self-hosted servers, not the desktop
 app's managed phone endpoint.
 
@@ -213,13 +213,13 @@ Requirements: Docker with Compose, a DNS name pointing at the machine, and
 ports 80/443 open.
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot/deploy
+git clone https://github.com/milind-soni/MausClaw && cd MausClaw/deploy
 cp .env.example .env            # set DOMAIN
-docker compose pull omb && docker compose up -d
+docker compose pull mausclaw && docker compose up -d
 ```
 
 That uses the image CI publishes on every `main` push
-(`ghcr.io/milind-soni/openmausbot`, tagged `latest`, `sha-…` and `v…`).
+(`ghcr.io/milind-soni/mausclaw`, tagged `latest`, `sha-…` and `v…`).
 To build from your checkout instead: `docker compose up -d --build`.
 
 Then sign the engine CLIs in **inside the container** (their logins live on
@@ -227,15 +227,15 @@ the `data` volume, so they survive restarts and image upgrades) and mint a
 pairing code for your first device:
 
 ```sh
-docker compose exec omb claude                       # each CLI you listed in ENGINES
-docker compose exec omb node dist-server/openmausbot.js pair # prints a code, a link and a QR
+docker compose exec mausclaw claude                       # each CLI you listed in ENGINES
+docker compose exec mausclaw node dist-server/mausclaw.js pair # prints a code, a link and a QR
 ```
 
 Open the link (`https://<DOMAIN>/pair#code=…`) in a browser and it is
 paired; see "Using it from your computer" for what a session is. Webhook
 URLs (`https://<DOMAIN>/hooks/wh_…`) work without a session, and that is the
 base the app prints on new hooks because the stack sets
-`OMB_WEBHOOK_PUBLIC_URL`.
+`MAUSCLAW_WEBHOOK_PUBLIC_URL`.
 
 What the stack does, so you can adapt it:
 
@@ -251,7 +251,7 @@ What the stack does, so you can adapt it:
   own pairing is the login. A shared-password `basic_auth` block is there,
   commented out, if you want a second wall in front of pairing.
 
-Upgrade with `docker compose pull omb && docker compose up -d` (or
+Upgrade with `docker compose pull mausclaw && docker compose up -d` (or
 `git pull && docker compose up -d --build`). State (chats, routines,
 engine logins, paired sessions) is on the `data` volume; back that up.
 
@@ -261,7 +261,7 @@ installed first, because those layers sit beneath the app and stay cached
 across code changes. To pick up the current ones, rebuild with a new tag:
 
 ```sh
-docker compose build --build-arg CHROME_CACHE_TAG=$(date +%F) omb && docker compose up -d
+docker compose build --build-arg CHROME_CACHE_TAG=$(date +%F) mausclaw && docker compose up -d
 ```
 
 ## From source
@@ -270,27 +270,27 @@ Requirements: Node 24+, pnpm, and at least one agent CLI installed and
 signed in on the server.
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot
+git clone https://github.com/milind-soni/MausClaw && cd MausClaw
 pnpm install
 
 # choose where data lives and start the server
-OMB_DATA_DIR="$HOME/.openmausbot" OMB_PORT=8799 \
+MAUSCLAW_DATA_DIR="$HOME/.mausclaw" MAUSCLAW_PORT=8799 \
   node --experimental-strip-types server/index.ts
 ```
 
 For something durable, let the CLI write the service for you:
 
 ```sh
-npx openmausbot service install --domain maus.example.com   # or --tunnel, --tailscale, or nothing
+npx mausclaw service install --domain maus.example.com   # or --tunnel, --tailscale, or nothing
 ```
 
 It renders a systemd unit (Linux) or a launchd agent (macOS) that runs the
-same `openmausbot serve …` with your options, restarts it if it stops, and,
+same `mausclaw serve …` with your options, restarts it if it stops, and,
 for `--domain`, grants the unit the capability to bind ports 80 and 443
 without root. The file is written next to your data and the two commands
 that install and start it are printed (they need `sudo` on Linux).
-`openmausbot service uninstall` prints the reverse. Install the package
-permanently first (`npm install -g openmausbot`): a service must not point
+`mausclaw service uninstall` prints the reverse. Install the package
+permanently first (`npm install -g mausclaw`): a service must not point
 at an `npx` cache that npm may prune.
 
 Engine CLIs read their logins from the service user's home: sign them in
@@ -301,10 +301,10 @@ rely on routines running unattended.
 
 Engines whose installer is an npm package (Claude Code, Codex, OpenCode,
 MiniMax, pi) can be installed and updated from **Settings → Engines** when
-npm is on the server's PATH. OMB runs `npm install -g` as its own user into
+npm is on the server's PATH. MausClaw runs `npm install -g` as its own user into
 `<data dir>/tools/npm`, so nothing needs sudo and nothing touches a global
 prefix; that folder goes ahead of everything else on the engines' PATH, so
-the copy OMB installed is the one bots run. The package name comes from the
+the copy MausClaw installed is the one bots run. The package name comes from the
 engine's own install descriptor, never from the browser. Engines installed
 by a `curl | bash` script still need the command on the server.
 
@@ -320,7 +320,7 @@ that makes one read-only request to the provider from the server.
   to sign in, and Settings → Engines shows "workspace API key" instead of a
   person. Remove the key to go back to personal logins. The server's own
   `ANTHROPIC_API_KEY` environment variable is deliberately ignored; use the
-  page, `config.json`, or `OMB_ANTHROPIC_API_KEY`.
+  page, `config.json`, or `MAUSCLAW_ANTHROPIC_API_KEY`.
 - **OpenAI-compatible API key and base URL**: OpenRouter by default, or Groq,
   Together, a gateway, or `https://api.openai.com/v1` for OpenAI itself. This
   powers the OpenAI-compatible engine. Codex has no key path by design and
@@ -343,8 +343,8 @@ Providers added with `opencode auth login` work everywhere.
 
 ## Many client workspaces on one server
 
-`openmausbot fleet` runs one workspace per client on a single Linux server,
-each as its own OS user, its own `openmausbot@<name>` service on its own
+`mausclaw fleet` runs one workspace per client on a single Linux server,
+each as its own OS user, its own `mausclaw@<name>` service on its own
 loopback ports, its own data folder, brand, sign-in list and provider key,
 reached at `<name>.<your domain>` through the system Caddy. Bots of one
 workspace cannot read another's files or reach its API: the data lives in a
@@ -356,22 +356,22 @@ Once, as root, with the package installed permanently and a wildcard DNS
 record (`*.example.com`) pointing at the server:
 
 ```sh
-openmausbot fleet init --domain example.com
+mausclaw fleet init --domain example.com
 ```
 
 That writes the template unit, the fence and its unit, the workspace folders,
-and adds `import /etc/caddy/omb.d/*.caddy` to `/etc/caddy/Caddyfile`. Then per
+and adds `import /etc/caddy/mausclaw.d/*.caddy` to `/etc/caddy/Caddyfile`. Then per
 client:
 
 ```sh
-openmausbot fleet create acme --admin owner@acme.test --member @acme.test \
+mausclaw fleet create acme --admin owner@acme.test --member @acme.test \
   --brand /root/acme-brand.json --anthropic-key-file /root/acme-anthropic.key \
   --cap 50 --memory 1G
-openmausbot fleet users acme add bob@acme.test --chat-only
-openmausbot fleet list
-openmausbot fleet suspend acme      # 503 page, service stopped; resume undoes it
-openmausbot fleet upgrade           # new release, then every running workspace restarted in turn
-openmausbot fleet delete acme --yes # add --keep-data to keep the home folder
+mausclaw fleet users acme add bob@acme.test --chat-only
+mausclaw fleet list
+mausclaw fleet suspend acme      # 503 page, service stopped; resume undoes it
+mausclaw fleet upgrade           # new release, then every running workspace restarted in turn
+mausclaw fleet delete acme --yes # add --keep-data to keep the home folder
 ```
 
 Give `init` `--operator USER` (the Unix user your own workspace runs as; the
@@ -380,10 +380,10 @@ root service on a Unix socket only that user may open. Your workspace then
 shows **Settings → Installations** (with the enterprise `admin` feature): create
 an installation, add or remove who may sign in, suspend, resume, delete, upgrade
 all, and see each one's spend this month. Every action goes through the
-agent's audit log at `/var/log/openmausbot/fleet.jsonl`.
+agent's audit log at `/var/log/mausclaw/fleet.jsonl`.
 
 `https://acme.example.com` is up when `create` returns; the first admin signs
-in with an emailed code. `OMB_LICENSE_KEY` in the environment (or
+in with an emailed code. `MAUSCLAW_LICENSE_KEY` in the environment (or
 `--license-key`) is carried into every workspace so a partner's white-label
 key covers them all. Not root? Every command prints the exact steps to run as
 root instead, and `--dry-run` always prints.
@@ -413,13 +413,13 @@ Pair once, then use the server from any browser on any machine that can
 reach it. On the server:
 
 ```sh
-npx openmausbot pair                         # npm install
-pnpm omb pair                                # from a checkout
-docker compose exec omb node dist-server/openmausbot.js pair   # Docker
+npx mausclaw pair                         # npm install
+pnpm mausclaw pair                                # from a checkout
+docker compose exec mausclaw node dist-server/mausclaw.js pair   # Docker
 ```
 
 It prints a 12-character code (single use, five minutes) and, when the
-server knows its public address (`OMB_PUBLIC_URL`, set by the Docker stack),
+server knows its public address (`MAUSCLAW_PUBLIC_URL`, set by the Docker stack),
 a link like `https://maus.example.com/pair#code=XXXX-XXXX-XXXX`. Open the
 link, or open `/pair` on the address you use and type the code. The browser
 gets a session cookie (30 days, renewed on use up to 180 days from pairing, revocable) and the app loads. Sessions are
@@ -430,7 +430,7 @@ From the **desktop app**, use the server dropdown above Search → **Connect
 to a server…**, or **Settings → Servers**. Enter the server's
 HTTPS address or full pairing link, with an optional name. Custom domains and
 Cloudflare tunnel addresses work; Tailscale is not required. Generate a fresh
-link for each device: `npx openmausbot pair --label "My desktop"` creates an
+link for each device: `npx mausclaw pair --label "My desktop"` creates an
 owner link without the phone wizard; add `--client` for chat-only access.
 A code already used by your phone cannot also pair your desktop.
 
@@ -458,7 +458,7 @@ desktop driver. Microphone access is not included.
 **Settings → Backups → Export backup**, then import it on the server in
 **Settings → Backups → Import backup**. API keys, engine sign-ins and paired
 devices stay where they are on both sides; routines arrive paused. An older
-desktop app's **Copy this computer here** is answered with "Update OpenMausBot
+desktop app's **Copy this computer here** is answered with "Update MausClaw
 to bring your bots here by itself."
 
 Only conversations you start yourself on that server can use what you share;
@@ -488,7 +488,7 @@ and take a 5-minute ticket from `POST /api/auth/stream-ticket` for the
 event stream, because `EventSource` cannot set headers:
 `GET /api/events?ticket=…`.
 
-`GET /.well-known/openmausbot/environment` is public and tells a client what
+`GET /.well-known/mausclaw/environment` is public and tells a client what
 it is talking to: a stable `environmentId`, the label, the version and
 capabilities. Saved connections check the id so a reused address that now
 points at a different server is refused loudly.
@@ -498,7 +498,7 @@ address of its own:
 
 ```sh
 ssh -L 8799:localhost:8799 you@your-server
-# then run `openmausbot pair` on the server and open the "this computer:" link it prints
+# then run `mausclaw pair` on the server and open the "this computer:" link it prints
 ```
 
 The browser signs in once through the tunnel, like any browser on the server
@@ -514,7 +514,7 @@ server, even when it runs on the same machine. Programs are unaffected: the
 CLI, scripts, `curl` and the companion send neither header.
 
 So the first time you open the web UI in a browser on the server's own
-machine, it shows the sign-in page. `openmausbot serve` and `openmausbot pair`
+machine, it shows the sign-in page. `mausclaw serve` and `mausclaw pair`
 print a link for it:
 
 ```
@@ -522,17 +522,17 @@ this computer: http://127.0.0.1:8799/pair#code=XXXX-XXXX-XXXX
 ```
 
 Open it and choose **Connect** (or type the code on the sign-in page); the browser
-keeps its session cookie from then on. `openmausbot` (the guided start) prints
+keeps its session cookie from then on. `mausclaw` (the guided start) prints
 the same link when it opens the browser. The desktop app is unaffected:
 its window adds the app's own per-launch owner header to every request and
 WebSocket it sends to its server, and no other Electron session may reach the
 server at all.
 
-For development, `pnpm dev:server` sets `OMB_DEV_TRUST_LOCAL_BROWSER=1`, so a
+For development, `pnpm dev:server` sets `MAUSCLAW_DEV_TRUST_LOCAL_BROWSER=1`, so a
 browser on Vite's dev page (`pnpm dev`) is the owner as before. The server
 honours it only when it runs from source with owner trust, logs a warning, and
 ignores it in a build, the desktop app, a hosted workspace and MausBot Cloud.
-Run `OMB_DEV_TRUST_LOCAL_BROWSER=0 pnpm dev:server` to try the sign-in.
+Run `MAUSCLAW_DEV_TRUST_LOCAL_BROWSER=0 pnpm dev:server` to try the sign-in.
 
 ### Loopback trust: owner or service
 
@@ -551,7 +551,7 @@ local requests: service trust (hosted workspace); without a session, loopback ma
 | Trust | Default for | A session-less loopback request may |
 |---|---|---|
 | `owner` | a self-hosted server, the desktop app | do everything, as today |
-| `service` | a hosted workspace: any of `OMB_ADMIN_URL`, `OMB_ADMIN_WORKSPACE` or `OMB_ADMIN_MEMBERSHIP` set (shared-workspace Full access only works there, so it is covered too) | read health, who-am-I, the bot list, a thread's messages and a bot's picture; open a thread; send through the guarded route; watch and stop its exact request; withdraw a queued line; **decline** a card; use the bots' own capability routes (`/api/internal/*`, which check their own per-turn token) |
+| `service` | a hosted workspace: any of `MAUSCLAW_ADMIN_URL`, `MAUSCLAW_ADMIN_WORKSPACE` or `MAUSCLAW_ADMIN_MEMBERSHIP` set (shared-workspace Full access only works there, so it is covered too) | read health, who-am-I, the bot list, a thread's messages and a bot's picture; open a thread; send through the guarded route; watch and stop its exact request; withdraw a queued line; **decline** a card; use the bots' own capability routes (`/api/internal/*`, which check their own per-turn token) |
 
 Under `service`, everything else from loopback needs a real session and
 answers 403: settings and keys (`/api/config`), instances, MCP servers,
@@ -562,8 +562,8 @@ local caller a hosted workspace has) needs nothing more and keeps working
 unchanged. Sessions — a portal sign-in, an email sign-in or a pairing — work
 exactly as before, with their own scopes.
 
-Set `OMB_LOOPBACK_TRUST=service` on a self-hosted server people share (with
-an email sign-in list, say), or `OMB_LOOPBACK_TRUST=owner` to opt a hosted
+Set `MAUSCLAW_LOOPBACK_TRUST=service` on a self-hosted server people share (with
+an email sign-in list, say), or `MAUSCLAW_LOOPBACK_TRUST=owner` to opt a hosted
 workspace back into the old behaviour (the log then warns). Any other value
 means `service`. The desktop app ignores the setting: its local changes
 already need the app's own per-launch capability. MausBot Cloud ignores
@@ -571,18 +571,18 @@ it too and is always `service` (docs/cloud-pro.md).
 
 With `service` on a self-hosted server:
 
-- `openmausbot serve` still prints the first pairing code. It hands the
+- `mausclaw serve` still prints the first pairing code. It hands the
   server it starts a one-off secret over the server's stdin (never its
   environment, which every engine inherits), and that secret opens the
   pairing route for that CLI alone. Pass `--no-pair` to skip the code; if
   the server refuses one anyway, `serve` says why and keeps running.
-- `openmausbot pair` and `openmausbot sessions`, run later from another
+- `mausclaw pair` and `mausclaw sessions`, run later from another
   terminal, are refused like any other admin change and say so. Pair from
   Settings → Remote access while signed in as an admin, or let people sign
-  in with their email (`openmausbot access add you@example.com`, which edits
+  in with their email (`mausclaw access add you@example.com`, which edits
   the sign-in list on disk).
 - A browser on an SSH tunnel gets the sign-in page instead of the app.
-- The MCP server script works with `OPENMAUSBOT_TOKEN` set to a paired session.
+- The MCP server script works with `MAUSCLAW_TOKEN` set to a paired session.
 
 **What `service` does not close yet.** Any bot's shell can still do
 everything the Slack worker does, and on a shared workspace that is a real
@@ -606,8 +606,8 @@ people use every day, let them sign in with an emailed code instead: set an
 allow-list, and `/pair` on your server offers "Sign in with your email" first.
 
 ```sh
-OMB_SIGNIN_EMAILS="her@yourcompany.com, @yourcompany.com"   # full access
-OMB_SIGNIN_MEMBER_EMAILS="freelancer@example.com"          # chat and approvals only
+MAUSCLAW_SIGNIN_EMAILS="her@yourcompany.com, @yourcompany.com"   # full access
+MAUSCLAW_SIGNIN_MEMBER_EMAILS="freelancer@example.com"          # chat and approvals only
 ```
 
 Signed in as an admin? Settings → Remote access → **Who can sign in with an
@@ -616,25 +616,25 @@ npm package, the same thing from the command line, with the server running
 or not, no restart needed:
 
 ```sh
-npx openmausbot access add her@yourcompany.com
-npx openmausbot access add freelancer@example.com --chat-only
-npx openmausbot access list
+npx mausclaw access add her@yourcompany.com
+npx mausclaw access add freelancer@example.com --chat-only
+npx mausclaw access list
 ```
 
 An entry is an address or `@domain` (everyone at that domain). Admins get
-the same access as a pairing code from `openmausbot serve`; users get the
-chat-only scope, the same as `openmausbot pair --client`. The same lists live
+the same access as a pairing code from `mausclaw serve`; users get the
+chat-only scope, the same as `mausclaw pair --client`. The same lists live
 in `config.json` under `signIn.admins` and `signIn.members` and can be changed
 through the settings API without a restart; the environment variables win
 when set, which is how a container or a service unit is bootstrapped.
 
-The code itself comes from `accounts.openmausbot.com`, the OpenMausBot
+The code itself comes from `accounts.mausclaw.com`, the MausClaw
 account service, so your server needs no email credentials. Your server asks
 it to send the code, checks the answer, and then issues its own session
 cookie: the browser only ever talks to your server, and who is welcome is
 decided only by your allow-list. Wrong codes count against the same lockout
 as pairing codes. Sessions from a sign-in show the email in
-`openmausbot sessions` and can be revoked the same way.
+`mausclaw sessions` and can be revoked the same way.
 
 ### Inviting people
 
@@ -646,7 +646,7 @@ with the address filled in, and the one-time code still goes to that address.
 Roles change with one click; removing someone stops new sign-ins.
 
 On a hosted workspace whose members your organization's Admin manages
-(`OMB_ADMIN_MEMBERSHIP=portal`), this list decides nothing, so Settings →
+(`MAUSCLAW_ADMIN_MEMBERSHIP=portal`), this list decides nothing, so Settings →
 People shows, read-only, who has signed in and what they spent, with a
 **Manage people in Admin** link to that workspace in Admin → People. Remote
 access there lists signed-in devices and offers no pairing codes, since a
@@ -654,7 +654,7 @@ hosted workspace refuses them.
 
 ### Who may answer a card
 
-Approval cards are the provider's own (see the approval modes); OpenMausBot
+Approval cards are the provider's own (see the approval modes); MausClaw
 adds none. On a workspace several people share — portal membership, or an
 email sign-in list that names users — it narrows only whose answer counts,
 and only when the card can be traced to a person:
@@ -755,8 +755,8 @@ Files people attach, and pictures a bot shows inline, live in the
 `attachments` folder of the data directory. Nothing there is deleted, since
 old messages still point at it, so the server stops taking new files once the
 folder holds 512 MB. A team fills that sooner: set
-`OMB_ATTACHMENTS_MAX_BYTES` in the server's environment and restart, for
-example `OMB_ATTACHMENTS_MAX_BYTES=4294967296` for 4 GB.
+`MAUSCLAW_ATTACHMENTS_MAX_BYTES` in the server's environment and restart, for
+example `MAUSCLAW_ATTACHMENTS_MAX_BYTES=4294967296` for 4 GB.
 
 ## Putting a proxy in front
 
@@ -773,8 +773,8 @@ Any reverse proxy works, given three things:
 3. **Do not buffer** the event stream (`flush_interval -1` in Caddy,
    `proxy_buffering off` in nginx); the UI streams events over SSE.
 
-Plus one convenience: set `OMB_PUBLIC_URL=https://your.domain` so pairing
-links, and `OMB_WEBHOOK_PUBLIC_URL=https://your.domain` so hook URLs, are
+Plus one convenience: set `MAUSCLAW_PUBLIC_URL=https://your.domain` so pairing
+links, and `MAUSCLAW_WEBHOOK_PUBLIC_URL=https://your.domain` so hook URLs, are
 printed with the public address. [`deploy/Caddyfile`](../deploy/Caddyfile)
 is the reference implementation.
 
@@ -782,7 +782,7 @@ is the reference implementation.
 
 In a paired admin browser, as in the desktop app, **Take control** turns the
 Computer panel's picture into the live desktop for Local VMs and your own VPS,
-through the same address as OpenMausBot; **Full screen** fills the window with
+through the same address as MausClaw; **Full screen** fills the window with
 the same session. Shared, per-bot and pool Local VMs connect through their
 managed container's loopback port. VPS desktops connect
 through an SSH tunnel opened by the server. Neither needs an additional public
@@ -818,22 +818,22 @@ creates a one-time code with a QR right in the browser, and lists every
 paired device with a sign-out button. Nobody needs the command line.
 
 The iOS app pairs with a server the same way a laptop does: scan the QR
-code that `openmausbot serve` (or `openmausbot pair`) prints, paste the
+code that `mausclaw serve` (or `mausclaw pair`) prints, paste the
 whole `https://host/pair#code=…` link into the address field on the pairing
 screen, or type the address and then the code. The phone gets a session of
-its own, listed and revocable with `openmausbot sessions`. What it may do is
-the code's scope: a code from `openmausbot pair` carries `admin` and the app
-shows everything; a code from `openmausbot pair --client` (also what the
+its own, listed and revocable with `mausclaw sessions`. What it may do is
+the code's scope: a code from `mausclaw pair` carries `admin` and the app
+shows everything; a code from `mausclaw pair --client` (also what the
 guided phone setup mints) can chat, approve and read, and the app hides
 creating bots and sections, changing models, generating avatars, connecting
 apps and cloud desktops — those stay with the owner. A server reinstalled at
 the same address has a new identity; the app then asks to pair again rather
 than present the old session to it.
 
-Both native apps pair this way. `openmausbot pair --phone android` prints the
+Both native apps pair this way. `mausclaw pair --phone android` prints the
 app-scheme QR that Android's scanner needs, and the iOS app accepts either
 that QR or the web link. Pass `--phone` whenever nothing is watching the
-terminal, such as `docker compose exec omb node dist-server/openmausbot.js
+terminal, such as `docker compose exec mausclaw node dist-server/mausclaw.js
 pair --phone android --public-url https://your-domain`, since a scripted run
 never reaches the question the interactive command asks. Nothing extra to install, and the phone becomes a
 session like any other.
@@ -841,7 +841,7 @@ session like any other.
 Older way, still supported, and only useful on a LAN or a tailnet: run the
 companion sidecar next to the harness and pair by its own QR. It advertises
 on your private networks (Tailscale-aware) and issues its own per-device
-credentials, which are **not** `openmausbot sessions` and are revoked from
+credentials, which are **not** `mausclaw sessions` and are revoked from
 its own page at the `127.0.0.1:8811/#token=…` link it prints. It also serves phones over cleartext HTTP
 on port 8810, so do not expose it from a public server. It ships only in a
 git checkout: neither the npm package nor the Docker image contains it.
@@ -885,12 +885,12 @@ stay where they are, and their message is sent again. Turns nobody typed
 (routines, webhooks, a teammate's work) get no card.
 
 The offer is on by default. To switch it off, start the server with
-`OMB_QUOTA_SWITCH=0`; any other value, or none, leaves it on. It has no
+`MAUSCLAW_QUOTA_SWITCH=0`; any other value, or none, leaves it on. It has no
 setting in `config.json` yet.
 
 ### Which engine a new bot uses
 
-A saved default model (Settings, `openmausbot setup`, or the New Bot
+A saved default model (Settings, `mausclaw setup`, or the New Bot
 defaults) always wins. Without one, new bots get the first engine that can
 run, in this order: a Claude account, a ChatGPT plan, Gemini, Grok, then the
 rest in the order of `instances`; OpenCode running only Zen's free no-login
@@ -915,7 +915,7 @@ or picks a model for it or one of its conversations: it moves only after a
 test result, only to an engine that answered, and only away from one whose
 latest test missed or that is signed out or turned off, or up to a better
 one. A status read that timed out moves nothing. No other bot ever moves. To stop the
-background test messages, start the server with `OMB_AI_CHECKS=0`.
+background test messages, start the server with `MAUSCLAW_AI_CHECKS=0`.
 
 ### The decision log
 
@@ -925,7 +925,7 @@ device label, `loopback` for the owner, `worker` for a session-less local
 service) — is appended to `<data dir>/decisions/YYYY-MM.ndjson` (0600,
 credentials redacted). Month files are kept for at least 180 days; set
 `decisions.retentionDays` in `config.json` (or through `PUT /api/config`),
-or `OMB_DECISION_RETENTION_DAYS`, to keep them longer or shorter (1–3650
+or `MAUSCLAW_DECISION_RETENTION_DAYS`, to keep them longer or shorter (1–3650
 days; the environment wins). A month is deleted only once all of it is older
 than the window. An older server's `decisions.ndjson` and `.1` are still read
 and age out the same way. Admins can read it back:
@@ -952,7 +952,7 @@ a filesystem in an image file or on a loop device is not on it.
 
 It is off unless you switch it on: set `safetyFloor.enabled` to `true` in
 `config.json` (or through `PUT /api/config`), or start the server with
-`OMB_SAFETY_FLOOR=1`, which turns it on whatever the file says.
+`MAUSCLAW_SAFETY_FLOOR=1`, which turns it on whatever the file says.
 `GET /api/config` reports whether it is in force as `safetyFloor.enabled`.
 
 **It is not applied on a Windows server yet.** There the setting is accepted
@@ -1002,15 +1002,15 @@ list that names more than one person or a whole `@domain`, or a device paired
 (or a pairing code open) with chat-only access, whether before or after the
 change — every admin change is recorded beside the decision
 log, in `<data dir>/admin-activity/YYYY-MM.ndjson` (0600), and kept for the
-same window (`decisions.retentionDays` / `OMB_DECISION_RETENTION_DAYS`; a
+same window (`decisions.retentionDays` / `MAUSCLAW_DECISION_RETENTION_DAYS`; a
 quiet server prunes on a timer, and pending rows are written out at
 shutdown): settings
 (which keys changed), sign-in lists and people, pairing codes and revoked
 sessions, webhooks, MCP servers, engines and keys, bots created, deleted or
 given different permissions, spend limits and prices, and who can see a bot.
 Each row names who acted — the session's email or device label, `This
-computer` for the owner, `Command line` for `openmausbot` commands such as
-`openmausbot access add` — and the values before and after. Values are
+computer` for the owner, `Command line` for `mausclaw` commands such as
+`mausclaw access add` — and the values before and after. Values are
 redacted: anything under a key that names a credential, every value in a
 headers or environment map, the value after a flag such as `--api-key` or
 `-k`, URL parameters such as `?key=`, a token before a URL's host
@@ -1089,8 +1089,8 @@ umask 077
 BOT_ID=your-bot-id
 THREAD_ID=your-existing-thread-id
 TOKEN=$(openssl rand -hex 32)
-printf '{ "%s": {"token":"%s","threadId":"%s"} }\n' "$BOT_ID" "$TOKEN" "$THREAD_ID" > ~/.openmausbot/external-runtimes.json
-chmod 600 ~/.openmausbot/external-runtimes.json
+printf '{ "%s": {"token":"%s","threadId":"%s"} }\n' "$BOT_ID" "$TOKEN" "$THREAD_ID" > ~/.mausclaw/external-runtimes.json
+chmod 600 ~/.mausclaw/external-runtimes.json
 ```
 
 Keep the file private (`600` on Unix; restrict its Windows file permissions).
@@ -1105,8 +1105,8 @@ The runtime runs the bundled MCP bridge from the source checkout with the same
 bot, thread and token (replace the port with your server's actual address):
 
 ```sh
-OMB_HARNESS_URL=http://127.0.0.1:8799 OMB_BOT_ID=$BOT_ID OMB_THREAD_ID=$THREAD_ID \
-  OMB_COMMS_TOKEN=$TOKEN OMB_EXTERNAL_RUNTIME=1 \
+MAUSCLAW_HARNESS_URL=http://127.0.0.1:8799 MAUSCLAW_BOT_ID=$BOT_ID MAUSCLAW_THREAD_ID=$THREAD_ID \
+  MAUSCLAW_COMMS_TOKEN=$TOKEN MAUSCLAW_EXTERNAL_RUNTIME=1 \
   node --experimental-strip-types server/drivers/agents-proxy.ts
 ```
 
@@ -1144,14 +1144,14 @@ and 20 times in one turn. That notice only tells you. The loop guard, which is
 off by default, also tells the bot:
 
 - Set `loopGuard.enabled` to `true` in `config.json` (or through
-  `PUT /api/config`), or start the server with `OMB_LOOP_GUARD=1`. When the
+  `PUT /api/config`), or start the server with `MAUSCLAW_LOOP_GUARD=1`. When the
   same whole shell command fails the same way five times in a row
   (`loopGuard.steerAt`, 2-1000), the server puts one short note into the
   running turn saying so. A command that succeeds, or that fails differently,
   ends the count, so a turn that re-runs its tests after each edit or polls a
   build is left alone.
 - Stopping the turn is a separate choice. Set `loopGuard.stopAt` (2-1000), or
-  `OMB_LOOP_GUARD_STOP_AT`, and the turn is stopped at that many identical
+  `MAUSCLAW_LOOP_GUARD_STOP_AT`, and the turn is stopped at that many identical
   failures in a row, with a line in the chat that names the command and offers
   Retry. Leave it unset and the guard never stops a turn. A wait that fails
   until something is ready (`curl -f` against a server that is still starting)
@@ -1172,15 +1172,15 @@ that succeed. A tool call that was denied is never sent back.
 ## A turn that goes silent
 
 The server stops a turn that has sent it nothing for 20 minutes
-(`OMB_TURN_STALL_MS`) and says why in the chat. Engines report a tool only
+(`MAUSCLAW_TURN_STALL_MS`) and says why in the chat. Engines report a tool only
 when it starts and when it ends, so while one of the turn's tools is still
-running the turn may stay silent for up to `OMB_TOOL_STALL_MS` (default 2
+running the turn may stay silent for up to `MAUSCLAW_TOOL_STALL_MS` (default 2
 hours). Any event from the turn starts the silence over, and time spent waiting
 on a person or a computer never counts. Either way the turn stops with "no
 activity for N minutes".
 
-Both take whole milliseconds. `OMB_TURN_STALL_MS` is never below 60000 (one
-minute) and `OMB_TOOL_STALL_MS` never below `OMB_TURN_STALL_MS`. A value that
+Both take whole milliseconds. `MAUSCLAW_TURN_STALL_MS` is never below 60000 (one
+minute) and `MAUSCLAW_TOOL_STALL_MS` never below `MAUSCLAW_TURN_STALL_MS`. A value that
 is not a positive finite number (empty, `65m`, `0`, a negative number,
 `Infinity`, `1e309`) leaves the default. Set them in the server's environment
 and restart it; the restart stops every running turn.
@@ -1194,12 +1194,12 @@ settings do not change it.
 
 For the npm service, [install the chosen new version](deploy-vps.md#update)
 as the service user while the server is stopped, then start it again.
-For a foreground invocation, `npx --yes openmausbot@X.Y.Z serve --tunnel`
+For a foreground invocation, `npx --yes mausclaw@X.Y.Z serve --tunnel`
 selects a particular published release; replace `X.Y.Z` with that version.
 
 ```sh
-docker compose -f deploy/docker-compose.yml pull omb && docker compose -f deploy/docker-compose.yml up -d   # Docker
-git pull && pnpm install && sudo systemctl restart openmausbot          # from source
+docker compose -f deploy/docker-compose.yml pull mausclaw && docker compose -f deploy/docker-compose.yml up -d   # Docker
+git pull && pnpm install && sudo systemctl restart mausclaw          # from source
 ```
 
 Routines and queued work survive restarts. A teammate turn in flight runs

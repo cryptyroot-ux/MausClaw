@@ -1,4 +1,4 @@
-// Connection requests become OpenMausBot chat cards: the agent never authors an auth URL and credentials never pass
+// Connection requests become MausClaw chat cards: the agent never authors an auth URL and credentials never pass
 // through its transcript. stdout is the MCP transport: never log there.
 import readline from "node:readline";
 import { randomUUID } from "node:crypto";
@@ -19,11 +19,11 @@ import { capToolListResult, toolLimitFromEnv } from "./tool-count-limit.ts";
 
 type Json = Record<string, unknown>;
 
-const UPSTREAM = process.env.OMB_CONNECTOR_UPSTREAM_URL ?? "";
-const HARNESS = process.env.OMB_HARNESS_URL ?? "http://127.0.0.1:8799";
-const BOT_ID = process.env.OMB_BOT_ID ?? "";
-const THREAD_ID = process.env.OMB_THREAD_ID ?? "";
-const TOKEN = process.env.OMB_CONNECTOR_TOKEN ?? process.env.OMB_COMMS_TOKEN ?? "";
+const UPSTREAM = process.env.MAUSCLAW_CONNECTOR_UPSTREAM_URL ?? "";
+const HARNESS = process.env.MAUSCLAW_HARNESS_URL ?? "http://127.0.0.1:8799";
+const BOT_ID = process.env.MAUSCLAW_BOT_ID ?? "";
+const THREAD_ID = process.env.MAUSCLAW_THREAD_ID ?? "";
+const TOKEN = process.env.MAUSCLAW_CONNECTOR_TOKEN ?? process.env.MAUSCLAW_COMMS_TOKEN ?? "";
 const ALLOWED_TOOLS = parseConnectorAllowedToolsEnv(process.env[CONNECTOR_ALLOWED_TOOLS_ENV]);
 const SERVICE_SLUGS = parseConnectorServiceSlugsEnv(process.env[CONNECTOR_SERVICE_SLUGS_ENV]);
 const SCHEMA_PROFILE = toolSchemaProfileFromEnv(process.env);
@@ -35,7 +35,7 @@ const TOOLS_LIST_RETRY_MS = 500;
 
 function parsedHeaders(): Record<string, string> {
   try {
-    const value: unknown = JSON.parse(process.env.OMB_CONNECTOR_UPSTREAM_HEADERS ?? "{}");
+    const value: unknown = JSON.parse(process.env.MAUSCLAW_CONNECTOR_UPSTREAM_HEADERS ?? "{}");
     if (!value || typeof value !== "object" || Array.isArray(value)) return {};
     return Object.fromEntries(
       Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
@@ -64,7 +64,7 @@ function initializeResult(id: unknown, protocolVersion: unknown): Json {
     result: {
       protocolVersion: typeof protocolVersion === "string" && protocolVersion ? protocolVersion : "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "openmausbot-connectors", version: "1" },
+      serverInfo: { name: "mausclaw-connectors", version: "1" },
     },
   };
 }
@@ -134,7 +134,7 @@ interface ConnectorRequest {
   authConfigId?: string;
 }
 
-const BAD_AUTH_CONFIG_ID = "OpenMausBot showed no card: auth_config_id must be a Composio auth config id (ac_ and then letters "
+const BAD_AUTH_CONFIG_ID = "MausClaw showed no card: auth_config_id must be a Composio auth config id (ac_ and then letters "
   + "or digits), copied from Auth Configs in the person's Composio project. Leave it out to use their newest enabled config.";
 
 /** Composio's own error names `auth_config_override`, so either spelling is read: on a toolkit entry, or at the top level
@@ -251,12 +251,12 @@ async function handle(message: Json): Promise<void> {
       const labels = requests.map((r) => (r.alias ? `${r.slug} (${r.alias})` : r.slug)).join(", ");
       send(textResult(
         id,
-        `OpenMausBot showed the user a secure connection card for ${labels}.${authConfigNote} End this turn now. The app will continue the task automatically after the connection finishes.`,
+        `MausClaw showed the user a secure connection card for ${labels}.${authConfigNote} End this turn now. The app will continue the task automatically after the connection finishes.`,
       ));
       return;
     }
     if (/WAIT_FOR_CONNECTIONS$/i.test(name)) {
-      send(textResult(id, "OpenMausBot is handling connection completion and will continue the task automatically."));
+      send(textResult(id, "MausClaw is handling connection completion and will continue the task automatically."));
       return;
     }
   }

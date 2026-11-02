@@ -270,15 +270,15 @@ test("utility replies cannot be forged by another child or reused across request
   const relay = createManagedDesktopRelay(); let message;
   const proc = { postMessage: value => { message = value; } }, foreign = {};
   let completed = false; const operation = relay.send(proc, null).then(() => { completed = true; });
-  relay.receive(foreign, { type: "openmausbot:managed-desktop-result", requestId: message.requestId, ok: true });
+  relay.receive(foreign, { type: "mausclaw:managed-desktop-result", requestId: message.requestId, ok: true });
   await settle(); assert.equal(completed, false);
-  relay.receive(proc, { type: "openmausbot:managed-desktop-result", requestId: message.requestId, ok: true });
+  relay.receive(proc, { type: "mausclaw:managed-desktop-result", requestId: message.requestId, ok: true });
   await operation; assert.equal(completed, true);
   const pending = relay.send(proc, { fixture: true }); relay.rejectProcess(proc);
   await assert.rejects(pending, /could not be connected/);
 });
 test("secure record is encrypted, atomic, bounded and does not follow a symlink on read", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omb-managed-store-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mausclaw-managed-store-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
   const key = randomBytes(32); let unlocked = true;
   const encryption = { available: async () => unlocked, encrypt: async text => {
     const iv = randomBytes(12), cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -315,7 +315,7 @@ function electron43Store(file, lock = { locked: false }, decrypt) {
 const until = async check => { const end = Date.now() + 5000; while (!check()) { if (Date.now() > end) assert.fail("did not happen"); await new Promise(resolve => setImmediate(resolve)); } };
 
 test("a saved company sign-in that can never be read is removed, and signing in again is the one next step", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omb-managed-unreadable-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mausclaw-managed-unreadable-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
   const file = path.join(root, "company-connection.bin");
   for (const decrypt of [
     // This computer's key no longer opens it (Windows after a reinstall onto a new profile).
@@ -332,7 +332,7 @@ test("a saved company sign-in that can never be read is removed, and signing in 
 });
 
 test("a locked keychain never removes the saved company sign-in: it is read again, sooner then each minute, until it opens", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omb-managed-locked-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mausclaw-managed-locked-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
   const file = path.join(root, "company-connection.bin"), lock = { locked: false }, saved = grant();
   await electron43Store(file).write(saved);
   lock.locked = true;
@@ -340,7 +340,7 @@ test("a locked keychain never removes the saved company sign-in: it is read agai
   const f = fixture(t, { store, handler: (url, options) => url.endsWith("/api/desktop/session") && options.method !== "DELETE" ? Response.json(session(saved)) : null });
   const first = await f.client.start();
   assert.equal(first.status, "unavailable"); assert.equal(f.policies.length, 0);
-  assert.equal(first.message, "The saved company sign-in can't be read right now. OpenMausBot tries again every minute.");
+  assert.equal(first.message, "The saved company sign-in can't be read right now. MausClaw tries again every minute.");
   for (const delay of [15_000, 30_000, 60_000]) {
     const reads = store.reads;
     await f.tick(delay - 1); assert.equal(store.reads, reads, "not read again early");
@@ -354,7 +354,7 @@ test("a locked keychain never removes the saved company sign-in: it is read agai
 });
 
 test("a decrypt answer in a shape this app does not know is never taken for an unreadable company sign-in", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "omb-managed-shape-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mausclaw-managed-shape-")); t.after(() => fs.rm(root, { recursive: true, force: true }));
   const file = path.join(root, "company-connection.bin");
   await electron43Store(file).write(grant());
   await assert.rejects(electron43Store(file, undefined, async () => ({ shouldReEncrypt: false })).read(), error => !unreadableRecord(error));

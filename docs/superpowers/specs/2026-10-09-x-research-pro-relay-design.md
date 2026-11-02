@@ -4,7 +4,7 @@
 
 X research (`x_search`, `x_user_posts`, `x_post`, `x_profile`;
 `2026-10-08-x-research-tools-design.md`) currently runs on a treg token the
-person pastes. Change it to an included service of OpenMausBot Cloud plans:
+person pastes. Change it to an included service of MausClaw Cloud plans:
 our Admin holds the treg key and relays calls for paying accounts only, with a
 monthly allowance per plan tier. Free users never get it. There is no
 bring-your-own token.
@@ -13,7 +13,7 @@ Two repositories change:
 
 - **openmaus-cloud** (Admin): the X relay, its per-tier allowance, tokens for
   Cloud homes and for signed-in desktops.
-- **OpenMausBot** (app): the included credential replaces the person's token;
+- **MausClaw** (app): the included credential replaces the person's token;
   the desktop fetches its token from its Cloud sign-in; the bot setting shows
   X research as a Cloud plan feature.
 
@@ -21,7 +21,7 @@ Two repositories change:
 
 - Every paid tier gets X research: Personal, Pro and Max. Free gets nothing.
 - Allowance per account per calendar month (UTC): Personal 1,500 calls,
-  Pro 5,000, Max 15,000. Overridable per tier through `OMB_CLOUD_TIERS`.
+  Pro 5,000, Max 15,000. Overridable per tier through `MAUSCLAW_CLOUD_TIERS`.
 - No bring-your-own treg token anywhere in the product.
 - The relay is the real gate. The app's check is presentation only.
 
@@ -61,16 +61,16 @@ Two repositories change:
 
 ### Tokens
 
-- **Cloud homes**: like decider. `OMB_CLOUD_X_URL` (the relay base,
-  `<origin>/api/cloud/services/x`) and the secret `OMB_CLOUD_X_TOKEN`
-  (`omb_x_…`), minted by the provisioning job and the reconciler, honoured
+- **Cloud homes**: like decider. `MAUSCLAW_CLOUD_X_URL` (the relay base,
+  `<origin>/api/cloud/services/x`) and the secret `MAUSCLAW_CLOUD_X_TOKEN`
+  (`mausclaw_x_…`), minted by the provisioning job and the reconciler, honoured
   while `serviceAccess(machineId)` allows. Stored hashed in a new table
   `portal_cloud_relay_token(machineId, service, tokenHash, createdAt)`; the old
   token table's CHECK cannot take `x` and its rebuild is never repeated.
   Reads go through the view `portal_cloud_service_tokens` over both tables.
 - **Desktops**: `POST /api/cloud/desktop/services/x` with the app's Cloud
   sign-in (`Bearer omc_…`). Paid, active accounts get `{ url, token }`
-  (`omb_xd_…`); others get 402. One token per desktop sign-in: asking again
+  (`mausclaw_xd_…`); others get 402. One token per desktop sign-in: asking again
   replaces it. Stored hashed in `portal_cloud_desktop_service_token(deviceId,
   service, userId, tokenHash, createdAt)`. Honoured only while that sign-in is
   live (not revoked, not expired) and the account's entitlement is an active
@@ -79,19 +79,19 @@ Two repositories change:
 
 ### Configuration
 
-- `OMB_CLOUD_TREG_KEY`: our treg token. Without it the relay answers 503 and
+- `MAUSCLAW_CLOUD_TREG_KEY`: our treg token. Without it the relay answers 503 and
   no home or desktop gets X wiring.
-- `OMB_CLOUD_X_CALLS_PER_MONTH` (default 1,500): the allowance for a Cloud
+- `MAUSCLAW_CLOUD_X_CALLS_PER_MONTH` (default 1,500): the allowance for a Cloud
   whose plan is unknown.
 - Tier catalog: `xCallsPerMonth` per tier (defaults 1,500 / 5,000 / 15,000).
 - The Cloud page's "Included" block gains `x: { calls, max }`.
 - `deploy/admin.env.example`, `docs/consumer-cloud.md`.
 
-## App (OpenMausBot)
+## App (MausClaw)
 
 ### Removed
 
-The person's token: config `treg`, `OMB_TREG_TOKEN`, desktop credential
+The person's token: config `treg`, `MAUSCLAW_TREG_TOKEN`, desktop credential
 `tregToken`, the API keys row and its Test route (`/api/x-research/test`),
 their strings and tests. Old config files that still contain `treg` keep
 loading.
@@ -99,19 +99,19 @@ loading.
 ### Included credential
 
 - `server/included-services.ts`: `xCredential()` returns `{ token, api }`.
-  - A Cloud home reads `OMB_CLOUD_X_URL` and `OMB_CLOUD_X_TOKEN` at boot, held
+  - A Cloud home reads `MAUSCLAW_CLOUD_X_URL` and `MAUSCLAW_CLOUD_X_TOKEN` at boot, held
     in memory like the others (`CLOUD_HOME_SECRET_KEYS`,
     `cloud-home-start.ts` `SERVER_ENV_NAMES`, `WORKSPACE_CREDENTIAL_ENV`,
     diagnostics).
   - The desktop's main process sends
-    `{ type: "openmausbot:included-x", access: { url, token } | null }` on the
+    `{ type: "mausclaw:included-x", access: { url, token } | null }` on the
     server's parent port; `null` clears it. Never written to disk.
 - Desktop main (`electron/main.mjs`, `cloud-account.mjs`): when the Cloud
   account is connected with an active paid entitlement, it asks the Admin for
   the X token and sends it to the server. On sign-out, an inactive plan or
   re-sign-in required, it sends `null`. It sends again after the server
   restarts. A 402 from the Admin sends `null`.
-- `OMB_CLOUD_X_URL` (with `OMB_CLOUD_X_TOKEN`) also serves development and the
+- `MAUSCLAW_CLOUD_X_URL` (with `MAUSCLAW_CLOUD_X_TOKEN`) also serves development and the
   e2e fixture; the verification launcher lets it cross only as a
   `http://127.0.0.1:<port>` URL.
 
@@ -121,11 +121,11 @@ loading.
   `Authorization: Bearer <token>`. Endpoints, fallback, row mapping, links and
   the result cap are unchanged.
 - New sentences:
-  - 402: "X research comes with OpenMausBot Cloud plans, and this account's
+  - 402: "X research comes with MausClaw Cloud plans, and this account's
     plan isn't active."
   - 429 `quota_exceeded`: the relay's own sentence (the plan, the allowance
     and the reset date).
-  - 401: "Sign in to OpenMausBot Cloud again in Settings to use X research."
+  - 401: "Sign in to MausClaw Cloud again in Settings to use X research."
 - Tools are shown only when `xCredential()` exists and `bot.xResearch` is on.
   The routes re-check both on every call.
 - `configStatus` reports `xResearch: { included: boolean }` in place of
@@ -133,9 +133,9 @@ loading.
 
 ### Access card
 
-- Included: the switch, as today ("Included with your OpenMausBot Cloud plan").
+- Included: the switch, as today ("Included with your MausClaw Cloud plan").
 - Not included, on the desktop app: locked. "X research is included with
-  OpenMausBot Cloud plans." Signed out: the existing sign-in action. Signed
+  MausClaw Cloud plans." Signed out: the existing sign-in action. Signed
   in on Free: Get Pro.
 - Elsewhere (a browser): the locked sentence only.
 - A bot already switched on can still be switched off.

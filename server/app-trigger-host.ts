@@ -83,7 +83,7 @@ export function createAppTriggerHost(deps: AppTriggerHostDeps) {
   const requests = new AppTriggerRequestService({ store: deps.store, triggers: manager, botName: (botId) => deps.store.bot(botId)?.name ?? "the bot" });
 
   const unavailableText = (reason: "self-hosted" | "unavailable") => reason === "self-hosted"
-    ? "App events need OpenMausBot's connected apps. This server uses its own Composio key, so a bot cannot watch apps here yet: use a schedule that checks the app, or a webhook."
+    ? "App events need MausClaw's connected apps. This server uses its own Composio key, so a bot cannot watch apps here yet: use a schedule that checks the app, or a webhook."
     : "Connected apps are not set up here, so a bot cannot watch apps yet.";
 
   async function catalog(bot: Bot, app?: string, search?: string): Promise<AppEventCatalog> {

@@ -8,7 +8,7 @@ import { CLOUD_HOME_NAME, cloudHomeConnectUrl, cloudPlanDisk, cloudUnreachableTe
 import environments from "./environments.cjs";
 
 const NOW = 1_800_000_000_000;
-const origin = "https://omb-u-1a2b3c4d5e6f.fly.dev";
+const origin = "https://mausclaw-u-1a2b3c4d5e6f.fly.dev";
 const code = "ABCD-EFGH-JK23";
 
 test("the Admin says whether this account may move to its Cloud, and when an ended Cloud it still holds is deleted", () => {
@@ -43,8 +43,8 @@ test("a Cloud whose plan sleeps carries the Admin's power word; a malformed one 
 
 test("a malformed summary is no machine at all", () => {
   for (const input of [null, undefined, "ready", [], { state: "running", origin }, { state: "ready" }, { state: "ready", origin: null },
-    { state: "ready", origin: "http://omb-u-1a2b3c4d5e6f.fly.dev" }, { state: "ready", origin: `${origin}/pair` },
-    { state: "ready", origin: "https://user:pw@omb-u-1a2b3c4d5e6f.fly.dev" }, { state: "ready", origin: "https://localhost" },
+    { state: "ready", origin: "http://mausclaw-u-1a2b3c4d5e6f.fly.dev" }, { state: "ready", origin: `${origin}/pair` },
+    { state: "ready", origin: "https://user:pw@mausclaw-u-1a2b3c4d5e6f.fly.dev" }, { state: "ready", origin: "https://localhost" },
     { state: "stopped", origin: "javascript:alert(1)" }, { state: "toString", origin }, { state: "__proto__", origin },
     { state: "allowance_used", origin }]) {
     assert.equal(parseCloudSummary(input), null, JSON.stringify(input));
@@ -52,9 +52,9 @@ test("a malformed summary is no machine at all", () => {
 });
 
 test("a pairing grant is accepted only for the machine it was asked for, fresh and well formed", () => {
-  const grant = { cloudContractVersion: 1, origin, code, pairingUrl: `${origin}/pair#code=${code}`, expiresAt: NOW + 300_000, credential: `omb_pair_${"c".repeat(43)}` };
+  const grant = { cloudContractVersion: 1, origin, code, pairingUrl: `${origin}/pair#code=${code}`, expiresAt: NOW + 300_000, credential: `mausclaw_pair_${"c".repeat(43)}` };
   assert.deepEqual(parsePairingGrant(grant, origin, NOW), { origin, code, expiresAt: NOW + 300_000 });
-  for (const bad of [{ ...grant, origin: "https://omb-u-ffffffffffff.fly.dev" }, { ...grant, cloudContractVersion: 2 }, { ...grant, code: "abcd-efgh-jk23" },
+  for (const bad of [{ ...grant, origin: "https://mausclaw-u-ffffffffffff.fly.dev" }, { ...grant, cloudContractVersion: 2 }, { ...grant, code: "abcd-efgh-jk23" },
     { ...grant, code: "ABCD-EFGH-JK01" }, { ...grant, code: `${code}&x=1` }, { ...grant, expiresAt: NOW }, { ...grant, expiresAt: NOW + 3_600_000 }, null]) {
     assert.equal(parsePairingGrant(bad, origin, NOW), null, JSON.stringify(bad));
   }
@@ -150,7 +150,7 @@ test("the session's machine reaches the page as state and address; a code is min
   assert.deepEqual(f.client.homeTarget(), { origin });
   assert.ok(!f.requests.some(line => line.includes("/pairing")), "reading the session never mints a code");
 
-  f.pairing = { origin, code, pairingUrl: `${origin}/pair#code=${code}`, expiresAt: NOW + 300_000, credential: `omb_pair_${"c".repeat(43)}` };
+  f.pairing = { origin, code, pairingUrl: `${origin}/pair#code=${code}`, expiresAt: NOW + 300_000, credential: `mausclaw_pair_${"c".repeat(43)}` };
   assert.deepEqual(await f.client.pairHome(), { origin, code, expiresAt: NOW + 300_000 });
   assert.equal(f.requests.filter(line => line === "POST /api/cloud/desktop/pairing token").length, 1);
   assert.ok(!JSON.stringify(f.states).includes(code), "the code never reaches a renderer snapshot");
@@ -161,7 +161,7 @@ test("a grant for another machine or an Admin refusal never connects", async t =
   const f = await admin(t);
   f.cloud = { state: "ready", origin, pairingAvailable: true };
   await f.connect();
-  f.pairing = { origin: "https://omb-u-ffffffffffff.fly.dev", code, expiresAt: NOW + 300_000 };
+  f.pairing = { origin: "https://mausclaw-u-ffffffffffff.fly.dev", code, expiresAt: NOW + 300_000 };
   await assert.rejects(f.client.pairHome(), /Invalid Cloud pairing response/);
   f.pairingStatus = 409;
   await assert.rejects(f.client.pairHome(), error => error.status === 409);
@@ -379,7 +379,7 @@ test("a malformed offer is no offer, and a malformed plan or extra is left out, 
 });
 
 test("the public offer is the catalog, with the free trial for new customers when the Admin says so", () => {
-  const offer = parsePublicOffer({ name: "OpenMausBot", surface: "cloud", plans: catalog(), trial: { days: 7, holdDays: 3, creditUsd: 5, reminderDays: 2 }, refundDays: 14 });
+  const offer = parsePublicOffer({ name: "MausClaw", surface: "cloud", plans: catalog(), trial: { days: 7, holdDays: 3, creditUsd: 5, reminderDays: 2 }, refundDays: 14 });
   assert.deepEqual(offer.plans.map(plan => plan.trialDays), [7, 7, 7]);
   assert.deepEqual([offer.recommended, offer.creditUsd, offer.reminderDays, offer.refundDays, offer.checkout], ["pro", 5, 2, 14, undefined]);
   const today = parsePublicOffer({ plans: catalog() });
@@ -445,7 +445,7 @@ test("the Server menu opens My Cloud through the Cloud's own connection, never a
   assert.deepEqual(calls, ["remember:null", "connect"]);
   calls.length = 0; await context.switchEnvironment("vps");
   assert.deepEqual(calls, ["remember:null", "active:vps", `navigate:${other.origin}`], "another server: the remembered team is let go");
-  const acme = { id: "acme", name: "Acme", origin: "https://omb-u-acme.fly.dev", team: { id: "team-acme", role: "member" } };
+  const acme = { id: "acme", name: "Acme", origin: "https://mausclaw-u-acme.fly.dev", team: { id: "team-acme", role: "member" } };
   context.environmentsState = { environments: [entry, other, acme], activeId: environments.LOCAL_ID };
   calls.length = 0; await context.switchEnvironment("acme");
   assert.deepEqual(calls, ['home:{"place":{"team":"team-acme","name":"Acme"}}'], "a team opens through the home window's team pairing, never a plain navigation");
@@ -459,7 +459,7 @@ test("the Server menu opens My Cloud through the Cloud's own connection, never a
   context.cloudAccount = { homeTarget: () => null, state: () => ({ status: "connected", machine: { status: "stopped" } }) }; context.remember({ accountId: "a1", origin });
   connect = async () => { calls.push("connect"); throw new Error("Your Cloud is not ready to connect yet."); };
   calls.length = 0; await context.switchEnvironment("cloud");
-  assert.deepEqual(calls, ["remember:null", "connect", "settings"], "not signed in there: Settings → OMB Cloud says what to do next");
+  assert.deepEqual(calls, ["remember:null", "connect", "settings"], "not signed in there: Settings → MausClaw Cloud says what to do next");
   signedIn = true; calls.length = 0; await context.switchEnvironment("cloud");
   assert.deepEqual(calls, ["remember:null", "connect", "active:cloud", `navigate:${origin}`], "signed in there already: it opens as any server does");
   context.cloudAccount = null; context.environmentsState = { environments: [entry, other], activeId: environments.LOCAL_ID };

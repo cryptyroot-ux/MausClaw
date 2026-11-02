@@ -3,13 +3,13 @@
 // a realistic job, plus two rows from before traces existed.
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
+import { launchVerificationServer, runControlMausclaw } from "./control-mausclaw.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
 const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
 let ui: MountedPreview | undefined;
 const api = fixtureApi(fixture.info.url, { headers: { origin: fixture.info.url } });
-const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;
+const control = (args: string[]) => runControlMausclaw([...args, "--url", fixture.info.url]) as Promise<any>;
 async function until<T>(check: () => T | Promise<T>): Promise<NonNullable<T>> {
   const deadline = Date.now() + 60_000;
   for (;;) {
@@ -94,7 +94,7 @@ try {
   const tool = (owner: string, name: string, start: number, end: number, detail?: string, status = "ok", error?: string) => {
     const turn = turns[owner]!;
     spans.push({ kind: "tool", id: `${turn.threadId}:${turn.turnId}:seed-tool-${++serial}`, ...turn, name, startedAt: at(start), endedAt: at(end),
-      status, timedBy: name.startsWith("mcp__") ? "omb" : "engine", ...(detail ? { detail } : {}), ...(error ? { error } : {}) });
+      status, timedBy: name.startsWith("mcp__") ? "mausclaw" : "engine", ...(detail ? { detail } : {}), ...(error ? { error } : {}) });
   };
   step(clive.id, 0, 6.9, 520, 14_000);
   tool(clive.id, "mcp__agents__coordinate_bots", 7.0, 7.6, "Researcher, Writer, Coder");
@@ -156,7 +156,7 @@ try {
   writeFileSync(dayFile, [...kept.map(resumeShift), ...spans.map((span) => JSON.stringify(span))].join("\n") + "\n");
 
   await control(["send", "--bot", clive.id, "--task", clive.activeTaskId, "--text", "Draft the launch email for Friday"]);
-  ui = await mountPreview(fixture, { entry: "/scripts/testing/usage-traces-preview.tsx", route: "/__usage-traces.html", title: "Isolated OMB Usage", logLevel: "silent" });
+  ui = await mountPreview(fixture, { entry: "/scripts/testing/usage-traces-preview.tsx", route: "/__usage-traces.html", title: "Isolated MausClaw Usage", logLevel: "silent" });
   console.log(JSON.stringify({ ...fixture.info, previewUrl: ui.previewUrl, gate }));
   await parkUntilSignal();
 } finally {

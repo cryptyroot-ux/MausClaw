@@ -10,9 +10,9 @@ import { BOX_BRIDGE_SCRIPT, writeSeccompFile } from "./box.ts";
 import { detectBox } from "./detect.ts";
 import { runBoxSelfCheck } from "./self-check.ts";
 
-const detection = detectBox({ env: { ...process.env, OMB_BOT_BOX: "1" } });
+const detection = detectBox({ env: { ...process.env, MAUSCLAW_BOT_BOX: "1" } });
 const available = detection.box === "bwrap" && detection.tools !== null;
-const root = mkdtempSync(join(tmpdir(), "omb-box-real-"));
+const root = mkdtempSync(join(tmpdir(), "mausclaw-box-real-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe.skipIf(!available)(`the real box (${detection.box === "bwrap" ? "bubblewrap works here" : `skipped: ${detection.reason}`})`, () => {

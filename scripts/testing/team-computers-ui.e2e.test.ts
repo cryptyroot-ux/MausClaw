@@ -5,14 +5,14 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { waitForExit } from "../../server/testing/cleanup.ts";
-import { runControlOmb } from "../control-omb.ts";
-import { OPEN_SIDEBAR_TOOLS, UI_TOOLS_DIR } from "./control-omb-ui.ts";
+import { runControlMausclaw } from "../control-mausclaw.ts";
+import { OPEN_SIDEBAR_TOOLS, UI_TOOLS_DIR } from "./control-mausclaw-ui.ts";
 import { fixtureApi } from "./preview-fixture.ts";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const binary = resolveAgentBrowserBinary({ dataDir: UI_TOOLS_DIR, env: process.env });
-const enabled = process.env.OMB_UI_E2E === "1" || Boolean(binary);
-if (!enabled) console.info("skipping team computers UI e2e: set OMB_UI_E2E=1 to install the pinned browser");
+const enabled = process.env.MAUSCLAW_UI_E2E === "1" || Boolean(binary);
+if (!enabled) console.info("skipping team computers UI e2e: set MAUSCLAW_UI_E2E=1 to install the pinned browser");
 
 type Info = { ui: string; url: string; botId: string; dataDir: string; logPath: string; boatFixtureApi: string };
 type Computer = { id: string; name: string; section: string | null; state: string; problem?: string; held?: boolean };
@@ -36,7 +36,7 @@ type Computer = { id: string; name: string; section: string | null; state: strin
     const fixture = info!;
     const api = fixtureApi(fixture.url);
     const provider = fixtureApi(fixture.boatFixtureApi);
-    const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<Record<string, any>>;
+    const ui = (verb: string, ...args: string[]) => runControlMausclaw(["ui", verb, "--ui", fixture.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const snapshot = async () => (await ui("snapshot")).snapshot as string;
     const ref = async (name: string, role?: string) => {
@@ -192,7 +192,7 @@ type Computer = { id: string; name: string; section: string | null; state: strin
   } finally {
     try {
       if (info) {
-        try { evidence.finalUi = await runControlOmb(["ui", "snapshot", "--ui", info.ui]); } catch { /* keep original failure */ }
+        try { evidence.finalUi = await runControlMausclaw(["ui", "snapshot", "--ui", info.ui]); } catch { /* keep original failure */ }
         const path = `${info.logPath}.team-computers.json`;
         writeFileSync(path, JSON.stringify({ fixture: info, ...evidence }, null, 2), { mode: 0o600 });
         console.info(JSON.stringify({ evidence: path }));
