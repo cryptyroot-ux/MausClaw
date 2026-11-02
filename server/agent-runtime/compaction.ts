@@ -12,6 +12,12 @@
 
 import type { AgentCompactionRecord, ModelMessage } from "./contracts.ts";
 import { countTokens } from "../drivers/tokenizer.ts";
+import {
+  contextWindowFor,
+  compactBudget,
+  learnContextWindow,
+} from "./context-budget.ts";
+import { engineMemory } from "../engine-memory.ts";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Token counting — BPE-aware via gpt-tokenizer, char estimate fallback
@@ -283,7 +289,7 @@ export function compactMessages(
   options: CompactionOptions,
 ): CompactionResult & { readonly droppedMessages: readonly ModelMessage[] } {
   const {
-    keepTokens,
+    keepTokens: configuredKeepTokens,
     modelId,
     allowShrink,
     minKeepMessages = 2,
@@ -291,7 +297,22 @@ export function compactMessages(
   } = options;
 
   const totalTokens = estimateMessagesTokens(messages, modelId);
-  if (totalTokens <= keepTokens) {
+
+  // Adaptive keepTokens: when a model id is provided, derive the budget from
+  // the model's learned context window so that repeated overflow lowers it.
+  let effectiveKeepTokens = configuredKeepTokens;
+  let overflow = false;
+  if (modelId) {
+    const window = contextWindowFor(modelId);
+    overflow = totalTokens > configuredKeepTokens;
+    const learnedWindow = learnContextWindow(modelId, window, { overflow });
+    effectiveKeepTokens = Math.min(
+      configuredKeepTokens,
+      compactBudget({ status: "known", value: learnedWindow }),
+    );
+  }
+
+  if (totalTokens <= effectiveKeepTokens) {
     return {
       messages: [...messages],
       droppedCount: 0,
@@ -343,7 +364,7 @@ export function compactMessages(
   }
 
   // Budget available for non-system messages.
-  const availableTokens = keepTokens - systemTokens;
+  const availableTokens = effectiveKeepTokens - systemTokens;
   let usedTokens = estimateMessagesTokens(
     body.filter((_, i) => keptIndices.has(i)),
     modelId,
@@ -396,7 +417,7 @@ export function compactMessages(
   const keptTokens = estimateMessagesTokens([...system, ...keptBody], modelId);
 
   // Tier 1: sliding-window result fits within budget.
-  if (keptTokens <= keepTokens) {
+  if (keptTokens <= effectiveKeepTokens) {
     const resultMessages: ModelMessage[] = [...system];
     if (droppedCount > 0) {
       resultMessages.push({
@@ -418,25 +439,20 @@ export function compactMessages(
 
   // Tier 3: aggressive shrink (truncate tool outputs, drop images).
   if (allowShrink) {
-    const shrunkBody = keptBody.map((m) => {
-      if (m.role === "tool" && typeof m.content === "string" && m.content.length > SHORT_TOOL_CHARS) {
-        return {
-          ...m,
-          content: `${m.content.slice(0, SHORT_TOOL_CHARS)}\n[tool output shortened to fit the provider's size limit]`,
-        };
-      }
-      if (Array.isArray(m.content)) {
-        return {
-          ...m,
-          content: m.content.map((p) =>
-            p.type === "image" ? { type: "text" as const, text: OMITTED_IMAGE } : p,
-          ),
-        };
-      }
-      return m;
-    });
-    const shrunkTokens = estimateMessagesTokens([...system, ...shrunkBody], modelId);
-    if (shrunkTokens <= keepTokens) {
+    // Image replacement happens before tool-output truncation.
+    let toolLimit = SHORT_TOOL_CHARS;
+    let shrunkBody = shrinkBody(keptBody, toolLimit);
+    let shrunkTokens = estimateMessagesTokens([...system, ...shrunkBody], modelId);
+
+    // Progressive truncation: if the shrunk result still exceeds the budget,
+    // reduce the tool-output limit and retry until it fits or the limit bottoms out.
+    while (shrunkTokens > effectiveKeepTokens && toolLimit > 256) {
+      toolLimit = Math.floor(toolLimit * 0.5);
+      shrunkBody = shrinkBody(keptBody, toolLimit);
+      shrunkTokens = estimateMessagesTokens([...system, ...shrunkBody], modelId);
+    }
+
+    if (shrunkTokens <= effectiveKeepTokens) {
       const resultMessages: ModelMessage[] = [...system];
       if (droppedCount > 0) {
         resultMessages.push({
@@ -477,9 +493,61 @@ export function compactMessages(
   };
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
+/** Shrink a kept message body: images become text first, then long tool
+ * outputs are cut at the last complete line/sentence boundary within `toolLimit`. */
+function shrinkBody(body: readonly ModelMessage[], toolLimit: number): ModelMessage[] {
+  return body.map((m) => {
+    // Image replacement happens before tool-output truncation.
+    if (Array.isArray(m.content)) {
+      return {
+        ...m,
+        content: m.content.map((p) =>
+          p.type === "image" ? { type: "text" as const, text: OMITTED_IMAGE } : p,
+        ),
+      };
+    }
+    if (m.role === "tool" && typeof m.content === "string" && m.content.length > toolLimit) {
+      return { ...m, content: truncateToolOutput(m.content, toolLimit) };
+    }
+    return m;
+  });
+}
+
+/** Cut `text` at the last complete sentence or line within `limit`, then
+ * append the omission notice. Falls back to a hard cut at `limit`. */
+function truncateToolOutput(text: string, limit: number): string {
+  const slice = text.slice(0, limit);
+  const sentence = Math.max(
+    slice.lastIndexOf(". "),
+    slice.lastIndexOf("! "),
+    slice.lastIndexOf("? "),
+    slice.lastIndexOf(".\n"),
+    slice.lastIndexOf("!\n"),
+    slice.lastIndexOf("?\n"),
+  );
+  const line = slice.lastIndexOf("\n");
+  const cut = sentence >= 0 ? sentence + 1 : line >= 0 ? line + 1 : limit;
+  return `${text.slice(0, Math.min(cut, limit))}\n[tool output shortened to fit the provider's size limit]`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // Request-size recovery planning
 // ═════════════════════════════════════════════════════════════════════════════
+
+/** Effective compaction trigger adjusted for memory pressure.
+ *
+ * The base trigger is max(50% of window, window - 15% reserve). When
+ * engineMemory.headroom() is below 0.3 the trigger is scaled down so
+ * compaction starts earlier; at or above 0.3 (including > 0.7) it is normal.
+ */
+export function compactionTrigger(headroom: number, window: number): number {
+  const reserve = Math.max(16_000, Math.floor(window * 0.15));
+  const baseTrigger = Math.max(Math.floor(window / 2), window - reserve);
+  if (headroom < 0.3) {
+    return Math.floor(baseTrigger * Math.max(0, Math.min(1, headroom / 0.3)));
+  }
+  return baseTrigger;
+}
 
 export type RecoveryAction = "none" | "compact" | "shrink" | "escalate" | "fail";
 
@@ -500,7 +568,13 @@ export function planRecovery(
 ): { readonly action: RecoveryAction; readonly reason: string } {
   const { compactions, maxCompactions, sizeRetries, maxSizeRetries, allowSummarize, allowShrink } = options;
 
-  if (tokenEst <= trigger) {
+  // OOM-aware trigger: under memory pressure compact earlier by lowering the
+  // trigger; at healthy headroom use the trigger as given.
+  const headroom = engineMemory.headroom();
+  const effectiveTrigger =
+    headroom < 0.3 ? Math.floor(trigger * Math.max(0.25, headroom / 0.3)) : trigger;
+
+  if (tokenEst <= effectiveTrigger) {
     return { action: "none", reason: "within budget" };
   }
 
