@@ -1,11 +1,23 @@
 // Engine-level context management for native turns: request-size accounting, large tool-result offload
 // with paging, and incremental mid-turn compaction. Provider-agnostic: every native driver shares it.
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { createHash } from "node:crypto";
-import { join, resolve, sep } from "node:path";
 import { prefixBytes } from "../context-rebuild.ts";
 import type { ChatToolDefinition } from "./chat-mcp-tools.ts";
 import type { OpenAIChatMessage } from "./openai-chat.ts";
+
+// Re-export overlapping functions from ContextManager to avoid circular dependency
+import { DEFAULT_KEEP_EXCHANGES } from "../agent-runtime/context-manager.ts";
+
+export {
+  turnCompactBudget,
+  TokenCalibration,
+  offloadToolOutput,
+  readToolOutput,
+  refusesContextLength,
+  DEFAULT_KEEP_EXCHANGES,
+  DEFAULT_TURN_COMPACT_AT,
+  DEFAULT_OFFLOAD_BYTES,
+  type Offloaded,
+} from "../agent-runtime/context-manager.ts";
 
 export function turnContextSettings(fromTurn: TurnContextSettings | undefined): TurnContextSettings {
   const envNumber = (name: string) => {
@@ -33,12 +45,6 @@ export interface TurnContextSettings {
   keepExchanges?: number;
 }
 
-export const DEFAULT_TURN_COMPACT_AT = 0.75;
-export const DEFAULT_OFFLOAD_BYTES = 16_000;
-export const DEFAULT_KEEP_EXCHANGES = 4;
-const HEAD_BYTES = 2_000;
-const TAIL_BYTES = 1_000;
-/** Characters per token for the cheap estimate; deliberately below the ~4 of English text so it over-counts. */
 const CHARS_PER_TOKEN = 3.5;
 const IMAGE_TOKENS = 1_100;
 const MESSAGE_OVERHEAD_TOKENS = 4;
@@ -76,21 +82,6 @@ export function estimateRequestTokens(messages: readonly OpenAIChatMessage[], to
   return total;
 }
 
-export function turnCompactBudget(window: number, compactAt?: number): number {
-  const at = typeof compactAt === "number" && Number.isFinite(compactAt) && compactAt > 0 ? compactAt : DEFAULT_TURN_COMPACT_AT;
-  return Math.max(1, Math.floor(Math.min(at < 1 ? window * at : at, window * 0.9)));
-}
-
-/** Learns how far the cheap estimate is from the provider's own prompt_tokens, never scaling it below 1. */
-export class TokenCalibration {
-  private ratio = 1;
-  observe(estimated: number, reported: number | undefined) {
-    if (!reported || reported <= 0 || estimated <= 0) return;
-    this.ratio = Math.min(3, Math.max(1, reported / estimated));
-  }
-  apply(estimated: number) { return Math.ceil(estimated * this.ratio); }
-}
-
 // ---------- tool-output offload ----------
 
 export const READ_TOOL_OUTPUT_TOOL = "read_tool_output";
@@ -111,44 +102,6 @@ export const READ_TOOL_OUTPUT_DEFINITION: ChatToolDefinition = {
     },
   },
 };
-
-const HANDLE = /^out_[A-Za-z0-9_-]{6,64}$/;
-const threadFolder = (dir: string, threadId: string) => join(dir, createHash("sha256").update(threadId).digest("hex").slice(0, 24));
-
-export interface Offloaded { text: string; handle: string; bytes: number }
-
-/** Saves `text` in full and returns head + tail + a note naming the handle; null when it is small enough. */
-export function offloadToolOutput(text: string, input: { dir?: string; threadId: string; callId: string; thresholdBytes?: number }): Offloaded | null {
-  const threshold = input.thresholdBytes ?? DEFAULT_OFFLOAD_BYTES;
-  const bytes = Buffer.byteLength(text);
-  if (!input.dir || bytes <= threshold) return null;
-  const handle = `out_${createHash("sha256").update(`${input.threadId}\0${input.callId}\0${bytes}`).digest("base64url").slice(0, 16)}`;
-  const folder = threadFolder(input.dir, input.threadId);
-  mkdirSync(folder, { recursive: true, mode: 0o700 });
-  writeFileSync(join(folder, `${handle}.txt`), text, { mode: 0o600 });
-  const head = prefixBytes(text, HEAD_BYTES);
-  const tailStart = Math.max(head.length, text.length - TAIL_BYTES);
-  const tail = text.slice(tailStart);
-  const note = `\n\n[… output shortened: ${text.length} characters in total, ${text.length - head.length - tail.length} omitted. ` +
-    `Full output saved with handle ${handle}; call ${READ_TOOL_OUTPUT_TOOL} {"handle":"${handle}","offset":${head.length},"limit":8000} to read more.]\n\n`;
-  return { text: `${head}${note}${tail}`, handle, bytes };
-}
-
-export function readToolOutput(args: Record<string, unknown>, input: { dir?: string; threadId: string }): { ok: boolean; text: string } {
-  const handle = typeof args.handle === "string" ? args.handle.trim() : "";
-  if (!input.dir) return { ok: false, text: "Tool output offload is not enabled for this turn." };
-  if (!HANDLE.test(handle)) return { ok: false, text: "Unknown handle: pass the out_… handle from a shortened tool result." };
-  const folder = threadFolder(input.dir, input.threadId);
-  const file = resolve(folder, `${handle}.txt`);
-  if (!file.startsWith(resolve(folder) + sep) || !existsSync(file)) return { ok: false, text: `No saved output for handle ${handle} in this conversation.` };
-  const full = readFileSync(file, "utf8");
-  const offset = Math.max(0, Math.floor(Number(args.offset ?? 0)) || 0);
-  const limit = Math.min(20_000, Math.max(1, Math.floor(Number(args.limit ?? 8_000)) || 8_000));
-  const slice = full.slice(offset, offset + limit);
-  const end = offset + slice.length;
-  return { ok: true, text: `[${handle}: characters ${offset}–${end} of ${full.length}${end < full.length ? `; next offset ${end}` : "; end of output"}]\n${slice}` };
-}
-
 // ---------- compaction ----------
 
 export interface CompactionPlan {
@@ -268,9 +221,4 @@ export async function compactTurnMessages(
   return { messages: next, folded: plan.folded.length, beforeTokens, afterTokens: estimateRequestTokens(next, input.tools), summarizer };
 }
 
-/** A provider's refusal of a prompt over its context window (OpenAI, Groq, Mistral, OpenRouter, vLLM, llama.cpp, LM Studio …). */
-const CONTEXT_OVERFLOW = /context[_ ]length[_ ]exceeded|maximum context length|context (?:window|length) (?:of|is|exceeded)|exceeds? (?:the )?(?:model'?s? )?(?:maximum )?context|prompt is too long|too many (?:input )?tokens|reduce the length of the messages|input (?:is )?too long|exceeds (?:the )?available context(?: size)?|request exceeds the maximum|tokens? (?:limit|budget) exceeded/i;
 
-export function refusesContextLength(status: number, body: string): boolean {
-  return (status === 400 || status === 413 || status === 422 || status === 500) && CONTEXT_OVERFLOW.test(body);
-}
