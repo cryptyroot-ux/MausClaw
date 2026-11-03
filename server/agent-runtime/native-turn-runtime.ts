@@ -159,6 +159,9 @@ const MAX_TURN_TOOL_CALLS = 200;
 const stoppedAfter = (count: string) =>
   `Stopped after ${count} without a final answer. The steps so far already ran, so ask only for what's left.`;
 
+/** Temporary gate: when MAUSCLAW_NATIVE_LEGACY=1, force the legacy turn loop. */
+const legacyTurn = () => process.env.MAUSCLAW_NATIVE_LEGACY === "1";
+
 interface DeliveredUserMessage {
   text: string;
   sent: string;
@@ -590,7 +593,7 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
     emit({ ...base(turn.threadId, turnId), type: "turn.started" });
     emit({ ...base(turn.threadId, turnId), type: "session.started", sessionId: null, model });
 
-    if (options.nativeAgentEngine && turn.agentEngine === "mausclaw-native") {
+    if (!legacyTurn() && options.nativeAgentEngine && turn.agentEngine === "mausclaw-native") {
       const nativeEngine = options.nativeAgentEngine;
       turnEntry.native = true;
       const steerState: NativeSteerState = { queue: [] };
