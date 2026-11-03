@@ -8,36 +8,18 @@ import { BUILT_IN_DRIVERS } from "../drivers/builtIn.ts";
 import { ENGINE_KINDS, engineCapabilities, replaysTranscriptNatively, type EngineCapabilities } from "./capabilities.ts";
 
 const chat: EngineCapabilities = { resume: false, nativeReviewer: false, full: true, edits: false, stepCap: 64, subagents: false };
-const bare: EngineCapabilities = { resume: true, nativeReviewer: false, full: true, edits: false, subagents: false };
 
 const EXPECTED: Record<string, EngineCapabilities> = {
-  claudeAgent: { resume: true, nativeReviewer: true, full: true, edits: true, subagents: false },
-  codex: { resume: true, nativeReviewer: true, full: true, edits: false, subagents: false },
-  piAgent: bare,
-  antigravityAgent: { resume: true, nativeReviewer: false, full: true, edits: true, subagents: false },
-  grokAgent: { resume: true, nativeReviewer: true, full: true, edits: true, subagents: false },
-  geminiAgent: { resume: true, nativeReviewer: false, full: true, edits: true, subagents: false },
-  kimiAgent: bare,
-  droidAgent: bare,
-  cursorAgent: { resume: true, nativeReviewer: true, full: true, edits: false, subagents: false },
-  museCode: { resume: true, nativeReviewer: false, full: true, edits: false, subagents: false },
-  opencodeGo: { resume: true, nativeReviewer: false, full: true, edits: false, subagents: false },
-  qwenAgent: { resume: true, nativeReviewer: true, full: true, edits: true, subagents: false },
-  hermesAgent: bare,
-  deepseekAgent: bare,
-  clineAgent: { resume: true, nativeReviewer: false, full: true, edits: false, subagents: false },
-  copilotAgent: bare,
-  customAcp: bare,
-  "openai-compat": chat,
+  anthropic: chat,
+  gemini: chat,
   grok: chat,
+  "openai-compat": chat,
+  "openai-responses": chat,
+  groq: chat,
+  meta: chat,
   minimax: chat,
   mistral: chat,
   cerebras: chat,
-  groq: chat,
-  meta: chat,
-  anthropic: chat,
-  gemini: chat,
-  "openai-responses": chat,
 };
 
 describe("engineCapabilities", () => {

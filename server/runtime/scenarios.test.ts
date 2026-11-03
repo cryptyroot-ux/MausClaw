@@ -1197,22 +1197,22 @@ describe("§1 storage", () => {
 });
 
 describe("§3 one level rule", () => {
-  it("S25 a Chief at full with a person origin lifts the child to full on every engine; outside lineage inherits nothing", async () => {
+  it("S25 a Chief at full with a person origin lifts the child to full; an unsupported level caps to ask; outside lineage inherits nothing", async () => {
     const w = world();
     const root = beginChief(w, { level: "full" });
-    const lifted = ok(enqueueFrom(w, root, workFor("dev", "Build", { levels: { own: "ask", chief: "full" }, driverKind: "claudeAgent" })));
+    const lifted = ok(enqueueFrom(w, root, workFor("dev", "Build", { levels: { own: "ask", chief: "full" }, driverKind: "openai-compat" })));
     expect(lifted.level).toBe("full");
     expect(lifted.levelSource).toBe("chief");
     const anyEngine = ok(enqueueFrom(w, root, workFor("qa", "Test", { levels: { own: "ask", chief: "full" }, driverKind: "unknownAgent" })));
     expect(anyEngine.level).toBe("full");
     expect(anyEngine.levelSource).toBe("chief");
-    const edits = ok(enqueueFrom(w, root, workFor("ops", "Deploy", { levels: { own: "ask", chief: "auto" }, driverKind: "geminiAgent" })));
-    expect(edits.level).toBe("edits");
-    expect(edits.levelSource).toBe("engine_cap");
-    const ownWins = ok(enqueueFrom(w, root, workFor("dev", "Lint", { levels: { own: "full", chief: "edits" }, driverKind: "claudeAgent" })));
+    const capped = ok(enqueueFrom(w, root, workFor("ops", "Deploy", { levels: { own: "ask", chief: "auto" }, driverKind: "openai-compat" })));
+    expect(capped.level).toBe("ask");
+    expect(capped.levelSource).toBe("engine_cap");
+    const ownWins = ok(enqueueFrom(w, root, workFor("dev", "Lint", { levels: { own: "full", chief: "edits" }, driverKind: "openai-compat" })));
     expect(ownWins.level).toBe("full");
     expect(ownWins.levelSource).toBe("own");
-    const customNeverTravels = ok(enqueueFrom(w, root, workFor("dev", "Shell", { levels: { own: "ask", chief: "custom" }, driverKind: "codex" })));
+    const customNeverTravels = ok(enqueueFrom(w, root, workFor("dev", "Shell", { levels: { own: "ask", chief: "custom" }, driverKind: "openai-compat" })));
     expect(customNeverTravels.level).toBe("ask");
 
     const outsideRoot = w.rt.begin({
@@ -1222,7 +1222,7 @@ describe("§3 one level rule", () => {
       brief: "Webhook: deploy",
       level: "full",
     });
-    const outside = ok(enqueueFrom(w, outsideRoot, workFor("dev", "Deploy", { levels: { own: "ask", chief: "full" }, driverKind: "claudeAgent" })));
+    const outside = ok(enqueueFrom(w, outsideRoot, workFor("dev", "Deploy", { levels: { own: "ask", chief: "full" }, driverKind: "openai-compat" })));
     expect(outside.level).toBe("ask");
     expect(outside.levelSource).toBe("own");
 

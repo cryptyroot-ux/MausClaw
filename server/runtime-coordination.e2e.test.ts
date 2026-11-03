@@ -11,6 +11,9 @@ import { waitForExit } from "./testing/cleanup.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
 import { ownTurnText } from "./testing/room-handoff-agent.ts";
 
+// Skipped until the external-Claude fixture is ported to the native loopback provider; see docs/superpowers/reports/2026-11-03-mausclaw-phase-0-baseline.md.
+const legacyIt = it.skip;
+
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SETTLED = "Your downstream room requests have settled.";
 const REPORT_FROM_MIRA = "[MausClaw report from @Mira";
@@ -135,7 +138,7 @@ async function scenario(test: (f: any) => Promise<void>) {
   }
 }
 
-it("S1 assigns a teammate under the envelope and resumes the Chief once with the report", () => scenario(async (f) => {
+legacyIt("S1 assigns a teammate under the envelope and resumes the Chief once with the report", () => scenario(async (f) => {
   const request = "S1-JOB: have Mira export the invoices to CSV and own the result.";
   const brief = "S1-BRIEF: export the invoices to CSV and report the row count.";
   f.script(f.clive.id,
@@ -173,7 +176,7 @@ it("S1 assigns a teammate under the envelope and resumes the Chief once with the
   expect(f.eventsOf(child.id).map((event: any) => event.kind)).toEqual(expect.arrayContaining(["enqueued", "started", "settled", "reported"]));
 }), hostTimeout(60_000));
 
-it("S2 parks a teammate on NEEDS INPUT, passes her question to the Chief once, carries the person's answer into her next turn, and resumes the Chief with the result", () => scenario(async (f) => {
+legacyIt("S2 parks a teammate on NEEDS INPUT, passes her question to the Chief once, carries the person's answer into her next turn, and resumes the Chief with the result", () => scenario(async (f) => {
   const brief = "S2-BRIEF: tag the release in the repository and report the tag.";
   f.script(f.clive.id,
     { key: "C0", match: ["S2-JOB"], steps: [{ arguments: { bot_ids: [f.mira.id], message: brief } }], reply: "C0: Mira is tagging it." },
@@ -217,7 +220,7 @@ it("S2 parks a teammate on NEEDS INPUT, passes her question to the Chief once, c
   expect((await f.messages(job)).filter((message: any) => message.tool?.name === "Mira replied")).toHaveLength(1);
 }), hostTimeout(60_000));
 
-it("S2b resumes the Chief once with a parked question, keeps one question chip across a restart and names the parked thread as waiting on the person", () => scenario(async (f) => {
+legacyIt("S2b resumes the Chief once with a parked question, keeps one question chip across a restart and names the parked thread as waiting on the person", () => scenario(async (f) => {
   const brief = "S2B-BRIEF: tag the release in the repository and report the tag.";
   f.script(f.clive.id,
     { key: "C0", match: ["S2B-JOB"], steps: [{ arguments: { bot_ids: [f.mira.id], message: brief } }], reply: "C0: Mira is tagging it." },
@@ -258,7 +261,7 @@ it("S2b resumes the Chief once with a parked question, keeps one question chip a
   expect(refused).toContain("waiting on the person's answer");
 }), hostTimeout(90_000));
 
-it("S3 runs a cut teammate turn again once after a restart and resumes the Chief with the report", () => scenario(async (f) => {
+legacyIt("S3 runs a cut teammate turn again once after a restart and resumes the Chief with the report", () => scenario(async (f) => {
   const brief = "S3-BRIEF: run the migration and report.";
   f.script(f.clive.id,
     { key: "C0", match: ["S3-JOB"], steps: [{ arguments: { bot_ids: [f.mira.id], message: brief } }], reply: "C0: Mira is migrating." },
@@ -302,7 +305,7 @@ it("S3 runs a cut teammate turn again once after a restart and resumes the Chief
   expect((await f.messages(job)).filter((message: any) => message.tool?.name === "Mira replied")).toHaveLength(1);
 }), hostTimeout(90_000));
 
-it("S4 cancels queued work and the Chief's record when the person stops the conversation, and resumes nothing", () => scenario(async (f) => {
+legacyIt("S4 cancels queued work and the Chief's record when the person stops the conversation, and resumes nothing", () => scenario(async (f) => {
   expect((await f.api("PATCH", "/api/config", { threads: { maxConcurrentPerBot: 1 } })).status).toBe(200);
   f.script(f.clive.id,
     { key: "C0", match: ["S4-JOB"], steps: [{ arguments: { bot_ids: [f.mira.id], message: "S4-BRIEF: audit the dependencies and report." } }], reply: "C0: Mira will audit." },

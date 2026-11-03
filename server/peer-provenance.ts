@@ -103,7 +103,7 @@ export function reportNote(rawName: string): string {
 const DELIVERED_NOTES = ["message from", "delegated by", "thread opened by", "retry requested by", "aside from"];
 const NOTE_OPENINGS = [...DELIVERED_NOTES, "messages this conversation", "delivered earlier by", "posted by", "assigned by",
   "report from", "teammate report", "teammate result", "thread you opened", "incident report", "escalation notice"].map(opening => opening.split(" "));
-const HEADER_WORDS = new Set(["mausclaw", "mausclaw"]);
+const HEADER_WORDS = new Set(["mausclaw"]);
 const FIRST_WORDS = new Set([...NOTE_OPENINGS.map(words => words[0]!), ...HEADER_WORDS]);
 const LEADING_NOTE = new RegExp(`^\\[(?:${DELIVERED_NOTES.map(opening => opening.replace(/ /g, "\\s+")).join("|")})\\b[^\\]\\n]*\\]`, "iu");
 const OPENER = /[[［【〔〖〘〚⟦⁅⦋]/gu;

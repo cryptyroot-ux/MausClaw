@@ -45,8 +45,15 @@ async function runTask(task: Task): Promise<TaskResult> {
     }
     let body = "";
     for await (const chunk of request) body += chunk;
-    requests.push(JSON.parse(body));
+    const parsed = JSON.parse(body) as { tools?: Array<{ function: { name: string } }> };
+    const toolsProbe = parsed.tools?.length === 1 && parsed.tools[0]!.function.name === "noop";
+    if (!toolsProbe) requests.push(parsed);
     response.writeHead(200, { "content-type": "text/event-stream" });
+    if (toolsProbe) {
+      response.write(frame({ tool_calls: [{ index: 0, id: "probe-call", type: "function", function: { name: "noop", arguments: "{}" } }] }, null));
+      response.end(frame({ tool_calls: [{ index: 0, id: null, type: null, function: { name: null, arguments: "" } }] }, "tool_calls") + "data: [DONE]\n\n");
+      return;
+    }
     response.end(frame({ content: task.providerReply }, "stop") + "data: [DONE]\n\n");
   });
   await new Promise<void>((resolve) => upstream.listen(0, "127.0.0.1", resolve));

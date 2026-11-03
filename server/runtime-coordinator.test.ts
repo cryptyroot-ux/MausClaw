@@ -186,7 +186,7 @@ describe("needsInputQuestion", () => {
 describe("RuntimeCoordinator: the requesting turn and its tree", () => {
   it("creates the root under the generation, runs the child with the envelope, and resumes the root with the child's report", async () => {
     const w = world((node) => node.botId === "builder" ? { ok: true, text: "Built it on branch csv-export." } : undefined);
-    w.host.levels.builder = { level: "edits", driverKind: "claudeAgent" };
+    w.host.levels.builder = { level: "edits", driverKind: "openai-compat" };
     w.host.chiefs.add("chief-chat");
     const { node, duplicate } = send(w, chief, "gen-1", undefined, builder, "Build it", { approved: true });
     expect(duplicate).toBe(false);
@@ -234,13 +234,13 @@ describe("RuntimeCoordinator: the requesting turn and its tree", () => {
     const sources: Array<HandoffView | undefined> = [];
     w.host.levelOf = (target, source) => {
       sources.push(source);
-      return target.botId === "tester" ? { level: "ask", chief: "auto", driverKind: "claudeAgent" } : { level: "auto" };
+      return target.botId === "tester" ? { level: "ask", chief: "full", driverKind: "openai-compat" } : { level: "auto" };
     };
     const first = send(w, chief, "gen-1", undefined, builder, "Have the tester check it").node;
     w.coordinator.tick();
     const second = send(w, builder, "gen-1", first.id, tester, "Check it").node;
     expect(sources.at(-1)).toMatchObject({ id: first.id, botId: "builder", threadId: "builder-work", parentId: "gen-1" });
-    expect(w.coordinator.status(second.id)!.assignment).toMatchObject({ level: "auto", levelSource: "chief" });
+    expect(w.coordinator.status(second.id)!.assignment).toMatchObject({ level: "full", levelSource: "chief" });
   });
 
   it("active() is all() without the ended nodes, with the same views", async () => {

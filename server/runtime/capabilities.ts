@@ -18,23 +18,6 @@ type EngineRow = Pick<EngineCapabilities, "resume" | "stepCap"> & { transcript?:
 const CHAT_ROW: EngineRow = { resume: false, stepCap: CHAT_STEP_CAP, transcript: true };
 
 const ENGINES: Readonly<Record<string, EngineRow>> = {
-  claudeAgent: { resume: true },
-  codex: { resume: true },
-  piAgent: { resume: true },
-  antigravityAgent: { resume: true },
-  grokAgent: { resume: true },
-  geminiAgent: { resume: true },
-  kimiAgent: { resume: true },
-  droidAgent: { resume: true },
-  cursorAgent: { resume: true },
-  museCode: { resume: true },
-  opencodeGo: { resume: true },
-  qwenAgent: { resume: true },
-  hermesAgent: { resume: true },
-  deepseekAgent: { resume: true },
-  clineAgent: { resume: true },
-  copilotAgent: { resume: true },
-  customAcp: { resume: true },
   "openai-compat": CHAT_ROW,
   grok: CHAT_ROW,
   minimax: CHAT_ROW,

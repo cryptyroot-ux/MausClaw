@@ -71,7 +71,7 @@ const toBot = (botId: string, parentId: string, brief = `Build it, ${botId}`, pa
   parentId, origin: { kind: "person", source: "chat" },
   requester: { kind: "bot_turn", botId: "chief", threadId: "chief-chat", chief: true },
   assignee: { botId, destination: { kind: "work_thread", threadId: `${botId}-work` } },
-  brief, levels: { own: "ask", chief: "auto" }, driverKind: "claudeAgent", ...patch,
+  brief, levels: { own: "ask", chief: "full" }, driverKind: "openai-compat", ...patch,
 });
 
 interface World { store: RuntimeStore; runner: Fake; clock: FakeClock; runtime: Runtime; logs: string[]; limits: Partial<Limits> }
@@ -95,11 +95,11 @@ describe("Runtime: one tree, one lane", () => {
     expect(root.status).toBe("running");
     expect(root.executions).toBe(1);
     const child = ok(w.runtime.enqueue(toBot("builder", root.id)));
-    expect(child).toMatchObject({ status: "queued", depth: 1, rootId: root.id, parentId: root.id, level: "auto", levelSource: "chief" });
+    expect(child).toMatchObject({ status: "queued", depth: 1, rootId: root.id, parentId: root.id, level: "full", levelSource: "chief" });
     expect(w.runtime.liveEdges()).toEqual([{ sourceBotId: "chief", targetBotId: "builder", state: "queued", threadId: "builder-work" }]);
     w.runtime.tick();
     expect(w.runner.runs).toHaveLength(1);
-    expect(w.runner.runs[0]!.input).toMatchObject({ resumed: false, restartNote: "", level: "auto", mode: "work" });
+    expect(w.runner.runs[0]!.input).toMatchObject({ resumed: false, restartNote: "", level: "full", mode: "work" });
     expect(w.runner.runs[0]!.input.envelope).toContain(child.id);
     expect(w.store.get(child.id)?.status).toBe("running");
     await flush();

@@ -12,6 +12,9 @@ import { readHandoffs } from "./testing/handoff-rows.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
 import { ownTurnText } from "./testing/room-handoff-agent.ts";
 
+// Skipped until the external-Claude fixture is ported to the native loopback provider; see docs/superpowers/reports/2026-11-03-mausclaw-phase-0-baseline.md.
+const legacyIt = it.skip;
+
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SETTLED = "Your downstream room requests have settled.";
 const REPORT_FROM_PEER = "[MausClaw report from @Peer";
@@ -132,7 +135,7 @@ async function scenario(test: (f: any) => Promise<void>) {
   }
 }
 
-it("R1 a routine run coordinates a teammate, waits, and completes through a routine resume turn", () => scenario(async (f) => {
+legacyIt("R1 a routine run coordinates a teammate, waits, and completes through a routine resume turn", () => scenario(async (f) => {
   const brief = "R1-BRIEF: produce the fixture report and give the row count.";
   f.script(f.owner.id,
     { key: "O0", match: ["R1-ROUTINE"], steps: [{ arguments: { bot_ids: [f.peer.id], message: brief, reason: "nightly check" } }], reply: "O0: handed to Peer." },
@@ -171,7 +174,7 @@ it("R1 a routine run coordinates a teammate, waits, and completes through a rout
   expect((await f.messages(run.threadId)).find((message: any) => message.tool?.name === "Sent to Peer")?.tool?.output).toBe("nightly check");
 }), hostTimeout(120_000));
 
-it("R3 a consultation reaches a teammate without waiting and resumes the asker with the answer", () => scenario(async (f) => {
+legacyIt("R3 a consultation reaches a teammate without waiting and resumes the asker with the answer", () => scenario(async (f) => {
   const question = "R3-QUESTION: which port does the fixture listen on?";
   f.script(f.owner.id,
     { key: "O0", match: ["R3-ASK"], gateFile: f.gate("r3-owner"), readyFile: f.ready("r3-owner"), reply: "O0: asked Peer." },
@@ -206,7 +209,7 @@ it("R3 a consultation reaches a teammate without waiting and resumes the asker w
   expect(f.children()[0]).toMatchObject({ status: "completed", result: "R3-ANSWER: port 4242." });
 }), hostTimeout(120_000));
 
-it("R4 a one-way notice opens a notify child in a new thread and never resumes the sender", () => scenario(async (f) => {
+legacyIt("R4 a one-way notice opens a notify child in a new thread and never resumes the sender", () => scenario(async (f) => {
   const notice = "R4-NOTICE: own the release QA from here.";
   f.script(f.owner.id, { key: "O0", match: ["R4-SEND"], gateFile: f.gate("r4-owner"), readyFile: f.ready("r4-owner"), reply: "O0: sent onward." });
   f.script(f.peer.id, { key: "P1", match: ["R4-NOTICE"], reply: "R4-DONE: release QA owned." });
@@ -242,7 +245,7 @@ it("R4 a one-way notice opens a notify child in a new thread and never resumes t
   expect((await f.messages(job)).filter((message: any) => message.tool?.name === "Peer replied")).toHaveLength(0);
 }), hostTimeout(120_000));
 
-it("R5 an external runtime delegates, long-polls assignment_status for the settled child, and is never woken", () => scenario(async (f) => {
+legacyIt("R5 an external runtime delegates, long-polls assignment_status for the settled child, and is never woken", () => scenario(async (f) => {
   const brief = "R5-BRIEF: count the open tickets and report the number.";
   f.script(f.peer.id, { key: "P1", match: ["R5-BRIEF"], reply: "R5-RESULT: 7 open tickets." });
   const gateway = { id: f.owner.id, threadId: f.owner.activeTaskId };
@@ -283,7 +286,7 @@ it("R5 an external runtime delegates, long-polls assignment_status for the settl
   expect(pinned.filter((message: any) => message.role === "bot" && message.turnId && !message.from)).toEqual([]);
 }), hostTimeout(120_000));
 
-it("R6 a restart while a routine's teammate runs reruns the teammate once and the run still completes", () => scenario(async (f) => {
+legacyIt("R6 a restart while a routine's teammate runs reruns the teammate once and the run still completes", () => scenario(async (f) => {
   const brief = "R6-BRIEF: rebuild the search index and report the document count.";
   f.script(f.owner.id,
     { key: "O0", match: ["R6-ROUTINE"], steps: [{ arguments: { bot_ids: [f.peer.id], message: brief } }], reply: "O0: handed to Peer." },
