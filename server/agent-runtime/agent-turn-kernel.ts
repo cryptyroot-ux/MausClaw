@@ -406,21 +406,25 @@ export class AgentTurnKernel implements AgentEngine {
           let sawCompletion = false;
           let finishReason: string | null = null;
           let budgetExhaustedRound = false;
-          let responseCalls: ModelToolCall[] = [];
-          let responseText = "";
+          let turnRequestCount = 0;
 
           for (;;) {
             signal.throwIfAborted();
+            let responseCalls: ModelToolCall[] = [];
+            let responseText = "";
 
             const nativeLog = undefined;
 
             try {
+              turnRequestCount++;
               // Emit model delta events via adapter stream.
               const stream = adapter.generate({
                 model: currentModelId,
                 messages,
                 stream: true,
-                tools: allowTools ? toolDescriptors : [],
+                // On the last allowed request, disable tools so the model must produce
+                // a final answer instead of another tool call.
+                tools: request.maxTurnRequests !== undefined && turnRequestCount + 1 >= request.maxTurnRequests ? [] : (allowTools ? toolDescriptors : []),
                 signal,
               });
 

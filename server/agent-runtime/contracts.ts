@@ -264,6 +264,10 @@ export interface AgentRunRequest {
   readonly toolScope?: unknown;
   /** Number of corrective rounds allowed when a tool call fails. */
   readonly toolErrorCorrectiveRounds?: number;
+  /** Maximum number of model requests per turn. The last request is sent with tools disabled. */
+  readonly maxTurnRequests?: number;
+  /** Provider instance identity for calibration and request limiting. */
+  readonly providerInstanceId?: string;
   /** Optional hook runner (PreToolUse/PostToolUse/PreCompact/Stop). */
   readonly hooks?: {
     run(event: "pre_tool_use" | "post_tool_use" | "pre_compact" | "stop" | "session_start" | "session_end", context: { readonly runId: string; readonly threadId: string; readonly botId: string; readonly capabilityId?: string; readonly callId?: string; readonly arguments?: unknown; readonly result?: { readonly ok: boolean; readonly content: string }; readonly reason?: string }): Promise<{ readonly allow: boolean; readonly messages: ReadonlyArray<string>; readonly modifiedArguments?: unknown }>;
