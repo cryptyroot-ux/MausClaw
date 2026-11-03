@@ -7,7 +7,6 @@
 import {
   compactionKeepTokens,
   contextBudget as compactionContextBudget,
-  estimateMessagesTokens,
   planRecovery,
   chooseBodyCut,
   compactionTranscript,
@@ -27,7 +26,6 @@ import {
   threadTokens,
 } from "./context-budget.ts";
 import {
-  estimateRequestTokens as legacyEstimateRequestTokens,
   TokenCalibration as LegacyTokenCalibration,
   turnCompactBudget,
   offloadToolOutput,
@@ -137,22 +135,25 @@ export class ContextManager {
 
   /** Plan recovery after context overflow. */
   planRecovery(
-    messages: readonly ModelMessage[],
-    options: { readonly keepTokens: number; readonly maxTokens: number; readonly modelId?: string },
-  ): { readonly messages: ModelMessage[]; readonly droppedCount: number } {
-    return planRecovery(messages, options);
+    tokenEst: number,
+    trigger: number,
+    maxTokens: number,
+    options: { readonly compactions: number; readonly maxCompactions: number; readonly sizeRetries: number; readonly maxSizeRetries: number; readonly allowSummarize: boolean; readonly allowShrink: boolean },
+  ): { readonly action: "none" | "compact" | "shrink" | "escalate" | "fail"; readonly reason: string } {
+    return planRecovery(tokenEst, trigger, maxTokens, options);
   }
 
   /** Build a compaction record for the store. */
   buildCompactionRecord(
     runId: string,
-    callId: string,
-    strategy: CompactionStrategy,
-    beforeTokens: number,
-    afterTokens: number,
-    droppedCount: number,
-  ): { readonly runId: string; readonly callId: string; readonly strategy: CompactionStrategy; readonly beforeTokens: number; readonly afterTokens: number; readonly droppedCount: number; readonly createdAt: number } {
-    return buildCompactionRecord(runId, callId, strategy, beforeTokens, afterTokens, droppedCount);
+    sequence: number,
+    summary: string,
+    firstKeptIndex: number,
+    tokenEstimate: number,
+    trigger: "auto" | "overflow",
+    createdAt?: number,
+  ): { readonly runId: string; readonly sequence: number; readonly summary: string; readonly firstKeptIndex: number; readonly tokenEstimate: number; readonly trigger: "auto" | "overflow"; readonly createdAt: number } {
+    return buildCompactionRecord(runId, sequence, summary, firstKeptIndex, tokenEstimate, trigger, createdAt);
   }
 
   /** Summarization prompt used when compressing older history. */

@@ -4,11 +4,10 @@ import { AgentTurnKernel } from "./agent-turn-kernel.ts";
 import type {
   AgentRunRequest,
   AgentRunStore,
-  CapabilityGrant,
   CapabilitySession,
   ModelAdapter,
   ModelCapabilities,
-  ModelMessage,
+  ModelGenerateRequest,
 } from "./contracts.ts";
 
 function testRunStore(): AgentRunStore {
@@ -32,7 +31,9 @@ function testRunStore(): AgentRunStore {
     recoverUnsettledRuns() {},
     recordCompaction() {},
     recordToolOutput() {},
-    readToolOutput() {},
+    readToolOutput() {
+      return undefined;
+    },
   };
 }
 
@@ -58,14 +59,14 @@ function testAdapter(text: string): ModelAdapter {
     capabilities() {
       return supportedCapabilities;
     },
-    async *generate() {
+    async *generate(_request: ModelGenerateRequest) {
       yield { type: "content.delta", kind: "assistant_text", delta: text };
       yield { type: "completed", finishReason: "stop" };
     },
   };
 }
 
-function testSession(): CapabilitySession {
+function testSession(): CapabilitySession & { recordToolOutput(callId: string, content: string): boolean } {
   return {
     list() {
       return [
@@ -77,6 +78,9 @@ function testSession(): CapabilitySession {
       return { callId: call.callId, ok: true, content: "echo result" };
     },
     async close() {},
+    recordToolOutput() {
+      return true;
+    },
   };
 }
 
@@ -86,7 +90,10 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => testAdapter("Hello from the kernel") },
       store,
-      createCapabilities: ({ capabilities }) => capabilities,
+      createCapabilities: ({ capabilities }) => ({
+      ...capabilities,
+      recordToolOutput: () => true,
+    }),
     });
 
     const handle = await kernel.run({
@@ -110,7 +117,10 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => testAdapter("") },
       store,
-      createCapabilities: ({ capabilities }) => capabilities,
+      createCapabilities: ({ capabilities }) => ({
+      ...capabilities,
+      recordToolOutput: () => true,
+    }),
     });
 
     const controller = new AbortController();
@@ -145,9 +155,9 @@ describe("AgentTurnKernel", () => {
         capabilities() {
           return supportedCapabilities;
         },
-        async *generate(request: { readonly tools?: unknown[] }) {
+        async *generate(_request: ModelGenerateRequest) {
           attempt += 1;
-          generateCalls.push({ tools: request.tools ?? [], attempt });
+          generateCalls.push({ tools: _request.tools ? [..._request.tools] : [], attempt });
           if (attempt === 1) {
             // First request: ask for a tool call
             yield { type: "tool_calls", calls: [{ id: "tc-1", name: "echo", arguments: {} }] };
@@ -164,7 +174,10 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => countingAdapter() },
       store,
-      createCapabilities: ({ capabilities }) => capabilities,
+      createCapabilities: ({ capabilities }) => ({
+      ...capabilities,
+      recordToolOutput: () => true,
+    }),
     });
 
     const handle = await kernel.run({

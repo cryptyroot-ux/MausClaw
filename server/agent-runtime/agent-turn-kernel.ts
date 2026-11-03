@@ -8,22 +8,17 @@
 import { randomUUID } from "node:crypto";
 
 import { computeBackoff, interruptibleDelay, RETRY_MAX_ATTEMPTS } from "../drivers/retry.ts";
-import { announcesAction, MAX_ANNOUNCEMENT_NUDGES, NUDGE_ANNOUNCED_ACTION } from "./announcement.ts";
 import { workspaceDir } from "../workspace.ts";
 import { parseToolScope, allowsTool } from "../../shared/tool-scope.ts";
 import { snapshot as createCheckpoint, rollback } from "../checkpoints.ts";
+import { TOOL_OUTPUT_READ_CAPABILITY } from "./capability-runtime.ts";
 import {
   compactionKeepTokens,
   contextBudget,
-  estimateMessagesTokens,
-  planRecovery,
   chooseBodyCut,
   compactionTranscript,
   compactMessages,
-  SUMMARY_PROMPT,
-  buildCompactionRecord,
 } from "./compaction.ts";
-import { createRunScopedCapabilitySession, TOOL_OUTPUT_READ_CAPABILITY } from "./capability-runtime.ts";
 import type {
   AgentEngine,
   AgentEvent,
@@ -35,6 +30,7 @@ import type {
   CapabilityCall,
   CapabilityDescriptor,
   CapabilityResult,
+  CapabilitySession,
   ModelAdapter,
   ModelAdapterError,
   ModelCapabilities,
@@ -51,8 +47,7 @@ const MAX_ENCODED_IMAGE_BYTES = Math.ceil(32 * 1024 * 1024 / 3) * 4;
 
 const COMPACTION_MIN_MESSAGES = 6;
 const COMPACTION_MAX_PER_RUN = 3;
-const COMPACTION_MIN_MESSAGE_GAP = 4;
-const SUMMARY_MAX_CHARS = 4_000;
+
 const TOOL_OUTPUT_PROMPT_CHARS = 8_000;
 /** Above this length, a tool output string is truncated on request_too_large recovery. */
 const SHORT_TOOL_CHARS = 2_000;
@@ -126,12 +121,15 @@ function mergeLiveCapabilities(staticCaps: ModelCapabilities, live: LiveProbeRes
   };
 }
 
-/** Dependencies required to run a single turn through the kernel. */
+/** Run-scoped capability session: CapabilitySession plus tool-output offload. */
+type RunCapabilitySession = CapabilitySession & {
+  recordToolOutput(callId: string, content: string): boolean;
+};
 export interface KernelDependencies {
   readonly adapters: { resolve(ref: AgentRunRecord["providerModel"]): ModelAdapter };
   readonly store: AgentRunStore;
   /** Run-scoped capability session factory. */
-  readonly createCapabilities: (request: { readonly runId: string; readonly capabilities: CapabilitySession; readonly store: AgentRunStore }) => CapabilitySession;
+  readonly createCapabilities: (request: { readonly runId: string; readonly capabilities: CapabilitySession; readonly store: AgentRunStore }) => RunCapabilitySession;
   /** Optional live capability probe. */
   readonly probe?: { run(adapter: ModelAdapter, modelId: string): Promise<LiveProbeResult | null> };
   /** Optional Intelligence Layer. */
@@ -243,9 +241,6 @@ export class AgentTurnKernel implements AgentEngine {
       let toolCalls = 0;
       let outputVisible = false;
       let capabilityDispatched = false;
-      let capabilityFailure = false;
-      let verificationFailure = false;
-      let verificationFeedback = "";
       let completed = false;
       let stopReason: string | null = null;
       let failure: unknown;
@@ -263,9 +258,6 @@ export class AgentTurnKernel implements AgentEngine {
         : request.text;
       const messages: ModelMessage[] = [...request.messages, { role: "user", content: userContent }];
       const seenCallIds = new Set<string>();
-      let nudges = 0;
-      let callsAtNudge = -1;
-      let correctiveRounds = 0;
 
       const progress = () => this.deps.store.updateRunProgress(runId, { modelRounds, toolCalls, updatedAt: Date.now() });
       const updateStatus = (next: AgentRunStatus, code?: string): void => {
@@ -349,15 +341,10 @@ export class AgentTurnKernel implements AgentEngine {
         }
         const modelCapabilities = mergeLiveCapabilities(adapter.capabilities(currentModelId), liveCaps);
         const budget = contextBudget(modelCapabilities.contextWindow);
-        const runBudget = request.budget;
-        const runStartedAt = Date.now();
         let budgetExhausted = false;
         let totalTokens = 0;
         let totalCost = 0;
-        let hasCost = false;
         let compactions = 0;
-        let lastCompactAttempt = 0;
-        let lastReportedInputTokens = 0;
 
         while (true) {
           signal.throwIfAborted();
@@ -365,7 +352,7 @@ export class AgentTurnKernel implements AgentEngine {
           if (!currentControl || currentControl.finishing) break;
 
           // Build tool descriptors for this round.
-          let toolDescriptors: CapabilityDescriptor[] = [];
+          let toolDescriptors: ReadonlyArray<CapabilityDescriptor> = [];
           let allowTools = true;
           if (request.capabilities) {
             toolDescriptors = runCapabilities.list(request.grant);
@@ -373,13 +360,7 @@ export class AgentTurnKernel implements AgentEngine {
           }
 
           // Estimate request size and compact if needed.
-          const estimatedTokens = estimateMessagesTokens(messages, currentModelId);
           const keepTokens = compactionKeepTokens(modelCapabilities.contextWindow);
-          const precomputeTrigger = Math.floor(budget.trigger * 0.7);
-          let precomputed: { readonly summary: string; readonly cut: number; readonly messageCount: number; readonly model: string } | null = null;
-          let overflowRejected = false;
-          const allowSummarize = true;
-          const allowShrink = true;
           let sizeRetries = 0;
 
           const firePrecompute = (): void => {
@@ -391,7 +372,6 @@ export class AgentTurnKernel implements AgentEngine {
             if (older.length < 2) return;
             const transcript = compactionTranscript(older);
             if (!transcript.trim()) return;
-            const snapshotCount = messages.length;
             void (async () => {
               // Precompute summary in background; applied on next overflow.
             })();
@@ -407,10 +387,8 @@ export class AgentTurnKernel implements AgentEngine {
 
           for (;;) {
             signal.throwIfAborted();
-            let responseCalls: ModelToolCall[] = [];
+            let responseCalls: ReadonlyArray<ModelToolCall> = [];
             let responseText = "";
-
-            const nativeLog = undefined;
 
             try {
               turnRequestCount++;
@@ -420,7 +398,6 @@ export class AgentTurnKernel implements AgentEngine {
               const stream = adapter.generate({
                 model: currentModelId,
                 messages,
-                stream: true,
                 // On the last allowed request, disable tools so the model must produce
                 // a final answer instead of another tool call.
                 tools: request.maxTurnRequests !== undefined && turnRequestCount + 1 >= request.maxTurnRequests ? [] : (allowTools ? toolDescriptors : []),
@@ -432,7 +409,7 @@ export class AgentTurnKernel implements AgentEngine {
                 if (event.type === "content.delta") {
                   if (event.kind === "assistant_text") {
                     responseText += event.delta;
-                    this.emit(request.threadId, { type: "content.delta", kind: "assistant_text", delta: event.delta });
+                    this.emit(request.threadId, { type: "model.delta", runId, kind: "assistant_text", delta: event.delta });
                   }
                   outputVisible = true;
                 } else if (event.type === "tool_calls") {
@@ -440,7 +417,6 @@ export class AgentTurnKernel implements AgentEngine {
                 } else if (event.type === "usage") {
                   totalTokens += event.input + (event.output ?? 0);
                   totalCost += event.costUsd ?? 0;
-                  hasCost = true;
                 } else if (event.type === "completed") {
                   sawCompletion = true;
                   finishReason = event.finishReason;
@@ -469,7 +445,6 @@ export class AgentTurnKernel implements AgentEngine {
                 && !outputVisible
                 && !signal.aborted
               ) {
-                overflowRejected = true;
                 const result = compactMessages(messages, {
                   keepTokens: 1,
                   maxTokens: budget.window,
@@ -482,7 +457,6 @@ export class AgentTurnKernel implements AgentEngine {
                 const shortened = shortenMessageContents(result.messages);
                 messages.splice(0, messages.length, ...shortened);
                 sizeRetries++;
-                precomputed = null;
                 continue;
               }
               if (
@@ -492,7 +466,6 @@ export class AgentTurnKernel implements AgentEngine {
                 && !outputVisible
                 && !signal.aborted
               ) {
-                overflowRejected = true;
                 const result = compactMessages(messages, {
                   keepTokens: 1,
                   maxTokens: budget.window,
@@ -539,7 +512,6 @@ export class AgentTurnKernel implements AgentEngine {
               if (toolCalls + responseCalls.length > MAX_TOOL_CALLS) throw new AgentRuntimeError("tool_budget_exceeded", `Stopped after ${MAX_TOOL_CALLS} tool calls`);
 
               const batch: Array<{ readonly call: CapabilityCall; readonly descriptor: (typeof toolDescriptors)[number] }> = [];
-              capabilityFailure = false;
               for (const modelCall of responseCalls) {
                 if (!modelCall.id.trim() || seenCallIds.has(modelCall.id)) throw new AgentRuntimeError("invalid_tool_call", "The model reused or omitted a tool-call ID");
                 seenCallIds.add(modelCall.id);
@@ -555,7 +527,6 @@ export class AgentTurnKernel implements AgentEngine {
                   const msg = excluded ? "tool selection excludes this tool" : `Unknown capability: ${modelCall.name}`;
                   this.emit(request.threadId, { type: "tool.result", runId, callId: modelCall.id, result: { callId: modelCall.id, ok: false, content: msg, error: "not_found" } });
                   messages.push({ role: "tool", content: JSON.stringify({ ok: false, result: msg }), toolCallId: modelCall.id });
-                  capabilityFailure = true;
                   continue;
                 }
                 batch.push({
@@ -696,7 +667,6 @@ export class AgentTurnKernel implements AgentEngine {
                 }
 
                 this.deps.store.settleCapabilityCall(runId, call.callId, result.ok ? "succeeded" : "failed", Date.now());
-                if (!result.ok) capabilityFailure = true;
                 this.emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result });
                 // Post-tool-use hooks: observe results and enforce blocks. A blocked
                 // mutating tool is undone via its pre-call checkpoint, then denied.
@@ -707,7 +677,6 @@ export class AgentTurnKernel implements AgentEngine {
                   }
                   if (postHook.allow === false) {
                     result = { ...result, ok: false, content: postHook.messages.join("; ") || "Blocked by post-tool hook.", error: "denied" };
-                    capabilityFailure = true;
                     this.deps.store.settleCapabilityCall(runId, call.callId, "failed", Date.now());
                     this.emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result });
                     continue;
