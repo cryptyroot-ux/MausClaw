@@ -14,6 +14,7 @@ import { NativeGitCapabilityProvider } from "./native-git-capability-provider.ts
 import { NativeWebCapabilityProvider } from "./native-web-capability-provider.ts";
 import { ToolSearchCapabilityProvider } from "./tool-search-capability-provider.ts";
 import { NativeShellCapabilityProvider } from "./native-shell-capability-provider.ts";
+import { NativeComputerCapabilityProvider } from "./native-computer-capability-provider.ts";
 import { workspaceDir } from "../workspace.ts";
 import type { AgentEngine, CapabilityGrant, CapabilitySession, CapabilityProvider, CapabilityDescriptor, CapabilityCall, CapabilityResult } from "./contracts.ts";
 import { plainFailureMessage } from "../drivers/engine-errors.ts";
@@ -241,6 +242,7 @@ export async function runNativeTurn(context: NativeTurnContext): Promise<void> {
     providers.push(new NativeShellCapabilityProvider({ root: fileRoot }, scope));
     providers.push(new NativeGitCapabilityProvider({ root: fileRoot }, scope));
     providers.push(new NativeWebCapabilityProvider({ root: fileRoot }, scope));
+    providers.push(new NativeComputerCapabilityProvider({ root: fileRoot }, scope));
     if (allowsTool(scope, { kind: "native", name: "tool_search" })) providers.push(new ToolSearchCapabilityProvider(() => mcpSession));
     // Native ask_user tool - handled directly without MCP
     if (context.toolsEnabled() && allowsTool(scope, { kind: "native", name: ASK_USER_TOOL })) {
