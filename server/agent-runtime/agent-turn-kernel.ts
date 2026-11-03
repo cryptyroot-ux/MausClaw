@@ -131,7 +131,7 @@ export interface KernelDependencies {
   readonly adapters: { resolve(ref: AgentRunRecord["providerModel"]): ModelAdapter };
   readonly store: AgentRunStore;
   /** Run-scoped capability session factory. */
-  readonly createCapabilities: (request: { readonly runId: string; readonly store: AgentRunStore }) => CapabilitySession;
+  readonly createCapabilities: (request: { readonly runId: string; readonly capabilities: CapabilitySession; readonly store: AgentRunStore }) => CapabilitySession;
   /** Optional live capability probe. */
   readonly probe?: { run(adapter: ModelAdapter, modelId: string): Promise<LiveProbeResult | null> };
   /** Optional Intelligence Layer. */
@@ -193,7 +193,7 @@ export class AgentTurnKernel implements AgentEngine {
     }
 
     const runId = randomUUID();
-    const runCapabilities = this.deps.createCapabilities({ runId, store: this.deps.store });
+    const runCapabilities = this.deps.createCapabilities({ runId, capabilities: request.capabilities, store: this.deps.store });
 
     // Plugin System: mount plugin capabilities into the capability session.
     if (this.plugins) {
@@ -364,9 +364,6 @@ export class AgentTurnKernel implements AgentEngine {
           const currentControl = this.active.get(runId);
           if (!currentControl || currentControl.finishing) break;
 
-          modelRounds++;
-          progress();
-
           // Build tool descriptors for this round.
           let toolDescriptors: CapabilityDescriptor[] = [];
           let allowTools = true;
@@ -417,6 +414,8 @@ export class AgentTurnKernel implements AgentEngine {
 
             try {
               turnRequestCount++;
+              modelRounds++;
+              progress();
               // Emit model delta events via adapter stream.
               const stream = adapter.generate({
                 model: currentModelId,

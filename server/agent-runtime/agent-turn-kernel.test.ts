@@ -86,7 +86,7 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => testAdapter("Hello from the kernel") },
       store,
-      createCapabilities: () => testSession(),
+      createCapabilities: ({ capabilities }) => capabilities,
     });
 
     const handle = await kernel.run({
@@ -110,7 +110,7 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => testAdapter("") },
       store,
-      createCapabilities: () => testSession(),
+      createCapabilities: ({ capabilities }) => capabilities,
     });
 
     const controller = new AbortController();
@@ -164,7 +164,7 @@ describe("AgentTurnKernel", () => {
     const kernel = new AgentTurnKernel({
       adapters: { resolve: () => countingAdapter() },
       store,
-      createCapabilities: () => testSession(),
+      createCapabilities: ({ capabilities }) => capabilities,
     });
 
     const handle = await kernel.run({
