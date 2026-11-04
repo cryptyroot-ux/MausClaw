@@ -1,5 +1,6 @@
 // Google Gemini transport (generateContent / streamGenerateContent). Owns the
 // Gemini wire format only; conforms to the protocol-neutral ModelAdapter.
+import { randomUUID } from "node:crypto";
 import { rejectsKey, noteKeyRejected } from "../key-rejections.ts";
 import type {
   CapabilityDescriptor,
@@ -11,6 +12,7 @@ import type {
   ModelEvent,
   ModelGenerateRequest,
   ModelMessage,
+  ModelToolCall,
 } from "./contracts.ts";
 
 interface GeminiPart {
@@ -178,10 +180,14 @@ export function createGeminiModelAdapter(config: GeminiModelAdapterConfig): Mode
           if (completion.error) throw protocolError(completion.error.message ?? "Gemini error", emitted);
           const candidate = completion.candidates?.[0];
           const parts = candidate?.content?.parts ?? [];
+          const toolCalls: ModelToolCall[] = [];
           for (const part of parts) {
             if (part.text) { emitted = true; yield { type: "content.delta", kind: "assistant_text", delta: part.text }; }
-            if (part.functionCall) { emitted = true; yield { type: "tool_calls", calls: [{ id: part.functionCall.name, name: part.functionCall.name, arguments: part.functionCall.args ?? {} }] }; }
+            if (part.functionCall) {
+              toolCalls.push({ id: randomUUID(), name: part.functionCall.name, arguments: part.functionCall.args ?? {} });
+            }
           }
+          if (toolCalls.length) { emitted = true; yield { type: "tool_calls", calls: toolCalls }; }
           const usage = completion.usageMetadata;
           if (usage) yield { type: "usage", input: usage.promptTokenCount ?? 0, output: usage.candidatesTokenCount ?? 0 };
           yield { type: "completed", finishReason: candidate?.finishReason ?? null };
@@ -208,10 +214,14 @@ export function createGeminiModelAdapter(config: GeminiModelAdapterConfig): Mode
               try { update = JSON.parse(data) as GeminiResponse; } catch { throw protocolError("Gemini stream contained an incomplete JSON frame", emitted); }
               const candidate = update.candidates?.[0];
               const parts = candidate?.content?.parts ?? [];
+              const toolCalls: ModelToolCall[] = [];
               for (const part of parts) {
                 if (part.text) { emitted = true; yield { type: "content.delta", kind: "assistant_text", delta: part.text }; }
-                if (part.functionCall) { emitted = true; yield { type: "tool_calls", calls: [{ id: part.functionCall.name, name: part.functionCall.name, arguments: part.functionCall.args ?? {} }] }; }
+                if (part.functionCall) {
+                  toolCalls.push({ id: randomUUID(), name: part.functionCall.name, arguments: part.functionCall.args ?? {} });
+                }
               }
+              if (toolCalls.length) { emitted = true; yield { type: "tool_calls", calls: toolCalls }; }
               const usage = update.usageMetadata;
               if (usage) yield { type: "usage", input: usage.promptTokenCount ?? 0, output: usage.candidatesTokenCount ?? 0 };
               if (candidate?.finishReason) yield { type: "completed", finishReason: candidate.finishReason };

@@ -13,6 +13,7 @@ export class NativeComputerCapabilityProvider implements CapabilityProvider {
 
   list(grant: CapabilityGrant): ReadonlyArray<CapabilityDescriptor> {
     if (this.closed) return [];
+    if (!this.ctx.spawnBoxed) return []; // OS sandbox unavailable: do not offer computer execution at all
     if (!allowsTool(this.scope, { kind: "native", name: COMPUTER_TOOL_DESCRIPTOR.name })) return [];
     if (grant.denied.has(COMPUTER_TOOL_DESCRIPTOR.id)) return [];
     if (grant.allowed.size > 0 && !grant.allowed.has(COMPUTER_TOOL_DESCRIPTOR.id)) return [];
@@ -51,6 +52,11 @@ export class NativeComputerCapabilityProvider implements CapabilityProvider {
     try { this.validate(call, context.grant); }
     catch (error) { return { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "denied" }; }
     context.signal.throwIfAborted();
+    // Fail closed: computer execution must run inside the OS sandbox. When the boxed spawn
+    // runner is not wired in, the sandbox is unavailable and the command must not run.
+    if (!this.ctx.spawnBoxed) {
+      return { callId: call.callId, ok: false, content: "native computer execution is not isolated: OS sandbox unavailable", error: "isolation_unavailable" };
+    }
     const result = await runComputerTool(this.ctx, (call.arguments ?? {}) as Record<string, unknown>, context.signal);
     return { callId: call.callId, ok: result.ok, content: result.content, ...(result.error ? { error: result.error } : {}) };
   }

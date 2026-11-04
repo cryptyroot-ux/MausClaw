@@ -1198,6 +1198,96 @@ describe("createAgentEngine", () => {
     expect(toolResults.some((event) => (event as any).result.ok === false && (event as any).result.content === "unsafe operation")).toBe(true);
   });
 
+  it("accepts Anthropic end_turn as a normal finish (M2)", async () => {
+    const modelAdapter = testModelAdapter([[
+      { type: "content.delta", kind: "assistant_text", delta: "Done." },
+      { type: "completed", finishReason: "end_turn" },
+    ]]);
+    const store = testRunStore();
+    const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+    const { runId, done } = await engine.run({
+      botId: "bot-1", threadId: "thread-1", text: "Answer.",
+      messages: userMessages,
+      providerModel: { providerId: "anthropic", modelId: "claude-3-5-sonnet" },
+      grant, capabilities: testCapabilitySession([]),
+      signal: new AbortController().signal,
+    });
+    await done;
+    expect(store.getRun(runId)).toMatchObject({ status: "completed" });
+  });
+
+  it("accepts Gemini STOP as a normal finish (M2)", async () => {
+    const modelAdapter = testModelAdapter([[
+      { type: "content.delta", kind: "assistant_text", delta: "Done." },
+      { type: "completed", finishReason: "STOP" },
+    ]]);
+    const store = testRunStore();
+    const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+    const { runId, done } = await engine.run({
+      botId: "bot-1", threadId: "thread-1", text: "Answer.",
+      messages: userMessages,
+      providerModel: { providerId: "gemini", modelId: "gemini-2.0-flash" },
+      grant, capabilities: testCapabilitySession([]),
+      signal: new AbortController().signal,
+    });
+    await done;
+    expect(store.getRun(runId)).toMatchObject({ status: "completed" });
+  });
+
+  it("accepts OpenAI Responses completed as a normal finish (M2)", async () => {
+    const modelAdapter = testModelAdapter([[
+      { type: "content.delta", kind: "assistant_text", delta: "Done." },
+      { type: "completed", finishReason: "completed" },
+    ]]);
+    const store = testRunStore();
+    const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+    const { runId, done } = await engine.run({
+      botId: "bot-1", threadId: "thread-1", text: "Answer.",
+      messages: userMessages,
+      providerModel: { providerId: "openai", modelId: "gpt-4o" },
+      grant, capabilities: testCapabilitySession([]),
+      signal: new AbortController().signal,
+    });
+    await done;
+    expect(store.getRun(runId)).toMatchObject({ status: "completed" });
+  });
+
+  it("rejects max_tokens as an incomplete finish (M2)", async () => {
+    const modelAdapter = testModelAdapter([[
+      { type: "content.delta", kind: "assistant_text", delta: "Parti" },
+      { type: "completed", finishReason: "max_tokens" },
+    ]]);
+    const store = testRunStore();
+    const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+    const { runId, done } = await engine.run({
+      botId: "bot-1", threadId: "thread-1", text: "Answer.",
+      messages: userMessages,
+      providerModel: { providerId: "fixture", modelId: "fixture-model" },
+      grant, capabilities: testCapabilitySession([]),
+      signal: new AbortController().signal,
+    });
+    await done;
+    expect(store.getRun(runId)).toMatchObject({ status: "failed" });
+  });
+
+  it("rejects SAFETY as an incomplete finish (M2)", async () => {
+    const modelAdapter = testModelAdapter([[
+      { type: "content.delta", kind: "assistant_text", delta: "Parti" },
+      { type: "completed", finishReason: "SAFETY" },
+    ]]);
+    const store = testRunStore();
+    const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+    const { runId, done } = await engine.run({
+      botId: "bot-1", threadId: "thread-1", text: "Answer.",
+      messages: userMessages,
+      providerModel: { providerId: "fixture", modelId: "fixture-model" },
+      grant, capabilities: testCapabilitySession([]),
+      signal: new AbortController().signal,
+    });
+    await done;
+    expect(store.getRun(runId)).toMatchObject({ status: "failed" });
+  });
+
   describe("live capability probe", () => {
 
   function probeRunner(results: ReadonlyArray<LiveProbeResult | null>) {

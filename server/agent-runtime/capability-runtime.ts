@@ -238,6 +238,7 @@ export class InMemoryCapabilitySession implements CapabilitySession {
 
 import { readFileSync } from "node:fs";
 import { enabledSkillFile, resolveBotSkills } from "../skills.ts";
+import { allowsTool } from "../../shared/tool-scope.ts";
 
 /** Adapts an existing CapabilitySession to a CapabilityProvider so legacy bridges (MCP, etc.)
  *  participate in the unified lifecycle without a rewrite. */
@@ -378,11 +379,13 @@ export class SkillCapabilityProvider implements CapabilityProvider {
   readonly kind = "skill" as const;
   private readonly botId: string;
   private readonly assignedLibrary?: readonly string[];
+  private readonly scope: unknown;
   private closed = false;
 
-  constructor(botId: string, assignedLibrary?: readonly string[]) {
+  constructor(botId: string, assignedLibrary?: readonly string[], scope?: unknown) {
     this.botId = botId;
     this.assignedLibrary = assignedLibrary;
+    this.scope = scope;
     this.id = `skill:${botId}`;
   }
 
@@ -392,27 +395,36 @@ export class SkillCapabilityProvider implements CapabilityProvider {
 
   list(grant: CapabilityGrant): ReadonlyArray<CapabilityDescriptor> {
     if (this.closed) return [];
-    if (grant.denied.has(this.id) && !grant.allowed.has(this.id)) {
-      // provider-level deny; still list nothing if denied entirely
-    }
-    return this.enabledSkills().map((skill) => ({
-      id: `skill:${skill.name}`,
-      name: `skill_${skill.name}`.toLowerCase().replace(/[^a-z0-9_]+/g, "_"),
-      description: skill.description || `Skill ${skill.name}`,
-      schema: { type: "object", properties: {}, additionalProperties: false },
-      risk: "read" as const,
-      sideEffect: false,
-      timeoutMs: 5_000,
-    }));
+    return this.enabledSkills().flatMap((skill) => {
+      const name = `skill_${skill.name}`.toLowerCase().replace(/[^a-z0-9_]+/g, "_");
+      const id = `skill:${skill.name}`;
+      if (!allowsTool(this.scope, { kind: "native", name })) return [];
+      if (grant.denied.has(id) || grant.denied.has(name)) return [];
+      if (grant.allowed.size > 0 && !grant.allowed.has(id) && !grant.allowed.has(name)) return [];
+      return [{
+        id,
+        name,
+        description: skill.description || `Skill ${skill.name}`,
+        schema: { type: "object", properties: {}, additionalProperties: false },
+        risk: "read" as const,
+        sideEffect: false,
+        timeoutMs: 5_000,
+      }];
+    });
   }
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability runtime is closed");
-    if (!this.enabledSkills().some((skill) => `skill:${skill.name}` === call.capabilityId)) {
+    const skill = this.enabledSkills().find((entry) => `skill:${entry.name}` === call.capabilityId);
+    if (!skill) {
       throw new Error(`Unknown capability: ${call.capabilityId}`);
     }
-    if (grant.denied.has(call.capabilityId)) throw new Error(`Capability denied: ${call.capabilityId}`);
-    if (grant.allowed.size > 0 && !grant.allowed.has(call.capabilityId)) throw new Error(`Capability not allowed: ${call.capabilityId}`);
+    const name = `skill_${skill.name}`.toLowerCase().replace(/[^a-z0-9_]+/g, "_");
+    if (!allowsTool(this.scope, { kind: "native", name })) throw new Error(`Capability not allowed: ${name}`);
+    if (grant.denied.has(call.capabilityId) || grant.denied.has(name)) throw new Error(`Capability denied: ${name}`);
+    if (grant.allowed.size > 0 && !grant.allowed.has(call.capabilityId) && !grant.allowed.has(name)) {
+      throw new Error(`Capability not allowed: ${name}`);
+    }
   }
 
   async mount(_ctx: { readonly grant: CapabilityGrant; readonly signal: AbortSignal }): Promise<void> { /* skills are files; nothing to mount */ }
@@ -423,11 +435,12 @@ export class SkillCapabilityProvider implements CapabilityProvider {
     const file = enabledSkillFile(this.botId, skillName, this.assignedLibrary);
     if (!file) return { callId: call.callId, ok: false, content: `Skill not found: ${skillName}`, error: "not_found" };
     try {
+      this.validate(call, context.grant);
       context.signal.throwIfAborted();
       const content = readFileSync(file, "utf8");
       return { callId: call.callId, ok: true, content: `Skill ${skillName} (read ${file}):\n\n${content}` };
     } catch (error) {
-      return { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "failed" };
+      return { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: context.signal.aborted ? "interrupted" : "denied" };
     }
   }
 

@@ -188,18 +188,31 @@ describe("the safety floor in the chat runtime", () => {
     }
   });
 
-  it("does not override a card a person answers", async () => {
+  it("refuses a never-list command at Ask before a person can allow it", async () => {
     bindSafetyFloor(() => ({ safetyFloor: { enabled: true } }), undefined, HOST);
     const f = await fixture([WIPE]);
+    const opened = f.recorder.until((event) => event.type === "request.opened");
+    const completed = f.completed();
     await f.start({ approvalMode: "ask" });
-    const card = await f.recorder.until((event) => event.type === "request.opened");
-    expect(card).toMatchObject({ requestType: "permission", tool: "shell_exec" });
+    const outcome = await Promise.race([
+      opened.then((event) => ({ type: "card" as const, event })),
+      completed.then((event) => ({ type: "completed" as const, event })),
+    ]);
+    if (outcome.type === "card") {
+      await f.instance.adapter.respondToRequest(f.threadId, outcome.event.requestId!, { behavior: "deny" });
+      await completed;
+    }
+    expect(outcome.type).toBe("completed");
+    if (outcome.type !== "completed") return;
+    const done = outcome.event;
+    expect(done).toMatchObject({ ok: false, denials: ["shell_exec"] });
     expect(f.handed()).toEqual([]);
-    expect(await f.instance.adapter.respondToRequest(f.threadId, card.requestId!, { behavior: "allow" })).toBe("allowed-once");
-    expect(await f.completed()).toMatchObject({ ok: true });
-    expect(f.handed()).toEqual([WIPE]);
-    expect(f.notices()).toEqual([]);
-    expect(await f.decisions()).toEqual([]);
+    expect(f.cards()).toEqual([]);
+    expect(f.notices()).toEqual([BLOCKED]);
+    expect(f.toolResult("call_1")).toEqual([expect.stringContaining(BLOCKED)]);
+    expect(await f.decisions()).toEqual([
+      expect.objectContaining({ botId: "bot-floor", tool: "shell_exec", decision: "auto-denied", source: "safety-floor", rule: "delete-root" }),
+    ]);
   });
 
   it("refuses it under \"Always allow this session\" too, where the grant would have answered", async () => {

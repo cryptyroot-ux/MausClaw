@@ -39,10 +39,8 @@ export function createChatToolApproval(options: {
   const covered = (grant?: string): boolean => grant !== undefined && options.granted?.has(grant) === true;
   return {
     covered,
-    /** The floor's block, already logged, for a call this gate would answer itself (Full access or a kept session
-     * allow), or null. A card a person answers is never touched. */
+    /** The floor's block, already logged, for a call this gate is about to execute, or null. */
     floored(call: { full: boolean; threadId: string; botId?: string; shown: ChatToolCallView; summary?: string }): FloorBlock | null {
-      if (!call.shown.ask || !(call.full || covered(call.shown.grant))) return null;
       return floorBlockForToolCall({ threadId: call.threadId, botId: call.botId, tool: call.shown.title, summary: call.summary, input: call.shown.input });
     },
     ask(tool: string, summary: string, grant?: string): Promise<boolean> {

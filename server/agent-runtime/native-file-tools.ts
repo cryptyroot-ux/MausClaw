@@ -1,8 +1,8 @@
 // Native file tools for the MausClaw agent engine: Read, Edit, Write, Glob, Grep.
 // These are built-in capabilities (no MCP server needed) so MausClaw can do coding
 // tasks out of the box. Path-safe: all paths resolve inside a workspace root.
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const READ_MAX_BYTES = 256 * 1024;
 const READ_MAX_LINES_DEFAULT = 2000;
@@ -26,18 +26,36 @@ function safeResolve(root: string, input: string): string | null {
   const resolved = isAbsolute(input) ? resolve(input) : resolve(root, input);
   const rel = relative(root, resolved);
   if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return null;
-  // Symlink escape check: resolve real path and ensure within root.
+
+  // Canonical ancestor walk: follow symlinks component-by-component from the
+  // workspace root, ensuring every existing ancestor stays inside root. This
+  // blocks symlink escapes even when intermediate path segments do not exist.
   try {
-    const real = realpathSync(resolved);
-    const realRel = relative(root, real);
-    if (realRel === ".." || realRel.startsWith(`..${sep}`) || isAbsolute(realRel)) return null;
+    const rootReal = realpathSync(root);
+    let current = rootReal;
+    for (const component of rel.split(sep)) {
+      if (!component || component === ".") continue;
+      const candidate = join(current, component);
+      let st: ReturnType<typeof lstatSync> | undefined;
+      try { st = lstatSync(candidate); } catch {
+        // Nonexistent component: nothing beyond can be a symlink, and `current`
+        // is within root by construction, so the remainder is safe.
+        current = candidate;
+        continue;
+      }
+      if (st.isSymbolicLink()) {
+        const targetReal = realpathSync(resolve(dirname(candidate), readlinkSync(candidate)));
+        const targetRel = relative(rootReal, targetReal);
+        if (targetRel === ".." || targetRel.startsWith(`..${sep}`) || isAbsolute(targetRel)) return null;
+        current = targetReal;
+      } else if (st.isDirectory()) {
+        current = candidate;
+      } else {
+        current = candidate; // file; only valid as last component
+      }
+    }
   } catch {
-    // File doesn't exist yet (new file) — check parent directory.
-    try {
-      const parentReal = realpathSync(resolve(resolved, ".."));
-      const parentRel = relative(root, parentReal);
-      if (parentRel === ".." || parentRel.startsWith(`..${sep}`) || isAbsolute(parentRel)) return null;
-    } catch {}
+    return null;
   }
   return resolved;
 }

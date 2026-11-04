@@ -9,7 +9,14 @@ import type { CapabilityCall, CapabilityGrant } from "./contracts.ts";
 
 let root: string;
 let ctx: ComputerToolContext;
-beforeEach(() => { root = mkdtempSync(join(tmpdir(), "nct-")); ctx = { root }; });
+beforeEach(() => {
+  root = mkdtempSync(join(tmpdir(), "nct-"));
+  // Sandbox available: a boxed-style runner that executes the command directly.
+  ctx = {
+    root,
+    spawnBoxed: async (command, cwd, _env, options) => runComputerTool({ root }, { command, cwd, timeout_ms: options?.timeoutMs }, options?.signal),
+  };
+});
 afterEach(() => rmSync(root, { recursive: true, force: true }));
 
 function grant(overrides: { allowed?: string[]; denied?: string[] } = {}) {
@@ -173,6 +180,17 @@ describe("NativeComputerCapabilityProvider", () => {
     const provider = new NativeComputerCapabilityProvider(ctx);
     await provider.close();
     expect(provider.list(grant())).toEqual([]);
+  });
+
+  it("fail closed: no OS sandbox means computer_exec is not offered or executed", async () => {
+    const unboxedCtx: ComputerToolContext = { root };
+    const provider = new NativeComputerCapabilityProvider(unboxedCtx);
+    expect(provider.list(grant())).toEqual([]);
+    const result = await provider.invoke(call({ command: "echo hi" }), context());
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("isolation_unavailable");
+    expect(result.content).toContain("not isolated");
+    await provider.close();
   });
 
   it("describe returns a string", () => {

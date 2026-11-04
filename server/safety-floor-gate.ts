@@ -1,6 +1,5 @@
-// Applies the safety floor only where the server would allow a command with nobody looking. A card a person answers
-// is never overridden; the floor is one more condition before an automatic allow. Inert on a Windows server, where
-// too many lines need two shells to read. It cannot reach an engine that never asks: Claude Code under
+// Security invariant: a safety-floor match is refused before execution at every approval level. Inert on a Windows
+// server, where too many lines need two shells to read. It cannot reach an engine that never asks: Claude Code under
 // bypassPermissions, Codex with approvals off, an ACP agent in its own yolo mode.
 import { homedir } from "node:os";
 
@@ -152,8 +151,7 @@ export function shellCommandOfToolCall(input: Record<string, unknown>): string |
   return undefined;
 }
 
-/** For a runtime about to run a tool call without asking anyone: the block, already logged, or null. An unreadable
- * command is refused too, since such a runtime has no card to fall back on. */
+/** For a runtime about to dispatch a tool call: a never-list or unreadable command is refused even if a card could be shown. */
 export function floorBlockForToolCall(call: {
   threadId: string;
   botId?: string;

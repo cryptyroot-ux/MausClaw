@@ -1,8 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
+import type { SendTurnInput } from "../contracts.ts";
 
 const dataDir = mkdtempSync(join(tmpdir(), "mausclaw-native-provider-"));
 const originalDataDir = process.env.MAUSCLAW_DATA_DIR;
@@ -16,6 +17,8 @@ const { createAgentEngine } = await import("./runtime.ts");
 const { createSqliteAgentRunStore } = await import("./run-store.ts");
 const { InMemoryCapabilitySession } = await import("./capability-runtime.ts");
 const { closeMessageDb } = await import("../message-db.ts");
+const { DATA_DIR } = await import("../config.ts");
+const { bindSafetyFloor } = await import("../safety-floor-gate.ts");
 
 afterAll(() => {
   process.env.PATH = originalPath;
@@ -41,6 +44,7 @@ const capabilities = {
 
 const cleanups: Array<() => Promise<void>> = [];
 afterEach(async () => {
+  bindSafetyFloor(() => ({}));
   for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
 });
 
@@ -49,12 +53,12 @@ function jsonResponse(response: import("node:http").ServerResponse, body: unknow
   response.end(JSON.stringify(body));
 }
 
-function toolRound(id: string, name: string): unknown {
+function toolRound(id: string, name: string, argumentsValue: unknown = { value: "fixture" }): unknown {
   return {
     choices: [{
       message: {
         content: "",
-        tool_calls: [{ id, type: "function", function: { name, arguments: '{"value":"fixture"}' } }],
+        tool_calls: [{ id, type: "function", function: { name, arguments: JSON.stringify(argumentsValue) } }],
       },
       finish_reason: "tool_calls",
     }],
@@ -62,7 +66,264 @@ function toolRound(id: string, name: string): unknown {
   };
 }
 
+async function nativeToolFixture(options: {
+  name: string;
+  arguments: unknown;
+  tools?: boolean;
+  computerUse?: boolean;
+  toolScope?: SendTurnInput["toolScope"];
+}) {
+  const requests: Array<{ tools?: Array<{ function: { name: string } }> }> = [];
+  const server = createServer(async (request, response) => {
+    let body = "";
+    for await (const part of request) body += part.toString();
+    requests.push(JSON.parse(body));
+    jsonResponse(response, requests.length === 1
+      ? toolRound("gated-call", options.name, options.arguments)
+      : { choices: [{ message: { content: "Done." }, finish_reason: "stop" }] });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  cleanups.push(async () => {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("fixture did not bind TCP");
+  const origin = `http://127.0.0.1:${address.port}`;
+  const adapter = createOpenAICompatibleModelAdapter({
+    providerId: "openai-compat", apiUrl: `${origin}/v1`, apiKey: "fixture-key", catalog,
+    capabilities: () => capabilities,
+  });
+  const runtime = createOpenAIChatRuntime({
+    input: { instanceId: `native-gate-${options.name}`, displayName: "Native gate fixture", environment: {}, enabled: true, config: {} },
+    driverKind: "openai-compat", apiKey: "fixture-key", apiUrl: `${origin}/v1`, models: () => catalog,
+    requestBody: (model, messages, stream) => ({ model, messages, stream }),
+    httpErrorLabel: "fixture", missingKeyError: "missing key", unavailableReason: "missing key", timeoutMs: 5_000,
+    nativeLog: { source: "fixture", outgoing: () => ({}), incoming: () => ({}) },
+    ...(options.tools !== undefined ? { tools: options.tools } : {}),
+    ...(options.computerUse !== undefined ? { computerUse: options.computerUse } : {}),
+    nativeAgentEngine: createAgentEngine({ adapters: { resolve: () => adapter }, store: createSqliteAgentRunStore() }),
+  });
+  cleanups.push(async () => { await runtime.dispose(); });
+  return { runtime, requests };
+}
+
+function turnCompleted(runtime: Awaited<ReturnType<typeof createOpenAIChatRuntime>>): Promise<Record<string, unknown>> {
+  return new Promise((resolve) => {
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "turn.completed") resolve(event as unknown as Record<string, unknown>);
+    });
+  });
+}
+
 describe("native ProviderAdapter acceptance", () => {
+  it("waits for approval before a native file write is dispatched", async () => {
+    const botId = "native-approval-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "approval.txt");
+    const { runtime, requests } = await nativeToolFixture({
+      name: "write", arguments: { file_path: "approval.txt", content: "approved" },
+    });
+    const completed = turnCompleted(runtime);
+    let resolveFirst!: (event: { type: "request"; requestId: string } | { type: "completed" }) => void;
+    const first = new Promise<{ type: "request"; requestId: string } | { type: "completed" }>((resolve) => { resolveFirst = resolve; });
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "request.opened" && event.requestType === "permission") resolveFirst({ type: "request", requestId: event.requestId! });
+      if (event.type === "turn.completed") resolveFirst({ type: "completed" });
+    });
+
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-approval", botId, text: "Write the fixture file.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "ask",
+    });
+    const waiting = await first;
+    expect(existsSync(target)).toBe(false);
+    expect(waiting).toMatchObject({ type: "request", requestId: expect.any(String) });
+    if (waiting.type !== "request") return;
+    expect(await runtime.adapter.respondToRequest("thread-native-approval", waiting.requestId, { behavior: "allow" })).toBe("allowed-once");
+    expect(await completed).toMatchObject({ type: "turn.completed", ok: true });
+    expect(readFileSync(target, "utf8")).toBe("approved");
+    expect(requests).toHaveLength(2);
+  });
+
+  it("does not dispatch a native write after the user denies approval", async () => {
+    const botId = "native-denied-write-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "denied.txt");
+    const { runtime } = await nativeToolFixture({
+      name: "write", arguments: { file_path: "denied.txt", content: "must not exist" },
+    });
+    const completed = turnCompleted(runtime);
+    let resolveGate!: (value: { requestId: string } | null) => void;
+    const gate = new Promise<{ requestId: string } | null>((resolve) => { resolveGate = resolve; });
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "request.opened" && event.requestType === "permission") resolveGate({ requestId: event.requestId! });
+      if (event.type === "turn.completed") resolveGate(null);
+    });
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-denied-write", botId, text: "Write the fixture file.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "ask",
+    });
+    const card = await gate;
+    if (!card) expect(existsSync(target)).toBe(false);
+    expect(card).not.toBeNull();
+    if (!card) return;
+    expect(await runtime.adapter.respondToRequest("thread-native-denied-write", card.requestId, { behavior: "deny" })).toBe("rejected");
+    await completed;
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("does not dispatch a native write after the turn is cancelled at approval", async () => {
+    const botId = "native-cancelled-write-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "cancelled.txt");
+    const { runtime } = await nativeToolFixture({
+      name: "write", arguments: { file_path: "cancelled.txt", content: "must not exist" },
+    });
+    const completed = turnCompleted(runtime);
+    let resolveGate!: (value: { type: "request"; requestId: string } | { type: "completed" }) => void;
+    const gate = new Promise<{ type: "request"; requestId: string } | { type: "completed" }>((resolve) => { resolveGate = resolve; });
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "request.opened" && event.requestType === "permission") resolveGate({ type: "request", requestId: event.requestId! });
+      if (event.type === "turn.completed") resolveGate({ type: "completed" });
+    });
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-cancelled-write", botId, text: "Write the fixture file.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "ask",
+    });
+    const waiting = await gate;
+    expect(waiting.type).toBe("request");
+    if (waiting.type !== "request") return;
+    await runtime.adapter.interruptTurn("thread-native-cancelled-write");
+    await completed;
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("keeps the native shell safety floor active even in full access mode", async () => {
+    const botId = "native-floor-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "floor-blocked.txt");
+    bindSafetyFloor(
+      () => ({ safetyFloor: { enabled: true } }),
+      () => ({ read: true, verdict: { rule: "delete-root", label: "fixture safety rule" } }),
+      "linux",
+    );
+    const { runtime, requests } = await nativeToolFixture({
+      name: "bash",
+      arguments: { command: `${process.execPath} -e "require('node:fs').writeFileSync('${target}', 'blocked')"` },
+    });
+    const completed = turnCompleted(runtime);
+    const toolResults: string[] = [];
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "item.completed" && event.itemType === "tool") toolResults.push(event.output ?? "");
+    });
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-floor", botId, text: "Run the fixture command.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "full",
+    });
+    await completed;
+    expect(requests.length).toBeGreaterThan(0);
+    // Fail-closed: when the OS sandbox (bot box) is unavailable, native shell is not offered,
+    // so bash never appears in the tool list and nothing runs on the host.
+    expect((requests[0]?.tools ?? []).map((tool) => tool.function.name)).not.toContain("bash");
+    expect(toolResults.join("\n")).not.toContain("fixture safety rule");
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("blocks a native shell floor match before an Ask-mode approval card", async () => {
+    const botId = "native-ask-floor-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "ask-floor-blocked.txt");
+    bindSafetyFloor(
+      () => ({ safetyFloor: { enabled: true } }),
+      () => ({ read: true, verdict: { rule: "delete-root", label: "fixture safety rule" } }),
+      "linux",
+    );
+    const { runtime } = await nativeToolFixture({
+      name: "bash",
+      arguments: { command: `${process.execPath} -e "require('node:fs').writeFileSync('${target}', 'blocked')"` },
+    });
+    const completed = turnCompleted(runtime);
+    const toolResults: string[] = [];
+    let permissionCards = 0;
+    runtime.adapter.onEvent((event) => {
+      if (event.type === "item.completed" && event.itemType === "tool") toolResults.push(event.output ?? "");
+      if (event.type === "request.opened" && event.requestType === "permission") permissionCards++;
+    });
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-ask-floor", botId, text: "Run the fixture command.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "ask",
+    });
+    await completed;
+    // Fail-closed: shell unavailable → no tool call → no approval card, nothing runs.
+    expect(permissionCards).toBe(0);
+    expect(toolResults.join("\n")).not.toContain("fixture safety rule");
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("does not offer or dispatch native tools when tools are disabled", async () => {
+    const botId = "native-tools-disabled-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "disabled.txt");
+    const { runtime, requests } = await nativeToolFixture({
+      name: "write", arguments: { file_path: "disabled.txt", content: "must not exist" }, tools: false,
+    });
+    const completed = turnCompleted(runtime);
+    await runtime.adapter.sendTurn({
+      threadId: "thread-tools-disabled", botId, text: "Write the fixture file.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "full",
+    });
+    expect(await completed).toMatchObject({ type: "turn.completed", ok: false });
+    expect((requests[0]?.tools ?? []).map((tool) => tool.function.name)).not.toContain("write");
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("does not offer or dispatch computer execution when computerUse is disabled", async () => {
+    const botId = "native-computer-disabled-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "computer-disabled.txt");
+    const { runtime, requests } = await nativeToolFixture({
+      name: "computer_exec",
+      arguments: { command: `${process.execPath} -e "require('node:fs').writeFileSync('${target}', 'blocked')"` },
+      computerUse: false,
+    });
+    const completed = turnCompleted(runtime);
+    await runtime.adapter.sendTurn({
+      threadId: "thread-computer-disabled", botId, text: "Run the fixture command.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "full",
+    });
+    await completed;
+    expect((requests[0]?.tools ?? []).map((tool) => tool.function.name)).not.toContain("computer_exec");
+    expect(existsSync(target)).toBe(false);
+  });
+
+  it("does not dispatch a guessed native tool excluded by tool scope", async () => {
+    const botId = "native-hidden-bash-bot";
+    const workspace = join(DATA_DIR, "workspaces", botId);
+    mkdirSync(workspace, { recursive: true, mode: 0o700 });
+    const target = join(workspace, "hidden-bash.txt");
+    const { runtime, requests } = await nativeToolFixture({
+      name: "bash",
+      arguments: { command: `${process.execPath} -e "require('node:fs').writeFileSync('${target}', 'blocked')"` },
+      toolScope: { deny: ["native:bash"] },
+    });
+    const completed = turnCompleted(runtime);
+    await runtime.adapter.sendTurn({
+      threadId: "thread-native-hidden-bash", botId, text: "Run the fixture command.", agentEngine: "mausclaw-native",
+      model: "fixture-model", approvalMode: "full", toolScope: { deny: ["native:bash"] },
+    });
+    expect(await completed).toMatchObject({ type: "turn.completed", ok: false });
+    expect((requests[0]?.tools ?? []).map((tool) => tool.function.name)).not.toContain("bash");
+    expect(existsSync(target)).toBe(false);
+  });
+
   it("completes two tool rounds without an agent CLI", async () => {
     const requests: unknown[] = [];
     const server = createServer(async (request, response) => {

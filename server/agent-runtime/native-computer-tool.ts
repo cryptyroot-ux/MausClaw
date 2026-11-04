@@ -15,6 +15,9 @@ export const TOTAL_CAP_BYTES = 128 * 1024;
 export interface ComputerToolContext {
   readonly root: string;
   readonly env?: NodeJS.ProcessEnv;
+  /** Run the command inside the OS sandbox (bot box / bubblewrap). Returns null when
+   *  the sandbox is unavailable; the caller must fail closed rather than run on the host. */
+  readonly spawnBoxed?: (command: string, cwd: string, env: NodeJS.ProcessEnv, options?: { readonly signal?: AbortSignal; readonly timeoutMs?: number }) => Promise<ComputerToolResult | null>;
 }
 
 export interface ComputerToolResult {
@@ -93,6 +96,22 @@ export async function runComputerTool(ctx: ComputerToolContext, args: Record<str
   env.PATH = process.env.PATH ?? "/usr/bin:/bin";
   env.HOME = process.env.HOME ?? ctx.root;
   env.PWD = cwd;
+
+  // OS-enforced isolation via the bot box. When a boxed spawn runner is provided it is
+  // the only path; a null result means the sandbox is unavailable and we fail closed.
+  if (ctx.spawnBoxed) {
+    const boxed = await ctx.spawnBoxed(command, cwd, env, { signal, timeoutMs: timeout });
+    if (!boxed) {
+      return { ok: false, content: "native computer execution requires OS sandbox which is unavailable", error: "isolation_unavailable", exitCode: null, durationMs: Date.now() - start };
+    }
+    return {
+      ok: boxed.ok,
+      content: boxed.content,
+      ...(boxed.error ? { error: boxed.error } : {}),
+      exitCode: boxed.exitCode,
+      durationMs: boxed.durationMs,
+    };
+  }
 
   return new Promise<ComputerToolResult>((resolve) => {
     const controller = new AbortController();

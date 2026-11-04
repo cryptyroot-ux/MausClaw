@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, symlinkSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -100,5 +100,46 @@ describe("native file tools", () => {
     const r = runFileTool(ctx, "read", { file_path: "bin.dat" });
     expect(r.ok).toBe(true);
     expect(r.content).toContain("binary file");
+  });
+
+  it("write through a symlink to outside the workspace is blocked (M7)", () => {
+    const outside = mkdtempSync(join(tmpdir(), "nft-out-"));
+    writeFileSync(join(outside, "secret.txt"), "secret", "utf8");
+    symlinkSync(outside, join(root, "escape"));
+    const r = runFileTool(ctx, "write", { file_path: "escape/leaked.txt", content: "pwned" });
+    expect(r.ok).toBe(false);
+    expect(r.content).toContain("outside the workspace");
+    expect(existsSync(join(outside, "leaked.txt"))).toBe(false);
+    rmSync(outside, { recursive: true, force: true });
+  });
+
+  it("write through a symlink with nonexistent intermediate is blocked (M7)", () => {
+    const outside = mkdtempSync(join(tmpdir(), "nft-out-"));
+    symlinkSync(outside, join(root, "escape"));
+    const r = runFileTool(ctx, "write", { file_path: "escape/newdir/leaked.txt", content: "pwned" });
+    expect(r.ok).toBe(false);
+    expect(r.content).toContain("outside the workspace");
+    expect(existsSync(join(outside, "newdir", "leaked.txt"))).toBe(false);
+    rmSync(outside, { recursive: true, force: true });
+  });
+
+  it("read through a symlink to outside the workspace is blocked (M7)", () => {
+    const outside = mkdtempSync(join(tmpdir(), "nft-out-"));
+    writeFileSync(join(outside, "secret.txt"), "secret", "utf8");
+    symlinkSync(outside, join(root, "escape"));
+    const r = runFileTool(ctx, "read", { file_path: "escape/secret.txt" });
+    expect(r.ok).toBe(false);
+    expect(r.content).toContain("outside the workspace");
+    rmSync(outside, { recursive: true, force: true });
+  });
+
+  it("grep through a symlink to outside the workspace is blocked (M7)", () => {
+    const outside = mkdtempSync(join(tmpdir(), "nft-out-"));
+    writeFileSync(join(outside, "secret.txt"), "secret", "utf8");
+    symlinkSync(outside, join(root, "escape"));
+    const r = runFileTool(ctx, "grep", { pattern: "secret", path: "escape" });
+    expect(r.ok).toBe(false);
+    expect(r.content).toContain("outside the workspace");
+    rmSync(outside, { recursive: true, force: true });
   });
 });

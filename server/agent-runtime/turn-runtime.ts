@@ -9,6 +9,7 @@ import type { createChatToolApproval } from "../drivers/chat-tool-approval.ts";
 import { toolSchemaProfileFor } from "../tool-schema-profile.ts";
 import { createChatCapabilitySession, type ChatCapabilityApproval } from "./chat-capability-runtime.ts";
 import { CompositeCapabilityRuntime, SessionCapabilityProvider, SkillCapabilityProvider } from "./capability-runtime.ts";
+import { NativeApprovalCapabilityProvider } from "./native-approval-capability-provider.ts";
 import { NativeFileCapabilityProvider } from "./native-file-capability-provider.ts";
 import { NativeGitCapabilityProvider } from "./native-git-capability-provider.ts";
 import { NativeWebCapabilityProvider } from "./native-web-capability-provider.ts";
@@ -16,6 +17,8 @@ import { ToolSearchCapabilityProvider } from "./tool-search-capability-provider.
 import { NativeShellCapabilityProvider } from "./native-shell-capability-provider.ts";
 import { NativeComputerCapabilityProvider } from "./native-computer-capability-provider.ts";
 import { workspaceDir } from "../workspace.ts";
+import { botBox } from "../bot-box/box.ts";
+import { runBoxedSpawn } from "./boxed-process.ts";
 import type { AgentEngine, CapabilityGrant, CapabilitySession, CapabilityProvider, CapabilityDescriptor, CapabilityCall, CapabilityResult } from "./contracts.ts";
 import { plainFailureMessage } from "../drivers/engine-errors.ts";
 
@@ -183,8 +186,9 @@ export async function runNativeTurn(context: NativeTurnContext): Promise<void> {
     const parsed = parseToolScope(turn.toolScope);
     if (!parsed.ok) throw new Error(parsed.error);
     const scope = parsed.scope;
+    const toolsEnabled = context.toolsEnabled();
     tools = await mountChatTools(
-      context.toolsEnabled() ? turn.integrations : undefined,
+      toolsEnabled ? turn.integrations : undefined,
       abort.signal,
       context.computerUse,
       scope,
@@ -194,7 +198,7 @@ export async function runNativeTurn(context: NativeTurnContext): Promise<void> {
     for (const { server, reason } of tools.skipped) {
       context.emit({ ...context.base(turn.threadId, turnId), type: "runtime.notice", message: `MCP server "${server}" was skipped for this turn: ${context.safeText(reason)}` });
     }
-    const questionAllowed = context.toolsEnabled() && allowsTool(scope, { kind: "native", name: ASK_USER_TOOL });
+    const questionAllowed = toolsEnabled && allowsTool(scope, { kind: "native", name: ASK_USER_TOOL });
     if (questionAllowed && !tools.definitions.some((definition) => definition.function.name === ASK_USER_TOOL)) {
       tools.definitions.push(ASK_USER_TOOL_DEFINITION);
     }
@@ -232,23 +236,50 @@ export async function runNativeTurn(context: NativeTurnContext): Promise<void> {
     };
     const mcpSession = createChatCapabilitySession({ session: tools, approval });
     const fileRoot = turn.botId ? workspaceDir(turn.botId) : process.cwd();
-    const providers: any[] = [
+
+    // OS-enforced isolation for native shell/computer via the bot box (bubblewrap).
+    // When the box is not available we pass undefined so providers fail closed.
+    const boxEnabled = botBox.enabled();
+    const spawnBoxed = boxEnabled
+      ? async (
+          command: string,
+          cwd: string,
+          env: NodeJS.ProcessEnv,
+          options?: { readonly signal?: AbortSignal; readonly timeoutMs?: number },
+        ) => {
+          const wrapped = botBox.wrap({
+            command: "/bin/bash",
+            args: ["-c", command],
+            cwd,
+            env: Object.fromEntries(Object.entries(env).filter((entry): entry is [string, string] => entry[1] !== undefined)),
+            botId: turn.botId ?? undefined,
+          });
+          if (!wrapped) return null;
+          return runBoxedSpawn(wrapped, { signal: options?.signal, timeoutMs: options?.timeoutMs });
+        }
+      : undefined;
+
+    const providers: CapabilityProvider[] = [
       new SessionCapabilityProvider("mcp", "mcp", mcpSession, "MCP tools"),
     ];
-    // Native built-in tools (file, shell, git, web, tool_search) are available when
-    // the tool scope permits them (or when no scope is set). They are not gated by
-    // the MCP tools flag, but they DO respect toolScope (granular per-tool filtering).
-    providers.push(new NativeFileCapabilityProvider({ root: fileRoot }, scope));
-    providers.push(new NativeShellCapabilityProvider({ root: fileRoot }, scope));
-    providers.push(new NativeGitCapabilityProvider({ root: fileRoot }, scope));
-    providers.push(new NativeWebCapabilityProvider({ root: fileRoot }, scope));
-    providers.push(new NativeComputerCapabilityProvider({ root: fileRoot }, scope));
-    if (allowsTool(scope, { kind: "native", name: "tool_search" })) providers.push(new ToolSearchCapabilityProvider(() => mcpSession));
+    const mountNative = (provider: CapabilityProvider) => {
+      providers.push(new NativeApprovalCapabilityProvider(provider, approval, context.preview));
+    };
+    if (toolsEnabled) {
+      mountNative(new NativeFileCapabilityProvider({ root: fileRoot }, scope));
+      mountNative(new NativeShellCapabilityProvider({ root: fileRoot, spawnBoxed }, scope));
+      mountNative(new NativeGitCapabilityProvider({ root: fileRoot }, scope));
+      mountNative(new NativeWebCapabilityProvider({ root: fileRoot }, scope));
+      if (context.computerUse) mountNative(new NativeComputerCapabilityProvider({ root: fileRoot, spawnBoxed }, scope));
+      if (allowsTool(scope, { kind: "native", name: "tool_search" })) {
+        mountNative(new ToolSearchCapabilityProvider(() => mcpSession));
+      }
+    }
     // Native ask_user tool - handled directly without MCP
-    if (context.toolsEnabled() && allowsTool(scope, { kind: "native", name: ASK_USER_TOOL })) {
+    if (questionAllowed) {
       providers.push(new AskUserCapabilityProvider(approval));
     }
-    providers.push(new SkillCapabilityProvider(turn.botId ?? "", undefined));
+    if (toolsEnabled) providers.push(new SkillCapabilityProvider(turn.botId ?? "", undefined, scope));
     const composite = new CompositeCapabilityRuntime(providers);
     await composite.mountAll({ grant, signal: abort.signal });
     capabilitySession = composite;

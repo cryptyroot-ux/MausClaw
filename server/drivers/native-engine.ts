@@ -54,15 +54,16 @@ export async function createNativeChatEngine(options: NativeChatEngineOptions): 
     }),
   });
 
-  // Cache for fallback adapters per model
+  // Cache for fallback adapters per (providerId, modelId)
   const fallbackAdapterCache = new Map<string, ModelAdapter>();
 
-  function getAdapterForModel(modelId: string): ModelAdapter {
-    if (modelId === options.catalog().default) return baseAdapter;
-    const cached = fallbackAdapterCache.get(modelId);
+  function getAdapterForModel(ref: ProviderModelRef): ModelAdapter {
+    if (ref.providerId === options.providerId && ref.modelId === options.catalog().default) return baseAdapter;
+    const cacheKey = `${ref.providerId}:${ref.modelId}`;
+    const cached = fallbackAdapterCache.get(cacheKey);
     if (cached) return cached;
     const adapter = createOpenAICompatibleModelAdapter({
-      providerId: options.providerId,
+      providerId: ref.providerId,
       apiUrl: options.apiUrl,
       apiKey: options.apiKey,
       catalog: options.catalog,
@@ -74,7 +75,7 @@ export async function createNativeChatEngine(options: NativeChatEngineOptions): 
         audioInput: options.audioInput,
       }),
     });
-    fallbackAdapterCache.set(modelId, adapter);
+    fallbackAdapterCache.set(cacheKey, adapter);
     return adapter;
   }
   // Load plugins from plugins directory (if exists).
@@ -147,7 +148,7 @@ export async function createNativeChatEngine(options: NativeChatEngineOptions): 
   }
 
   const engine = createAgentEngine({
-    adapters: { resolve: (ref: ProviderModelRef) => getAdapterForModel(ref.modelId) },
+    adapters: { resolve: (ref: ProviderModelRef) => getAdapterForModel(ref) },
     store,
     cacheEnabled: true,
     plugins: pluginRegistry,

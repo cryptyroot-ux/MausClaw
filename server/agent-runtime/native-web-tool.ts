@@ -20,6 +20,31 @@ function privateAddress(address: string): boolean {
     return false;
   }
   if (isIP(a) === 6) {
+    // IPv4-mapped IPv6: ::ffff:w.x.y.z. Node normalizes a URL host like
+    // [::ffff:127.0.0.1] to ::ffff:7f00:1 (hex tail), while a direct call may
+    // pass ::ffff:127.0.0.1 (dotted tail). Extract the embedded IPv4 either way
+    // so private IPv4 ranges inside an IPv6 literal are not missed.
+    if (a.startsWith("::ffff:")) {
+      const parts = a.split(":").filter((p) => p !== "");
+      // Case A: URL-normalized IPv4-mapped IPv6 like ::ffff:7f00:1 (pure hex tail).
+      const tailParts = parts.slice(-2);
+      if (tailParts.every((p) => /^[0-9a-fA-F]{1,4}$/.test(p))) {
+        const hexTail = tailParts.map((p) => p.padStart(4, "0")).join("");
+        const v4 = parseInt(hexTail, 16);
+        const b = [
+          String((v4 >>> 24) & 0xff),
+          String((v4 >>> 16) & 0xff),
+          String((v4 >>> 8) & 0xff),
+          String(v4 & 0xff),
+        ].join(".");
+        return privateAddress(b);
+      }
+      // Case B: direct IPv4-mapped IPv6 like ::ffff:127.0.0.1 (dotted tail).
+      const dotted = a.match(/(\d{1,3}(?:\.\d{1,3}){3})$/);
+      if (dotted) return privateAddress(dotted[1]);
+      // Malformed ::ffff: cannot be trusted → fail closed.
+      return true;
+    }
     if (a === "::1") return true;
     if (a.toLowerCase().startsWith("fe80")) return true;
     if (a.toLowerCase().startsWith("fc") || a.toLowerCase().startsWith("fd")) return true;
@@ -27,6 +52,8 @@ function privateAddress(address: string): boolean {
   }
   return false;
 }
+
+export { privateAddress, isPrivateUrl };
 
 async function isPrivateUrl(url: string): Promise<boolean> {
   let parsed: URL;

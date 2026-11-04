@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, expect, it, beforeEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -5,6 +6,7 @@ import { tmpdir } from "node:os";
 
 import { CompositeCapabilityRuntime, SkillCapabilityProvider } from "./capability-runtime.ts";
 import type { CapabilityGrant } from "./contracts.ts";
+import { installSkill, setSkillEnabled } from "../skills.ts";
 
 const grant: CapabilityGrant = { botId: "bot-1", threadId: "t-1", approvalMode: "full", allowed: new Set(), denied: new Set() };
 
@@ -44,6 +46,34 @@ describe("SkillCapabilityProvider", () => {
     const res = await provider.invoke({ runId: "r", callId: "c", capabilityId: "skill:nope", arguments: {}, botId: "bot-1", threadId: "t-1" }, { grant, signal: new AbortController().signal });
     expect(res.ok).toBe(false);
     rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("does not dispatch a skill denied by its native tool name", async () => {
+    const botId = `scope-${randomUUID()}`;
+    const skillName = "scope-guard";
+    const installed = installSkill(botId, "fixture", [{
+      path: "SKILL.md",
+      content: `---\nname: ${skillName}\ndescription: Scoped fixture\n---\n\nThis skill must stay hidden.\n`,
+    }]);
+    expect("error" in installed).toBe(false);
+    expect(setSkillEnabled(botId, skillName, true)).toMatchObject({ enabled: true });
+
+    const deniedGrant: CapabilityGrant = { ...grant, denied: new Set(["skill_scope_guard"]) };
+    const runtime = new CompositeCapabilityRuntime([new SkillCapabilityProvider(botId)]);
+    await runtime.mountAll({ grant: deniedGrant, signal: new AbortController().signal });
+    const result = await runtime.invoke({
+      runId: "r",
+      callId: "c",
+      capabilityId: `skill:${skillName}`,
+      arguments: {},
+      botId,
+      threadId: "t-1",
+    }, { grant: deniedGrant, signal: new AbortController().signal });
+
+    expect(runtime.list(deniedGrant)).toEqual([]);
+    expect(result.ok).toBe(false);
+    expect(result.content).not.toContain("This skill must stay hidden.");
+    await runtime.close();
   });
 });
 

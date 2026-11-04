@@ -11,6 +11,9 @@ export interface ShellToolContext {
   readonly root: string;
   readonly env?: NodeJS.ProcessEnv;
   readonly sandboxMode?: "workspace-write" | "read-only" | "full";
+  /** Run the command inside the OS sandbox (bot box / bubblewrap). Returns null when
+   *  the sandbox is unavailable; the caller must fail closed rather than run on the host. */
+  readonly spawnBoxed?: (command: string, cwd: string, env: NodeJS.ProcessEnv, options?: { readonly signal?: AbortSignal; readonly timeoutMs?: number }) => Promise<ShellToolResult | null>;
 }
 
 export interface ShellToolResult {
@@ -54,6 +57,22 @@ export async function runShellTool(ctx: ShellToolContext, args: Record<string, u
   env.PATH = process.env.PATH ?? "/usr/bin:/bin";
   env.HOME = process.env.HOME ?? ctx.root;
   env.PWD = ctx.root;
+
+  // OS-enforced isolation via the bot box. When a boxed spawn runner is provided it is
+  // the only path; a null result means the sandbox is unavailable and we fail closed.
+  if (ctx.spawnBoxed) {
+    const boxed = await ctx.spawnBoxed(command, ctx.root, env, { signal, timeoutMs: timeout });
+    if (!boxed) {
+      return { ok: false, content: "native shell requires OS sandbox which is unavailable", error: "isolation_unavailable", exitCode: null, durationMs: Date.now() - start };
+    }
+    return {
+      ok: boxed.ok,
+      content: `${description ? `[${description}]\n` : ""}${boxed.content}`,
+      ...(boxed.error ? { error: boxed.error } : {}),
+      exitCode: boxed.exitCode,
+      durationMs: boxed.durationMs,
+    };
+  }
 
   return new Promise<ShellToolResult>((resolve) => {
     const controller = new AbortController();

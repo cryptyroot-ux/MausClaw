@@ -84,6 +84,15 @@ function modelEventFailure(message: string): AgentRuntimeError {
   return new AgentRuntimeError("invalid_model_response", message);
 }
 
+/** Normalize provider-specific finish reasons to a canonical set.
+ *  Normal completion reasons map to "stop"; error/incomplete reasons pass through
+ *  so they trigger the existing failure path at line 877. */
+const NORMAL_FINISH_REASONS = new Set(["stop", "end_turn", "STOP", "completed"]);
+function normalizeFinishReason(reason: string | null): string | null {
+  if (reason === null) return null;
+  return NORMAL_FINISH_REASONS.has(reason) ? "stop" : reason;
+}
+
 /** Merge live probe results over static model capabilities. The live probe is ground truth
  *  for features it actually exercises (tools, streaming); static hints provide everything
  *  else (context window, modalities the probe does not test such as image input). */
@@ -874,7 +883,7 @@ export function createAgentEngine(dependencies: {
             }
 
             if (!responseText.trim()) throw modelEventFailure("The model returned an empty final answer");
-            if (finishReason && finishReason !== "stop") throw modelEventFailure(`The model did not finish the response (${finishReason})`);
+            if (normalizeFinishReason(finishReason) !== "stop") throw modelEventFailure(`The model did not finish the response (${finishReason})`);
             if (control.steers.length) {
               messages.push({ role: "assistant", content: responseText });
               continue;
@@ -906,7 +915,7 @@ export function createAgentEngine(dependencies: {
               messages.push({ role: "assistant", content: responseText }, { role: "user", content: NUDGE_ANNOUNCED_ACTION });
               continue;
             }
-            stopReason = finishReason;
+            stopReason = normalizeFinishReason(finishReason);
             completed = true;
             break;
           }
