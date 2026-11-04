@@ -590,8 +590,6 @@ export function createAgentEngine(dependencies: {
                       // Observe provider-reported vs estimated tokens to refine calibration
                       // for this provider instance + model pair.
                       observeCalibration(providerInstanceId, currentModelId, estimateMessagesTokens(messages, currentModelId), event.input);
-                      // Track last reported input tokens for usage-aware trigger
-                      lastReportedInputTokens = event.input;
                       emit(request.threadId, { type: "usage", runId, input: event.input, output: event.output, ...(event.cachedInput !== undefined ? { cachedInput: event.cachedInput } : {}), ...(event.costUsd !== undefined ? { costUsd: event.costUsd } : {}) });
                       break;
                     case "completed":

@@ -5,7 +5,19 @@
 // schema before they are used, preventing hook-produced arguments from bypassing
 // the type/safety contract of the underlying capability.
 
-import type { CapabilityDescriptor, HookContext, HookEvent, HookRegistry } from "./contracts.ts";
+import type { CapabilityDescriptor } from "./contracts.ts";
+import type { HookContext, HookEvent } from "./hooks.ts";
+
+export interface HookRunResult {
+  readonly allow: boolean;
+  readonly messages: ReadonlyArray<string>;
+  readonly modifiedArguments?: unknown;
+}
+
+/** The gateway only runs hooks; callers may supply just that half of a registry. */
+export interface HookRunner {
+  run(event: HookEvent, context: HookContext): Promise<HookRunResult>;
+}
 
 /** Minimal JSON Schema subset for validation. */
 interface JSONSchema {
@@ -65,15 +77,12 @@ function validateAgainstSchema(value: unknown, schema: JSONSchema | undefined): 
  * arguments are preserved.
  */
 export function createHookGateway(
-  registry: HookRegistry,
+  registry: HookRunner,
   /** Look up a capability descriptor by capabilityId. */
   descriptorFor: (capabilityId: string) => CapabilityDescriptor | undefined,
-): HookRegistry {
+): HookRunner {
   return {
-    register(event, handler) {
-      return registry.register(event, handler);
-    },
-    async run(event: HookEvent, context: HookContext): Promise<{ allow: boolean; messages: string[]; modifiedArguments?: unknown }> {
+    async run(event: HookEvent, context: HookContext): Promise<HookRunResult> {
       const originalArguments = context.arguments;
       const result = await registry.run(event, context);
 
@@ -83,16 +92,16 @@ export function createHookGateway(
         const schema = descriptor?.schema as JSONSchema | undefined;
         const validation = validateAgainstSchema(result.modifiedArguments, schema);
         if (!validation.ok) {
-          // Discard modified arguments; keep originals. Log the violation.
-          result.modifiedArguments = originalArguments;
-          result.messages.push(`Hook argument validation rejected: ${validation.error}; using original arguments.`);
+          // Discard modified arguments; keep originals. Report the violation.
+          return {
+            allow: result.allow,
+            messages: [...result.messages, `Hook argument validation rejected: ${validation.error}; using original arguments.`],
+            modifiedArguments: originalArguments,
+          };
         }
       }
 
       return result;
-    },
-    clear() {
-      registry.clear();
     },
   };
 }

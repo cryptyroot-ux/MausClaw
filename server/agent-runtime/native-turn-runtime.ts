@@ -22,7 +22,7 @@ import { ChatProtocolError, ChatReasoningDetails, ChatToolCalls, object, type Ch
 import { appendNative } from "../drivers/native.ts";
 import { contextWindowFor } from "../context-budget.ts";
 import { turnContextSettings, estimateRequestTokens, TokenCalibration, offloadToolOutput, readToolOutput, READ_TOOL_OUTPUT_TOOL, READ_TOOL_OUTPUT_DEFINITION, compactTurnMessages, turnCompactBudget, DEFAULT_KEEP_EXCHANGES } from "../drivers/turn-context.ts";
-import { classifyError } from "../drivers/retry.ts";
+import { classifyError, HttpStatusError, parseRetryAfter } from "../drivers/retry.ts";
 import { plainFailureMessage } from "../drivers/engine-errors.ts";
 import { refusesRequestSize, RequestTooLargeError, sizeChange, smallerResend } from "../drivers/chat-size-limit.ts";
 import { refusesContextLength } from "../drivers/turn-context.ts";
