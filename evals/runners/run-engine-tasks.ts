@@ -11,6 +11,9 @@
 //     MAUSCLAW_EVAL_LIVE_CONFIG). Live/paid model runs require explicit owner
 //     approval and refuse before any HTTP request when not configured.
 //
+// Flags: --suite basic|hard, --task <id> (repeatable). Selection happens before
+// the request ceiling is computed; the report records both.
+//
 // Reports are written to evals/results/ (gitignored). A committed baseline
 // manifest lives at evals/engine-tasks/baselines/phase0.json.
 import { createHash } from "node:crypto";
@@ -20,13 +23,34 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import type { EngineTask } from "../engine-tasks/tasks.ts";
 import type { EngineTaskRow } from "../engine-tasks/run-engine-tasks.ts";
-import { runEngineTask } from "../engine-tasks/run-engine-tasks.ts";
+import { runEngineTask, selectTasks } from "../engine-tasks/run-engine-tasks.ts";
 import type { LiveInstance } from "../live/types.ts";
 import { z } from "zod";
 
 const ROOT = new URL("../..", import.meta.url).pathname.replace(/\/$/, "");
 const RESULTS_DIR = join(ROOT, "evals", "results");
 const MAX_REQUESTS = 25; // per task: discovery + probe + turn + tool exchanges
+type Suite = "basic" | "hard";
+
+function parseArgs(argv: string[]): { suite?: Suite; ids: string[] } {
+  let suite: Suite | undefined;
+  const ids: string[] = [];
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    if (arg === "--suite") {
+      const value = argv[++index];
+      if (value !== "basic" && value !== "hard") throw new Error("--suite must be basic or hard");
+      suite = value;
+    } else if (arg === "--task") {
+      const value = argv[++index];
+      if (!value) throw new Error("--task needs a task id");
+      ids.push(value);
+    } else {
+      throw new Error(`unknown argument: ${arg}`);
+    }
+  }
+  return { suite, ids: [...new Set(ids)] };
+}
 
 const SCHEMA_VERSION = 1;
 
@@ -86,6 +110,8 @@ interface EngineEvalReport {
   provider?: string;
   model?: string;
   maxRequests?: number;
+  selection: { suite?: Suite; taskIds: string[] };
+  requestCeiling?: { perTask: number; total: number };
   requests: { sent: number; refused: number };
   rows: EngineTaskRow[];
   aggregate: {
@@ -112,6 +138,7 @@ interface Aggregate {
   cappedCount: number;
   totalRequests: number;
   totalDurationMs: number;
+  meanDurationMs: number;
   totalCompactions: number;
   toolsUsed: string[];
   bySuite: Record<"basic" | "hard", { total: number; pass: number; fail: number; infra: number }>;
@@ -148,6 +175,7 @@ function aggregateRows(rows: EngineTaskRow[], tasks: EngineTask[]): Aggregate {
     cappedCount,
     totalRequests,
     totalDurationMs,
+    meanDurationMs: rows.length ? totalDurationMs / rows.length : 0,
     totalCompactions,
     toolsUsed,
     bySuite,
@@ -233,7 +261,10 @@ async function runLiveMode(
 }
 
 async function main() {
-  const tasks = await import("../engine-tasks/tasks.ts").then((m) => m.ENGINE_TASKS);
+  const args = parseArgs(process.argv.slice(2));
+  const catalog = await import("../engine-tasks/tasks.ts").then((m) => m.ENGINE_TASKS);
+  const tasks = selectTasks(catalog, args.suite, args.ids);
+  if (!tasks.length) throw new Error("no tasks selected");
   const instance = loadLiveInstance();
   const commit = resolveCommit();
   const hash = taskSetHash(tasks);
@@ -282,6 +313,8 @@ async function main() {
     ...(provider ? { provider } : {}),
     ...(model ? { model } : {}),
     ...(maxRequests !== undefined ? { maxRequests } : {}),
+    selection: { ...(args.suite ? { suite: args.suite } : {}), taskIds: tasks.map((task) => task.id) },
+    ...(mode === "live" ? { requestCeiling: { perTask: MAX_REQUESTS, total: MAX_REQUESTS * tasks.length } } : {}),
     requests,
     rows,
     aggregate: {
