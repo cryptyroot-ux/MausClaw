@@ -5,9 +5,9 @@ import { ModelRouter } from "./model-router.ts";
 describe("ModelRouter", () => {
   const router = new ModelRouter({
     rules: {
-      coding: { primary: "claude-sonnet-4", fallbacks: ["gpt-4o", "llama-3.3-70b"] },
-      research: { primary: "gpt-4o", fallbacks: ["claude-sonnet-4"] },
-      general: { primary: "llama-3.3-70b", fallbacks: ["gpt-4o-mini"] },
+      coding: { primary: "claude-sonnet-4", fallbacks: ["gpt-4o", "llama-3.3-70b"], provider: "anthropic" },
+      research: { primary: "gpt-4o", fallbacks: ["claude-sonnet-4"], provider: "openai" },
+      general: { primary: "llama-3.3-70b", fallbacks: ["gpt-4o-mini"], provider: "meta" },
     },
     costTable: {
       "claude-sonnet-4": { input: 3, output: 15 },  // $/M tokens
@@ -34,5 +34,12 @@ describe("ModelRouter", () => {
 
   it("throws when no model fits budget", () => {
     expect(() => router.select("coding", { maxCost: 0.001 })).toThrow("No model fits budget");
+  });
+
+  // M8: provider must be populated, never empty string
+  it("populates provider from routing rule (not empty)", () => {
+    const assignment = router.select("coding", { maxCost: 100 });
+    expect(assignment.primary.provider).toBe("anthropic");
+    expect(assignment.primary.provider).not.toBe("");
   });
 });

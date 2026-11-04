@@ -9,6 +9,10 @@ export interface RoutingRule {
   readonly primary: string;
   readonly fallbacks: ReadonlyArray<string>;
   readonly qualityScores?: Readonly<Record<string, number>>;
+  /** Provider that owns the primary/fallback models. Empty string is rejected:
+   * hard-coded cross-provider routes that do not correspond to configured
+   * adapters are not allowed (M8). */
+  readonly provider: string;
 }
 
 export interface Budget {

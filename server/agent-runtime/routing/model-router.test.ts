@@ -11,8 +11,8 @@ describe("ModelRouter", () => {
   };
 
   const rules: Record<string, RoutingRule> = {
-    coding: { primary: "premium-model", fallbacks: ["standard-model", "cheap-model"] },
-    general: { primary: "standard-model", fallbacks: ["cheap-model"] },
+    coding: { primary: "premium-model", fallbacks: ["standard-model", "cheap-model"], provider: "anthropic" },
+    general: { primary: "standard-model", fallbacks: ["cheap-model"], provider: "openai" },
   };
 
   it("selects primary model within budget", () => {
@@ -37,5 +37,24 @@ describe("ModelRouter", () => {
     const router = new ModelRouter({ rules, costTable });
     const assignment = router.select("unknown" as TaskType, { maxCost: 20 });
     expect(assignment.primary.model).toBe("standard-model");
+  });
+
+  // M8: provider must be populated, never empty string
+  it("populates provider from routing rule (not empty)", () => {
+    const rulesWithProvider: Record<string, RoutingRule> = {
+      coding: { primary: "premium-model", fallbacks: ["standard-model"], provider: "anthropic" },
+      general: { primary: "standard-model", fallbacks: ["cheap-model"], provider: "openai" },
+    };
+    const router = new ModelRouter({ rules: rulesWithProvider, costTable });
+    const assignment = router.select("coding", { maxCost: 20 });
+    expect(assignment.primary.provider).toBe("anthropic");
+    expect(assignment.primary.provider).not.toBe("");
+  });
+
+  it("rejects rule with empty provider (M8: hard-coded routes not allowed)", () => {
+    const rulesWithEmptyProvider: Record<string, RoutingRule> = {
+      coding: { primary: "premium-model", fallbacks: [], provider: "" },
+    };
+    expect(() => new ModelRouter({ rules: rulesWithEmptyProvider, costTable })).toThrow(/provider/);
   });
 });

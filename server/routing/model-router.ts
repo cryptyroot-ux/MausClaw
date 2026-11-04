@@ -20,6 +20,13 @@ export class ModelRouter {
     this.rules = config.rules;
     this.costTable = config.costTable;
     this.qualityScores = config.qualityScores ?? config.scores ?? config.quality;
+    // M8: reject hard-coded cross-provider routes. Every rule must declare a
+    // non-empty provider so fallbacks only select from configured providers.
+    for (const [taskType, rule] of Object.entries(this.rules)) {
+      if (!rule.provider || rule.provider.trim() === "") {
+        throw new Error(`routing rule for "${taskType}" must declare a non-empty provider`);
+      }
+    }
   }
 
   select(taskType: TaskType, budget: Budget): ModelAssignment {
@@ -75,7 +82,7 @@ export class ModelRouter {
 
     return {
       primary: {
-        provider: "",
+        provider: rule.provider,
         model: primaryModel,
         estimatedCost: costOf(primaryModel),
       },
