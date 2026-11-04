@@ -123,6 +123,11 @@ async function runTask(task: Task): Promise<TaskResult> {
 }
 
 async function main() {
+  if (process.argv.includes("--golden")) {
+    const { runGoldenCli } = await import("../golden/run-golden-cli.ts");
+    process.exitCode = await runGoldenCli(process.argv.slice(2));
+    return;
+  }
   const taskFiles = readdirSync(TASKS_DIR).filter((name) => name.endsWith(".json")).sort();
   const tasks: Task[] = taskFiles.map((name) => JSON.parse(readFileSync(join(TASKS_DIR, name), "utf8")));
   const results: TaskResult[] = [];
