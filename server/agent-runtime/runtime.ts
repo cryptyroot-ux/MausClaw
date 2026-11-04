@@ -5,7 +5,7 @@ import { announcesAction, MAX_ANNOUNCEMENT_NUDGES, NUDGE_ANNOUNCED_ACTION } from
 import { workspaceDir } from "../workspace.ts";
 import { parseToolScope, allowsTool } from "../../shared/tool-scope.ts";
 import { snapshot as createCheckpoint, rollback } from "../checkpoints.ts";
-import { createRunScopedCapabilitySession, TOOL_OUTPUT_READ_CAPABILITY } from "./capability-runtime.ts";
+import { createRunScopedCapabilitySession, TOOL_OUTPUT_READ_CAPABILITY, toolOutputReadDescriptor, capabilityPermitted } from "./capability-runtime.ts";
 import {
   compactionKeepTokens,
   contextBudget,
@@ -26,6 +26,7 @@ import type {
   AgentRunStore,
   CapabilityCall,
   CapabilityDescriptor,
+  CapabilityGrant,
   CapabilityResult,
   ModelAdapter,
   ModelAdapterError,
@@ -35,6 +36,9 @@ import type {
   ModelToolCall,
 } from "./contracts.ts";
 import type { LiveProbeResult } from "./capability-probe.ts";
+import { CapabilityCatalog, ToolSurface, executeWithScheduling, type SchedulingState } from "./capability-catalog.ts";
+import { observeCalibration, applyCalibration } from "./calibration.ts";
+import { createHookGateway } from "./hook-gateway.ts";
 
 const MAX_MODEL_ROUNDS = 64;
 const MAX_TOOL_CALLS = 200;
@@ -148,6 +152,12 @@ export function createAgentEngine(dependencies: {
     readonly onEvent: (planId: string, listener: (event: unknown) => void) => () => void;
     readonly interrupt: (planId: string) => void;
   };
+  /** Optional bounded in-loop plan+verify. Off by default. */
+  readonly planVerify?: {
+    readonly enabled: boolean;
+    readonly maxPlanSteps: number;
+    readonly maxVerifyRounds: number;
+  };
 }): AgentEngine {
   const active = new Map<string, {
     readonly threadId: string;
@@ -204,6 +214,26 @@ export function createAgentEngine(dependencies: {
           }
         }
       }
+      // Phase 2 deferred discovery: build catalog and tool surface.
+      const providers = typeof runCapabilities.providers === "function"
+        ? [...runCapabilities.providers()]
+        : [];
+      const catalog = new CapabilityCatalog(providers, request.grant);
+      const surface = new ToolSurface(catalog);
+      // If no providers are exposed (e.g. test mocks), fall back to listing
+      // directly from the capability session for the surface.
+      if (providers.length === 0) {
+        for (const descriptor of runCapabilities.list(request.grant)) {
+          surface.addDescriptor(descriptor);
+        }
+      }
+      const schedulingState: SchedulingState = {
+        catalog,
+        surface,
+        readCache: new Map(),
+        effectTracker: new Set(),
+        concurrencyGates: new Map(),
+      };
       const startedAt = Date.now();
       dependencies.store.createRun({
         runId,
@@ -250,6 +280,7 @@ export function createAgentEngine(dependencies: {
           : request.text;
         const messages: ModelMessage[] = [...request.messages, { role: "user", content: userContent }];
         const seenCallIds = new Set<string>();
+        const providerInstanceId = request.providerInstanceId ?? request.providerModel.modelId;
         let nudges = 0;
         let callsAtNudge = -1;
         let correctiveRounds = 0;
@@ -338,6 +369,11 @@ export function createAgentEngine(dependencies: {
           }
           const modelCapabilities = mergeLiveCapabilities(adapter.capabilities(currentModelId), liveCaps);
           const budget = contextBudget(modelCapabilities.contextWindow);
+          // Output reserve: keep tokens free for the model's generation so the prompt
+          // never consumes the entire context window. Reserve up to 25% of the window,
+          // never below 4k tokens.
+          const outputReserve = Math.min(Math.floor(budget.window * 0.25), Math.max(4_000, Math.floor(budget.window * 0.1)));
+          const effectiveTrigger = Math.max(1, budget.trigger - outputReserve);
           const runBudget = request.budget;
           const runStartedAt = Date.now();
           let budgetExhausted = false;
@@ -346,14 +382,12 @@ export function createAgentEngine(dependencies: {
           let hasCost = false;
           let compactions = 0;
           let lastCompactAttempt = 0;
-          let lastReportedInputTokens = 0;
           const keepTokens = compactionKeepTokens(modelCapabilities.contextWindow);
-          const precomputeTrigger = Math.floor(budget.trigger * 0.7);
+          const precomputeTrigger = Math.floor(effectiveTrigger * 0.7);
           let precomputed: { readonly summary: string; readonly cut: number; readonly messageCount: number; readonly model: string } | null = null;
           let overflowRejected = false;
           const allowSummarize = true;
           const allowShrink = true;
-          let sizeRetries = 0;
 
           const firePrecompute = (): void => {
             if (compactions >= COMPACTION_MAX_PER_RUN || messages.length < COMPACTION_MIN_MESSAGES) return;
@@ -427,10 +461,18 @@ export function createAgentEngine(dependencies: {
                   if (event.type === "content.delta" && event.kind === "assistant_text") summary += event.delta;
                 }
               } catch {
-                return false;
+                // Deterministic summary fallback: use truncated dropped messages below.
               }
               summary = summary.trim();
-              if (!summary) return false;
+              if (!summary) {
+                // Deterministic fallback: concatenate dropped messages, truncated to SUMMARY_MAX_CHARS.
+                const MAX_SUMMARY_CHARS = 4_000;
+                summary = result.droppedMessages
+                  .map((m) => `${m.role.toUpperCase()}: ${m.content ?? ""}`)
+                  .join("\n\n")
+                  .slice(0, MAX_SUMMARY_CHARS);
+                if (!summary.trim()) return false;
+              }
               if (summary.length > SUMMARY_MAX_CHARS) summary = summary.slice(0, SUMMARY_MAX_CHARS) + "…";
             }
             const summaryMessage: ModelMessage = {
@@ -449,6 +491,7 @@ export function createAgentEngine(dependencies: {
             return true;
           };
           let allowTools = true;
+          let turnRequestCount = 0;
           while (modelRounds < MAX_MODEL_ROUNDS) {
             signal.throwIfAborted();
             if (control.steers.length) {
@@ -461,40 +504,43 @@ export function createAgentEngine(dependencies: {
             if (budgetExhausted) {
               throw new AgentRuntimeError("budget_exhausted", "Turn stopped at the configured token, cost, or time budget.");
             }
-            const tokenEst = estimateMessagesTokens(messages, currentModelId);
-            // Fire background precompute early (OpenCode-style).
-            // Precompute only while approaching (not yet over) the trigger, so we don't
-            // fire a redundant summary call when compaction is already required now.
-            if (tokenEst > precomputeTrigger && tokenEst <= budget.trigger && !precomputed && !overflowRejected) {
-              firePrecompute();
-            }
-            if (
-              compactions < COMPACTION_MAX_PER_RUN
-              && messages.length - lastCompactAttempt >= COMPACTION_MIN_MESSAGE_GAP
-              && (tokenEst > budget.trigger || lastReportedInputTokens > budget.trigger)
-            ) {
-              const recovery = planRecovery(tokenEst, budget.trigger, budget.window, {
+            const tokenEst = applyCalibration(providerInstanceId, currentModelId, estimateMessagesTokens(messages, currentModelId));
+            // Context-precision check before each model request: if the calibrated
+            // estimate exceeds the effective trigger (window minus output reserve),
+            // run recovery (compact → shrink → escalate → fail) before sending.
+            if (tokenEst > effectiveTrigger) {
+              const recovery = planRecovery(tokenEst, effectiveTrigger, budget.window, {
                 compactions,
                 maxCompactions: COMPACTION_MAX_PER_RUN,
-                sizeRetries,
-                maxSizeRetries: 2,
+                sizeRetries: 0,
+                maxSizeRetries: 1,
                 allowSummarize,
                 allowShrink,
               });
               if (recovery.action === "compact" || recovery.action === "shrink") {
                 let allowCompact = true;
                 if (request.hooks) {
-                  const hr = await request.hooks.run("pre_compact", { runId, threadId: request.threadId, botId: request.botId });
+                  const gateway = createHookGateway(request.hooks, (capabilityId) => surface.getDescriptors().find((d) => d.id === capabilityId || d.name === capabilityId));
+                  const hr = await gateway.run("pre_compact", { runId, threadId: request.threadId, botId: request.botId });
                   allowCompact = hr.allow;
                 }
                 if (allowCompact) await doCompact("auto");
               } else if (recovery.action === "escalate") {
-                // All compaction strategies exhausted; try a fallback model or fail below.
                 overflowRejected = true;
+              } else if (recovery.action === "fail") {
+                stopReason = "context_overflow";
+                throw new AgentRuntimeError("context_overflow", "All context recovery strategies exhausted.");
               }
-              precomputed = null;
+            } else if (
+              compactions < COMPACTION_MAX_PER_RUN
+              && messages.length - lastCompactAttempt >= COMPACTION_MIN_MESSAGE_GAP
+              && tokenEst > precomputeTrigger
+              && !overflowRejected
+            ) {
+              firePrecompute();
             }
-            let toolDescriptors = allowTools ? runCapabilities.list(request.grant) : [];
+            precomputed = null;
+            let toolDescriptors = allowTools ? surface.getDescriptors() : [];
             if (toolDescriptors.length > 0 && modelCapabilities.tools !== "supported") {
               throw new AgentRuntimeError("unsupported_capability", "The selected model is not verified for structured tool calls");
             }
@@ -512,12 +558,15 @@ export function createAgentEngine(dependencies: {
               finishReason = null;
               sawCompletion = false;
               modelRounds++;
+              turnRequestCount++;
               progress();
               try {
                 for await (const event of adapter.generate({
                   messages,
                   model: currentModelId,
-                  tools: toolDescriptors,
+                  // On the last allowed request, disable tools so the model must
+                  // produce a final answer instead of another tool call.
+                  tools: request.maxTurnRequests !== undefined && turnRequestCount >= request.maxTurnRequests ? [] : toolDescriptors,
                   signal,
                 })) {
                   signal.throwIfAborted();
@@ -538,6 +587,9 @@ export function createAgentEngine(dependencies: {
                       if (event.costUsd !== undefined) { totalCost += event.costUsd; hasCost = true; }
                       if (runBudget?.maxTokens && totalTokens > runBudget.maxTokens) budgetExhausted = true;
                       if (runBudget?.maxCostUsd && hasCost && totalCost > runBudget.maxCostUsd) budgetExhausted = true;
+                      // Observe provider-reported vs estimated tokens to refine calibration
+                      // for this provider instance + model pair.
+                      observeCalibration(providerInstanceId, currentModelId, estimateMessagesTokens(messages, currentModelId), event.input);
                       // Track last reported input tokens for usage-aware trigger
                       lastReportedInputTokens = event.input;
                       emit(request.threadId, { type: "usage", runId, input: event.input, output: event.output, ...(event.cachedInput !== undefined ? { cachedInput: event.cachedInput } : {}), ...(event.costUsd !== undefined ? { costUsd: event.costUsd } : {}) });
@@ -563,7 +615,7 @@ export function createAgentEngine(dependencies: {
                   && !capabilityDispatched
                   && !signal.aborted
                 ) {
-                  const offered = runCapabilities.list(request.grant);
+                  const offered = surface.getDescriptors();
                   if (offered.length > 0 && offered.every((tool) => tool.optional === true)) {
                     allowTools = false;
                     toolDescriptors = [];
@@ -573,13 +625,10 @@ export function createAgentEngine(dependencies: {
                 if (
                   isModelAdapterError(error)
                   && error.code === "request_too_large"
-                  && sizeRetries === 0
                   && !outputVisible
                   && !signal.aborted
                 ) {
-                  overflowRejected = true;
-                  // Force shrink on the first rejection: aggressively drop older messages
-                  // and shorten remaining large content (images, long tool outputs).
+                  stopReason = "context_overflow";
                   const result = compactMessages(messages, {
                     keepTokens: 1,
                     maxTokens: budget.window,
@@ -591,30 +640,19 @@ export function createAgentEngine(dependencies: {
                   });
                   const shortened = shortenMessageContents(result.messages);
                   messages.splice(0, messages.length, ...shortened);
-                  sizeRetries++;
+                  // One pass only: if still too large, escalate below.
+                  const stillTooLarge = applyCalibration(providerInstanceId, currentModelId, estimateMessagesTokens(messages, currentModelId)) > effectiveTrigger;
+                  if (stillTooLarge) {
+                    // Try fallback provider with a larger window, or fail.
+                    if (adapterIndex < adapterChain.length - 1) {
+                      adapterIndex++;
+                      adapter = adapterChain[adapterIndex]!;
+                      if (request.fallbackProviders?.[adapterIndex - 1]) currentModelId = request.fallbackProviders[adapterIndex - 1].modelId;
+                      continue;
+                    }
+                    throw new AgentRuntimeError("context_overflow", "Request exceeds the provider's context window after compaction and shrink.");
+                  }
                   precomputed = null;
-                  continue;
-                }
-                if (
-                  isModelAdapterError(error)
-                  && error.code === "request_too_large"
-                  && sizeRetries < 2
-                  && !outputVisible
-                  && !signal.aborted
-                ) {
-                  overflowRejected = true;
-                  const result = compactMessages(messages, {
-                    keepTokens: 1,
-                    maxTokens: budget.window,
-                    modelId: currentModelId,
-                    allowSummarize: false,
-                    allowShrink: true,
-                    minKeepMessages: 1,
-                    bridgeMessages: 1,
-                  });
-                  const shortened = shortenMessageContents(result.messages);
-                  messages.splice(0, messages.length, ...shortened);
-                  sizeRetries++;
                   continue;
                 }
                 const canRetry = isModelAdapterError(error)
@@ -631,7 +669,6 @@ export function createAgentEngine(dependencies: {
                   adapterIndex++;
                   adapter = adapterChain[adapterIndex]!;
                   if (request.fallbackProviders?.[adapterIndex - 1]) currentModelId = request.fallbackProviders[adapterIndex - 1].modelId;
-                  sizeRetries = 0;
                   continue;
                 }
                 if (!canRetry) throw error;
@@ -685,99 +722,105 @@ export function createAgentEngine(dependencies: {
               const batchImages: ModelContentPart[] = [];
 
               const checkpointHashes = new Map<string, string>();
-              // Classify: read-only tools (risk "read", no side effects) may run concurrently
-              // (Claude Code pattern). Mutating tools run sequentially for safety.
-              const allReadOnly = batch.every(({ descriptor }) => descriptor.risk === "read" && descriptor.sideEffect === false);
 
-              // Invoke phase: concurrent for all-read-only batches, sequential otherwise.
-              const invoked: Array<{ call: CapabilityCall; descriptor: CapabilityDescriptor; result: CapabilityResult | null; uncertain: boolean }> = [];
-              if (allReadOnly && batch.length > 1) {
-                // Pre-tool-use hooks (sequential, before concurrent invoke).
-                const preHookResults = request.hooks ? await Promise.all(batch.map(({ call }) =>
-                  request.hooks!.run("pre_tool_use", { runId, threadId: request.threadId, botId: request.botId, capabilityId: call.capabilityId, callId: call.callId, arguments: call.arguments })
-                )) : batch.map(() => ({ allow: true, messages: [] as string[], modifiedArguments: undefined }));
-                const invokedResults = await Promise.all(batch.map(async ({ call, descriptor }, idx) => {
-                  signal.throwIfAborted();
-                  if (preHookResults[idx].allow === false) {
-                    return { call, descriptor, result: { callId: call.callId, ok: false, content: preHookResults[idx].messages.join("; ") || "Blocked by hook.", error: "denied" } as CapabilityResult, uncertain: false };
-                  }
-                  const dispatchedAt = Date.now();
-                  let checkpointHash: string | null = null;
-                  if (descriptor.risk !== "read") {
-                    try { checkpointHash = await createCheckpoint(request.botId, workspaceDir(request.botId), `before ${call.capabilityId}`, signal, { pin: call.callId }); } catch {}
-                  }
-                  if (checkpointHash) checkpointHashes.set(call.callId, checkpointHash);
+              // Phase 2: Handle tool_search calls by searching the catalog instead of invoking.
+              const searchCalls = batch.filter(({ call }) => call.capabilityId === "native:tool-search");
+              const capabilityCalls = batch.filter(({ call }) => call.capabilityId !== "native:tool-search");
+
+              // Execute tool_search calls (search catalog, return results, add discovered tools to surface).
+              for (const { call, descriptor } of searchCalls) {
+                const args = call.arguments as Record<string, unknown> | null;
+                const query = args && typeof args.query === "string" ? args.query : "";
+                const limit = args && typeof args.limit === "number" ? args.limit : 20;
+                try {
+                  const results = await surface.search(query, limit, true);
+                  const content = results.length === 0
+                    ? "No matching tools found."
+                    : results.map((d) => `- ${d.name}: ${d.description}`).join("\n");
+                  const result: CapabilityResult = { callId: call.callId, ok: true, content };
                   toolCalls++;
                   progress();
                   dependencies.store.beginCapabilityCall({
-                    runId,
-                    callId: call.callId,
-                    capabilityId: call.capabilityId,
-                    risk: descriptor.risk,
-                    status: "dispatching",
-                    startedAt: dispatchedAt,
+                    runId, callId: call.callId, capabilityId: call.capabilityId,
+                    risk: descriptor.risk, status: "dispatching", startedAt: Date.now(),
                   });
-                  capabilityDispatched = true;
-                  const invokeCall = preHookResults[idx].modifiedArguments !== undefined
-                    ? { ...call, arguments: preHookResults[idx].modifiedArguments }
-                    : call;
-                  try {
-                    const r = await runCapabilities.invoke(invokeCall, { grant: request.grant, signal });
-                    return { call: invokeCall, descriptor, result: r, uncertain: !!r.uncertain };
-                  } catch {
-                    return { call, descriptor, result: null, uncertain: true };
-                  }
-                }));
-                for (const r of invokedResults) invoked.push(r);
-              } else {
-                for (const { call, descriptor } of batch) {
-                  signal.throwIfAborted();
-                  let preHookAllow = true;
-                  let preHookMsg = "";
-                  let modifiedArgs: unknown;
-                  if (request.hooks) {
-                    const hr = await request.hooks.run("pre_tool_use", { runId, threadId: request.threadId, botId: request.botId, capabilityId: call.capabilityId, callId: call.callId, arguments: call.arguments });
-                    preHookAllow = hr.allow;
-                    preHookMsg = hr.messages.join("; ");
-                    modifiedArgs = hr.modifiedArguments;
-                  }
-                  const invokeCall = modifiedArgs !== undefined
-                    ? { ...call, arguments: modifiedArgs }
-                    : call;
-                  if (!preHookAllow) {
-                    const denied: CapabilityResult = { callId: call.callId, ok: false, content: preHookMsg || "Blocked by hook.", error: "denied" };
-                    dependencies.store.beginCapabilityCall({ runId, callId: call.callId, capabilityId: call.capabilityId, risk: descriptor.risk, status: "dispatching", startedAt: Date.now() });
-                    capabilityDispatched = true;
-                    dependencies.store.settleCapabilityCall(runId, call.callId, "failed", Date.now());
-                    emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result: denied });
-                    messages.push({ role: "tool", content: JSON.stringify({ ok: false, result: denied.content }), toolCallId: call.callId });
-                    continue;
-                  }
-                  const dispatchedAt = Date.now();
-                  let checkpointHash: string | null = null;
-                  if (descriptor.risk !== "read") {
-                    try { checkpointHash = await createCheckpoint(request.botId, workspaceDir(request.botId), `before ${call.capabilityId}`, signal, { pin: call.callId }); } catch {}
-                  }
-                  if (checkpointHash) checkpointHashes.set(call.callId, checkpointHash);
-                  toolCalls++;
-                  progress();
-                  dependencies.store.beginCapabilityCall({
-                    runId,
-                    callId: call.callId,
-                    capabilityId: call.capabilityId,
-                    risk: descriptor.risk,
-                    status: "dispatching",
-                    startedAt: dispatchedAt,
+                  dependencies.store.settleCapabilityCall(runId, call.callId, "succeeded", Date.now());
+                  emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result });
+                  messages.push({
+                    role: "tool",
+                    content: JSON.stringify({ ok: true, result: content }),
+                    toolCallId: call.callId,
                   });
-                  capabilityDispatched = true;
-                  try {
-                    const r = await runCapabilities.invoke(invokeCall, { grant: request.grant, signal });
-                    invoked.push({ call: invokeCall, descriptor, result: r, uncertain: !!r.uncertain });
-                  } catch {
-                    invoked.push({ call: invokeCall, descriptor, result: null, uncertain: true });
-                  }
+                } catch (error) {
+                  const result: CapabilityResult = {
+                    callId: call.callId,
+                    ok: false,
+                    content: error instanceof Error ? error.message : String(error),
+                    error: "failed",
+                  };
+                  emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result });
+                  messages.push({
+                    role: "tool",
+                    content: JSON.stringify({ ok: false, result: result.content }),
+                    toolCallId: call.callId,
+                  });
                 }
               }
+
+              // Phase 2 safe scheduling for capability calls.
+              const invokeFn = async (call: CapabilityCall, _ctx: { grant: CapabilityGrant; signal: AbortSignal }): Promise<CapabilityResult> => {
+                const dispatchedAt = Date.now();
+                const item = batch.find((b) => b.call.callId === call.callId)!;
+                const descriptor = item.descriptor;
+
+                // Pre-tool-use hooks (sequential per call) via gateway with final-argument revalidation.
+                let preHookAllow = true;
+                let preHookMsg = "";
+                let modifiedArgs: unknown;
+                if (request.hooks) {
+                  const gateway = createHookGateway(request.hooks, (capabilityId) => surface.getDescriptors().find((d) => d.id === capabilityId || d.name === capabilityId));
+                  const hr = await gateway.run("pre_tool_use", { runId, threadId: request.threadId, botId: request.botId, capabilityId: call.capabilityId, callId: call.callId, arguments: call.arguments });
+                  preHookAllow = hr.allow;
+                  preHookMsg = hr.messages.join("; ");
+                  modifiedArgs = hr.modifiedArguments;
+                }
+                if (!preHookAllow) {
+                  return { callId: call.callId, ok: false, content: preHookMsg || "Blocked by hook.", error: "denied" };
+                }
+                const invokeCall = modifiedArgs !== undefined ? { ...call, arguments: modifiedArgs } : call;
+                let checkpointHash: string | null = null;
+                if (descriptor.risk !== "read") {
+                  try { checkpointHash = await createCheckpoint(request.botId, workspaceDir(request.botId), `before ${call.capabilityId}`, signal, { pin: call.callId }); } catch {}
+                }
+                if (checkpointHash) checkpointHashes.set(call.callId, checkpointHash);
+                toolCalls++;
+                progress();
+                dependencies.store.beginCapabilityCall({
+                  runId, callId: call.callId, capabilityId: call.capabilityId,
+                  risk: descriptor.risk, status: "dispatching", startedAt: dispatchedAt,
+                });
+                capabilityDispatched = true;
+                try {
+                  const r = await runCapabilities.invoke(invokeCall, { grant: request.grant, signal });
+                  return r;
+                } catch {
+                  // Return uncertain result to trigger recovery_required (matches original behavior).
+                  return { callId: call.callId, ok: false, content: "interrupted", error: "interrupted", uncertain: true };
+                }
+              };
+
+              const schedulingResults = await executeWithScheduling(
+                schedulingState,
+                capabilityCalls,
+                invokeFn,
+                { grant: request.grant, signal }
+              );
+
+              // Convert scheduling results to invoked format for process phase.
+              const invoked: Array<{ call: CapabilityCall; descriptor: CapabilityDescriptor; result: CapabilityResult; uncertain: boolean }> = schedulingResults.map((slot) => {
+                const item = batch.find((b) => b.call.callId === slot.callId)!;
+                return { call: item.call, descriptor: slot.descriptor, result: slot.result, uncertain: !!slot.result.uncertain };
+              });
 
               // Process phase: sequential, in order (settle, emit, push messages).
               for (const { call, result: rawResult, uncertain: wasUncertain } of invoked) {
@@ -812,10 +855,10 @@ export function createAgentEngine(dependencies: {
                 dependencies.store.settleCapabilityCall(runId, call.callId, result.ok ? "succeeded" : "failed", Date.now());
                 if (!result.ok) capabilityFailure = true;
                 emit(request.threadId, { type: "tool.result", runId, callId: call.callId, result });
-                // Post-tool-use hooks: observe results and enforce blocks. A blocked
-                // mutating tool is undone via its pre-call checkpoint, then denied.
+                // Post-tool-use hooks via gateway with final-argument revalidation.
                 if (request.hooks) {
-                  const postHook = await request.hooks.run("post_tool_use", { runId, threadId: request.threadId, botId: request.botId, capabilityId: call.capabilityId, callId: call.callId, arguments: call.arguments, result: { ok: result.ok, content: result.content } });
+                  const gateway = createHookGateway(request.hooks, (capabilityId) => surface.getDescriptors().find((d) => d.id === capabilityId || d.name === capabilityId));
+                  const postHook = await gateway.run("post_tool_use", { runId, threadId: request.threadId, botId: request.botId, capabilityId: call.capabilityId, callId: call.callId, arguments: call.arguments, result: { ok: result.ok, content: result.content } });
                   if (postHook.allow === false && checkpointHash) {
                     try { await rollback(request.botId, workspaceDir(request.botId), checkpointHash, signal); } catch {}
                   }
@@ -833,6 +876,11 @@ export function createAgentEngine(dependencies: {
                 let promptResult = result.content;
                 let outputRef: Record<string, unknown> | undefined;
                 if (result.content.length > TOOL_OUTPUT_PROMPT_CHARS && runCapabilities.recordToolOutput(call.callId, result.content)) {
+                  // Expose tool_output_read on the surface so the model can read the stored remainder,
+                  // but only if the grant permits it.
+                  if (capabilityPermitted(TOOL_OUTPUT_READ_CAPABILITY, request.grant) && !surface.has(TOOL_OUTPUT_READ_CAPABILITY)) {
+                    surface.addDescriptor(toolOutputReadDescriptor);
+                  }
                   promptResult = `${result.content.slice(0, TOOL_OUTPUT_PROMPT_CHARS)}\n\n[Output truncated: ${TOOL_OUTPUT_PROMPT_CHARS} of ${result.content.length} chars shown. Full output is stored as call ${call.callId}. Use ${TOOL_OUTPUT_READ_CAPABILITY} with callId "${call.callId}" and offset/limit to read more.]`;
                   outputRef = { callId: call.callId, totalChars: result.content.length, shownChars: TOOL_OUTPUT_PROMPT_CHARS, truncated: true };
                 }
@@ -972,5 +1020,7 @@ export function createAgentEngine(dependencies: {
         if (threadListeners?.size === 0) listeners.delete(threadId);
       };
     },
+    planVerify: dependencies.planVerify,
+    orchestrator: dependencies.orchestrator,
   };
 }

@@ -109,7 +109,7 @@ export async function runWebTool(_ctx: WebToolContext, args: Record<string, unkn
 }
 
 export const WEB_TOOL_DESCRIPTOR = {
-  id: "web",
+  id: "native:web",
   name: "web",
   description: "Fetch a URL or search the web. Operations: fetch (get page text), search (DuckDuckGo results).",
   schema: {

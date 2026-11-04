@@ -3,7 +3,7 @@ import { allowsTool } from "../../shared/tool-scope.ts";
 import { COMPUTER_TOOL_DESCRIPTOR, MAX_COMMAND_CHARS, MAX_TIMEOUT_MS, MIN_TIMEOUT_MS, runComputerTool, type ComputerToolContext } from "./native-computer-tool.ts";
 
 export class NativeComputerCapabilityProvider implements CapabilityProvider {
-  readonly id = "native-computer-exec";
+  readonly id = "native:computer";
   readonly kind = "native-tool" as const;
   private readonly ctx: ComputerToolContext;
   private readonly scope: unknown;
@@ -29,7 +29,7 @@ export class NativeComputerCapabilityProvider implements CapabilityProvider {
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability provider is closed");
-    if (call.capabilityId !== COMPUTER_TOOL_DESCRIPTOR.id) throw new Error(`Unknown capability: ${call.capabilityId}`);
+    if (call.capabilityId !== COMPUTER_TOOL_DESCRIPTOR.id && call.capabilityId !== "computer_exec") throw new Error(`Unknown capability: ${call.capabilityId}`);
     if (grant.denied.has(COMPUTER_TOOL_DESCRIPTOR.id)) throw new Error("Capability denied: computer_exec");
     if (grant.allowed.size > 0 && !grant.allowed.has(COMPUTER_TOOL_DESCRIPTOR.id)) throw new Error("Capability not allowed: computer_exec");
     const args = call.arguments as Record<string, unknown> | null;

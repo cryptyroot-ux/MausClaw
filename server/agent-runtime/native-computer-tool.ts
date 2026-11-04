@@ -26,7 +26,7 @@ export interface ComputerToolResult {
 }
 
 export const COMPUTER_TOOL_DESCRIPTOR = {
-  id: "computer_exec",
+  id: "native:computer",
   name: "computer_exec",
   description: "Run a shell command in the computer's workspace and return exit code, stdout and stderr.",
   schema: {

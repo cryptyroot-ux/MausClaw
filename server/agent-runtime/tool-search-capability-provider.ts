@@ -4,7 +4,7 @@
 import type { CapabilityCall, CapabilityDescriptor, CapabilityGrant, CapabilityProvider, CapabilityResult } from "./contracts.ts";
 
 export class ToolSearchCapabilityProvider implements CapabilityProvider {
-  readonly id = "tool-search";
+  readonly id = "native:tool-search";
   readonly kind = "native-tool" as const;
   private readonly getSession: () => { list(grant: CapabilityGrant): ReadonlyArray<CapabilityDescriptor> } | null;
   private closed = false;
@@ -18,7 +18,7 @@ export class ToolSearchCapabilityProvider implements CapabilityProvider {
     if (grant.denied.has("tool_search")) return [];
     if (grant.allowed.size > 0 && !grant.allowed.has("tool_search")) return [];
     return [{
-      id: "tool_search",
+      id: "native:tool-search",
       name: "tool_search",
       description: "Search available MCP tools by keyword. Returns matching tool names and descriptions. Use before calling an MCP tool whose name you don't know.",
       schema: {
@@ -33,12 +33,13 @@ export class ToolSearchCapabilityProvider implements CapabilityProvider {
       risk: "read" as const,
       sideEffect: false,
       timeoutMs: 5_000,
+      parallelSafe: true,
     }];
   }
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability provider is closed");
-    if (call.capabilityId !== "tool_search") throw new Error(`Unknown capability: ${call.capabilityId}`);
+    if (call.capabilityId !== "native:tool-search") throw new Error(`Unknown capability: ${call.capabilityId}`);
     if (grant.denied.has("tool_search")) throw new Error("Capability denied: tool_search");
     if (grant.allowed.size > 0 && !grant.allowed.has("tool_search")) throw new Error("Capability not allowed: tool_search");
     const args = call.arguments as Record<string, unknown> | null;

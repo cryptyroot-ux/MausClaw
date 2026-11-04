@@ -14,7 +14,7 @@ import type {
 export const TOOL_OUTPUT_READ_CAPABILITY = "tool_output_read";
 export const TOOL_OUTPUT_READ_MAX_CHARS = 20_000;
 
-const toolOutputReadDescriptor: CapabilityDescriptor = {
+export const toolOutputReadDescriptor: CapabilityDescriptor = {
   id: TOOL_OUTPUT_READ_CAPABILITY,
   name: TOOL_OUTPUT_READ_CAPABILITY,
   description: "Read part of a tool output that was truncated to fit the model window. Use the callId from the output's outputRef.",
@@ -35,9 +35,11 @@ const toolOutputReadDescriptor: CapabilityDescriptor = {
 
 export interface RunScopedCapabilitySession extends CapabilitySession {
   recordToolOutput(callId: string, content: string): boolean;
+  /** Providers aggregated by the wrapped composite, if any (for catalog building). */
+  providers?(): ReadonlyArray<CapabilityProvider>;
 }
 
-function capabilityPermitted(id: string, grant: CapabilityGrant): boolean {
+export function capabilityPermitted(id: string, grant: CapabilityGrant): boolean {
   if (grant.denied.has(id)) return false;
   return grant.allowed.size === 0 || grant.allowed.has(id);
 }
@@ -93,6 +95,13 @@ export function createRunScopedCapabilitySession(
       if (!availableOutputs.size || !capabilityPermitted(TOOL_OUTPUT_READ_CAPABILITY, grant)
         || available.some((item) => item.id === TOOL_OUTPUT_READ_CAPABILITY)) return available;
       return [...available, toolOutputReadDescriptor];
+    },
+
+    providers(): ReadonlyArray<CapabilityProvider> {
+      if ("providers" in session && typeof session.providers === "function") {
+        return session.providers();
+      }
+      return [];
     },
 
     validate(call, grant): void {
@@ -174,6 +183,7 @@ export class InMemoryCapabilitySession implements CapabilitySession {
 
   register(descriptor: CapabilityDescriptor, handler: CapabilityHandler): void {
     if (this.closed) throw new Error("Capability session is closed");
+    if (this.descriptors.has(descriptor.id)) throw new Error(`Duplicate capability ID: ${descriptor.id}`);
     this.descriptors.set(descriptor.id, descriptor);
     this.handlers.set(descriptor.id, handler);
   }
@@ -286,37 +296,54 @@ export class SessionCapabilityProvider implements CapabilityProvider {
 export type CapabilityPolicy = (call: CapabilityCall, grant: CapabilityGrant) => { readonly allowed: boolean; readonly reason?: string };
 
 export class CompositeCapabilityRuntime implements CapabilitySession {
-  private readonly providers: CapabilityProvider[];
+  private readonly _providers: CapabilityProvider[];
   private readonly policy: CapabilityPolicy;
   private mounted = false;
   private closed = false;
 
   constructor(providers: CapabilityProvider[], policy?: CapabilityPolicy) {
-    this.providers = providers;
+    this._providers = providers;
     this.policy = policy ?? ((call, grant) => {
       if (grant.denied.has(call.capabilityId)) return { allowed: false, reason: `Capability denied: ${call.capabilityId}` };
       if (grant.allowed.size > 0 && !grant.allowed.has(call.capabilityId)) return { allowed: false, reason: `Capability not allowed: ${call.capabilityId}` };
       return { allowed: true };
     });
+    // Reject duplicate capability IDs across providers at session composition time.
+    const seen = new Map<string, string>();
+    const openGrant: CapabilityGrant = { botId: "", threadId: "", approvalMode: "full", allowed: new Set(), denied: new Set() };
+    for (const provider of providers) {
+      for (const descriptor of provider.list(openGrant)) {
+        const existing = seen.get(descriptor.id);
+        if (existing !== undefined) {
+          throw new Error(`Duplicate capability ID "${descriptor.id}" provided by "${provider.id}" and "${existing}"`);
+        }
+        seen.set(descriptor.id, provider.id);
+      }
+    }
+  }
+
+  /** Return the providers aggregated by this composite (for catalog building). */
+  providers(): ReadonlyArray<CapabilityProvider> {
+    return this._providers;
   }
 
   async mountAll(context: { readonly grant: CapabilityGrant; readonly signal: AbortSignal }): Promise<void> {
     if (this.closed) throw new Error("Capability runtime is closed");
     if (this.mounted) return;
-    for (const provider of this.providers) await provider.mount(context);
+    for (const provider of this._providers) await provider.mount(context);
     this.mounted = true;
   }
 
   list(grant: CapabilityGrant): ReadonlyArray<CapabilityDescriptor> {
     if (this.closed) return [];
     const out: CapabilityDescriptor[] = [];
-    for (const provider of this.providers) out.push(...provider.list(grant));
+    for (const provider of this._providers) out.push(...provider.list(grant));
     return out;
   }
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability runtime is closed");
-    const provider = this.providers.find((p) => p.list(grant).some((d) => d.id === call.capabilityId));
+    const provider = this._providers.find((p) => p.list(grant).some((d) => d.id === call.capabilityId));
     if (!provider) throw new Error(`Capability not found: ${call.capabilityId}`);
     const decision = this.policy(call, grant);
     if (!decision.allowed) throw new Error(decision.reason ?? `Capability denied: ${call.capabilityId}`);
@@ -325,48 +352,39 @@ export class CompositeCapabilityRuntime implements CapabilitySession {
 
   async invoke(call: CapabilityCall, context: { readonly grant: CapabilityGrant; readonly signal: AbortSignal }): Promise<CapabilityResult> {
     if (this.closed) return { callId: call.callId, ok: false, content: "Capability runtime is closed", error: "closed" };
-    // Every provider that offers this capability is a fallback candidate: if the
-    // first one fails (crash or execution error), try the next before giving up.
-    // Policy is global — if it denies, no provider can help — so it is checked once.
-    const candidates = this.providers.filter((p) => p.list(context.grant).some((d) => d.id === call.capabilityId));
-    if (candidates.length === 0) return { callId: call.callId, ok: false, content: `Capability not found: ${call.capabilityId}`, error: "not_found" };
+    // Single invocation gateway: exactly one provider per capability ID.
+    // Pre-tool-use hooks run before this call (by the kernel); we revalidate here
+    // against the possibly-modified call, then dispatch to the single provider.
+    // No fallback cascade after dispatch — any non-ok result is terminal.
+    const provider = this._providers.find((p) => p.list(context.grant).some((d) => d.id === call.capabilityId));
+    if (!provider) {
+      return { callId: call.callId, ok: false, content: `Capability not found: ${call.capabilityId}`, error: "not_found" };
+    }
     const decision = this.policy(call, context.grant);
     if (!decision.allowed) {
       return { callId: call.callId, ok: false, content: decision.reason ?? "denied", error: "denied" };
     }
-    let lastResult: CapabilityResult | undefined;
-    for (const provider of candidates) {
-      try {
-        provider.validate(call, context.grant);
-      } catch (error) {
-        lastResult = { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "denied" };
-        continue;
-      }
-      try {
-        context.signal.throwIfAborted();
-        const result = await provider.invoke(call, context);
-        if (result.ok) return result;
-        // Non-ok result: cascade only on provider-level execution failures, not on
-        // policy denials, interrupts, invalid arguments, or closed sessions — those
-        // would not differ on another provider.
-        lastResult = result;
-        if (result.error === "denied" || result.error === "interrupted" || result.error === "invalid_arguments" || result.error === "closed") {
-          return result;
-        }
-        continue;
-      } catch (error) {
-        if (context.signal.aborted) return { callId: call.callId, ok: false, content: "interrupted", error: "interrupted" };
-        lastResult = { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "failed" };
-        continue;
-      }
+    // Revalidate after hook modifications: validate against the call as it will be dispatched.
+    try {
+      provider.validate(call, context.grant);
+    } catch (error) {
+      return { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "denied" };
     }
-    return lastResult ?? { callId: call.callId, ok: false, content: `Capability not found: ${call.capabilityId}`, error: "not_found" };
+    context.signal.throwIfAborted();
+    try {
+      return await provider.invoke(call, context);
+    } catch (error) {
+      if (context.signal.aborted) {
+        return { callId: call.callId, ok: false, content: "interrupted", error: "interrupted" };
+      }
+      return { callId: call.callId, ok: false, content: error instanceof Error ? error.message : String(error), error: "failed" };
+    }
   }
 
   async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
-    for (const provider of this.providers) await provider.close().catch(() => {});
+    for (const provider of this._providers) await provider.close().catch(() => {});
   }
 }
 

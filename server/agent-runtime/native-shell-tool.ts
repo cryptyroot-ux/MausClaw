@@ -118,7 +118,7 @@ export async function runShellTool(ctx: ShellToolContext, args: Record<string, u
 }
 
 export const SHELL_TOOL_DESCRIPTOR = {
-  id: "bash",
+  id: "native:shell:bash",
   name: "bash",
   description: "Execute a shell command in the workspace. Supports pipes, redirects, &&. Times out at 2 min by default (max 10 min).",
   schema: {

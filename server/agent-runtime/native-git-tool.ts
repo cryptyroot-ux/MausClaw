@@ -149,7 +149,7 @@ export async function runGitTool(ctx: GitToolContext, args: Record<string, unkno
 }
 
 export const GIT_TOOL_DESCRIPTOR = {
-  id: "git",
+  id: "native:git",
   name: "git",
   description: "Run git operations in the workspace: status, diff, log, add, commit, branch, checkout, init, worktree-add, worktree-remove, worktree-list.",
   schema: {

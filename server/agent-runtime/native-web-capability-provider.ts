@@ -3,7 +3,7 @@ import { runWebTool, WEB_TOOL_DESCRIPTOR, type WebToolContext } from "./native-w
 import { allowsTool } from "../../shared/tool-scope.ts";
 
 export class NativeWebCapabilityProvider implements CapabilityProvider {
-  readonly id = "native-web";
+  readonly id = "native:web";
   readonly kind = "native-tool" as const;
   private readonly ctx: WebToolContext;
   private readonly scope: unknown;
@@ -29,7 +29,7 @@ export class NativeWebCapabilityProvider implements CapabilityProvider {
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability provider is closed");
-    if (call.capabilityId !== "web") throw new Error(`Unknown capability: ${call.capabilityId}`);
+    if (call.capabilityId !== "web" && call.capabilityId !== "native:web") throw new Error(`Unknown capability: ${call.capabilityId}`);
     if (grant.denied.has("web")) throw new Error("Capability denied: web");
     if (grant.allowed.size > 0 && !grant.allowed.has("web")) throw new Error("Capability not allowed: web");
   }

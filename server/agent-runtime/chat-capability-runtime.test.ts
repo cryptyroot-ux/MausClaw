@@ -60,8 +60,8 @@ describe("createChatCapabilitySession", () => {
     const session = fakeSession();
     const bridge = createChatCapabilitySession({ session, approval: approval(true) });
 
-    expect(bridge.list(grant(["read_file"])).map((item) => item.id)).toEqual(["read_file"]);
-    expect(bridge.list(grant()).map((item) => item.id)).toEqual(["read_file", "write_file"]);
+    expect(bridge.list(grant(["mcp:read_file"])).map((item) => item.id)).toEqual(["mcp:read_file"]);
+    expect(bridge.list(grant()).map((item) => item.id)).toEqual(["mcp:read_file", "mcp:write_file"]);
   });
 
   it("waits for approval before executing an ask-only capability", async () => {
@@ -69,14 +69,14 @@ describe("createChatCapabilitySession", () => {
     const gate = approval(false);
     const bridge = createChatCapabilitySession({ session, approval: gate });
 
-    const denied = await bridge.invoke(call("c1", "write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
+    const denied = await bridge.invoke(call("c1", "mcp:write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
     expect(gate.ask).toHaveBeenCalledOnce();
     expect(denied).toMatchObject({ ok: false, error: "denied" });
     expect(session.executed).toEqual([]);
 
     const allowedGate = approval(true);
     const allowedBridge = createChatCapabilitySession({ session, approval: allowedGate });
-    const allowed = await allowedBridge.invoke(call("c2", "write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
+    const allowed = await allowedBridge.invoke(call("c2", "mcp:write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
     expect(allowed).toMatchObject({ ok: true, content: "Result for write_file" });
     expect(session.executed).toEqual(["write_file"]);
   });
@@ -87,8 +87,8 @@ describe("createChatCapabilitySession", () => {
     gate.ask.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     const bridge = createChatCapabilitySession({ session, approval: gate });
 
-    const denied = await bridge.invoke(call("c1", "write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
-    const allowed = await bridge.invoke(call("c2", "write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
+    const denied = await bridge.invoke(call("c1", "mcp:write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
+    const allowed = await bridge.invoke(call("c2", "mcp:write_file"), { grant: grant([], "ask"), signal: new AbortController().signal });
 
     expect(denied.ok).toBe(false);
     expect(allowed.ok).toBe(true);
@@ -103,7 +103,7 @@ describe("createChatCapabilitySession", () => {
     });
 
     expect(bridge.list(grant())).toEqual([
-      expect.objectContaining({ id: "read_file", name: "read_file" }),
+      expect.objectContaining({ id: "mcp:read_file", name: "read_file" }),
     ]);
   });
 
@@ -113,7 +113,7 @@ describe("createChatCapabilitySession", () => {
 
     await bridge.close();
     await bridge.close();
-    const result = await bridge.invoke(call("c1", "read_file"), { grant: grant(), signal: new AbortController().signal });
+    const result = await bridge.invoke(call("c1", "mcp:read_file"), { grant: grant(), signal: new AbortController().signal });
 
     expect(result).toMatchObject({ ok: false, error: "closed" });
     expect(session.closed).toBe(1);
@@ -126,7 +126,7 @@ describe("createChatCapabilitySession", () => {
     });
     const bridge = createChatCapabilitySession({ session, approval: approval(true) });
 
-    const result = await bridge.invoke(call("c1", "read_file"), { grant: grant(), signal: new AbortController().signal });
+    const result = await bridge.invoke(call("c1", "mcp:read_file"), { grant: grant(), signal: new AbortController().signal });
 
     expect(result).toMatchObject({ ok: false, uncertain: true, error: "uncertain_side_effect" });
   });

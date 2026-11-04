@@ -1,6 +1,6 @@
 import type { RuntimeEvent, SendTurnInput } from "../contracts.ts";
 import { allowsTool, parseToolScope, selectorIdentity } from "../../shared/tool-scope.ts";
-import { ASK_USER_TOOL, ASK_USER_TOOL_DEFINITION, parseAskQuestions, askQuestionSummary } from "../../shared/ask-question.ts";
+import { ASK_USER_TOOL, parseAskQuestions, askQuestionSummary } from "../../shared/ask-question.ts";
 import { chatToolName } from "../drivers/chat-mcp-tools.ts";
 import { mountChatTools, type ChatToolSession } from "../drivers/chat-mcp-tools.ts";
 import type { ChatImagePart } from "../drivers/chat-images.ts";
@@ -193,10 +193,6 @@ export async function runNativeTurn(context: NativeTurnContext): Promise<void> {
     );
     for (const { server, reason } of tools.skipped) {
       context.emit({ ...context.base(turn.threadId, turnId), type: "runtime.notice", message: `MCP server "${server}" was skipped for this turn: ${context.safeText(reason)}` });
-    }
-    const questionAllowed = context.toolsEnabled() && allowsTool(scope, { kind: "native", name: ASK_USER_TOOL });
-    if (questionAllowed && !tools.definitions.some((definition) => definition.function.name === ASK_USER_TOOL)) {
-      tools.definitions.push(ASK_USER_TOOL_DEFINITION);
     }
     // Populate grant from toolScope using transformed tool names (matching chatToolName)
     const allowed = new Set<string>();

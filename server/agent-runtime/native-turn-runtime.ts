@@ -22,7 +22,7 @@ import { ChatProtocolError, ChatReasoningDetails, ChatToolCalls, object, type Ch
 import { appendNative } from "../drivers/native.ts";
 import { contextWindowFor } from "../context-budget.ts";
 import { turnContextSettings, estimateRequestTokens, TokenCalibration, offloadToolOutput, readToolOutput, READ_TOOL_OUTPUT_TOOL, READ_TOOL_OUTPUT_DEFINITION, compactTurnMessages, turnCompactBudget, DEFAULT_KEEP_EXCHANGES } from "../drivers/turn-context.ts";
-import { classifyError, HttpStatusError, interruptibleDelay, nextRetryDelay, parseRetryAfter, RETRY_MAX_ATTEMPTS } from "../drivers/retry.ts";
+import { classifyError } from "../drivers/retry.ts";
 import { plainFailureMessage } from "../drivers/engine-errors.ts";
 import { refusesRequestSize, RequestTooLargeError, sizeChange, smallerResend } from "../drivers/chat-size-limit.ts";
 import { refusesContextLength } from "../drivers/turn-context.ts";
@@ -718,8 +718,6 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
             if (await compact("budget", keep)) target = Math.floor(budget * 0.6);
           }
           native("out", options.nativeLog.outgoing(turn, messages, model, tools.definitions));
-          let attempt = 0;
-          let retryWaitedMs = 0;
           let resized = false;
           let completion: Completion;
           for (;;) {
@@ -770,11 +768,11 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
                 emit({ ...base(turn.threadId, turnId), type: "turn.retrying", attempt: 1, delayMs: 0, reason: "request_too_large" });
                 continue;
               }
-              // A refused tool call ran nothing, so the request goes again, but not once answer text streamed.
+              // A refused tool call ran nothing, so the request goes again once, but not once answer text streamed.
               if (error instanceof RejectedToolCallError) {
-                native("in", { refused: "tool_use_failed", attempt: attempt + 1, error: error.refusal });
-                if (!answerStreamed && !abort.signal.aborted && attempt < RETRY_MAX_ATTEMPTS - 1) {
-                  emit({ ...base(turn.threadId, turnId), type: "turn.retrying", attempt: ++attempt, delayMs: 0, reason: "tool_use_failed" });
+                native("in", { refused: "tool_use_failed", attempt: 1, error: error.refusal });
+                if (!answerStreamed && !abort.signal.aborted) {
+                  emit({ ...base(turn.threadId, turnId), type: "turn.retrying", attempt: 1, delayMs: 0, reason: "tool_use_failed" });
                   continue;
                 }
                 if (!abort.signal.aborted) throw new ChatProtocolError(refusedToolCallFailure(error, seenCalls.size > 0));
@@ -786,17 +784,8 @@ export function createNativeTurnRuntime<Config>(options: RuntimeOptions<Config>)
                 tools.definitions.length = 0;
                 continue;
               }
-              const retryScale = options.retryScale ?? Number(process.env.MAUSCLAW_RETRY_SCALE ?? "1");
-              // Once a call has been handled, never replay it through a turn retry.
-              if (abort.signal.aborted || streamed || seenCalls.size ||
-                  error instanceof ChatProtocolError || !verdict.transient) throw error;
-              const delayMs = nextRetryDelay(attempt, retryWaitedMs, error instanceof HttpStatusError ? error.retryAfterMs : undefined);
-              if (delayMs === null) throw error;
-              attempt++;
-              retryWaitedMs += delayMs;
-              emit({ ...base(turn.threadId, turnId), type: "turn.retrying", attempt, delayMs, reason: verdict.reason });
-              await interruptibleDelay(delayMs * retryScale, abort.signal).promise;
-              abort.signal.throwIfAborted();
+              // No adapter-level retry: all transient/terminal errors propagate to the kernel.
+              throw error;
             }
           }
           native("in", options.nativeLog.incoming(completion));

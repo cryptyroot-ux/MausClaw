@@ -123,6 +123,12 @@ export interface CapabilityDescriptor {
   readonly risk: "read" | "write" | "destructive";
   readonly sideEffect: boolean;
   readonly timeoutMs: number;
+  /** When true, multiple instances of this capability may run concurrently in the same batch.
+   *  Host-declared only: missing or false means serial execution. */
+  readonly parallelSafe?: boolean;
+  /** Optional provider-derived key: calls sharing the same key serialize even across different
+   *  capabilities, protecting access to shared stateful resources. */
+  readonly concurrencyKey?: string;
   /** A tool the engine may drop when a provider rejects the whole tools parameter (e.g. the built-in question tool). */
   readonly optional?: boolean;
 }
@@ -292,6 +298,12 @@ export interface AgentEngine {
     readonly runPlan: (steps: ReadonlyArray<unknown>, context: unknown) => { planId: string; done: Promise<void> };
     readonly onEvent: (planId: string, listener: (event: unknown) => void) => () => void;
     readonly interrupt: (planId: string) => void;
+  };
+  /** Optional bounded in-loop plan+verify. Off by default. */
+  readonly planVerify?: {
+    readonly enabled: boolean;
+    readonly maxPlanSteps: number;
+    readonly maxVerifyRounds: number;
   };
 }
 

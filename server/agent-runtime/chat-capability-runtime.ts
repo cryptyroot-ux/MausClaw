@@ -28,9 +28,9 @@ export interface ChatCapabilitySessionOptions {
   approval: ChatCapabilityApproval;
 }
 
-function descriptor(definition: ChatToolDefinition): CapabilityDescriptor {
+function descriptor(definition: ChatToolDefinition, id: string): CapabilityDescriptor {
   return {
-    id: definition.function.name,
+    id,
     name: definition.function.name,
     description: definition.function.description,
     schema: definition.function.parameters,
@@ -64,6 +64,10 @@ function capabilityImages(images: ChatToolResultImages): CapabilityResult["image
   return converted.length ? converted : undefined;
 }
 
+function stripMcpPrefix(id: string): string {
+  return id.startsWith("mcp:") ? id.slice(4) : id;
+}
+
 type ChatToolResultImages = Awaited<ReturnType<ChatToolSession["execute"]>>["images"];
 
 /**
@@ -75,7 +79,17 @@ export function createChatCapabilitySession({
   session,
   approval,
 }: ChatCapabilitySessionOptions): CapabilitySession {
-  const descriptors = new Map(session.definitions.map((definition) => [definition.function.name, descriptor(definition)]));
+  // MCP capability IDs are namespaced as mcp:<server>_<tool>. The underlying
+  // ChatToolSession uses the un-prefixed name (from chatToolName), so we keep a
+  // mapping from namespaced id to the session's original tool name.
+  const originalById = new Map<string, string>();
+  const descriptors = new Map(session.definitions.map((definition) => {
+    const name = definition.function.name;
+    // ask_user is a built-in, not an MCP tool — keep flat ID.
+    const id = name === "ask_user" ? name : `mcp:${name}`;
+    originalById.set(id, name);
+    return [id, descriptor(definition, id)];
+  }));
   let closed = false;
 
   const assertOpen = (): void => {
@@ -103,7 +117,10 @@ export function createChatCapabilitySession({
         if (!parseAskQuestions(call.arguments)) throw new Error("The ask_user arguments are malformed");
         return;
       }
-      session.validate(call.capabilityId, call.arguments);
+      // MCP capability IDs are namespaced (mcp:<name>); the ChatToolSession uses
+      // the un-prefixed tool name.
+      const originalName = stripMcpPrefix(call.capabilityId);
+      session.validate(originalName, call.arguments);
     },
 
     async invoke(
@@ -137,8 +154,11 @@ export function createChatCapabilitySession({
           };
         }
 
-        session.validate(call.capabilityId, call.arguments);
-        const shown = session.view(call.capabilityId, call.arguments as Record<string, unknown>);
+        // MCP capability IDs are namespaced (mcp:<name>); the ChatToolSession uses
+        // the un-prefixed tool name.
+        const originalName = stripMcpPrefix(call.capabilityId);
+        session.validate(originalName, call.arguments);
+        const shown = session.view(originalName, call.arguments as Record<string, unknown>);
         const summary = preview(shown.input);
         const floored = approval.floored({
           full: context.grant.approvalMode === "full",
@@ -164,7 +184,7 @@ export function createChatCapabilitySession({
         }
 
         dispatched = true;
-        const result = await session.execute(call.capabilityId, call.arguments as Record<string, unknown>, context.signal);
+        const result = await session.execute(originalName, call.arguments as Record<string, unknown>, context.signal);
         const images = capabilityImages(result.images);
         const omitted = result.images?.length && !images ? "\n[image omitted: unsupported image transport]" : "";
         return {

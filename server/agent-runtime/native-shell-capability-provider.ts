@@ -3,7 +3,7 @@ import { runShellTool, SHELL_TOOL_DESCRIPTOR, type ShellToolContext } from "./na
 import { allowsTool } from "../../shared/tool-scope.ts";
 
 export class NativeShellCapabilityProvider implements CapabilityProvider {
-  readonly id = "native-shell";
+  readonly id = "native:shell";
   readonly kind = "native-tool" as const;
   private readonly ctx: ShellToolContext;
   private readonly scope: unknown;
@@ -29,7 +29,7 @@ export class NativeShellCapabilityProvider implements CapabilityProvider {
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability provider is closed");
-    if (call.capabilityId !== "bash") throw new Error(`Unknown capability: ${call.capabilityId}`);
+    if (call.capabilityId !== "bash" && call.capabilityId !== "native:shell:bash") throw new Error(`Unknown capability: ${call.capabilityId}`);
     if (grant.denied.has("bash")) throw new Error("Capability denied: bash");
     if (grant.allowed.size > 0 && !grant.allowed.has("bash")) throw new Error("Capability not allowed: bash");
     const args = call.arguments as Record<string, unknown> | null;

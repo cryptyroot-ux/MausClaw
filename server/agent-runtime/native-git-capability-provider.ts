@@ -3,7 +3,7 @@ import { runGitTool, GIT_TOOL_DESCRIPTOR, type GitToolContext } from "./native-g
 import { allowsTool } from "../../shared/tool-scope.ts";
 
 export class NativeGitCapabilityProvider implements CapabilityProvider {
-  readonly id = "native-git";
+  readonly id = "native:git";
   readonly kind = "native-tool" as const;
   private readonly ctx: GitToolContext;
   private readonly scope: unknown;
@@ -29,7 +29,7 @@ export class NativeGitCapabilityProvider implements CapabilityProvider {
 
   validate(call: CapabilityCall, grant: CapabilityGrant): void {
     if (this.closed) throw new Error("Capability provider is closed");
-    if (call.capabilityId !== "git") throw new Error(`Unknown capability: ${call.capabilityId}`);
+    if (call.capabilityId !== "git" && call.capabilityId !== "native:git") throw new Error(`Unknown capability: ${call.capabilityId}`);
     if (grant.denied.has("git")) throw new Error("Capability denied: git");
     if (grant.allowed.size > 0 && !grant.allowed.has("git")) throw new Error("Capability not allowed: git");
     const args = call.arguments as Record<string, unknown> | null;

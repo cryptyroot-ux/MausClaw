@@ -19,6 +19,22 @@ function json(response: import("node:http").ServerResponse, body: unknown): void
   response.end(JSON.stringify(body));
 }
 
+function toolSearchRound(): unknown {
+  return {
+    choices: [{
+      message: {
+        content: "",
+        tool_calls: [{
+          id: "call-search",
+          type: "function",
+          function: { name: "tool_search", arguments: '{"query":"audit"}' },
+        }],
+      },
+      finish_reason: "tool_calls",
+    }],
+  };
+}
+
 function toolRound(): unknown {
   return {
     choices: [{
@@ -72,11 +88,12 @@ describe("OpenAI-compatible native opt-in", () => {
         return;
       }
       if (firstContent.includes("Use the noop tool")) {
-        json(response, toolRound());
+        json(response, toolSearchRound());
         return;
       }
       requests.push(parsed);
-      if (requests.length === 1) json(response, toolRound());
+      if (requests.length === 1) json(response, toolSearchRound());
+      else if (requests.length === 2) json(response, toolRound());
       else json(response, finalRound(`answer-${requests.length}`));
     });
     await new Promise<void>((resolve) => modelServer.listen(0, "127.0.0.1", resolve));
@@ -105,8 +122,8 @@ describe("OpenAI-compatible native opt-in", () => {
         integrations: integration,
       });
       expect(await nativeCompleted).toMatchObject({ ok: true });
-      expect(requests).toHaveLength(2);
-      expect(JSON.stringify(requests[0]?.tools)).toContain("audit_echo");
+      expect(requests).toHaveLength(3);
+      expect(JSON.stringify(requests[1]?.tools)).toContain("audit_echo");
       expect(mcp.calls).toHaveLength(1);
 
       const legacyCompleted = waitForCompleted(instance.adapter);
@@ -119,14 +136,14 @@ describe("OpenAI-compatible native opt-in", () => {
         approvalMode: "full",
       });
       expect(await legacyCompleted).toMatchObject({ ok: true });
-      expect(requests).toHaveLength(3);
-      expect(JSON.stringify(requests[2]?.tools)).not.toContain("audit_echo");
+      expect(requests).toHaveLength(4);
+      expect(JSON.stringify(requests[3]?.tools)).not.toContain("audit_echo");
 
       const db = new DatabaseSync(join(DATA_DIR, "messages.db"));
       const runs = db.prepare("SELECT status, model_rounds, tool_calls FROM agent_runs").all() as Array<{ status: string; model_rounds: number; tool_calls: number }>;
       db.close();
       expect(runs).toEqual([
-        { status: "completed", model_rounds: 2, tool_calls: 1 },
+        { status: "completed", model_rounds: 3, tool_calls: 2 },
         { status: "completed", model_rounds: 1, tool_calls: 0 },
       ]);
     } finally {

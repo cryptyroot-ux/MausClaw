@@ -105,7 +105,7 @@ describe("NativeComputerCapabilityProvider", () => {
     const provider = new NativeComputerCapabilityProvider(ctx);
     const descs = provider.list(grant());
     expect(descs.length).toBe(1);
-    expect(descs[0].id).toBe("computer_exec");
+    expect(descs[0].id).toBe("native:computer");
     expect(descs[0].name).toBe("computer_exec");
     expect(descs[0].risk).toBe("write");
     expect(descs[0].sideEffect).toBe(true);
@@ -114,7 +114,7 @@ describe("NativeComputerCapabilityProvider", () => {
 
   it("denied grant blocks list and invoke", async () => {
     const provider = new NativeComputerCapabilityProvider(ctx);
-    const denied = grant({ denied: ["computer_exec"] });
+    const denied = grant({ denied: ["native:computer"] });
     expect(provider.list(denied)).toEqual([]);
     const result = await provider.invoke(call({ command: "echo hi" }), context(denied));
     expect(result.ok).toBe(false);
