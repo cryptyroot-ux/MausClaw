@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createOrchestrator } from "./orchestrator.ts";
 import type {
@@ -6,6 +6,7 @@ import type {
   AgentEvent,
   AgentRunHandle,
   AgentRunRecord,
+  AgentRunStatus,
   CapabilityDescriptor,
   CapabilityGrant,
   CapabilitySession,
@@ -122,7 +123,7 @@ interface TestAgentEngine extends AgentEngine {
 }
 
 function testAgentEngine(
-  outcomes: ReadonlyArray<{ status: "completed" | "failed"; failureCode?: string; modelRounds?: number; toolCalls?: number; output?: string }>,
+  outcomes: ReadonlyArray<{ status: AgentRunStatus; failureCode?: string; modelRounds?: number; toolCalls?: number; output?: string }>,
 ): TestAgentEngine {
   const runs = new Map<string, AgentRunRecord>();
   const requests: Array<{ botId: string; threadId: string; text: string }> = [];
@@ -328,5 +329,78 @@ describe("createOrchestrator", () => {
 
   it("returns store engineId", async () => {
     expect(orchestrator.engineId).toBe("engine-1");
+  });
+
+  // M10: engine run returns recovery_required → mark step recovery_required and stop plan
+  it("marks step as recovery_required when engine run returns recovery_required", async () => {
+    const steps: PlanStep[] = [
+      { id: "s1", text: "First step.", providerModel: { providerId: "fixture", modelId: "fixture-model" }, grant, capabilities: testCapabilitySession() },
+      { id: "s2", text: "Second step.", providerModel: { providerId: "fixture", modelId: "fixture-model" }, grant, capabilities: testCapabilitySession() },
+    ];
+    const engine = testAgentEngine([
+      { status: "recovery_required" as AgentRunStatus },
+      { status: "completed", output: "should not run" },
+    ]);
+    const orch = createOrchestrator({ engine, store });
+    const { done } = orch.runPlan(steps, contextFor(steps));
+    await done;
+
+    const stepResults = store.listSteps("plan-1");
+    expect(stepResults).toHaveLength(1);
+    expect(stepResults[0]?.status).toBe("recovery_required");
+    const plan = store.plans.get("plan-1");
+    expect(plan?.status).toBe("recovery_required");
+    expect(engine.requests).toHaveLength(1);
+  });
+
+  // M10: verification not-run when no verifier configured
+  it("records verification not_run when no verifier configured", async () => {
+    const steps: PlanStep[] = [
+      { id: "s1", text: "Say hello.", providerModel: { providerId: "fixture", modelId: "fixture-model" }, grant, capabilities: testCapabilitySession() },
+    ];
+    const { planId, done } = orchestrator.runPlan(steps, contextFor(steps));
+    await done;
+
+    const stepResults = store.listSteps(planId);
+    expect(stepResults).toHaveLength(1);
+    expect(stepResults[0]?.status).toBe("completed");
+    const verification = stepResults[0]?.result?.verification;
+    expect(verification).toEqual({ verified: false, reason: "not_run" });
+  });
+
+  // M10: verification ok when verifier configured and passes
+  it("records verification verified when verifier passes", async () => {
+    const steps: PlanStep[] = [
+      { id: "s1", text: "Say hello.", providerModel: { providerId: "fixture", modelId: "fixture-model" }, grant, capabilities: testCapabilitySession() },
+    ];
+    const verify = vi.fn().mockResolvedValue({ ok: true, feedback: "" });
+    const decide = vi.fn().mockReturnValue({ allowed: true, route: { candidates: [{ providerId: "fixture", modelId: "fixture-model" }] } });
+    const orch = createOrchestrator({ engine, store, intelligence: { enabled: false, verify, decide } });
+    const { done } = orch.runPlan(steps, contextFor(steps));
+    await done;
+
+    const stepResults = store.listSteps("plan-1");
+    expect(stepResults[0]?.status).toBe("completed");
+    expect(verify).toHaveBeenCalledTimes(1);
+  });
+
+  // M10: verification failure triggers retry then fail
+  it("retry then fail when verification rejects", async () => {
+    const steps: PlanStep[] = [
+      { id: "s1", text: "Say hello.", providerModel: { providerId: "fixture", modelId: "fixture-model" }, grant, capabilities: testCapabilitySession() },
+    ];
+    const engine = testAgentEngine([
+      { status: "completed", output: "wrong answer" },
+      { status: "completed", output: "still wrong" },
+    ]);
+    const verify = vi.fn().mockResolvedValue({ ok: false, feedback: "not good enough" });
+    const decide = vi.fn().mockReturnValue({ allowed: true, route: { candidates: [{ providerId: "fixture", modelId: "fixture-model" }] } });
+    const orch = createOrchestrator({ engine, store, intelligence: { enabled: true, verify, decide } });
+    const { done } = orch.runPlan(steps, contextFor(steps));
+    await done;
+
+    const stepResults = store.listSteps("plan-1");
+    expect(stepResults[0]?.status).toBe("failed");
+    expect(verify).toHaveBeenCalledTimes(3);
   });
 });

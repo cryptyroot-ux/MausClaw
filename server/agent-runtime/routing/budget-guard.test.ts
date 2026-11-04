@@ -49,4 +49,23 @@ describe("BudgetGuard", () => {
     const guard = new BudgetGuard({ perThreadLimit: 42 });
     expect(guard.toBudget()).toEqual({ maxCost: 42 } as Budget);
   });
+
+  // M10: per-category budget tracking
+  it("tracks cost by category", () => {
+    const guard = new BudgetGuard({ perThreadLimit: 100, perRunLimit: 1000 });
+    guard.record({ category: "engine", primary: { estimatedCost: 5 } }, "t1");
+    guard.record({ category: "verifier", primary: { estimatedCost: 3 } }, "t1");
+    guard.record({ category: "compaction", primary: { estimatedCost: 2 } }, "t1");
+    expect(guard.getThreadSpend("t1")).toBe(10);
+    expect(guard.getRunSpend()).toBe(10);
+  });
+
+  it("rejects cost exceeding per-category limit", () => {
+    const guard = new BudgetGuard({ perThreadLimit: 100, perRunLimit: 1000 });
+    guard.record({ category: "engine", primary: { estimatedCost: 5 } }, "t1");
+    guard.record({ category: "verifier", primary: { estimatedCost: 3 } }, "t1");
+    expect(guard.check({ category: "engine", primary: { estimatedCost: 100 } }, "t1")).toBe(false);
+    // But a different category could still fit within overall run limit
+    expect(guard.check({ category: "compaction", primary: { estimatedCost: 1 } }, "t1")).toBe(true);
+  });
 });

@@ -915,14 +915,23 @@ export function listOrchestratorSteps(planId: string): StepRecord[] {
 }
 
 export function recoverUnsettledOrchestratorPlans(now: number): void {
+  // Mark every unsettled step as recovery_required: its effect is uncertain.
   db()
     .prepare(
-      "UPDATE agent_orchestrator_plans SET status = 'interrupted', updated_at = ? WHERE status IN ('pending', 'running')",
+      "UPDATE agent_orchestrator_steps SET status = 'recovery_required', completed_at = ? WHERE status IN ('pending', 'running', 'approval_required')",
     )
     .run(now);
+  // Plans with any unsettled step: recovery_required (effects may have taken effect).
   db()
     .prepare(
-      "UPDATE agent_orchestrator_steps SET status = 'interrupted', completed_at = ? WHERE status IN ('pending', 'running', 'approval_required')",
+      "UPDATE agent_orchestrator_plans SET status = 'recovery_required', updated_at = ? WHERE status IN ('pending', 'running') AND plan_id IN (SELECT plan_id FROM agent_orchestrator_steps WHERE status = 'recovery_required')",
+    )
+    .run(now);
+  // Plans with zero steps: no step was ever dispatched, so they can be safely
+  // interrupted without implying an uncertain write.
+  db()
+    .prepare(
+      "UPDATE agent_orchestrator_plans SET status = 'interrupted', updated_at = ? WHERE status IN ('pending', 'running') AND plan_id NOT IN (SELECT DISTINCT plan_id FROM agent_orchestrator_steps)",
     )
     .run(now);
 }

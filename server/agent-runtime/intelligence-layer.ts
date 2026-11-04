@@ -176,13 +176,13 @@ export function createIntelligenceLayer(config: IntelligenceConfig) {
           try {
             assignment = pivotRouter.select(taskType, routingBudget);
             cost += assignment.primary?.estimatedCost ?? 0;
-            const allowed = budgetGuard.check(assignment, tid);
+            const allowed = budgetGuard.check({ ...assignment, category: "route" }, tid);
             if (!allowed) {
               const r: IntelligenceLayerResult = { completed: false, stepsCompleted: 0, stepsFailed: 0, error: "budget exceeded", cost };
               yield { phase: "done", data: r };
               return r;
             }
-            budgetGuard.record(assignment, tid);
+            budgetGuard.record({ ...assignment, category: "route" }, tid);
           } catch {
             // routing failure is non-fatal; proceed without router assignment
           }
@@ -203,6 +203,21 @@ export function createIntelligenceLayer(config: IntelligenceConfig) {
         const plan: Plan = await planner.plan(brief, taskType, tid);
         yield { phase: "plan", data: { planId: plan.id, steps: plan.steps.length } };
 
+        // Track planner cost as its own category.
+        const planCost = typeof (plan as { metadata?: { estimatedCost?: number } }).metadata?.estimatedCost === "number"
+          ? (plan as { metadata?: { estimatedCost?: number } }).metadata!.estimatedCost!
+          : 0;
+        if (planCost > 0) {
+          const allowed = budgetGuard.check({ category: "planner", primary: { estimatedCost: planCost } }, tid);
+          if (!allowed) {
+            const r: IntelligenceLayerResult = { completed: false, stepsCompleted: 0, stepsFailed: 0, error: "budget exceeded", cost: cost + planCost };
+            yield { phase: "done", data: r };
+            return r;
+          }
+          budgetGuard.record({ category: "planner", primary: { estimatedCost: planCost } }, tid);
+          cost += planCost;
+        }
+
         // 4. execute
         if (!executor && toolRunner) {
           executor = new Executor(toolRunner, verifier);
@@ -216,7 +231,35 @@ export function createIntelligenceLayer(config: IntelligenceConfig) {
         const execResult: ExecutionResult = await executor.execute(plan);
         yield { phase: "execute", data: { completedSteps: execResult.completedSteps, failedSteps: execResult.failedSteps } };
 
+        // Track engine (model call) cost as its own category.
+        const execCost = typeof (execResult as { costUsd?: number }).costUsd === "number"
+          ? (execResult as { costUsd?: number }).costUsd!
+          : 0;
+        if (execCost > 0) {
+          const allowed = budgetGuard.check({ category: "engine", primary: { estimatedCost: execCost } }, tid);
+          if (!allowed) {
+            const r: IntelligenceLayerResult = { completed: false, stepsCompleted: 0, stepsFailed: execResult.failedSteps ?? 0, error: "budget exceeded", cost: cost + execCost };
+            yield { phase: "done", data: r };
+            return r;
+          }
+          budgetGuard.record({ category: "engine", primary: { estimatedCost: execCost } }, tid);
+          cost += execCost;
+        }
+
         // 5. verification logging
+        const verificationCost = typeof (execResult as { verificationCostUsd?: number }).verificationCostUsd === "number"
+          ? (execResult as { verificationCostUsd?: number }).verificationCostUsd!
+          : 0;
+        if (verificationCost > 0) {
+          const allowed = budgetGuard.check({ category: "verifier", primary: { estimatedCost: verificationCost } }, tid);
+          if (!allowed) {
+            const r: IntelligenceLayerResult = { completed: false, stepsCompleted: execResult.completedSteps ?? 0, stepsFailed: execResult.failedSteps ?? 0, error: "budget exceeded", cost: cost + verificationCost };
+            yield { phase: "done", data: r };
+            return r;
+          }
+          budgetGuard.record({ category: "verifier", primary: { estimatedCost: verificationCost } }, tid);
+          cost += verificationCost;
+        }
         for (const outcome of execResult.outcomes ?? execResult.steps ?? []) {
           const verification = (outcome as { verification?: { verified: boolean; confidence: number } }).verification;
           if (verification) {
@@ -224,11 +267,6 @@ export function createIntelligenceLayer(config: IntelligenceConfig) {
           }
         }
         yield { phase: "verify", data: {} };
-
-        const planCost = typeof (plan as { metadata?: { estimatedCost?: number } }).metadata?.estimatedCost === "number"
-          ? (plan as { metadata?: { estimatedCost?: number } }).metadata!.estimatedCost!
-          : 0;
-        if (planCost > 0) cost = planCost;
 
         const failed = execResult.failedSteps ?? 0;
         const completedSteps = execResult.completedSteps ?? 0;

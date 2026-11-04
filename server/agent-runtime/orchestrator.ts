@@ -6,6 +6,7 @@ import type {
   AgentEngine,
   AgentEvent,
   AgentRunRequest,
+  AgentRunStatus,
   ModelMessage,
   Orchestrator,
   OrchestratorContext,
@@ -167,7 +168,7 @@ export function createOrchestrator(dependencies: {
           let retryFeedback: string | undefined;
 
           while (attempt <= maxRetries) {
-            const stepText = retryFeedback ? `${step.text}\\n\\nCorrection feedback: ${retryFeedback}` : step.text;
+            const stepText = retryFeedback ? `${step.text}\n\nCorrection feedback: ${retryFeedback}` : step.text;
             const stepMessages = buildMessagesWithContext({ ...step, text: stepText }, contextVariables);
 
             const engineRequest: AgentRunRequest = {
@@ -195,20 +196,29 @@ export function createOrchestrator(dependencies: {
             unsubscribe();
 
             const runRecord = dependencies.engine.getState(runId);
+            const runStatus: AgentRunStatus = runRecord?.status ?? "failed";
+            const stepStatus: StepStatus = runStatus === "completed" ? "completed" : runStatus === "recovery_required" ? "recovery_required" : "failed";
             stepResult = {
               stepId: step.id,
               runId,
-              status: runRecord?.status === "completed" ? "completed" : "failed",
+              status: stepStatus,
               output: stepOutput.trim() || undefined,
-              error: runRecord?.failureCode,
+              error: runStatus === "failed" ? runRecord?.failureCode : undefined,
+              verification:
+                runStatus === "completed" && dependencies.intelligence?.verify
+                  ? { verified: true, reason: "verified" }
+                  : { verified: false, reason: "not_run" },
               modelRounds: runRecord?.modelRounds,
               toolCalls: runRecord?.toolCalls,
             };
 
             if (stepResult.status === "failed") break;
 
+            if (stepResult.status === "recovery_required") break;
+
             if (dependencies.intelligence?.verify && stepResult.output) {
               const verification = await dependencies.intelligence.verify(stepResult.output, step);
+              stepResult.verification = { verified: verification.ok, reason: verification.ok ? "verified" : "feedback" };
               if (!verification.ok) {
                 retryFeedback = verification.feedback;
                 attempt++;
@@ -221,6 +231,13 @@ export function createOrchestrator(dependencies: {
 
           if (!stepResult) {
             stepResult = { stepId: step.id, runId: "", status: "failed", error: "no_result" };
+          }
+
+          // If verification was enabled and the last attempt was rejected,
+          // the step ultimately fails (all retries exhausted).
+          if (dependencies.intelligence?.verify && stepResult.output && stepResult.verification?.verified === false) {
+            stepResult.status = "failed";
+            stepResult.error = stepResult.error ?? "verification failed";
           }
 
           if (stepResult.output) {
@@ -239,9 +256,10 @@ export function createOrchestrator(dependencies: {
         }));
 
         // Check for failures and conflicts.
-        const failedStep = waveResults.find((r) => r.result.status === "failed");
+        const failedStep = waveResults.find((r) => r.result.status === "failed" || r.result.status === "recovery_required");
         if (failedStep) {
-          dependencies.store.updatePlanStatus(planId, "failed", Date.now());
+          const finalStatus = failedStep.result.status === "recovery_required" ? "recovery_required" : "failed";
+          dependencies.store.updatePlanStatus(planId, finalStatus, Date.now());
           emit(planId, { type: "plan.failed", planId, error: failedStep.result.error ?? "step failed" });
           return;
         }

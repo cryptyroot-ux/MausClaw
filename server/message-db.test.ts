@@ -33,11 +33,17 @@ import { closeMessageDb,
   recallMessages,
   searchMessages,
   setActiveLeaf,
-  updateMessage, describeMissingFts5 } from "./message-db.ts";
+  updateMessage, describeMissingFts5,
+  insertOrchestratorPlan,
+  insertOrchestratorStep,
+  readOrchestratorPlan,
+  readOrchestratorStep,
+  recoverUnsettledOrchestratorPlans } from "./message-db.ts";
 import type { NotificationLogEntry } from "../shared/notification.ts";
 import { withPeerProvenance } from "./peer-provenance.ts";
 import { Store, type Message } from "./store.ts";
 import type { ModelSelection } from "./contracts.ts";
+import type { PlanStatus } from "./agent-runtime/contracts.ts";
 
 const selection = (): ModelSelection => ({ instanceId: "claude", model: "claude-sonnet-5" });
 const legacy = (threadId: string) => join(DATA_DIR, `messages-${threadId}.json`);
@@ -665,6 +671,99 @@ describe("notification_log", () => {
 
       expect(readAgentRun("run-with-call")?.status).toBe("recovery_required");
       expect(readAgentRun("run-no-call")?.status).toBe("interrupted");
+    });
+  });
+
+  describe("recoverUnsettledOrchestratorPlans (M10)", () => {
+    const now = 1_700_000_000_000;
+
+    const insertPlan = (planId: string, status: PlanStatus = "running") => {
+      insertOrchestratorPlan({
+        planId,
+        status,
+        steps: ["step-1"],
+        createdAt: now - 1000,
+        updatedAt: now,
+        contextVariables: new Map(),
+      });
+    };
+
+    const insertRunningStep = (stepId: string, planId: string) => {
+      insertOrchestratorStep({
+        stepId,
+        planId,
+        status: "running",
+        result: undefined,
+        startedAt: now - 500,
+        completedAt: undefined,
+      });
+    };
+
+    const insertSettledStep = (stepId: string, planId: string) => {
+      insertOrchestratorStep({
+        stepId,
+        planId,
+        status: "completed",
+        result: { stepId, runId: "run-1", status: "completed", output: "done" },
+        startedAt: now - 500,
+        completedAt: now - 100,
+      });
+    };
+
+    it("marks plans with unsettled steps as recovery_required", () => {
+      insertPlan("plan-unsettled");
+      insertRunningStep("step-unsettled-1", "plan-unsettled");
+
+      recoverUnsettledOrchestratorPlans(now);
+
+      expect(readOrchestratorPlan("plan-unsettled")?.status).toBe("recovery_required");
+      expect(readOrchestratorStep("step-unsettled-1")?.status).toBe("recovery_required");
+    });
+
+    it("marks plans with no steps as interrupted", () => {
+      insertOrchestratorPlan({
+        planId: "plan-no-steps",
+        status: "running",
+        steps: [],
+        createdAt: now - 1000,
+        updatedAt: now,
+        contextVariables: new Map(),
+      });
+
+      recoverUnsettledOrchestratorPlans(now);
+
+      expect(readOrchestratorPlan("plan-no-steps")?.status).toBe("interrupted");
+    });
+
+    it("leaves plans with all settled steps untouched", () => {
+      insertPlan("plan-settled");
+      insertSettledStep("step-settled-1", "plan-settled");
+
+      recoverUnsettledOrchestratorPlans(now);
+
+      expect(readOrchestratorPlan("plan-settled")?.status).toBe("running");
+      expect(readOrchestratorStep("step-settled-1")?.status).toBe("completed");
+    });
+
+    it("marks multiple plans correctly: one unsettled, one no-steps, one settled", () => {
+      insertPlan("plan-multi-unsettled");
+      insertRunningStep("step-multi-1", "plan-multi-unsettled");
+      insertOrchestratorPlan({
+        planId: "plan-multi-no-steps",
+        status: "running",
+        steps: [],
+        createdAt: now - 1000,
+        updatedAt: now,
+        contextVariables: new Map(),
+      });
+      insertPlan("plan-multi-settled");
+      insertSettledStep("step-multi-2", "plan-multi-settled");
+
+      recoverUnsettledOrchestratorPlans(now);
+
+      expect(readOrchestratorPlan("plan-multi-unsettled")?.status).toBe("recovery_required");
+      expect(readOrchestratorPlan("plan-multi-no-steps")?.status).toBe("interrupted");
+      expect(readOrchestratorPlan("plan-multi-settled")?.status).toBe("running");
     });
   });
 });

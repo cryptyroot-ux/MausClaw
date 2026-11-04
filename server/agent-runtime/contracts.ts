@@ -303,8 +303,8 @@ export interface AgentEngine {
 export type PlanId = string;
 export type StepId = string;
 
-export type PlanStatus = "pending" | "running" | "completed" | "failed" | "interrupted";
-export type StepStatus = "pending" | "running" | "completed" | "failed" | "skipped" | "approval_required";
+export type PlanStatus = "pending" | "running" | "completed" | "failed" | "interrupted" | "recovery_required";
+export type StepStatus = "pending" | "running" | "completed" | "failed" | "skipped" | "approval_required" | "recovery_required";
 
 export interface PlanStep {
   readonly id: StepId;
@@ -325,11 +325,12 @@ export interface PlanStep {
 export interface PlanResult {
   readonly stepId: StepId;
   readonly runId: string;
-  readonly status: StepStatus;
-  readonly output?: string;
-  readonly error?: string;
-  readonly modelRounds?: number;
-  readonly toolCalls?: number;
+  status: StepStatus;
+  output?: string;
+  error?: string;
+  verification?: { readonly verified: boolean; readonly reason: string };
+  modelRounds?: number;
+  toolCalls?: number;
 }
 
 export interface OrchestratorContext {

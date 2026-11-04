@@ -14,12 +14,24 @@ export interface BudgetGuardLimits {
   readonly thread?: number;
   readonly maxThread?: number;
   readonly maxRun?: number;
+  /** Optional per-category limits, e.g. { engine: 10, verifier: 5, compaction: 3 }. */
+  readonly perCategory?: Readonly<Record<string, number>>;
+}
+
+export interface CategoryCost {
+  readonly category: string;
+  readonly primary?: { readonly estimatedCost?: number; readonly cost?: number; readonly [key: string]: unknown };
+  readonly estimatedCost?: number;
+  readonly cost?: number;
+  readonly [key: string]: unknown;
 }
 
 export class BudgetGuard {
   private readonly perThreadLimit: number;
   private readonly perRunLimit: number;
+  private readonly perCategoryLimits: Readonly<Record<string, number>>;
   private readonly threadSpend = new Map<string, number>();
+  private readonly categorySpend = new Map<string, Map<string, number>>();
   private runSpend = 0;
 
   constructor(
@@ -29,6 +41,7 @@ export class BudgetGuard {
     if (typeof limits === "number") {
       this.perThreadLimit = Number.isFinite(limits) ? limits : Infinity;
       this.perRunLimit = typeof perRunLimit === "number" && Number.isFinite(perRunLimit) ? perRunLimit : Infinity;
+      this.perCategoryLimits = {};
       return;
     }
     const l = limits ?? {};
@@ -49,6 +62,7 @@ export class BudgetGuard {
       finite(l.maxRunCost) ??
       finite(l.maxRun) ??
       Infinity;
+    this.perCategoryLimits = l.perCategory ?? {};
   }
 
   private toCost(cost: unknown): number {
@@ -70,19 +84,50 @@ export class BudgetGuard {
     return Math.max(0, num);
   }
 
+  private categoryOf(cost: unknown): string {
+    if (cost && typeof cost === "object") {
+      const obj = cost as Record<string, unknown>;
+      if (typeof obj.category === "string") return obj.category;
+    }
+    return "default";
+  }
+
   check(cost: unknown, threadId?: string): boolean {
     const normalizedCost = this.toCost(cost);
     const key = threadId ?? "";
+    const category = this.categoryOf(cost);
+
+    // Overall thread and run limits.
     const threadTotal = (this.threadSpend.get(key) ?? 0) + normalizedCost;
     const runTotal = this.runSpend + normalizedCost;
-    return threadTotal <= this.perThreadLimit && runTotal <= this.perRunLimit;
+    if (threadTotal > this.perThreadLimit) return false;
+    if (runTotal > this.perRunLimit) return false;
+
+    // Per-category thread limit.
+    const catLimit = this.perCategoryLimits[category];
+    if (catLimit !== undefined) {
+      const catSpendMap = this.categorySpend.get(key) ?? new Map();
+      const catTotal = (catSpendMap.get(category) ?? 0) + normalizedCost;
+      if (catTotal > catLimit) return false;
+    }
+
+    return true;
   }
 
   record(cost: unknown, threadId?: string): void {
     const normalizedCost = this.toCost(cost);
     const key = threadId ?? "";
+    const category = this.categoryOf(cost);
+
     this.threadSpend.set(key, (this.threadSpend.get(key) ?? 0) + normalizedCost);
     this.runSpend += normalizedCost;
+
+    let catSpendMap = this.categorySpend.get(key);
+    if (!catSpendMap) {
+      catSpendMap = new Map();
+      this.categorySpend.set(key, catSpendMap);
+    }
+    catSpendMap.set(category, (catSpendMap.get(category) ?? 0) + normalizedCost);
   }
 
   getThreadSpend(threadId?: string): number {
@@ -91,6 +136,10 @@ export class BudgetGuard {
 
   getRunSpend(): number {
     return this.runSpend;
+  }
+
+  getCategorySpend(category: string, threadId?: string): number {
+    return this.categorySpend.get(threadId ?? "")?.get(category) ?? 0;
   }
 
   resetRun(): void {
@@ -103,10 +152,12 @@ export class BudgetGuard {
 
   resetThread(threadId?: string): void {
     this.threadSpend.delete(threadId ?? "");
+    this.categorySpend.delete(threadId ?? "");
   }
 
   resetAll(): void {
     this.threadSpend.clear();
+    this.categorySpend.clear();
     this.runSpend = 0;
   }
 
