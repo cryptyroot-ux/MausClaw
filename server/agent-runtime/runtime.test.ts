@@ -27,6 +27,7 @@ interface TestRunStore extends AgentRunStore {
   readonly calls: Map<string, { readonly status: CapabilityCallStatus }>;
   readonly compactions: AgentCompactionRecord[];
   readonly outputs: Map<string, AgentToolOutputRecord>;
+  readonly recoverCalls: number[];
 }
 
 function testRunStore(): TestRunStore {
@@ -34,11 +35,13 @@ function testRunStore(): TestRunStore {
   const calls = new Map<string, { readonly status: CapabilityCallStatus }>();
   const compactions: AgentCompactionRecord[] = [];
   const outputs = new Map<string, AgentToolOutputRecord>();
+  const recoverCalls: number[] = [];
   return {
     runs,
     calls,
     compactions,
     outputs,
+    recoverCalls,
     createRun(record) {
       runs.set(record.runId, record);
     },
@@ -61,7 +64,9 @@ function testRunStore(): TestRunStore {
     settleCapabilityCall(runId, callId, status) {
       calls.set(`${runId}:${callId}`, { status });
     },
-    recoverUnsettledRuns() {},
+    recoverUnsettledRuns(now: number) {
+      recoverCalls.push(now);
+    },
     recordCompaction(record) {
       compactions.push(record);
     },
@@ -1286,6 +1291,73 @@ describe("createAgentEngine", () => {
     });
     await done;
     expect(store.getRun(runId)).toMatchObject({ status: "failed" });
+  });
+
+  describe("Phase 4: uncertain effects and process lifecycle (M5/M6)", () => {
+    it("stops the batch on an uncertain tool result without replaying", async () => {
+      const modelAdapter = testModelAdapter([[
+        { type: "tool_calls", calls: [{ id: "call-uncertain", name: "read-a", arguments: { value: "a" } }] },
+        { type: "completed", finishReason: "tool_calls" },
+      ], [
+        { type: "content.delta", kind: "assistant_text", delta: "Should not run after uncertain." },
+        { type: "completed", finishReason: "stop" },
+      ]]);
+      const capabilities = testCapabilitySession([descriptor("read-a")], new Set(), new Set(["call-uncertain"]));
+      const store = testRunStore();
+      const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+      const events: AgentEvent[] = [];
+      engine.onEvent("thread-1", (event) => events.push(event));
+
+      const { runId, done } = await engine.run({
+        botId: "bot-1", threadId: "thread-1", text: "Run once.",
+        messages: userMessages,
+        providerModel: { providerId: "fixture", modelId: "fixture-model" },
+        grant, capabilities,
+        signal: new AbortController().signal,
+      });
+      await done;
+
+      expect(capabilities.invocations).toEqual(["call-uncertain"]);
+      expect(modelAdapter.requests).toHaveLength(1);
+      expect(store.calls.get(`${runId}:call-uncertain`)).toMatchObject({ status: "recovery_required" });
+      expect(store.getRun(runId)).toMatchObject({ status: "recovery_required", failureCode: "uncertain" });
+      expect(events.some((event) => event.type === "run.recovery_required")).toBe(true);
+      expect(events.some((event) => event.type === "run.failed")).toBe(false);
+    });
+
+    it("stops the batch when a dispatched capability throws (uncertain outcome)", async () => {
+      const modelAdapter = testModelAdapter([[
+        { type: "tool_calls", calls: [{ id: "call-throws", name: "read-a", arguments: { value: "a" } }] },
+        { type: "completed", finishReason: "tool_calls" },
+      ], [
+        { type: "content.delta", kind: "assistant_text", delta: "Should not run after throw." },
+        { type: "completed", finishReason: "stop" },
+      ]]);
+      const capabilities = testCapabilitySession([descriptor("read-a")], new Set(), new Set(), new Set(["call-throws"]));
+      const store = testRunStore();
+      const engine = createAgentEngine({ adapters: registryFor(modelAdapter), store });
+
+      const { runId, done } = await engine.run({
+        botId: "bot-1", threadId: "thread-1", text: "Run once.",
+        messages: userMessages,
+        providerModel: { providerId: "fixture", modelId: "fixture-model" },
+        grant, capabilities,
+        signal: new AbortController().signal,
+      });
+      await done;
+
+      expect(capabilities.invocations).toEqual(["call-throws"]);
+      expect(modelAdapter.requests).toHaveLength(1);
+      expect(store.calls.get(`${runId}:call-throws`)).toMatchObject({ status: "recovery_required" });
+      expect(store.getRun(runId)).toMatchObject({ status: "recovery_required", failureCode: "uncertain_side_effect" });
+    });
+
+    it("tracks recoverUnsettledRuns calls on the store", () => {
+      const store = testRunStore();
+      store.recoverUnsettledRuns(1_700_000_000_000);
+      store.recoverUnsettledRuns(1_700_000_001_000);
+      expect(store.recoverCalls).toEqual([1_700_000_000_000, 1_700_000_001_000]);
+    });
   });
 
   describe("live capability probe", () => {

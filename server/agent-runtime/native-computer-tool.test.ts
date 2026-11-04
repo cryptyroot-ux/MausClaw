@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
 
 import { COMPUTER_TOOL_DESCRIPTOR, runComputerTool, type ComputerToolContext } from "./native-computer-tool.ts";
 import { NativeComputerCapabilityProvider } from "./native-computer-capability-provider.ts";
@@ -98,6 +99,52 @@ describe("native computer tool", () => {
     const result = await runComputerTool(ctx, { command: "sleep 10", timeout_ms: 1000 });
     expect(result.ok).toBe(false);
     expect(result.content).toContain("timed out");
+  });
+
+  it("kills the process tree on abort, not just the shell", async () => {
+    const pidFile = join(root, "bg-pid");
+    const marker = join(root, "child-alive");
+    const cmd = `sleep 15 & echo $! > ${pidFile}; touch ${marker}; sleep 2`;
+    const controller = new AbortController();
+    const promise = runComputerTool(ctx, { command: cmd, timeout_ms: 30000 }, controller.signal);
+    setTimeout(() => controller.abort(), 150);
+    const r = await promise;
+    expect(r.ok).toBe(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const pidContent = await readFile(pidFile, "utf8").catch(() => null);
+    expect(pidContent).not.toBeNull();
+    const pid = Number((pidContent ?? "").trim());
+    expect(Number.isFinite(pid)).toBe(true);
+    let dead = false;
+    try { process.kill(pid, 0); } catch { dead = true; }
+    expect(dead).toBe(true);
+  });
+
+  it("kills the process tree on timeout, not just the shell", async () => {
+    const pidFile = join(root, "bg-pid-timeout");
+    const cmd = `sleep 15 & echo $! > ${pidFile}; sleep 2`;
+    const r = await runComputerTool(ctx, { command: cmd, timeout_ms: 150 });
+    expect(r.ok).toBe(false);
+    expect(r.content).toContain("timed out");
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const pidContent = await readFile(pidFile, "utf8").catch(() => null);
+    expect(pidContent).not.toBeNull();
+    const pid = Number((pidContent ?? "").trim());
+    expect(Number.isFinite(pid)).toBe(true);
+    let dead = false;
+    try { process.kill(pid, 0); } catch { dead = true; }
+    expect(dead).toBe(true);
+  });
+
+  it("has an uncertain field on the result type", () => {
+    const result: { ok: boolean; content: string; exitCode: number | null; durationMs: number; uncertain?: boolean } = {
+      ok: false, content: "x", exitCode: null, durationMs: 0, uncertain: true,
+    };
+    expect(result.uncertain).toBe(true);
   });
 
   it("rejects empty command", async () => {

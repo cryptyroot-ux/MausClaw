@@ -9,12 +9,17 @@ import { closeMessageDb,
   deleteThreads,
   indexMemoryFile,
   indexedMemoryFiles,
+  insertAgentCapabilityCall,
+  insertAgentRun,
   insertMessage,
   insertNotificationLog,
   lastRowAt,
   latestPersonLineAts,
   logNotification,
   openRescueMessages,
+  readAgentCapabilityCall,
+  readAgentRun,
+  recoverUnsettledAgentRuns,
   latestSaidByBot,
   markNotificationLogRead,
   markThreadNotificationLogRead,
@@ -573,5 +578,93 @@ describe("notification_log", () => {
     expect(rows.map((r) => r.id)).not.toContain("n2");
     expect(rows[0]?.id).toBe("n502");
     expect(rows.map((r) => r.id)).toContain("n3");
+  });
+
+  describe("recoverUnsettledAgentRuns", () => {
+    const now = 1_700_000_000_000;
+
+    const insertRun = (runId: string, status: "queued" | "running" | "waiting" = "running") => {
+      insertAgentRun({
+        runId,
+        botId: "bot-1",
+        threadId: "thread-1",
+        engineId: "mausclaw-native",
+        providerModel: { providerId: "fixture", modelId: "fixture-model" },
+        status,
+        startedAt: now - 1000,
+        updatedAt: now,
+        modelRounds: 1,
+        toolCalls: 0,
+      });
+    };
+
+    const insertDispatchingCall = (runId: string, callId: string) => {
+      insertAgentCapabilityCall({
+        runId,
+        callId,
+        capabilityId: "bash",
+        risk: "write",
+        status: "dispatching",
+        startedAt: now - 500,
+      });
+    };
+
+    const insertSettledCall = (runId: string, callId: string) => {
+      insertAgentCapabilityCall({
+        runId,
+        callId,
+        capabilityId: "bash",
+        risk: "write",
+        status: "succeeded",
+        startedAt: now - 500,
+        settledAt: now - 100,
+      });
+    };
+
+    it("marks runs with unsettled dispatching calls as recovery_required", () => {
+      insertRun("run-unsettled");
+      insertDispatchingCall("run-unsettled", "call-1");
+
+      recoverUnsettledAgentRuns(now);
+
+      expect(readAgentRun("run-unsettled")?.status).toBe("recovery_required");
+    });
+
+    it("marks runs with no capability calls as interrupted", () => {
+      insertRun("run-no-calls", "queued");
+
+      recoverUnsettledAgentRuns(now);
+
+      expect(readAgentRun("run-no-calls")?.status).toBe("interrupted");
+    });
+
+    it("leaves runs with all settled calls untouched", () => {
+      insertRun("run-settled", "running");
+      insertSettledCall("run-settled", "call-1");
+
+      recoverUnsettledAgentRuns(now);
+
+      expect(readAgentRun("run-settled")?.status).toBe("running");
+    });
+
+    it("settles the unsettled calls as recovery_required", () => {
+      insertRun("run-unsettled");
+      insertDispatchingCall("run-unsettled", "call-1");
+
+      recoverUnsettledAgentRuns(now);
+
+      expect(readAgentCapabilityCall("run-unsettled", "call-1")?.status).toBe("recovery_required");
+    });
+
+    it("marks multiple runs correctly: one with calls, one without", () => {
+      insertRun("run-with-call");
+      insertDispatchingCall("run-with-call", "call-1");
+      insertRun("run-no-call", "queued");
+
+      recoverUnsettledAgentRuns(now);
+
+      expect(readAgentRun("run-with-call")?.status).toBe("recovery_required");
+      expect(readAgentRun("run-no-call")?.status).toBe("interrupted");
+    });
   });
 });

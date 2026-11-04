@@ -775,9 +775,11 @@ export function readAgentCapabilityCall(runId: string, callId: string): AgentCap
  */
 export function recoverUnsettledAgentRuns(now: number): void {
   transaction((database) => {
+    // Mark every dispatching call as recovery_required: its side effect is uncertain.
     database
       .prepare("UPDATE agent_capability_calls SET status = 'recovery_required', settled_at = ? WHERE status = 'dispatching'")
       .run(now);
+    // Runs with any unsettled call: recovery_required (effects may have taken effect).
     database
       .prepare(
         "UPDATE agent_runs SET status = 'recovery_required', updated_at = ?, failure_code = COALESCE(failure_code, 'uncertain_side_effect') " +
@@ -785,10 +787,13 @@ export function recoverUnsettledAgentRuns(now: number): void {
         "SELECT run_id FROM agent_capability_calls WHERE status = 'recovery_required')",
       )
       .run(now);
+    // Runs with zero capability calls: no side effect was ever dispatched, so
+    // they can be safely interrupted without implying an uncertain write.
     database
       .prepare(
         "UPDATE agent_runs SET status = 'interrupted', updated_at = ?, failure_code = COALESCE(failure_code, 'process_restarted') " +
-        "WHERE status IN ('queued', 'running', 'waiting')",
+        "WHERE status IN ('queued', 'running', 'waiting') " +
+        "AND run_id NOT IN (SELECT DISTINCT run_id FROM agent_capability_calls)",
       )
       .run(now);
   });

@@ -26,6 +26,9 @@ export interface ComputerToolResult {
   readonly error?: string;
   readonly exitCode: number | null;
   readonly durationMs: number;
+  /** True when the process tree was killed but could not be confirmed terminated;
+   * the caller should treat the outcome as uncertain rather than a clean failure. */
+  readonly uncertain?: boolean;
 }
 
 export const COMPUTER_TOOL_DESCRIPTOR = {
@@ -114,28 +117,47 @@ export async function runComputerTool(ctx: ComputerToolContext, args: Record<str
   }
 
   return new Promise<ComputerToolResult>((resolve) => {
-    const controller = new AbortController();
+    // detached: true makes bash the leader of a new process group, so we can kill
+    // the entire tree (bash and any children it spawned) on abort/timeout.
     const child = spawn("/bin/bash", ["-c", command], {
       cwd,
       env,
       stdio: ["ignore", "pipe", "pipe"],
-      signal: controller.signal,
+      detached: true,
     });
+    const pid = child.pid;
 
     let stdout = "";
     let stderr = "";
     let killed = false;
     let timedOut = false;
+    let terminated = false; // close fired: process tree confirmed gone
+
+    const GRACE_MS = 5_000;
+    let graceTimer: NodeJS.Timeout | null = null;
+
+    const killProcessTree = (): void => {
+      if (killed) return;
+      killed = true;
+      try { process.kill(-pid!, "SIGTERM"); } catch {}
+      graceTimer = setTimeout(() => {
+        if (!terminated) {
+          try { process.kill(-pid!, "SIGKILL"); } catch {}
+        }
+        graceTimer = null;
+      }, GRACE_MS);
+      graceTimer.unref?.();
+    };
 
     const timer = setTimeout(() => {
       timedOut = true;
-      controller.abort();
+      killProcessTree();
     }, timeout);
     timer.unref?.();
 
     if (signal) {
-      if (signal.aborted) { controller.abort(); }
-      else { signal.addEventListener("abort", () => controller.abort(), { once: true }); }
+      if (signal.aborted) { killProcessTree(); }
+      else { signal.addEventListener("abort", () => killProcessTree(), { once: true }); }
     }
 
     child.stdout?.on("data", (data: Buffer) => {
@@ -153,6 +175,8 @@ export async function runComputerTool(ctx: ComputerToolContext, args: Record<str
 
     child.on("close", (code) => {
       clearTimeout(timer);
+      if (graceTimer) { clearTimeout(graceTimer); graceTimer = null; }
+      terminated = true;
       const durationMs = Date.now() - start;
       let out = stdout;
       let err = stderr;
@@ -176,12 +200,13 @@ export async function runComputerTool(ctx: ComputerToolContext, args: Record<str
 
     child.on("error", (err) => {
       clearTimeout(timer);
+      if (graceTimer) { clearTimeout(graceTimer); graceTimer = null; }
       const durationMs = Date.now() - start;
       if (timedOut || err.name === "AbortError") {
         killed = true;
         const output = (stdout + (stderr ? "\n--- stderr ---\n" + stderr : "")).slice(0, TOTAL_CAP_BYTES);
         const reason = timedOut ? `timed out after ${timeout}ms` : "interrupted";
-        resolve({ ok: false, content: `${output}\n${reason} (${durationMs}ms)`, error: reason, exitCode: null, durationMs });
+        resolve({ ok: false, content: `${output}\n${reason} (${durationMs}ms)`, error: reason, exitCode: null, durationMs, uncertain: !terminated });
       } else {
         resolve({ ok: false, content: `error: ${err.message}`, error: err.message, exitCode: null, durationMs });
       }

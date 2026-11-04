@@ -58,7 +58,7 @@ export class NativeComputerCapabilityProvider implements CapabilityProvider {
       return { callId: call.callId, ok: false, content: "native computer execution is not isolated: OS sandbox unavailable", error: "isolation_unavailable" };
     }
     const result = await runComputerTool(this.ctx, (call.arguments ?? {}) as Record<string, unknown>, context.signal);
-    return { callId: call.callId, ok: result.ok, content: result.content, ...(result.error ? { error: result.error } : {}) };
+    return { callId: call.callId, ok: result.ok, content: result.content, ...(result.error ? { error: result.error } : {}), ...(result.uncertain ? { uncertain: true } : {}) };
   }
 
   async close(): Promise<void> { this.closed = true; }
